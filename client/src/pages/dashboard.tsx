@@ -27,6 +27,11 @@ export default function Dashboard() {
     enabled: !!selectedReligion,
   });
 
+  const { data: bookInfo } = useQuery<{name: string, chapters: number, religion: Religion}>({
+    queryKey: ['/api/religions', selectedReligion, 'books', selectedBook],
+    enabled: !!selectedReligion && !!selectedBook,
+  });
+
   const { data: scriptures, isLoading: scripturesLoading, error: scripturesError } = useQuery<Scripture[]>({
     queryKey: [`/api/scriptures?religion=${selectedReligion}&book=${selectedBook}&chapter=${selectedChapter}`],
     enabled: !!selectedReligion && !!selectedBook && !!selectedChapter,
@@ -115,6 +120,7 @@ export default function Dashboard() {
           selectedChapter={selectedChapter}
           religions={religions}
           books={currentReligionBooks}
+          maxChapters={bookInfo?.chapters || 10}
           onReligionChange={handleReligionChange}
           onBookChange={handleBookChange}
           onChapterChange={handleChapterChange}

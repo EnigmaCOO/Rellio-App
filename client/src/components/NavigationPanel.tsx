@@ -12,6 +12,7 @@ interface NavigationPanelProps {
   selectedChapter: number;
   religions?: any[];
   books?: string[];
+  maxChapters?: number;
   onReligionChange: (religion: Religion) => void;
   onBookChange: (book: string) => void;
   onChapterChange: (chapter: number) => void;
@@ -24,6 +25,7 @@ export function NavigationPanel({
   selectedChapter,
   religions,
   books,
+  maxChapters = 10,
   onReligionChange,
   onBookChange,
   onChapterChange,
@@ -112,9 +114,11 @@ export function NavigationPanel({
 
         {/* Chapter Selector */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-scripture-700 mb-3">Chapter</label>
-          <div className="grid grid-cols-4 gap-2">
-            {Array.from({ length: 10 }, (_, i) => i + 1).map((chapter) => (
+          <label className="block text-sm font-medium text-scripture-700 mb-3">
+            Chapter (1-{maxChapters})
+          </label>
+          <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto">
+            {Array.from({ length: maxChapters }, (_, i) => i + 1).map((chapter) => (
               <Button
                 key={chapter}
                 variant={selectedChapter === chapter ? "default" : "outline"}

@@ -44,6 +44,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get book info including chapter count
+  app.get("/api/religions/:religion/books/:book", async (req, res) => {
+    try {
+      const religion = religionSchema.parse(req.params.religion);
+      const bookName = req.params.book;
+      
+      const religionConfig = getReligionConfig(religion);
+      const book = religionConfig.books.find(b => b.name === bookName);
+      
+      if (!book) {
+        return res.status(404).json({ error: "Book not found" });
+      }
+      
+      res.json({
+        name: book.name,
+        chapters: book.chapters,
+        religion: religion
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid religion parameter" });
+      } else {
+        res.status(500).json({ error: "Failed to fetch book info" });
+      }
+    }
+  });
+
   // Get scripture verses
   app.get("/api/scriptures", async (req, res) => {
     try {
