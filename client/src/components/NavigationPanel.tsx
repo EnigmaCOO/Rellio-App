@@ -47,6 +47,32 @@ export function NavigationPanel({
     return `${Math.floor(diffInHours / 24)} days ago`;
   };
 
+  // Dynamic chapter calculation based on religion and book
+  const getDynamicChapterCount = (): number => {
+    if (!selectedReligion || !selectedBook) return 10;
+
+    switch (selectedReligion) {
+      case 'bible':
+        // Use the API-provided maxChapters for Bible books since we have accurate data
+        return maxChapters;
+      case 'quran':
+        // For Quran, each surah has only one chapter, but we use 1 as default
+        // The chapter selector represents verse groupings within each surah
+        return 1; // Each surah is one chapter
+      case 'hindu':
+        return 18; // Bhagavad Gita chapters
+      case 'torah':
+        // Use the API-provided maxChapters for Torah books since we have accurate data
+        return maxChapters;
+      case 'buddhist':
+        return 10; // Tripitaka sample
+      default:
+        return maxChapters;
+    }
+  };
+
+  const dynamicChapterCount = getDynamicChapterCount();
+
   if (isLoading) {
     return (
       <div className="w-1/4 bg-white shadow-md border-r border-scripture-200 p-6">
@@ -115,15 +141,23 @@ export function NavigationPanel({
         {/* Chapter Selector */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-scripture-700 mb-3">
-            Chapter (1-{maxChapters})
+            {selectedReligion === 'quran' ? 'Surah' : 'Chapter'} (1-{dynamicChapterCount})
           </label>
-          <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto">
-            {Array.from({ length: maxChapters }, (_, i) => i + 1).map((chapter) => (
+          <div className={`grid gap-2 max-h-48 overflow-y-auto p-1 ${
+            dynamicChapterCount <= 20 ? 'grid-cols-4' : 
+            dynamicChapterCount <= 50 ? 'grid-cols-5' : 
+            'grid-cols-6'
+          }`}>
+            {Array.from({ length: dynamicChapterCount }, (_, i) => i + 1).map((chapter) => (
               <Button
                 key={chapter}
                 variant={selectedChapter === chapter ? "default" : "outline"}
                 size="sm"
-                className="h-9 text-sm font-medium hover:bg-scripture-50 border-scripture-300 hover:border-scripture-400 transition-colors"
+                className={`h-9 text-xs font-medium transition-all duration-200 ${
+                  selectedChapter === chapter
+                    ? 'bg-scripture-600 hover:bg-scripture-700 text-white shadow-md ring-2 ring-scripture-300'
+                    : 'hover:bg-scripture-50 border-scripture-300 hover:border-scripture-400 text-scripture-700 hover:shadow-sm'
+                }`}
                 onClick={() => onChapterChange(chapter)}
               >
                 {chapter}
