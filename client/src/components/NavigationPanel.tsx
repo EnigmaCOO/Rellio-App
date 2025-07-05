@@ -29,7 +29,7 @@ export function NavigationPanel({
   onChapterChange,
   isLoading,
 }: NavigationPanelProps) {
-  const { data: recentReadings } = useQuery({
+  const { data: recentReadings } = useQuery<any[]>({
     queryKey: ['/api/readings', 1], // Using user ID 1 as default
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
@@ -65,17 +65,21 @@ export function NavigationPanel({
         
         {/* Religion Selector */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-scripture-700 mb-2">Religious Text</label>
+          <label className="block text-sm font-medium text-scripture-700 mb-3">Religious Text</label>
           <Select
             value={selectedReligion}
             onValueChange={onReligionChange}
           >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a religion" />
+            <SelectTrigger className="w-full h-11 bg-white border-scripture-300 hover:border-scripture-400 focus:border-scripture-500 focus:ring-2 focus:ring-scripture-100 transition-all duration-200">
+              <SelectValue placeholder="Choose a religious text..." className="text-scripture-700" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border-scripture-200 shadow-lg">
               {religions?.map((religion) => (
-                <SelectItem key={religion.id} value={religion.id}>
+                <SelectItem 
+                  key={religion.id} 
+                  value={religion.id}
+                  className="cursor-pointer hover:bg-scripture-50 focus:bg-scripture-100 py-2.5 px-3 text-scripture-700 font-medium"
+                >
                   {religion.name}
                 </SelectItem>
               ))}
@@ -85,17 +89,17 @@ export function NavigationPanel({
 
         {/* Book Selector */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-scripture-700 mb-2">Book</label>
-          <ScrollArea className="h-60">
-            <div className="space-y-2">
-              {books?.map((book) => {
+          <label className="block text-sm font-medium text-scripture-700 mb-3">Book</label>
+          <ScrollArea className="h-60 border border-scripture-200 rounded-lg bg-gray-50/50">
+            <div className="p-2 space-y-1">
+              {books?.map((book, index) => {
                 // Handle both string and object formats
-                const bookName = typeof book === 'string' ? book : book.name || book;
+                const bookName = typeof book === 'string' ? book : (book as any)?.name || book;
                 return (
                   <Button
-                    key={bookName}
+                    key={`${bookName}-${index}`}
                     variant={selectedBook === bookName ? "default" : "ghost"}
-                    className="w-full justify-start"
+                    className="w-full justify-start text-left h-9 px-3 font-medium hover:bg-scripture-100 transition-colors"
                     onClick={() => onBookChange(bookName)}
                   >
                     {bookName}
@@ -108,13 +112,14 @@ export function NavigationPanel({
 
         {/* Chapter Selector */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-scripture-700 mb-2">Chapter</label>
+          <label className="block text-sm font-medium text-scripture-700 mb-3">Chapter</label>
           <div className="grid grid-cols-4 gap-2">
             {Array.from({ length: 10 }, (_, i) => i + 1).map((chapter) => (
               <Button
                 key={chapter}
                 variant={selectedChapter === chapter ? "default" : "outline"}
                 size="sm"
+                className="h-9 text-sm font-medium hover:bg-scripture-50 border-scripture-300 hover:border-scripture-400 transition-colors"
                 onClick={() => onChapterChange(chapter)}
               >
                 {chapter}
@@ -130,7 +135,7 @@ export function NavigationPanel({
             Recent Readings
           </h3>
           <div className="space-y-2">
-            {recentReadings?.length > 0 ? (
+            {recentReadings && recentReadings.length > 0 ? (
               recentReadings.slice(0, 5).map((reading: any) => (
                 <div key={reading.id} className="p-2 bg-scripture-50 rounded-lg text-sm">
                   <div className="font-medium text-scripture-700">

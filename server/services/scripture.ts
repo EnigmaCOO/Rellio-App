@@ -50,14 +50,16 @@ export const RELIGION_CONFIGS: Record<Religion, ReligionConfig> = {
     ]
   },
   buddhist: {
-    name: "Buddhist Texts",
+    name: "Tripitaka",
     books: [
       { name: "Dhammapada", chapters: 26 },
       { name: "Lotus Sutra", chapters: 28 },
+      { name: "Sutta Pitaka", chapters: 34 },
+      { name: "Vinaya Pitaka", chapters: 20 },
     ]
   },
   hindu: {
-    name: "Hindu Texts",
+    name: "Bhagavad Gita",
     books: [
       { name: "Bhagavad Gita", chapters: 18 },
       { name: "Upanishads", chapters: 10 },
