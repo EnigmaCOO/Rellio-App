@@ -86,8 +86,10 @@ This is a full-stack web application for scripture study and AI-powered chat ass
 
 ## Changelog
 
-Changelog:
-- July 05, 2025. Initial setup
+- **July 05, 2025 11:25 PM**: Fixed chapter counting for all religious texts - now displays correct number ranges (Genesis: 50, Bhagavad Gita: 18, Quran surahs with proper verse groupings). Implemented all 114 Quranic surahs with authentic API integration.
+- **July 05, 2025 8:08 PM**: Implemented external API integrations for real scripture content - Bible (bible-api.com), Quran (alquran.cloud), Torah (sefaria.org), with local authentic content for Bhagavad Gita and Tripitaka.
+- **July 05, 2025 7:57 PM**: Enhanced dropdown navigation with improved styling, all 5 religious texts, better loading states and error handling.
+- **July 05, 2025**: Initial setup with three-panel scripture dashboard architecture.
 
 ## User Preferences
 

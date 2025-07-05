@@ -71,7 +71,7 @@ export function getBhagavadGitaContent(chapter: number): ExternalScripture[] {
 }
 
 // Quran API using alquran.cloud/api
-export async function fetchQuranContent(surah: number): Promise<ExternalScripture[]> {
+export async function fetchQuranContent(surah: number, startVerse: number = 1, endVerse?: number): Promise<ExternalScripture[]> {
   try {
     const response = await fetch(`https://api.alquran.cloud/v1/surah/${surah}/en.asad`);
     
@@ -85,10 +85,16 @@ export async function fetchQuranContent(surah: number): Promise<ExternalScriptur
       return [];
     }
     
-    return data.data.ayahs.map((ayah: any) => ({
+    // For Quran, if chapter (verse range) is specified, return that range
+    const ayahs = data.data.ayahs;
+    const filteredAyahs = endVerse 
+      ? ayahs.slice(startVerse - 1, endVerse)
+      : ayahs.slice(startVerse - 1, Math.min(startVerse + 9, ayahs.length)); // Show 10 verses max per "chapter"
+    
+    return filteredAyahs.map((ayah: any) => ({
       religion: 'quran' as Religion,
-      book: data.data.englishName || 'Quran',
-      chapter: surah,
+      book: data.data.englishName || data.data.name || 'Quran',
+      chapter: 1, // Always 1 for Quran since each surah is treated as a book
       verse: ayah.numberInSurah || 1,
       text: ayah.text || '',
       translation: 'English - Muhammad Asad'
@@ -195,19 +201,63 @@ export async function fetchScriptureContent(
       return getBhagavadGitaContent(chapter);
     
     case 'quran':
-      // Map book names to surah numbers
-      const surahMap: { [key: string]: number } = {
-        'Al-Fatihah': 1,
-        'Al-Baqarah': 2,
-        'Al-Imran': 3,
-        'An-Nisa': 4,
-        'Al-Maidah': 5,
-        'Al-An\'am': 6,
-        'Al-A\'raf': 7,
-        'Al-Anfal': 8
-      };
-      const surahNumber = surahMap[book] || 1;
-      return await fetchQuranContent(surahNumber);
+      // Extract surah number from book name (format: "Name (Translation)" -> get index + 1)
+      const quranBooks = [
+        "Al-Fatihah (The Opening)", "Al-Baqarah (The Cow)", "Al-Imran (Family of Imran)", 
+        "An-Nisa (The Women)", "Al-Maidah (The Table)", "Al-An'am (The Cattle)", 
+        "Al-A'raf (The Heights)", "Al-Anfal (The Spoils of War)", "At-Tawbah (The Repentance)", 
+        "Yunus (Jonah)", "Hud (Hud)", "Yusuf (Joseph)", "Ar-Ra'd (The Thunder)", 
+        "Ibrahim (Abraham)", "Al-Hijr (The Rocky Tract)", "An-Nahl (The Bee)", 
+        "Al-Isra (The Night Journey)", "Al-Kahf (The Cave)", "Maryam (Mary)", 
+        "Ta-Ha (Ta-Ha)", "Al-Anbiya (The Prophets)", "Al-Hajj (The Pilgrimage)", 
+        "Al-Mu'minun (The Believers)", "An-Nur (The Light)", "Al-Furqan (The Criterion)", 
+        "Ash-Shu'ara (The Poets)", "An-Naml (The Ant)", "Al-Qasas (The Stories)", 
+        "Al-Ankabut (The Spider)", "Ar-Rum (The Romans)", "Luqman (Luqman)", 
+        "As-Sajdah (The Prostration)", "Al-Ahzab (The Clans)", "Saba (Sheba)", 
+        "Fatir (Originator)", "Ya-Sin (Ya Sin)", "As-Saffat (Those Who Set The Ranks)", 
+        "Sad (The Letter Sad)", "Az-Zumar (The Troops)", "Ghafir (The Forgiver)", 
+        "Fussilat (Explained In Detail)", "Ash-Shura (The Consultation)", 
+        "Az-Zukhruf (The Ornaments of Gold)", "Ad-Dukhan (The Smoke)", 
+        "Al-Jathiyah (The Crouching)", "Al-Ahqaf (The Wind-Curved Sandhills)", 
+        "Muhammad (Muhammad)", "Al-Fath (The Victory)", "Al-Hujurat (The Rooms)", 
+        "Qaf (The Letter Qaf)", "Adh-Dhariyat (The Winnowing Winds)", "At-Tur (The Mount)", 
+        "An-Najm (The Star)", "Al-Qamar (The Moon)", "Ar-Rahman (The Beneficent)", 
+        "Al-Waqi'ah (The Inevitable)", "Al-Hadid (The Iron)", "Al-Mujadilah (The Pleading Woman)", 
+        "Al-Hashr (The Exile)", "Al-Mumtahanah (She That Is To Be Examined)", 
+        "As-Saff (The Ranks)", "Al-Jumu'ah (The Congregation)", "Al-Munafiqun (The Hypocrites)", 
+        "At-Taghabun (The Mutual Disillusion)", "At-Talaq (The Divorce)", 
+        "At-Tahrim (The Prohibition)", "Al-Mulk (The Sovereignty)", "Al-Qalam (The Pen)", 
+        "Al-Haqqah (The Reality)", "Al-Ma'arij (The Ascending Stairways)", "Nuh (Noah)", 
+        "Al-Jinn (The Jinn)", "Al-Muzzammil (The Enshrouded One)", "Al-Muddaththir (The Cloaked One)", 
+        "Al-Qiyamah (The Resurrection)", "Al-Insan (The Man)", "Al-Mursalat (The Emissaries)", 
+        "An-Naba (The Tidings)", "An-Nazi'at (Those Who Drag Forth)", "Abasa (He Frowned)", 
+        "At-Takwir (The Overthrowing)", "Al-Infitar (The Cleaving)", "Al-Mutaffifin (The Defrauding)", 
+        "Al-Inshiqaq (The Sundering)", "Al-Buruj (The Mansions of the Stars)", 
+        "At-Tariq (The Morning Star)", "Al-A'la (The Most High)", "Al-Ghashiyah (The Overwhelming)", 
+        "Al-Fajr (The Dawn)", "Al-Balad (The City)", "Ash-Shams (The Sun)", "Al-Layl (The Night)", 
+        "Ad-Duha (The Morning Hours)", "Ash-Sharh (The Relief)", "At-Tin (The Fig)", 
+        "Al-Alaq (The Clot)", "Al-Qadr (The Power)", "Al-Bayyinah (The Clear Proof)", 
+        "Az-Zalzalah (The Earthquake)", "Al-Adiyat (The Courser)", "Al-Qari'ah (The Calamity)", 
+        "At-Takathur (The Rivalry In World Increase)", "Al-Asr (The Declining Day)", 
+        "Al-Humazah (The Traducer)", "Al-Fil (The Elephant)", "Quraysh (Quraysh)", 
+        "Al-Ma'un (The Small Kindnesses)", "Al-Kawthar (The Abundance)", 
+        "Al-Kafirun (The Disbelievers)", "An-Nasr (The Divine Support)", 
+        "Al-Masad (The Palm Fiber)", "Al-Ikhlas (The Sincerity)", "Al-Falaq (The Daybreak)", 
+        "An-Nas (The Mankind)"
+      ];
+      
+      const surahNumber = quranBooks.indexOf(book) + 1;
+      if (surahNumber === 0) {
+        // Fallback: try to match just the Arabic name part
+        const arabicName = book.split(' (')[0];
+        const fallbackIndex = quranBooks.findIndex(name => name.startsWith(arabicName));
+        if (fallbackIndex !== -1) {
+          return await fetchQuranContent(fallbackIndex + 1, (chapter - 1) * 10 + 1);
+        }
+        return await fetchQuranContent(1, (chapter - 1) * 10 + 1);
+      }
+      // For Quran, use chapter as verse range (every 10 verses is a "chapter")
+      return await fetchQuranContent(surahNumber, (chapter - 1) * 10 + 1);
     
     case 'torah':
       return await fetchTorahContent(book, chapter);
