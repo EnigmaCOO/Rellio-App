@@ -12,7 +12,7 @@ import type { Religion, ChatMessage } from "@shared/schema";
 interface ChatPanelProps {
   sessionId: string;
   context: {
-    religion: Religion;
+    religion: Religion | null;
     book: string;
     chapter: number;
   };
@@ -24,7 +24,7 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { data: messages, isLoading } = useQuery({
+  const { data: messages, isLoading } = useQuery<ChatMessage[]>({
     queryKey: ['/api/chat', sessionId],
     staleTime: 30 * 1000, // 30 seconds
   });

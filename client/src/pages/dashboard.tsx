@@ -10,8 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { Religion, Scripture } from "@shared/schema";
 
 export default function Dashboard() {
-  const [selectedReligion, setSelectedReligion] = useState<Religion>('bible');
-  const [selectedBook, setSelectedBook] = useState<string>('Genesis');
+  const [selectedReligion, setSelectedReligion] = useState<Religion | null>(null);
+  const [selectedBook, setSelectedBook] = useState<string>('');
   const [selectedChapter, setSelectedChapter] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [chatSessionId] = useState<string>(() => `session_${Date.now()}`);
@@ -66,6 +66,8 @@ export default function Dashboard() {
   const handleReligionChange = (religion: Religion) => {
     setSelectedReligion(religion);
     setSelectedChapter(1);
+    // Reset book selection to let the effect handle it
+    setSelectedBook('');
   };
 
   const handleBookChange = (book: string) => {
@@ -134,7 +136,7 @@ export default function Dashboard() {
           scriptures={scriptures}
           isLoading={scripturesLoading}
           isError={!!scripturesError}
-          religionName={currentReligionData?.name || selectedReligion}
+          religionName={currentReligionData?.name || selectedReligion || 'Scripture'}
           onChapterChange={handleChapterChange}
         />
         

@@ -7,7 +7,7 @@ import { Clock } from "lucide-react";
 import type { Religion } from "@shared/schema";
 
 interface NavigationPanelProps {
-  selectedReligion: Religion;
+  selectedReligion: Religion | null;
   selectedBook: string;
   selectedChapter: number;
   religions?: any[];
@@ -69,7 +69,7 @@ export function NavigationPanel({
         <div className="mb-6">
           <label className="block text-sm font-medium text-scripture-700 mb-3">Religious Text</label>
           <Select
-            value={selectedReligion}
+            value={selectedReligion || ''}
             onValueChange={onReligionChange}
           >
             <SelectTrigger className="w-full h-11 bg-white border-scripture-300 hover:border-scripture-400 focus:border-scripture-500 focus:ring-2 focus:ring-scripture-100 transition-all duration-200">

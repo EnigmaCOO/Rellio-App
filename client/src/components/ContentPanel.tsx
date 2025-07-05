@@ -17,7 +17,7 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Religion, Scripture } from "@shared/schema";
 
 interface ContentPanelProps {
-  selectedReligion: Religion;
+  selectedReligion: Religion | null;
   selectedBook: string;
   selectedChapter: number;
   scriptures?: Scripture[];
@@ -54,13 +54,15 @@ export function ContentPanel({
     if (newChapter > 0) {
       onChapterChange(newChapter);
       
-      // Record the reading
-      recordReadingMutation.mutate({
-        userId: 1, // Default user ID
-        religion: selectedReligion,
-        book: selectedBook,
-        chapter: newChapter,
-      });
+      // Record the reading (only if religion is selected)
+      if (selectedReligion) {
+        recordReadingMutation.mutate({
+          userId: 1, // Default user ID
+          religion: selectedReligion as Religion,
+          book: selectedBook,
+          chapter: newChapter,
+        });
+      }
     }
   };
 
@@ -83,6 +85,29 @@ export function ContentPanel({
       description: `${tool} functionality would be implemented here.`,
     });
   };
+
+  // Show welcome message when no religion is selected
+  if (!selectedReligion) {
+    return (
+      <div className="flex-1 bg-white shadow-md mx-2 p-6">
+        <div className="space-y-6 flex flex-col items-center justify-center min-h-[500px]">
+          <div className="text-center space-y-4">
+            <h2 className="text-3xl font-bold text-scripture-800">Welcome to the Scripture Dashboard!</h2>
+            <p className="text-lg text-scripture-600 max-w-md mx-auto leading-relaxed">
+              Please select a religious text and book from the navigation panel to begin exploring sacred writings.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 mt-6">
+              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Bible</span>
+              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">Quran</span>
+              <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">Torah</span>
+              <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">Bhagavad Gita</span>
+              <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm">Tripitaka</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
