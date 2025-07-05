@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+  
+  /* Custom scripture colors */
+  --scripture-50: hsl(210, 40%, 98%);
+  --scripture-100: hsl(210, 40%, 96%);
+  --scripture-200: hsl(214, 32%, 91%);
+  --scripture-300: hsl(213, 27%, 84%);
+  --scripture-400: hsl(215, 20%, 65%);
+  --scripture-500: hsl(215, 16%, 47%);
+  --scripture-600: hsl(215, 19%, 35%);
+  --scripture-700: hsl(215, 25%, 27%);
+  --scripture-800: hsl(217, 33%, 17%);
+  --scripture-900: hsl(222, 47%, 11%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .text-scripture-50 { color: var(--scripture-50); }
+  .text-scripture-100 { color: var(--scripture-100); }
+  .text-scripture-200 { color: var(--scripture-200); }
+  .text-scripture-300 { color: var(--scripture-300); }
+  .text-scripture-400 { color: var(--scripture-400); }
+  .text-scripture-500 { color: var(--scripture-500); }
+  .text-scripture-600 { color: var(--scripture-600); }
+  .text-scripture-700 { color: var(--scripture-700); }
+  .text-scripture-800 { color: var(--scripture-800); }
+  .text-scripture-900 { color: var(--scripture-900); }
+  
+  .bg-scripture-50 { background-color: var(--scripture-50); }
+  .bg-scripture-100 { background-color: var(--scripture-100); }
+  .bg-scripture-200 { background-color: var(--scripture-200); }
+  .bg-scripture-300 { background-color: var(--scripture-300); }
+  .bg-scripture-400 { background-color: var(--scripture-400); }
+  .bg-scripture-500 { background-color: var(--scripture-500); }
+  .bg-scripture-600 { background-color: var(--scripture-600); }
+  .bg-scripture-700 { background-color: var(--scripture-700); }
+  .bg-scripture-800 { background-color: var(--scripture-800); }
+  .bg-scripture-900 { background-color: var(--scripture-900); }
+  
+  .border-scripture-50 { border-color: var(--scripture-50); }
+  .border-scripture-100 { border-color: var(--scripture-100); }
+  .border-scripture-200 { border-color: var(--scripture-200); }
+  .border-scripture-300 { border-color: var(--scripture-300); }
+  .border-scripture-400 { border-color: var(--scripture-400); }
+  .border-scripture-500 { border-color: var(--scripture-500); }
+  .border-scripture-600 { border-color: var(--scripture-600); }
+  .border-scripture-700 { border-color: var(--scripture-700); }
+  .border-scripture-800 { border-color: var(--scripture-800); }
+  .border-scripture-900 { border-color: var(--scripture-900); }
+}
