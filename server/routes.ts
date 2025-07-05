@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateScriptureResponse } from "./services/openai";
 import { getReligionConfig, getAvailableReligions } from "./services/scripture";
+import { fetchScriptureContent } from "./services/externalScripture";
 import { 
   scriptureRequestSchema, 
   chatRequestSchema, 
@@ -56,8 +57,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const validatedParams = scriptureRequestSchema.parse({ religion, book, chapter });
-      const scriptures = await storage.getScriptures(validatedParams.religion, validatedParams.book, validatedParams.chapter);
-      res.json(scriptures);
+      
+      // Try to fetch from external APIs first
+      const externalScriptures = await fetchScriptureContent(
+        validatedParams.religion, 
+        validatedParams.book, 
+        validatedParams.chapter
+      );
+      
+      if (externalScriptures.length > 0) {
+        res.json(externalScriptures);
+      } else {
+        // Fallback to local storage if external API fails
+        const localScriptures = await storage.getScriptures(
+          validatedParams.religion, 
+          validatedParams.book, 
+          validatedParams.chapter
+        );
+        res.json(localScriptures);
+      }
     } catch (error) {
       if (error instanceof z.ZodError) {
         console.log('Validation error:', error.errors);

@@ -22,6 +22,7 @@ interface ContentPanelProps {
   selectedChapter: number;
   scriptures?: Scripture[];
   isLoading: boolean;
+  isError?: boolean;
   religionName: string;
   onChapterChange: (chapter: number) => void;
 }
@@ -32,6 +33,7 @@ export function ContentPanel({
   selectedChapter,
   scriptures,
   isLoading,
+  isError = false,
   religionName,
   onChapterChange,
 }: ContentPanelProps) {
@@ -85,17 +87,28 @@ export function ContentPanel({
   if (isLoading) {
     return (
       <div className="flex-1 bg-white shadow-md mx-2 p-6">
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-96" />
-          <Skeleton className="h-6 w-48" />
-          <div className="space-y-3 mt-8">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex space-x-4">
-                <Skeleton className="h-4 w-8" />
-                <Skeleton className="h-4 w-full" />
-              </div>
-            ))}
-          </div>
+        <div className="space-y-4 flex flex-col items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-scripture-600"></div>
+          <div className="text-scripture-600 text-lg font-medium">Loading scripture content...</div>
+          <div className="text-scripture-500 text-sm">Fetching {religionName} - {selectedBook} Chapter {selectedChapter}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex-1 bg-white shadow-md mx-2 p-6">
+        <div className="space-y-4 flex flex-col items-center justify-center min-h-[400px]">
+          <div className="text-red-600 text-lg font-medium">Error loading scripture content</div>
+          <div className="text-scripture-500 text-sm">Failed to fetch {religionName} - {selectedBook} Chapter {selectedChapter}</div>
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.reload()}
+            className="mt-4"
+          >
+            Try Again
+          </Button>
         </div>
       </div>
     );
@@ -150,9 +163,9 @@ export function ContentPanel({
         <div className="bg-scripture-50 rounded-lg p-6 mb-6">
           <div className="space-y-4">
             {scriptures && scriptures.length > 0 ? (
-              scriptures.map((scripture) => (
+              scriptures.map((scripture, index) => (
                 <div
-                  key={scripture.id}
+                  key={scripture.id || `${scripture.religion}-${scripture.book}-${scripture.chapter}-${scripture.verse || index}`}
                   className="flex items-start space-x-4 hover:bg-white rounded-lg p-3 transition-colors cursor-pointer group"
                 >
                   <span className="text-blue-600 font-bold text-sm mt-1 min-w-[2rem]">

@@ -127,6 +127,7 @@ export default function Dashboard() {
           selectedChapter={selectedChapter}
           scriptures={scriptures}
           isLoading={scripturesLoading}
+          isError={!!scripturesError}
           religionName={currentReligionData?.name || selectedReligion}
           onChapterChange={handleChapterChange}
         />
