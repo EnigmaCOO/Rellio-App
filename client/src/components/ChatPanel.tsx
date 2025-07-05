@@ -86,7 +86,10 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
           </Button>
         </div>
         <p className="text-sm text-scripture-600">
-          Ask questions about {context.book} Chapter {context.chapter}
+          {context.religion ? 
+            `Ask questions about ${context.religion === 'quran' ? 'Quran -' : ''} ${context.book}${context.religion === 'quran' ? '' : ` Chapter ${context.chapter}`}` :
+            "Welcome! I'm your AI Scripture Guide. Please select a text and book to start a conversation."
+          }
         </p>
       </div>
 
@@ -127,10 +130,10 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
                 <div className={`flex-1 max-w-[75%] ${
                   message.type === 'user' ? 'text-right' : 'text-left'
                 }`}>
-                  <div className={`inline-block p-3 rounded-lg ${
+                  <div className={`inline-block p-3 rounded-lg shadow-sm ${
                     message.type === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-scripture-100 text-scripture-800'
+                      ? 'bg-blue-600 text-white rounded-br-sm'
+                      : 'bg-scripture-100 text-scripture-800 border border-scripture-200 rounded-bl-sm'
                   }`}>
                     <p className="text-sm leading-relaxed">{message.content}</p>
                   </div>
@@ -144,8 +147,10 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
             <div className="text-center py-8 text-scripture-600">
               <Bot className="h-12 w-12 mx-auto mb-4 text-scripture-400" />
               <p className="text-sm">
-                Hello! I'm here to help you explore and understand the scriptures. 
-                Ask me anything about {context.book} Chapter {context.chapter}.
+                {context.religion ? 
+                  `Hello! I'm here to help you explore and understand the scriptures. Ask me anything about ${context.religion === 'quran' ? 'this surah' : 'this passage'}.` :
+                  "Welcome! I'm your AI Scripture Guide. Select a religious text and book to start our conversation about sacred writings."
+                }
               </p>
             </div>
           )}
@@ -175,16 +180,19 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
         <div className="flex space-x-2">
           <Input
             type="text"
-            placeholder="Ask about this passage..."
+            placeholder={context.religion ? 
+              `Ask about ${context.religion === 'quran' ? 'this surah' : 'this passage'}...` :
+              "Select a text to start asking questions..."
+            }
             className="flex-1"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            disabled={sendMessageMutation.isPending}
+            disabled={sendMessageMutation.isPending || !context.religion}
           />
           <Button
             onClick={handleSendMessage}
-            disabled={!newMessage.trim() || sendMessageMutation.isPending}
+            disabled={!newMessage.trim() || sendMessageMutation.isPending || !context.religion}
             size="sm"
           >
             <Send className="h-4 w-4" />

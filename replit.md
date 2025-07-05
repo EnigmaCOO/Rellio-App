@@ -86,6 +86,7 @@ This is a full-stack web application for scripture study and AI-powered chat ass
 
 ## Changelog
 
+- **July 05, 2025 11:57 PM**: Enhanced AI Scripture Guide with contextual messaging - neutral welcome state, dynamic text adaptation ("Ask questions about Quran - Surah 1"), contextual placeholders, and improved chat bubble styling with shadows and borders.
 - **July 05, 2025 11:48 PM**: Implemented dynamic chapter navigation with adaptive ranges - Bible (uses API chapter counts), Quran (1 chapter per surah), Bhagavad Gita (18 chapters), Torah (API chapter counts), Tripitaka (10 chapters). Enhanced grid layout with responsive columns and improved active state styling.
 - **July 05, 2025 11:29 PM**: Verified and corrected all biblical chapter counts for accuracy - complete Bible with 66 books (Psalms: 150 chapters, Matthew: 28, Isaiah: 66, etc.). Torah books verified with exact biblical correspondence (Bereshit: 50, Shemot: 40, etc.).
 - **July 05, 2025 11:25 PM**: Fixed chapter counting for all religious texts - now displays correct number ranges (Genesis: 50, Bhagavad Gita: 18, Quran surahs with proper verse groupings). Implemented all 114 Quranic surahs with authentic API integration.
