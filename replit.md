@@ -1,4 +1,4 @@
-# Scripture Dashboard Application
+# Rellio Scripture Library Application
 
 ## Overview
 

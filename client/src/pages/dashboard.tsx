@@ -99,7 +99,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 lg:space-x-3">
               <BookOpen className="h-6 w-6 lg:h-8 lg:w-8 text-blue-600" />
-              <h1 className="text-lg lg:text-2xl font-bold text-scripture-800">Scripture Dashboard</h1>
+              <h1 className="text-lg lg:text-2xl font-bold text-scripture-800">Rellio Scripture Library</h1>
             </div>
             <div className="flex items-center space-x-2 lg:space-x-4">
               <div className="relative">
