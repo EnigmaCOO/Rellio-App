@@ -28,7 +28,7 @@ export default function Dashboard() {
   });
 
   const { data: bookInfo } = useQuery<{name: string, chapters: number, religion: Religion}>({
-    queryKey: ['/api/religions', selectedReligion, 'books', selectedBook],
+    queryKey: [`/api/religions/${selectedReligion}/books/${selectedBook}`],
     enabled: !!selectedReligion && !!selectedBook,
   });
 
