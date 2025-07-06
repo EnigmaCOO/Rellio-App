@@ -53,38 +53,136 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
-    // AI Scripture Guide with Expert System Prompt
+    // AI Scripture Guide with Intelligent Context Preservation
     function AIScriptureGuide({ selectedReligion, selectedBook, selectedChapter, currentVerses }) {
       const [messageGroups, setMessageGroups] = useState({});
       const [chatState, setChatState] = useState([]);
       const [newMessage, setNewMessage] = useState('');
       const [isLoading, setIsLoading] = useState(false);
+      const [currentContext, setCurrentContext] = useState(null);
+      const [previousContexts, setPreviousContexts] = useState([]);
       const messagesEndRef = useRef(null);
 
-      // Create a unique key for grouping messages by religious text and book
-      const getGroupKey = () => {
+      // Context Management System
+      const getContextKey = () => {
         if (!selectedReligion || !selectedBook) return 'general';
         return `${selectedReligion}-${selectedBook}`;
       };
 
-      // Get current group's messages - simplified to use chatState array
+      const getContextDisplayName = (contextKey) => {
+        if (contextKey === 'general') return 'General Chat';
+        const [religion, book] = contextKey.split('-');
+        const religionNames = {
+          bible: 'Bible',
+          quran: 'Quran',
+          torah: 'Torah', 
+          hindu: 'Bhagavad Gita',
+          buddhist: 'Tripitaka'
+        };
+        return `${religionNames[religion] || religion} - ${book}`;
+      };
+
+      // Context preservation and switching
+      useEffect(() => {
+        const newContextKey = getContextKey();
+        
+        // Save current conversation to messageGroups before switching
+        if (currentContext && chatState.length > 0) {
+          setMessageGroups(prev => ({
+            ...prev,
+            [currentContext]: [...chatState]
+          }));
+          
+          // Add to previous contexts if not already there
+          if (!previousContexts.some(ctx => ctx.key === currentContext)) {
+            const contextInfo = {
+              key: currentContext,
+              name: getContextDisplayName(currentContext),
+              lastActivity: new Date(),
+              messageCount: chatState.length
+            };
+            setPreviousContexts(prev => [contextInfo, ...prev.slice(0, 4)]); // Keep last 5 contexts
+          }
+        }
+        
+        // Load conversation history for new context
+        if (newContextKey !== currentContext) {
+          const savedMessages = messageGroups[newContextKey] || [];
+          setChatState(savedMessages);
+          setCurrentContext(newContextKey);
+          
+          // Add context switch message if switching between different texts
+          if (currentContext && currentContext !== 'general' && newContextKey !== 'general' && savedMessages.length > 0) {
+            console.log(`Context switched from ${currentContext} to ${newContextKey}, loaded ${savedMessages.length} messages`);
+          }
+        }
+      }, [selectedReligion, selectedBook]);
+
+      // Get current group's messages
       const getCurrentMessages = () => {
         return chatState;
       };
 
-      // Add message to chat state
+      // Add message to current chat state with context preservation
       const addMessageToChat = (message) => {
         console.log('Adding message to chat:', message);
+        const enhancedMessage = {
+          ...message,
+          context: {
+            religion: selectedReligion,
+            book: selectedBook,
+            chapter: selectedChapter,
+            contextKey: getContextKey()
+          }
+        };
+        
         setChatState(prev => {
-          const newChatState = [...prev, message];
+          const newChatState = [...prev, enhancedMessage];
           console.log('Updated chat state:', newChatState);
           return newChatState;
         });
+        
+        // Auto-save to messageGroups
+        const contextKey = getContextKey();
+        setMessageGroups(prev => ({
+          ...prev,
+          [contextKey]: [...(prev[contextKey] || []), enhancedMessage]
+        }));
       };
 
       // Clear current chat history
       const clearCurrentHistory = () => {
         setChatState([]);
+        const contextKey = getContextKey();
+        setMessageGroups(prev => ({
+          ...prev,
+          [contextKey]: []
+        }));
+        
+        // Update previous contexts
+        setPreviousContexts(prev => 
+          prev.map(ctx => 
+            ctx.key === contextKey 
+              ? { ...ctx, messageCount: 0, lastActivity: new Date() }
+              : ctx
+          )
+        );
+      };
+
+      // Load previous conversation
+      const loadPreviousContext = (contextKey) => {
+        const savedMessages = messageGroups[contextKey] || [];
+        setChatState(savedMessages);
+        setCurrentContext(contextKey);
+        
+        // Update last activity
+        setPreviousContexts(prev =>
+          prev.map(ctx =>
+            ctx.key === contextKey
+              ? { ...ctx, lastActivity: new Date() }
+              : ctx
+          )
+        );
       };
 
       // Clear current group's history
@@ -205,11 +303,18 @@ Response format:
         
         console.log('Submitting:', newMessage);
         
-        // Add user message to chat state
+        // Add user message to chat state with context metadata
         const userMsg = { 
           text: newMessage, 
           isUser: true, 
-          timestamp: new Date()
+          timestamp: new Date(),
+          metadata: {
+            religion: selectedReligion,
+            book: selectedBook,
+            chapter: selectedChapter,
+            messageLength: newMessage.length,
+            verseContext: currentVerses ? currentVerses.slice(0, 3) : []
+          }
         };
         addMessageToChat(userMsg);
         
@@ -284,11 +389,19 @@ Response format:
             aiContent = 'I apologize, but I couldn\'t generate a proper response. Please try asking again.';
           }
           
-          // Add AI response to chat state
+          // Add AI response to chat state with enhanced context
           const aiMsg = { 
             text: aiContent,
             isUser: false, 
-            timestamp: new Date()
+            timestamp: new Date(),
+            metadata: {
+              apiResponse: true,
+              religion: selectedReligion,
+              book: selectedBook,
+              chapter: selectedChapter,
+              responseLength: aiContent.length,
+              verseContext: currentVerses ? currentVerses.slice(0, 3) : [] // Store first 3 verses for context
+            }
           };
           console.log('Adding AI message to chat:', aiMsg);
           addMessageToChat(aiMsg);
@@ -389,8 +502,64 @@ Response format:
           <div className="flex-1 overflow-y-auto p-4">
             {(() => {
               console.log("Rendering chat:", chatState);
+              console.log("Current context:", currentContext);
+              console.log("Previous contexts:", previousContexts);
               return null;
             })()}
+            
+            {/* Context Switch Indicator */}
+            {currentContext && currentContext !== 'general' && (
+              <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m0-4l-4-4" />
+                    </svg>
+                    <span className="text-sm font-medium text-blue-800">
+                      Context: {getContextDisplayName(currentContext)}
+                    </span>
+                  </div>
+                  <span className="text-xs text-blue-600">
+                    {chatState.length} message{chatState.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            {/* Previous Conversations */}
+            {previousContexts.length > 0 && chatState.length === 0 && (
+              <div className="mb-6">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center">
+                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Recent Conversations
+                </h3>
+                <div className="space-y-2">
+                  {previousContexts.slice(0, 3).map((context, index) => (
+                    <button
+                      key={context.key}
+                      onClick={() => loadPreviousContext(context.key)}
+                      className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
+                            {context.name}
+                          </h4>
+                          <p className="text-xs text-gray-500">
+                            {context.messageCount} messages • {formatTime(context.lastActivity)}
+                          </p>
+                        </div>
+                        <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             
             {chatState.length === 0 ? (
               <div className="text-center py-8 text-gray-600">
@@ -405,6 +574,11 @@ Response format:
                     "Welcome! I'm your AI Scripture Guide. Select a religious text and book to start our conversation about sacred writings."
                   }
                 </p>
+                {previousContexts.length === 0 && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    Your conversation history will be automatically preserved as you switch between different religious texts.
+                  </p>
+                )}
               </div>
             ) : (
               <div className="space-y-3">
@@ -485,6 +659,49 @@ Response format:
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                   </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Mini Previous Conversations Sidebar (when chat is active) */}
+            {chatState.length > 0 && previousContexts.length > 0 && (
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center">
+                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Other Conversations
+                  </h3>
+                  <span className="text-xs text-gray-400">{previousContexts.length}</span>
+                </div>
+                <div className="space-y-1">
+                  {previousContexts.slice(0, 2).map((context) => (
+                    <button
+                      key={context.key}
+                      onClick={() => loadPreviousContext(context.key)}
+                      className="w-full text-left p-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded text-xs transition-colors group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-700 group-hover:text-gray-900 truncate">
+                            {context.name}
+                          </p>
+                          <p className="text-gray-500 truncate">
+                            {context.messageCount} msg • {new Date(context.lastActivity).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <svg className="w-3 h-3 text-gray-400 group-hover:text-gray-600 flex-shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </button>
+                  ))}
+                  {previousContexts.length > 2 && (
+                    <div className="text-xs text-gray-400 text-center py-1">
+                      +{previousContexts.length - 2} more conversations
+                    </div>
+                  )}
                 </div>
               </div>
             )}
