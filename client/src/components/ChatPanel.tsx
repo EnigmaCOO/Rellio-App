@@ -77,15 +77,15 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
   };
 
   return (
-    <div className="w-1/4 bg-white shadow-md border-l border-scripture-200 flex flex-col">
-      <div className="p-6 border-b border-scripture-200">
+    <div className="h-full bg-white shadow-md border-l border-scripture-200 flex flex-col">
+      <div className="p-4 lg:p-6 border-b border-scripture-200">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-semibold text-scripture-800">AI Scripture Guide</h2>
+          <h2 className="text-base lg:text-lg font-semibold text-scripture-800">AI Scripture Guide</h2>
           <Button variant="ghost" size="sm">
             <MoreVertical className="h-4 w-4" />
           </Button>
         </div>
-        <p className="text-sm text-scripture-600">
+        <p className="text-xs lg:text-sm text-scripture-600">
           {context.religion ? 
             `Ask questions about ${context.religion === 'quran' ? 'Quran -' : ''} ${context.book}${context.religion === 'quran' ? '' : ` Chapter ${context.chapter}`}` :
             "Welcome! I'm your AI Scripture Guide. Please select a text and book to start a conversation."

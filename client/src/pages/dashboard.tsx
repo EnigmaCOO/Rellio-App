@@ -40,6 +40,11 @@ export default function Dashboard() {
   // Get books for current religion from the religions data
   const currentReligionBooks = religions?.find(r => r.id === selectedReligion)?.books || [];
 
+  // Filter books based on search term
+  const filteredBooks = currentReligionBooks.filter(book => 
+    book.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   // Update selected book when religion changes
   useEffect(() => {
     if (currentReligionBooks && currentReligionBooks.length > 0 && !currentReligionBooks.includes(selectedBook)) {
@@ -90,19 +95,19 @@ export default function Dashboard() {
     <div className="min-h-screen bg-scripture-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-scripture-200">
-        <div className="max-w-full px-6 py-4">
+        <div className="max-w-full px-4 lg:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <BookOpen className="h-8 w-8 text-blue-600" />
-              <h1 className="text-2xl font-bold text-scripture-800">Scripture Dashboard</h1>
+            <div className="flex items-center space-x-2 lg:space-x-3">
+              <BookOpen className="h-6 w-6 lg:h-8 lg:w-8 text-blue-600" />
+              <h1 className="text-lg lg:text-2xl font-bold text-scripture-800">Scripture Dashboard</h1>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 lg:space-x-4">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-scripture-400" />
                 <Input
                   type="text"
                   placeholder="Search scriptures..."
-                  className="pl-10 pr-4 py-2 w-64 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="pl-10 pr-4 py-2 w-48 lg:w-64 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -115,35 +120,43 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <div className="flex h-[calc(100vh-80px)]">
-        <NavigationPanel
-          selectedReligion={selectedReligion}
-          selectedBook={selectedBook}
-          selectedChapter={selectedChapter}
-          religions={religions}
-          books={currentReligionBooks}
-          maxChapters={bookInfo?.chapters || 10}
-          onReligionChange={handleReligionChange}
-          onBookChange={handleBookChange}
-          onChapterChange={handleChapterChange}
-          isLoading={religionsLoading}
-        />
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)] gap-1">
+        {/* Enhanced responsive layout with animations */}
+        <div className="w-full lg:w-1/4 transition-all duration-300 ease-in-out">
+          <NavigationPanel
+            selectedReligion={selectedReligion}
+            selectedBook={selectedBook}
+            selectedChapter={selectedChapter}
+            religions={religions}
+            books={filteredBooks}
+            maxChapters={bookInfo?.chapters || 10}
+            onReligionChange={handleReligionChange}
+            onBookChange={handleBookChange}
+            onChapterChange={handleChapterChange}
+            isLoading={religionsLoading}
+            searchTerm={searchTerm}
+          />
+        </div>
         
-        <ContentPanel
-          selectedReligion={selectedReligion}
-          selectedBook={selectedBook}
-          selectedChapter={selectedChapter}
-          scriptures={scriptures}
-          isLoading={scripturesLoading}
-          isError={!!scripturesError}
-          religionName={currentReligionData?.name || selectedReligion || 'Scripture'}
-          onChapterChange={handleChapterChange}
-        />
+        <div className="w-full lg:w-2/4 transition-all duration-300 ease-in-out">
+          <ContentPanel
+            selectedReligion={selectedReligion}
+            selectedBook={selectedBook}
+            selectedChapter={selectedChapter}
+            scriptures={scriptures}
+            isLoading={scripturesLoading}
+            isError={!!scripturesError}
+            religionName={currentReligionData?.name || selectedReligion || 'Scripture'}
+            onChapterChange={handleChapterChange}
+          />
+        </div>
         
-        <ChatPanel
-          sessionId={chatSessionId}
-          context={currentContext}
-        />
+        <div className="w-full lg:w-1/4 transition-all duration-300 ease-in-out">
+          <ChatPanel
+            sessionId={chatSessionId}
+            context={currentContext}
+          />
+        </div>
       </div>
     </div>
   );

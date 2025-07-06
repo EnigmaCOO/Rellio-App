@@ -17,6 +17,7 @@ interface NavigationPanelProps {
   onBookChange: (book: string) => void;
   onChapterChange: (chapter: number) => void;
   isLoading: boolean;
+  searchTerm?: string;
 }
 
 export function NavigationPanel({
@@ -30,6 +31,7 @@ export function NavigationPanel({
   onBookChange,
   onChapterChange,
   isLoading,
+  searchTerm,
 }: NavigationPanelProps) {
   const { data: recentReadings } = useQuery<any[]>({
     queryKey: ['/api/readings', 1], // Using user ID 1 as default
@@ -109,8 +111,8 @@ export function NavigationPanel({
   }
 
   return (
-    <div className="w-1/4 bg-white shadow-md border-r border-scripture-200 overflow-y-auto">
-      <div className="p-6">
+    <div className="h-full bg-white shadow-md border-r border-scripture-200 overflow-y-auto">
+      <div className="p-4 lg:p-6">
         <h2 className="text-lg font-semibold text-scripture-800 mb-4">Scripture Navigation</h2>
         
         {/* Religion Selector */}
@@ -139,23 +141,31 @@ export function NavigationPanel({
 
         {/* Book Selector */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-scripture-700 mb-3">Book</label>
+          <label className="block text-sm font-medium text-scripture-700 mb-3">
+            Book {searchTerm && `(${books?.length || 0} found)`}
+          </label>
           <ScrollArea className="h-60 border border-scripture-200 rounded-lg bg-gray-50/50">
             <div className="p-2 space-y-1">
-              {books?.map((book, index) => {
-                // Handle both string and object formats
-                const bookName = typeof book === 'string' ? book : (book as any)?.name || book;
-                return (
-                  <Button
-                    key={`${bookName}-${index}`}
-                    variant={selectedBook === bookName ? "default" : "ghost"}
-                    className="w-full justify-start text-left h-9 px-3 font-medium hover:bg-scripture-100 transition-colors"
-                    onClick={() => onBookChange(bookName)}
-                  >
-                    {bookName}
-                  </Button>
-                );
-              })}
+              {books?.length === 0 && searchTerm ? (
+                <div className="text-center py-8 text-scripture-500">
+                  <p className="text-sm">No books found matching "{searchTerm}"</p>
+                </div>
+              ) : (
+                books?.map((book, index) => {
+                  // Handle both string and object formats
+                  const bookName = typeof book === 'string' ? book : (book as any)?.name || book;
+                  return (
+                    <Button
+                      key={`${bookName}-${index}`}
+                      variant={selectedBook === bookName ? "default" : "ghost"}
+                      className="w-full justify-start text-left h-9 px-3 font-medium hover:bg-scripture-100 transition-all duration-200 animate-in fade-in-0"
+                      onClick={() => onBookChange(bookName)}
+                    >
+                      {bookName}
+                    </Button>
+                  );
+                })
+              )}
             </div>
           </ScrollArea>
         </div>

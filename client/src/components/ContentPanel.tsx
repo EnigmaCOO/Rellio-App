@@ -89,11 +89,11 @@ export function ContentPanel({
   // Show welcome message when no religion is selected
   if (!selectedReligion) {
     return (
-      <div className="flex-1 bg-white shadow-md mx-2 p-6">
-        <div className="space-y-6 flex flex-col items-center justify-center min-h-[500px]">
+      <div className="h-full bg-white shadow-md p-4 lg:p-6">
+        <div className="space-y-6 flex flex-col items-center justify-center min-h-[500px] animate-in fade-in-0 duration-500">
           <div className="text-center space-y-4">
-            <h2 className="text-3xl font-bold text-scripture-800">Welcome to the Scripture Dashboard!</h2>
-            <p className="text-lg text-scripture-600 max-w-md mx-auto leading-relaxed">
+            <h2 className="text-2xl lg:text-3xl font-bold text-scripture-800">Welcome to the Scripture Dashboard!</h2>
+            <p className="text-base lg:text-lg text-scripture-600 max-w-md mx-auto leading-relaxed">
               Please select a religious text and book from the navigation panel to begin exploring sacred writings.
             </p>
             <div className="flex flex-wrap justify-center gap-2 mt-6">
@@ -111,10 +111,10 @@ export function ContentPanel({
 
   if (isLoading) {
     return (
-      <div className="flex-1 bg-white shadow-md mx-2 p-6">
-        <div className="space-y-4 flex flex-col items-center justify-center min-h-[400px]">
+      <div className="h-full bg-white shadow-md p-4 lg:p-6">
+        <div className="space-y-4 flex flex-col items-center justify-center min-h-[400px] animate-in fade-in-0 duration-300">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-scripture-600"></div>
-          <div className="text-scripture-600 text-lg font-medium">Loading scripture content...</div>
+          <div className="text-scripture-600 text-base lg:text-lg font-medium">Loading scripture content...</div>
           <div className="text-scripture-500 text-sm">Fetching {religionName} - {selectedBook} Chapter {selectedChapter}</div>
         </div>
       </div>
@@ -140,11 +140,11 @@ export function ContentPanel({
   }
 
   return (
-    <div className="flex-1 bg-white shadow-md mx-2 overflow-y-auto">
-      <div className="p-6">
+    <div className="h-full bg-white shadow-md overflow-y-auto">
+      <div className="p-4 lg:p-6">
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-scripture-800">
+            <h2 className="text-lg lg:text-2xl font-bold text-scripture-800">
               {religionName} - {selectedBook}
               <span className="text-scripture-500 ml-2">Chapter {selectedChapter}</span>
             </h2>
@@ -185,18 +185,19 @@ export function ContentPanel({
         </div>
 
         {/* Scripture Content */}
-        <div className="bg-scripture-50 rounded-lg p-6 mb-6">
+        <div className="bg-scripture-50 rounded-lg p-4 lg:p-6 mb-6 animate-in fade-in-0 duration-500">
           <div className="space-y-4">
             {scriptures && scriptures.length > 0 ? (
               scriptures.map((scripture, index) => (
                 <div
                   key={scripture.id || `${scripture.religion}-${scripture.book}-${scripture.chapter}-${scripture.verse || index}`}
-                  className="flex items-start space-x-4 hover:bg-white rounded-lg p-3 transition-colors cursor-pointer group"
+                  className="flex items-start space-x-4 hover:bg-white rounded-lg p-3 transition-all duration-200 cursor-pointer group animate-in fade-in-0"
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <span className="text-blue-600 font-bold text-sm mt-1 min-w-[2rem]">
                     {scripture.verse}
                   </span>
-                  <p className="text-scripture-800 leading-relaxed text-lg group-hover:text-scripture-900">
+                  <p className="text-scripture-800 leading-relaxed text-base lg:text-lg group-hover:text-scripture-900">
                     {scripture.text}
                   </p>
                   <Button
