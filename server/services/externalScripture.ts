@@ -67,8 +67,8 @@ export async function getBhagavadGitaContent(chapter: number): Promise<ExternalS
         book: 'Bhagavad Gita',
         chapter: chapter,
         verse: verseData.number,
-        text: `${verseData.sanskrit}\n\n${verseData.transliteration}\n\n${verseData.translation}`,
-        translation: 'Sanskrit with English Translation'
+        text: verseData.translation.trim(),  // Show only clean English translation
+        translation: 'English Translation'
       });
     }
     
