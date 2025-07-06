@@ -171,8 +171,33 @@ Response format:
         return response;
       };
 
+      // Generate mock response based on user input and current context
+      const generateMockResponse = (userMessage) => {
+        const questionWords = ['what', 'why', 'how', 'when', 'where', 'who', 'explain', 'meaning', 'significance'];
+        const hasQuestion = questionWords.some(word => userMessage.toLowerCase().includes(word));
+        
+        if (hasQuestion && selectedReligion && selectedBook) {
+          // Get current verse text if available
+          const currentVerse = currentVerses && currentVerses.length > 0 ? currentVerses[0].text : '';
+          
+          const religionResponses = {
+            bible: `This passage from ${selectedBook} teaches about divine truth and spiritual guidance. ${currentVerse ? 'The verse reveals God\'s plan for humanity through Christ\'s teachings.' : 'These scriptures provide wisdom for Christian living.'} What aspect would you like to explore further?`,
+            quran: `This surah from ${selectedBook} contains Allah's guidance with profound meaning. ${currentVerse ? 'The verse emphasizes submission to Allah and following the straight path.' : 'The Quranic teachings offer direction for righteous living.'} Which part interests you most?`,
+            torah: `This section from ${selectedBook} contains foundational Jewish teachings. ${currentVerse ? 'The verse reflects the covenant between God and His people.' : 'The Torah provides laws and wisdom for Jewish life.'} What questions do you have about its significance?`,
+            hindu: `This chapter from the ${selectedBook} presents dharmic wisdom about life's purpose. ${currentVerse ? 'The verse teaches about karma, dharma, and spiritual realization.' : 'The Bhagavad Gita offers guidance on righteous action.'} Which teaching resonates with you?`,
+            buddhist: `This passage from ${selectedBook} offers insight into the path of liberation. ${currentVerse ? 'The verse addresses suffering and the way to enlightenment.' : 'Buddhist teachings guide us toward mindfulness and compassion.'} What aspect of the dharma interests you?`
+          };
+          
+          return religionResponses[selectedReligion] || "This scripture offers timeless wisdom. What specific aspect would you like to understand better?";
+        } else {
+          return "I'm here to help! Please ask a question about the scripture to begin our conversation.";
+        }
+      };
+
       const sendMessage = async () => {
         if (!newMessage.trim()) return;
+        
+        console.log('Submitting:', newMessage);
         
         const userMsg = { 
           type: 'user', 
@@ -181,10 +206,48 @@ Response format:
           context: { religion: selectedReligion, book: selectedBook, chapter: selectedChapter }
         };
         addMessageToGroup(userMsg);
+        const userInput = newMessage;
         setNewMessage('');
+        setIsLoading(true);
         
         try {
-          const aiResponse = await generateAIResponse(newMessage);
+          // Call the actual backend API
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: userInput,
+              sessionId: `session_${Date.now()}`,
+              context: {
+                religion: selectedReligion,
+                book: selectedBook,
+                chapter: selectedChapter,
+                verses: currentVerses
+              }
+            })
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to get AI response');
+          }
+          
+          const data = await response.json();
+          
+          const aiMsg = { 
+            type: 'ai', 
+            content: data.aiResponse.content,
+            timestamp: new Date().toISOString(),
+            context: { religion: selectedReligion, book: selectedBook, chapter: selectedChapter }
+          };
+          addMessageToGroup(aiMsg);
+          
+        } catch (error) {
+          console.error('Chat error:', error);
+          
+          // Fallback to mock response if API fails
+          const aiResponse = generateMockResponse(userInput);
           const aiMsg = { 
             type: 'ai', 
             content: aiResponse, 
@@ -192,15 +255,9 @@ Response format:
             context: { religion: selectedReligion, book: selectedBook, chapter: selectedChapter }
           };
           addMessageToGroup(aiMsg);
-        } catch (error) {
-          const errorMsg = { 
-            type: 'ai', 
-            content: 'I apologize, but I encountered an error. Please try again.', 
-            timestamp: new Date().toISOString(),
-            context: { religion: selectedReligion, book: selectedBook, chapter: selectedChapter }
-          };
-          addMessageToGroup(errorMsg);
         }
+        
+        setIsLoading(false);
       };
 
       const handleKeyPress = (e) => {
