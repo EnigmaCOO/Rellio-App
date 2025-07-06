@@ -168,17 +168,22 @@ export function ContentPanel({
 
   const displayChapter = getDisplayChapter();
 
-  // Calculate pagination for Quran verses
-  const VERSES_PER_PAGE = 10; // Show 10 verses per page
+  // Calculate pagination for scriptures with verse counts
+  const VERSES_PER_PAGE = 10; // Show 10 verses per page for Quran
   const totalVerses = scriptures?.length || 0;
-  const totalPages = selectedReligion === 'quran' ? Math.ceil(totalVerses / VERSES_PER_PAGE) : 1;
-  const currentPage = selectedReligion === 'quran' ? selectedChapter : selectedChapter;
-  const startVerseIndex = selectedReligion === 'quran' ? (currentPage - 1) * VERSES_PER_PAGE : 0;
-  const endVerseIndex = selectedReligion === 'quran' ? Math.min(startVerseIndex + VERSES_PER_PAGE, totalVerses) : totalVerses;
+  const isQuranPagination = selectedReligion === 'quran';
+  const isBibleChapter = selectedReligion === 'bible';
+  
+  // For Quran: page-based navigation within surahs
+  // For Bible: chapter-based navigation with verse counts displayed
+  const totalPages = isQuranPagination ? Math.ceil(totalVerses / VERSES_PER_PAGE) : 1;
+  const currentPage = isQuranPagination ? selectedChapter : selectedChapter;
+  const startVerseIndex = isQuranPagination ? (currentPage - 1) * VERSES_PER_PAGE : 0;
+  const endVerseIndex = isQuranPagination ? Math.min(startVerseIndex + VERSES_PER_PAGE, totalVerses) : totalVerses;
   const versesOnCurrentPage = endVerseIndex - startVerseIndex;
 
-  // Get verses for current page (only for Quran)
-  const currentPageVerses = selectedReligion === 'quran' ? 
+  // Get verses for current page (only for Quran pagination)
+  const currentPageVerses = isQuranPagination ? 
     scriptures?.slice(startVerseIndex, endVerseIndex) || [] : 
     scriptures || [];
 
@@ -192,8 +197,8 @@ export function ContentPanel({
   });
 
   const handleChapterNavigation = (direction: 'prev' | 'next') => {
-    if (selectedReligion === 'quran') {
-      // For Quran, navigate through pages of verses
+    if (isQuranPagination) {
+      // For Quran, navigate through pages of verses within a surah
       const newPage = direction === 'prev' ? currentPage - 1 : currentPage + 1;
       
       if (newPage >= 1 && newPage <= totalPages) {
@@ -208,7 +213,7 @@ export function ContentPanel({
         });
       }
     } else {
-      // For other religions, navigate through chapters
+      // For Bible and other religions, navigate through chapters
       const newChapter = direction === 'prev' ? selectedChapter - 1 : selectedChapter + 1;
       if (newChapter > 0) {
         onChapterChange(newChapter);
@@ -276,7 +281,7 @@ export function ContentPanel({
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-scripture-600"></div>
           <div className="text-scripture-600 text-base lg:text-lg font-medium">Loading scripture content...</div>
           <div className="text-scripture-500 text-sm">
-            Fetching {religionName} - {selectedBook} {selectedReligion === 'quran' ? `Page ${selectedChapter}` : `Chapter ${selectedChapter}`}
+            Fetching {religionName} - {selectedBook} {isQuranPagination ? `Page ${selectedChapter}` : `Chapter ${selectedChapter}`}
           </div>
         </div>
       </div>
@@ -309,9 +314,11 @@ export function ContentPanel({
             <h2 className="text-lg lg:text-2xl font-bold text-scripture-800">
               {religionName} - {selectedBook}
               <span className="text-scripture-500 ml-2">
-                {selectedReligion === 'quran' ? 
+                {isQuranPagination ? 
                   `Page ${currentPage} of ${totalPages}` : 
-                  `Chapter ${displayChapter}`
+                  isBibleChapter ? 
+                    `Chapter ${displayChapter} (${totalVerses} verses)` :
+                    `Chapter ${displayChapter}`
                 }
               </span>
             </h2>
@@ -334,17 +341,24 @@ export function ContentPanel({
               variant="outline"
               size="sm"
               onClick={() => handleChapterNavigation('prev')}
-              disabled={selectedReligion === 'quran' ? currentPage <= 1 : selectedChapter <= 1}
+              disabled={isQuranPagination ? currentPage <= 1 : selectedChapter <= 1}
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
               Previous
             </Button>
             <span className="text-scripture-600">
-              {selectedReligion === 'quran' ? (
+              {isQuranPagination ? (
                 <div className="text-center">
                   <div>Page {currentPage} of {totalPages}</div>
                   <div className="text-xs text-scripture-500">
                     {versesOnCurrentPage} verses on this page
+                  </div>
+                </div>
+              ) : isBibleChapter ? (
+                <div className="text-center">
+                  <div>Chapter {displayChapter}</div>
+                  <div className="text-xs text-scripture-500">
+                    {totalVerses} verses in this chapter
                   </div>
                 </div>
               ) : (
@@ -355,7 +369,7 @@ export function ContentPanel({
               variant="outline"
               size="sm"
               onClick={() => handleChapterNavigation('next')}
-              disabled={selectedReligion === 'quran' ? currentPage >= totalPages : false}
+              disabled={isQuranPagination ? currentPage >= totalPages : false}
             >
               Next
               <ChevronRight className="h-4 w-4 ml-1" />
@@ -374,7 +388,7 @@ export function ContentPanel({
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <span className="text-blue-600 font-bold text-sm mt-1 min-w-[2rem]">
-                    {selectedReligion === 'quran' ? 
+                    {isQuranPagination ? 
                       scripture.verse || (startVerseIndex + index + 1) : 
                       scripture.verse
                     }
