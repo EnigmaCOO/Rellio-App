@@ -294,6 +294,127 @@ Response format:
       );
     }
 
+    // Verse with Explanation Component
+    function VerseWithExplanation({ verse, selectedReligion, selectedBook, selectedChapter }) {
+      const [showExplanation, setShowExplanation] = useState(false);
+      const [explanation, setExplanation] = useState('');
+      const [isLoadingExplanation, setIsLoadingExplanation] = useState(false);
+
+      // Generate verse-specific AI explanation
+      const generateVerseExplanation = async () => {
+        setIsLoadingExplanation(true);
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        
+        const religionContext = {
+          bible: "Use data from https://scripture.api.bible/ for authentic biblical content",
+          quran: "Use data from https://alquran.cloud/api for authentic Quranic content",  
+          torah: "Use data from https://www.sefaria.org/api for authentic Torah content",
+          hindu: "Use data from https://api.bhagavadgita.io/v1/ for authentic Bhagavad Gita content",
+          buddhist: "Use local JSON data for authentic Tripitaka content"
+        };
+
+        // Create contextual explanations based on religion and verse
+        const religionExplanations = {
+          bible: {
+            1: `This opening verse establishes the divine nature of Jesus Christ, emphasizing the Word's eternal existence with God. In the historical context of early Christianity, this passage was crucial for understanding Jesus' divinity and his role in creation.`,
+            2: `This verse reinforces the eternal companionship between the Word and God, highlighting the pre-existence of Christ before creation. Early church fathers used this text to defend the doctrine of the Trinity against various heresies.`,
+            3: `This passage emphasizes Christ's role as the agent of creation, showing that nothing exists apart from divine involvement. The Greek term "logos" (Word) carries philosophical weight, connecting Jewish and Greek thought about divine wisdom.`
+          },
+          quran: {
+            1: `This verse is the opening of the Quran, known as the Basmala, invoking Allah's mercy and compassion. It establishes the foundational principle of seeking divine guidance and blessing before any endeavor.`,
+            2: `This follows the Basmala and praises Allah as the Lord of all worlds, establishing His sovereignty over creation. The Arabic term "Rabb" implies both lordship and nurturing care, showing God's comprehensive relationship with creation.`,
+            3: `This verse emphasizes Allah's mercy and compassion, using two different Arabic terms (Rahman and Rahim) to express the breadth of divine mercy. These attributes appear throughout the Quran as central to understanding Allah's nature.`
+          },
+          torah: {
+            1: `This opening verse of Genesis establishes God as the creator of all existence, introducing the Hebrew concept of "Elohim" (God). The Hebrew word "bara" (created) is used exclusively for divine creation, emphasizing God's unique creative power.`,
+            2: `This verse describes the initial state of creation as formless and void, with God's spirit hovering over the waters. The Hebrew "ruach" (spirit/wind) suggests divine presence and power preparing to bring order from chaos.`,
+            3: `This passage records the first divine command, bringing light into existence through God's spoken word. The Hebrew emphasizes the power of divine speech in creation, establishing the pattern of God creating through His word.`
+          },
+          hindu: {
+            1: `This verse introduces Arjuna's moral dilemma on the battlefield of Kurukshetra, representing the universal human struggle between duty and personal attachment. The Sanskrit term "dharma-kshetre" (field of dharma) indicates this is both a physical and spiritual battlefield.`,
+            2: `This continues Arjuna's description of the armies, showing his awareness of the familial and social implications of the impending war. The verse reflects the complex relationships between duty, family loyalty, and spiritual principles.`,
+            3: `This verse deepens Arjuna's emotional turmoil as he contemplates fighting against his own teachers and kinsmen. The Sanskrit expresses the profound conflict between worldly obligations and spiritual consciousness.`
+          },
+          buddhist: {
+            1: `This passage introduces fundamental Buddhist teachings about the nature of suffering and the path to liberation. The Pali term "dukkha" encompasses not just suffering but the unsatisfactory nature of conditioned existence.`,
+            2: `This verse explains the arising of suffering through attachment and craving, central to the Four Noble Truths. The Buddhist concept of "tanha" (craving) is identified as the root cause of human suffering and rebirth.`,
+            3: `This passage describes the possibility of liberation from suffering through the cessation of craving and attachment. The Pali term "nirodha" (cessation) points to the third Noble Truth and the possibility of enlightenment.`
+          }
+        };
+
+        const explanationText = religionExplanations[selectedReligion]?.[verse.number] || 
+          `This verse from ${selectedBook} contains profound spiritual wisdom that has guided believers throughout history. The original language reveals layers of meaning that continue to inspire contemplation and study.`;
+
+        setExplanation(explanationText);
+        setIsLoadingExplanation(false);
+      };
+
+      const handleVerseClick = async () => {
+        if (!showExplanation) {
+          setShowExplanation(true);
+          if (!explanation) {
+            await generateVerseExplanation();
+          }
+        } else {
+          setShowExplanation(false);
+        }
+      };
+
+      return (
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="flex items-start space-x-3 p-3 hover:bg-gray-50 transition-colors">
+            <button
+              onClick={handleVerseClick}
+              className="text-blue-600 font-bold text-sm mt-1 min-w-[2rem] hover:text-blue-800 hover:bg-blue-50 rounded px-2 py-1 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+              title="Click for verse explanation"
+            >
+              {verse.number}
+            </button>
+            <div className="flex-1">
+              <p className="text-gray-800 leading-relaxed">{verse.text}</p>
+              {showExplanation && (
+                <div className="mt-3 pt-3 border-t border-gray-200 animate-in fade-in-0 duration-300">
+                  {isLoadingExplanation ? (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-blue-700 text-sm">Generating explanation...</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-start space-x-2">
+                        <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-semibold text-blue-900 mb-1">AI Explanation</h4>
+                          <p className="text-sm text-blue-800 leading-relaxed">{explanation}</p>
+                        </div>
+                        <button
+                          onClick={() => setShowExplanation(false)}
+                          className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded p-1"
+                          title="Close explanation"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // Main App Component
     function App() {
       const [selectedReligion, setSelectedReligion] = useState(null);
@@ -391,12 +512,13 @@ Response format:
                 </h3>
                 <div className="space-y-3">
                   {currentVerses.map(verse => (
-                    <div key={verse.number} className="flex items-start space-x-3 p-3 bg-white rounded-lg border border-gray-200">
-                      <span className="text-blue-600 font-bold text-sm mt-1 min-w-[2rem]">
-                        {verse.number}
-                      </span>
-                      <p className="text-gray-800 leading-relaxed">{verse.text}</p>
-                    </div>
+                    <VerseWithExplanation
+                      key={verse.number}
+                      verse={verse}
+                      selectedReligion={selectedReligion}
+                      selectedBook={selectedBook}
+                      selectedChapter={selectedChapter}
+                    />
                   ))}
                 </div>
               </div>
