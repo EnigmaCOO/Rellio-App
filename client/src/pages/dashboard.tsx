@@ -4,6 +4,7 @@ import { ContentPanel } from "@/components/ContentPanel";
 import { ChatPanel } from "@/components/ChatPanel";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Settings, BookOpen } from "lucide-react";
+import rellioLogo from "@assets/image_1751781461744.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -98,7 +99,7 @@ export default function Dashboard() {
         <div className="max-w-full px-4 lg:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 lg:space-x-3">
-              <BookOpen className="h-6 w-6 lg:h-8 lg:w-8 text-blue-600" />
+              <img src={rellioLogo} alt="Rellio Logo" className="h-6 w-6 lg:h-8 lg:w-8" />
               <h1 className="text-lg lg:text-2xl font-bold text-scripture-800">Rellio Scripture Library</h1>
             </div>
             <div className="flex items-center space-x-2 lg:space-x-4">

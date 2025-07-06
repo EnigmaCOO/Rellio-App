@@ -13,6 +13,7 @@ import {
   Quote,
   MessageCircle
 } from "lucide-react";
+import rellioLogo from "@assets/image_1751781461744.png";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, Scripture } from "@shared/schema";
 
@@ -259,6 +260,9 @@ export function ContentPanel({
       <div className="h-full bg-white shadow-md p-4 lg:p-6">
         <div className="space-y-6 flex flex-col items-center justify-center min-h-[500px] animate-in fade-in-0 duration-500">
           <div className="text-center space-y-4">
+            <div className="mb-8">
+              <img src={rellioLogo} alt="Rellio Logo" className="w-32 h-32 lg:w-40 lg:h-40 mx-auto" />
+            </div>
             <h2 className="text-2xl lg:text-3xl font-bold text-scripture-800">Welcome to the Scripture Dashboard!</h2>
             <p className="text-base lg:text-lg text-scripture-600 max-w-md mx-auto leading-relaxed">
               Please select a religious text and book from the navigation panel to begin exploring sacred writings.
