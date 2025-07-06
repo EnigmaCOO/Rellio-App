@@ -38,36 +38,33 @@ export async function fetchBibleContent(book: string, chapter: number): Promise<
   }
 }
 
-// Bhagavad Gita - Using local content as the API requires authentication
-export function getBhagavadGitaContent(chapter: number): ExternalScripture[] {
-  const sampleContent = {
-    1: [
-      "Now, O Arjuna, seeing the armies of the Pandavas and Kauravas arrayed for battle, Duryodhana spoke these words to his teacher Drona.",
-      "Behold, O teacher, this mighty army of the sons of Pandu, arrayed by the son of Drupada, your wise disciple.",
-      "In this army are many heroic bowmen equal in fighting to Bhima and Arjuna: Yuyudhana, Virata, and Drupada, the great chariot-warrior.",
-      "Dhrishtaketu, Chekitana, and the valiant king of Kashi, also Purujit, Kuntibhoja, and Shaibya, the best of men."
-    ],
-    2: [
-      "Sanjaya said: To him who was thus overcome with pity and whose eyes were brimming with tears and full of despondency, Madhusudana spoke these words.",
-      "The Supreme Lord said: O Arjuna, how has this delusion overcome you at this critical hour? It is not befitting an Aryan; it does not lead to the heavenly planets, and it brings only infamy.",
-      "O Partha, do not yield to this degrading impotence. It does not become you. Give up such petty weakness of heart and arise, O chastiser of the enemy!",
-      "Arjuna said: O slayer of enemies, how can I counterattack with arrows in battle men like Bhishma and Drona, who are worthy of my worship?"
-    ]
-  };
-  
-  const content = sampleContent[chapter as keyof typeof sampleContent];
-  if (!content) {
+// Bhagavad Gita API using publicapi.dev
+export async function getBhagavadGitaContent(chapter: number): Promise<ExternalScripture[]> {
+  try {
+    const response = await fetch(`https://api.publicapi.dev/bhagavad-gita/chapters/${chapter}/verses`);
+    
+    if (!response.ok) {
+      throw new Error(`Bhagavad Gita API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data || !Array.isArray(data)) {
+      return [];
+    }
+    
+    return data.map((verse: any) => ({
+      religion: 'hindu' as Religion,
+      book: 'Bhagavad Gita',
+      chapter: chapter,
+      verse: verse.verse_number || verse.id || 1,
+      text: verse.text || verse.verse || verse.sanskrit || '',
+      translation: verse.translation || verse.english || 'Sanskrit'
+    }));
+  } catch (error) {
+    console.error('Error fetching Bhagavad Gita content:', error);
     return [];
   }
-  
-  return content.map((text: string, index: number) => ({
-    religion: 'hindu' as Religion,
-    book: 'Bhagavad Gita',
-    chapter: chapter,
-    verse: index + 1,
-    text: text,
-    translation: 'English - Swami Prabhupada'
-  }));
 }
 
 // Quran API using alquran.cloud/api
@@ -214,7 +211,7 @@ export async function fetchScriptureContent(
       return await fetchBibleContent(book, chapter);
     
     case 'hindu':
-      return getBhagavadGitaContent(chapter);
+      return await getBhagavadGitaContent(chapter);
     
     case 'quran':
       // Extract surah number from book name (format: "Name (Translation)" -> get index + 1)
