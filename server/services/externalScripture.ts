@@ -1,4 +1,6 @@
 import { Religion } from "@shared/schema";
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface ExternalScripture {
   religion: Religion;
@@ -41,17 +43,26 @@ export async function fetchBibleContent(book: string, chapter: number): Promise<
 // Bhagavad Gita content from local JSON file
 export async function getBhagavadGitaContent(chapter: number): Promise<ExternalScripture[]> {
   try {
-    const fs = require('fs');
-    const path = require('path');
+    // Get the absolute path to the data file
+    const gitaPath = path.resolve(process.cwd(), 'server/data/bhagavad_gita.json');
+    console.log('Loading Bhagavad Gita from:', gitaPath);
     
-    const gitaPath = path.join(__dirname, '../data/bhagavad_gita.json');
     const gitaData = JSON.parse(fs.readFileSync(gitaPath, 'utf8'));
+    console.log(`Found ${gitaData.chapters.length} chapters in Bhagavad Gita data`);
     
     const chapterData = gitaData.chapters.find((ch: any) => ch.chapter === chapter);
     
-    if (!chapterData || !chapterData.verses) {
+    if (!chapterData) {
+      console.log(`Chapter ${chapter} not found in Bhagavad Gita data`);
       return [];
     }
+    
+    if (!chapterData.verses || chapterData.verses.length === 0) {
+      console.log(`No verses found in chapter ${chapter}`);
+      return [];
+    }
+    
+    console.log(`Loading ${chapterData.verses.length} verses from chapter ${chapter}: ${chapterData.title}`);
     
     return chapterData.verses.map((verse: any) => ({
       religion: 'hindu' as Religion,
@@ -63,6 +74,7 @@ export async function getBhagavadGitaContent(chapter: number): Promise<ExternalS
     }));
   } catch (error) {
     console.error('Error loading Bhagavad Gita content:', error);
+    console.error('Error details:', error instanceof Error ? error.message : String(error));
     return [];
   }
 }
