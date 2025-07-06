@@ -99,7 +99,7 @@ export default function Dashboard() {
         <div className="max-w-full px-4 lg:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 lg:space-x-3">
-              <img src={rellioLogo} alt="Rellio Logo" className="h-6 w-6 lg:h-8 lg:w-8" />
+              <img src={rellioLogo} alt="Rellio Logo" className="h-10 w-10 lg:h-12 lg:w-12" />
               <h1 className="text-lg lg:text-2xl font-bold text-scripture-800">Rellio Scripture Library</h1>
             </div>
             <div className="flex items-center space-x-2 lg:space-x-4">
