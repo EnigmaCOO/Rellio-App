@@ -1,0 +1,485 @@
+{
+  "title": "Bhagavad Gita",
+  "totalChapters": 18,
+  "chapters": [
+    {
+      "chapter": 1,
+      "title": "Arjuna's Distress",
+      "sanskrit": "अर्जुन विषाद योग",
+      "totalVerses": 47,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "धृतराष्ट्र उवाच | धर्मक्षेत्रे कुरुक्षेत्रे समवेता युयुत्सवः | मामकाः पाण्डवाश्चैव किमकुर्वत सञ्जय ||",
+          "english": "Dhritarashtra said: O Sanjaya, after my sons and the sons of Pandu assembled in the place of pilgrimage at Kurukshetra, desiring to fight, what did they do?"
+        },
+        {
+          "verse": 2,
+          "sanskrit": "सञ्जय उवाच | दृष्ट्वा तु पाण्डवानीकं व्यूढं दुर्योधनस्तदा | आचार्यमुपसंगम्य राजा वचनमब्रवीत् ||",
+          "english": "Sanjaya said: O King, after looking over the army arranged in military formation by the sons of Pandu, King Duryodhana went to his teacher and spoke the following words."
+        },
+        {
+          "verse": 3,
+          "sanskrit": "पश्यैतां पाण्डुपुत्राणामाचार्य महतीं चमूम् | व्यूढां द्रुपदपुत्रेण तव शिष्येण धीमता ||",
+          "english": "O my teacher, behold the great army of the sons of Pandu, so expertly arranged by your intelligent disciple the son of Drupada."
+        },
+        {
+          "verse": 4,
+          "sanskrit": "अत्र शूरा महेष्वासा भीमार्जुनसमा युधि | युयुधानो विराटश्च द्रुपदश्च महारथः ||",
+          "english": "Here in this army are many heroic bowmen equal in fighting to Bhima and Arjuna: great fighters like Yuyudhana, Virata, and Drupada."
+        },
+        {
+          "verse": 5,
+          "sanskrit": "धृष्टकेतुश्चेकितानः काशिराजश्च वीर्यवान् | पुरुजित्कुन्तिभोजश्च शैब्यश्च नरपुङ्गवः ||",
+          "english": "There are also great heroic, powerful fighters like Dhrishtaketu, Chekitana, Kashiraja, Purujit, Kuntibhoja, and Shaibya."
+        },
+        {
+          "verse": 10,
+          "sanskrit": "अपर्याप्तं तदस्माकं बलं भीष्माभिरक्षितम् | पर्याप्तं त्विदमेतेषां बलं भीमाभिरक्षितम् ||",
+          "english": "Our strength is immeasurable, and we are perfectly protected by Grandfather Bhishma, whereas the strength of the Pandavas, carefully protected by Bhima, is limited."
+        },
+        {
+          "verse": 20,
+          "sanskrit": "अथ व्यवस्थितान्दृष्ट्वा धार्तराष्ट्रान्कपिध्वजः | प्रवृत्ते शस्त्रसम्पाते धनुरुद्यम्य पाण्डवः ||",
+          "english": "At that time Arjuna, the son of Pandu, seated in the chariot bearing the flag marked with Hanuman, took up his bow and prepared to shoot his arrows."
+        },
+        {
+          "verse": 25,
+          "sanskrit": "भीष्मद्रोणप्रमुखतः सर्वेषां च महीक्षिताम् | उवाच पार्थ पश्यैतान्समवेतान्कुरूनिति ||",
+          "english": "In the presence of Bhishma, Drona, and all the other chieftains of the world, the Lord said, Just behold, Partha, all the Kurus assembled here."
+        },
+        {
+          "verse": 30,
+          "sanskrit": "गाण्डीवं स्रंसते हस्तात्त्वक्चैव परिदह्यते | न च शक्नोम्यवस्थातुं भ्रमतीव च मे मनः ||",
+          "english": "My bow Gandiva is slipping from my hand, and my skin is burning. I am no longer able to stand here, and my mind is reeling."
+        },
+        {
+          "verse": 35,
+          "sanskrit": "एतान्न हन्तुमिच्छामि घ्नतोऽपि मधुसूदन | अपि त्रैलोक्यराज्यस्य हेतोः किं नु महीकृते ||",
+          "english": "O Madhusudana, I do not wish to fight with them even if they attack me. Even for the sake of the three worlds, what to speak of this earth?"
+        },
+        {
+          "verse": 40,
+          "sanskrit": "कुलक्षये प्रणश्यन्ति कुलधर्माः सनातनाः | धर्मे नष्टे कुलं कृत्स्नमधर्मोऽभिभवत्युत ||",
+          "english": "When a dynasty is destroyed, the eternal family traditions are vanquished, and thus the rest of the family becomes involved in irreligion."
+        },
+        {
+          "verse": 47,
+          "sanskrit": "एवमुक्त्वार्जुनः सङ्ख्ये रथोपस्थ उपाविशत् | विसृज्य सशरं चापं शोकसंविग्नमानसः ||",
+          "english": "Sanjaya said: Having thus spoken on the battlefield, Arjuna cast aside his bow and arrows and sat down on the chariot, his mind overwhelmed with grief."
+        }
+      ]
+    },
+    {
+      "chapter": 2,
+      "title": "The Path of Doctrines",
+      "sanskrit": "सांख्य योग",
+      "totalVerses": 72,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "सञ्जय उवाच | तं तथा कृपयाविष्टमश्रुपूर्णाकुलेक्षणम् | विषीदन्तमिदं वाक्यमुवाच मधुसूदनः ||",
+          "english": "Sanjaya said: Seeing Arjuna full of compassion, his mind depressed, his eyes full of tears, Madhusudana, Krishna, spoke the following words."
+        },
+        {
+          "verse": 2,
+          "sanskrit": "श्रीभगवानुवाच | कुतस्त्वा कश्मलमिदं विषमे समुपस्थितम् | अनार्यजुष्टमस्वर्ग्यमकीर्तिकरमर्जुन ||",
+          "english": "The Supreme Personality of Godhead said: My dear Arjuna, how have these impurities come upon you? They are not at all befitting a man who knows the value of life. They lead not to higher planets but to infamy."
+        },
+        {
+          "verse": 11,
+          "sanskrit": "श्रीभगवानुवाच | अशोच्यानन्वशोचस्त्वं प्रज्ञावादांश्च भाषसे | गतासूनगतासूंश्च नानुशोचन्ति पण्डिताः ||",
+          "english": "The Supreme Personality of Godhead said: While speaking learned words, you are mourning for what is not worthy of grief. Those who are wise lament neither for the living nor for the dead."
+        },
+        {
+          "verse": 20,
+          "sanskrit": "न जायते म्रियते वा कदाचिन्नायं भूत्वा भविता वा न भूयः | अजो नित्यः शाश्वतोऽयं पुराणो न हन्यते हन्यमाने शरीरे ||",
+          "english": "For the soul there is neither birth nor death nor, having once been, does he ever cease to be. He is unborn, eternal, permanent, and primeval. He is not slain when the body is slain."
+        },
+        {
+          "verse": 47,
+          "sanskrit": "कर्मण्येवाधिकारस्ते मा फलेषु कदाचन | मा कर्मफलहेतुर्भूर्मा ते सङ्गोऽस्त्वकर्मणि ||",
+          "english": "You have a right to perform your prescribed duty, but not to the fruits of action. Never consider yourself the cause of the results of your activities, and never be attached to not doing your duty."
+        },
+        {
+          "verse": 58,
+          "sanskrit": "यदा संहरते चायं कूर्मोऽङ्गानीव सर्वशः | इन्द्रियाणीन्द्रियार्थेभ्यस्तस्य प्रज्ञा प्रतिष्ठिता ||",
+          "english": "One who is able to withdraw his senses from sense objects, as the tortoise draws its limbs within the shell, is firmly fixed in perfect consciousness."
+        },
+        {
+          "verse": 62,
+          "sanskrit": "ध्यायतो विषयान्पुंसः सङ्गस्तेषूपजायते | सङ्गात्सञ्जायते कामः कामात्क्रोधोऽभिजायते ||",
+          "english": "While contemplating the objects of the senses, a person develops attachment for them, and from such attachment lust develops, and from lust anger arises."
+        },
+        {
+          "verse": 72,
+          "sanskrit": "एषा ब्राह्मी स्थितिः पार्थ नैनां प्राप्य विमुह्यति | स्थित्वास्यामन्तकालेऽपि ब्रह्मनिर्वाणमृच्छति ||",
+          "english": "That is the way of the spiritual and godly life, after attaining which a man is not bewildered. If one is thus situated even at the hour of death, one can enter into the kingdom of God."
+        }
+      ]
+    },
+    {
+      "chapter": 3,
+      "title": "The Path of Action",
+      "sanskrit": "कर्म योग",
+      "totalVerses": 43,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "अर्जुन उवाच | ज्यायसी चेत्कर्मणस्ते मता बुद्धिर्जनार्दन | तत्किं कर्मणि घोरे मां नियोजयसि केशव ||",
+          "english": "Arjuna said: O Janardana, O Keshava, why do you urge me to engage in this ghastly warfare, if you think that intelligence is better than fruitive work?"
+        },
+        {
+          "verse": 8,
+          "sanskrit": "नियतं कुरु कर्म त्वं कर्म ज्यायो ह्यकर्मणः | शरीरयात्रापि च ते न प्रसिद्ध्येदकर्मणः ||",
+          "english": "You should thus perform your prescribed duties, for doing so is better than not working. One cannot even maintain one's physical body without work."
+        },
+        {
+          "verse": 21,
+          "sanskrit": "यद्यदाचरति श्रेष्ठस्तत्तदेवेतरो जनः | स यत्प्रमाणं कुरुते लोकस्तदनुवर्तते ||",
+          "english": "Whatever action a great man performs, common men follow. And whatever standards he sets by exemplary acts, all the world pursues."
+        },
+        {
+          "verse": 35,
+          "sanskrit": "श्रेयान्स्वधर्मो विगुणः परधर्मात्स्वनुष्ठितात् | स्वधर्मे निधनं श्रेयः परधर्मो भयावहः ||",
+          "english": "It is far better to discharge one's prescribed duties, even though faultily, than another's duties perfectly. Destruction in the course of performing one's own duty is better than engaging in another's duties, for to follow another's path is dangerous."
+        }
+      ]
+    },
+    {
+      "chapter": 4,
+      "title": "Wisdom in Action",
+      "sanskrit": "ज्ञान कर्म संन्यास योग",
+      "totalVerses": 42,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "श्रीभगवानुवाच | इमं विवस्वते योगं प्रोक्तवानहमव्ययम् | विवस्वान्मनवे प्राह मनुरिक्ष्वाकवेऽब्रवीत् ||",
+          "english": "The Personality of Godhead said: I instructed this imperishable science of yoga to the sun-god, Vivasvan, and Vivasvan instructed it to Manu, the father of mankind, and Manu in turn instructed it to Ikshvaku."
+        },
+        {
+          "verse": 7,
+          "sanskrit": "यदा यदा हि धर्मस्य ग्लानिर्भवति भारत | अभ्युत्थानमधर्मस्य तदात्मानं सृजाम्यहम् ||",
+          "english": "Whenever and wherever there is a decline in religious practice, O descendant of Bharata, and a predominant rise of irreligion—at that time I descend Myself."
+        },
+        {
+          "verse": 8,
+          "sanskrit": "परित्राणाय साधूनां विनाशाय च दुष्कृताम् | धर्मसंस्थापनार्थाय सम्भवामि युगे युगे ||",
+          "english": "To deliver the pious and to annihilate the miscreants, as well as to reestablish the principles of religion, I Myself appear, millennium after millennium."
+        },
+        {
+          "verse": 18,
+          "sanskrit": "कर्मण्यकर्म यः पश्येदकर्मणि च कर्म यः | स बुद्धिमान्मनुष्येषु स युक्तः कृत्स्नकर्मकृत् ||",
+          "english": "One who sees inaction in action, and action in inaction, is intelligent among men, and he is in the transcendental position, although engaged in all sorts of activities."
+        }
+      ]
+    },
+    {
+      "chapter": 5,
+      "title": "The Path of Renunciation",
+      "sanskrit": "कर्म संन्यास योग",
+      "totalVerses": 29,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "अर्जुन उवाच | संन्यासं कर्मणां कृष्ण पुनर्योगं च शंससि | यच्छ्रेय एतयोरेकं तन्मे ब्रूहि सुनिश्चितम् ||",
+          "english": "Arjuna said: O Krishna, first of all You ask me to renounce work, and then again You recommend work with devotion. Now will You kindly tell me definitely which of the two is more beneficial?"
+        },
+        {
+          "verse": 10,
+          "sanskrit": "ब्रह्मण्याधाय कर्माणि सङ्गं त्यक्त्वा करोति यः | लिप्यते न स पापेन पद्मपत्रमिवाम्भसा ||",
+          "english": "One who performs his duty without attachment, surrendering the results unto the Supreme Lord, is unaffected by sinful action, as the lotus leaf is untouched by water."
+        },
+        {
+          "verse": 22,
+          "sanskrit": "ये हि संस्पर्शजा भोगा दुःखयोनय एव ते | आद्यन्तवन्तः कौन्तेय न तेषु रमते बुधः ||",
+          "english": "An intelligent person does not take part in the sources of misery, which are due to contact with the material senses. O son of Kunti, such pleasures have a beginning and an end, and so the wise man does not delight in them."
+        }
+      ]
+    },
+    {
+      "chapter": 6,
+      "title": "The Path of Self Restraint",
+      "sanskrit": "आत्मसंयम योग",
+      "totalVerses": 47,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "श्रीभगवानुवाच | अनाश्रितः कर्मफलं कार्यं कर्म करोति यः | स संन्यासी च योगी च न निरग्निर्न चाक्रियः ||",
+          "english": "The Supreme Personality of Godhead said: One who is unattached to the fruits of his work and who works as he is obligated is in the renounced order of life, and he is the true mystic, not he who lights no fire and performs no duty."
+        },
+        {
+          "verse": 5,
+          "sanskrit": "उद्धरेदात्मनात्मानं नात्मानमवसादयेत् | आत्मैव ह्यात्मनो बन्धुरात्मैव रिपुरात्मनः ||",
+          "english": "One must deliver himself with the help of his mind, and not degrade himself. The mind is the friend of the conditioned soul, and his enemy as well."
+        },
+        {
+          "verse": 35,
+          "sanskrit": "श्रीभगवानुवाच | असंशयं महाबाहो मनो दुर्निग्रहं चलम् | अभ्यासेन तु कौन्तेय वैराग्येण च गृह्यते ||",
+          "english": "Lord Sri Krishna said: O mighty-armed son of Kunti, it is undoubtedly very difficult to curb the restless mind, but it is possible by suitable practice and by detachment."
+        }
+      ]
+    },
+    {
+      "chapter": 7,
+      "title": "The Path of Knowledge and Wisdom",
+      "sanskrit": "परम हंस योग",
+      "totalVerses": 30,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "श्रीभगवानुवाच | मयि आसक्तमनाः पार्थ योगं युञ्जन्मदाश्रयः | असंशयं समग्रं मां यथा ज्ञास्यसि तच्छृणु ||",
+          "english": "The Supreme Personality of Godhead said: Now hear, O son of Pritha, how by practicing yoga in full consciousness of Me, with mind attached to Me, you can know Me in full, free from doubt."
+        },
+        {
+          "verse": 7,
+          "sanskrit": "मत्तः परतरं नान्यत्किञ्चिदस्ति धनञ्जय | मयि सर्वमिदं प्रोतं सूत्रे मणिगणा इव ||",
+          "english": "O conqueror of wealth, there is no truth superior to Me. Everything rests upon Me, as pearls are strung on a thread."
+        },
+        {
+          "verse": 19,
+          "sanskrit": "बहूनां जन्मनामन्ते ज्ञानवान्मां प्रपद्यते | वासुदेवः सर्वमिति स महात्मा सुदुर्लभः ||",
+          "english": "After many births and deaths, he who is actually in knowledge surrenders unto Me, knowing Me to be the cause of all causes and all that is. Such a great soul is very rare."
+        }
+      ]
+    },
+    {
+      "chapter": 8,
+      "title": "The Imperishable Lord",
+      "sanskrit": "अक्षर ब्रह्म योग",
+      "totalVerses": 28,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "अर्जुन उवाच | किं तद्ब्रह्म किमध्यात्मं किं कर्म पुरुषोत्तम | अधिभूतं च किं प्रोक्तमधिदैवं किमुच्यते ||",
+          "english": "Arjuna inquired: O my Lord, O Supreme Person, what is Brahman? What is the self? What are fruitive activities? What is this material manifestation? And what are the demigods?"
+        },
+        {
+          "verse": 7,
+          "sanskrit": "तस्मात्सर्वेषु कालेषु मामनुस्मर युध्य च | मय्यर्पितमनोबुद्धिर्मामेवैष्यस्यसंशयम् ||",
+          "english": "Therefore, Arjuna, you should always think of Me in the form of Krishna and at the same time carry out your prescribed duty of fighting. With your activities dedicated to Me and your mind and intelligence fixed on Me, you will attain Me without doubt."
+        },
+        {
+          "verse": 22,
+          "sanskrit": "पुरुषः स परः पार्थ भक्त्या लभ्यस्त्वनन्यया | यस्यान्तःस्थानि भूतानि येन सर्वमिदं ततम् ||",
+          "english": "The Supreme Personality of Godhead, who is greater than all, is attainable by unalloyed devotion. Although He is present in His abode, He is all-pervading, and everything is situated within Him."
+        }
+      ]
+    },
+    {
+      "chapter": 9,
+      "title": "Path of Supreme Knowledge and Secrets",
+      "sanskrit": "राजविद्या राजगुह्य योग",
+      "totalVerses": 34,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "श्रीभगवानुवाच | इदं तु ते गुह्यतमं प्रवक्ष्याम्यनसूयवे | ज्ञानं विज्ञानसहितं यज्ज्ञात्वा मोक्ष्यसेऽशुभात् ||",
+          "english": "The Supreme Personality of Godhead said: My dear Arjuna, because you are never envious of Me, I shall impart to you this most confidential knowledge and realization, knowing which you shall be relieved of the miseries of material existence."
+        },
+        {
+          "verse": 22,
+          "sanskrit": "अनन्याश्चिन्तयन्तो मां ये जनाः पर्युपासते | तेषां नित्याभियुक्तानां योगक्षेमं वहाम्यहम् ||",
+          "english": "But those who always worship Me with exclusive devotion, meditating on My transcendental form—to them I carry what they lack, and I preserve what they have."
+        },
+        {
+          "verse": 34,
+          "sanskrit": "मन्मना भव मद्भक्तो मद्याजी मां नमस्कुरु | मामेवैष्यसि सत्यं ते प्रतिजाने प्रियोऽसि मे ||",
+          "english": "Always think of Me, become My devotee, worship Me and offer your homage unto Me. Thus you will come to Me without fail. I promise you this because you are My very dear friend."
+        }
+      ]
+    },
+    {
+      "chapter": 10,
+      "title": "Divine Manifestations",
+      "sanskrit": "विभूति योग",
+      "totalVerses": 42,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "श्रीभगवानुवाच | भूय एव महाबाहो शृणु मे परमं वचः | यत्तेऽहं प्रीयमाणाय वक्ष्यामि हितकाम्यया ||",
+          "english": "The Supreme Personality of Godhead said: Listen again, O mighty-armed Arjuna. Because you are My dear friend, for your benefit I shall speak to you further, giving knowledge that is better than what I have already explained."
+        },
+        {
+          "verse": 20,
+          "sanskrit": "अहमात्मा गुडाकेश सर्वभूताशयस्थितः | अहमादिश्च मध्यं च भूतानामन्त एव च ||",
+          "english": "I am the Supersoul, O Arjuna, seated in the hearts of all living entities. I am the beginning, the middle and the end of all beings."
+        },
+        {
+          "verse": 41,
+          "sanskrit": "यद्यद्विभूतिमत्सत्त्वं श्रीमदूर्जितमेव वा | तत्तदेवावगच्छ त्वं मम तेजोंऽशसम्भवम् ||",
+          "english": "Know that all opulent, beautiful and glorious creations spring from but a spark of My splendor."
+        }
+      ]
+    },
+    {
+      "chapter": 11,
+      "title": "The Lord's Universal Form",
+      "sanskrit": "विश्वरूप दर्शन योग",
+      "totalVerses": 55,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "अर्जुन उवाच | मदनुग्रहाय परमं गुह्यमध्यात्मसंज्ञितम् | यत्त्वयोक्तं वचस्तेन मोहोऽयं विगतो मम ||",
+          "english": "Arjuna said: By Your mercy, I have heard from You this confidential supreme knowledge about the self, which has dispelled my illusion."
+        },
+        {
+          "verse": 32,
+          "sanskrit": "श्रीभगवानुवाच | कालोऽस्मि लोकक्षयकृत्प्रवृद्धो लोकान्समाहर्तुमिह प्रवृत्तः | ऋतेऽपि त्वां न भविष्यन्ति सर्वे येऽवस्थिताः प्रत्यनीकेषु योधाः ||",
+          "english": "The Supreme Personality of Godhead said: Time I am, the great destroyer of the worlds, and I have come here to destroy all people. With the exception of you [the Pandavas], all the soldiers here on both sides will be slain."
+        },
+        {
+          "verse": 54,
+          "sanskrit": "भक्त्या त्वनन्यया शक्य अहमेवंविधोऽर्जुन | ज्ञातुं द्रष्टुं च तत्त्वेन प्रवेष्टुं च परन्तप ||",
+          "english": "My dear Arjuna, only by undivided devotional service can I be understood as I am, standing before you, and can thus be seen directly. Only in this way can you enter into the mysteries of My understanding."
+        }
+      ]
+    },
+    {
+      "chapter": 12,
+      "title": "The Path of Devotion",
+      "sanskrit": "भक्ति योग",
+      "totalVerses": 20,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "अर्जुन उवाच | एवं सततयुक्ता ये भक्तास्त्वां पर्युपासते | ये चाप्यक्षरमव्यक्तं तेषां के योगवित्तमाः ||",
+          "english": "Arjuna inquired: Which are considered to be more perfect, those who are always properly engaged in Your devotional service or those who worship the impersonal Brahman, the unmanifested?"
+        },
+        {
+          "verse": 8,
+          "sanskrit": "मय्येव मन आधत्स्व मयि बुद्धिं निवेशय | निवसिष्यसि मय्येव अत ऊर्ध्वं न संशयः ||",
+          "english": "Just fix your mind upon Me, the Supreme Personality of Godhead, and engage all your intelligence in Me. Thus you will live in Me always, without a doubt."
+        },
+        {
+          "verse": 20,
+          "sanskrit": "ये तु धर्म्यामृतमिदं यथोक्तं पर्युपासते | श्रद्दधाना मत्परमा भक्तास्तेऽतीव मे प्रियाः ||",
+          "english": "Those who follow this imperishable path of devotional service and who completely engage themselves with faith, making Me the supreme goal, are very, very dear to Me."
+        }
+      ]
+    },
+    {
+      "chapter": 13,
+      "title": "The Field and The Knower of the Field",
+      "sanskrit": "क्षेत्र क्षेत्रज्ञ विभाग योग",
+      "totalVerses": 35,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "अर्जुन उवाच | प्रकृतिं पुरुषं चैव क्षेत्रं क्षेत्रज्ञमेव च | एतद्वेदितुमिच्छामि ज्ञानं ज्ञेयं च केशव ||",
+          "english": "Arjuna said: O my dear Krishna, I wish to know about prakrti [nature], purusha [the enjoyer], and the field and the knower of the field, and of knowledge and the object of knowledge."
+        },
+        {
+          "verse": 2,
+          "sanskrit": "श्रीभगवानुवाच | इदं शरीरं कौन्तेय क्षेत्रमित्यभिधीयते | एतद्यो वेत्ति तं प्राहुः क्षेत्रज्ञ इति तद्विदः ||",
+          "english": "The Supreme Personality of Godhead said: This body, O son of Kunti, is called the field, and one who knows this body is called the knower of the field."
+        },
+        {
+          "verse": 35,
+          "sanskrit": "क्षेत्रक्षेत्रज्ञयोरेवमन्तरं ज्ञानचक्षुषा | भूतप्रकृतिमोक्षं च ये विदुर्यान्ति ते परम् ||",
+          "english": "Those who see with eyes of knowledge the difference between the body and the knower of the body, and can also understand the process of liberation from bondage in material nature, attain to the supreme goal."
+        }
+      ]
+    },
+    {
+      "chapter": 14,
+      "title": "Division of Qualities",
+      "sanskrit": "गुणत्रय विभाग योग",
+      "totalVerses": 27,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "श्रीभगवानुवाच | परं भूयः प्रवक्ष्यामि ज्ञानानां ज्ञानमुत्तमम् | यज्ज्ञात्वा मुनयः सर्वे परां सिद्धिमितो गताः ||",
+          "english": "The Supreme Personality of Godhead said: Again I shall declare to you this supreme wisdom, the best of all knowledge, knowing which all the sages have attained the supreme perfection."
+        },
+        {
+          "verse": 20,
+          "sanskrit": "गुणानेतानतीत्य त्रीन्देही देहसमुद्भवान् | जन्ममृत्युजरादुःखैर्विमुक्तोऽमृतमश्नुते ||",
+          "english": "When the embodied being is able to transcend these three modes associated with the material body, he can become free from birth, death, old age and their distresses and can enjoy nectar even in this life."
+        }
+      ]
+    },
+    {
+      "chapter": 15,
+      "title": "Theology of The Supreme Being",
+      "sanskrit": "पुरुषोत्तम योग",
+      "totalVerses": 20,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "श्रीभगवानुवाच | ऊर्ध्वमूलमधःशाखमश्वत्थं प्राहुरव्ययम् | छन्दांसि यस्य पर्णानि यस्तं वेद स वेदवित् ||",
+          "english": "The Supreme Personality of Godhead said: It is said that there is an imperishable banyan tree that has its roots upward and its branches down and whose leaves are the Vedic hymns. One who knows this tree is the knower of the Vedas."
+        },
+        {
+          "verse": 15,
+          "sanskrit": "सर्वस्य चाहं हृदि संनिविष्टो मत्तः स्मृतिर्ज्ञानमपोहनं च | वेदैश्च सर्वैरहमेव वेद्यो वेदान्तकृद्वेदविदेव चाहम् ||",
+          "english": "I am seated in everyone's heart, and from Me come remembrance, knowledge and forgetfulness. By all the Vedas, I am to be known. Indeed, I am the compiler of Vedanta, and I am the knower of the Vedas."
+        }
+      ]
+    },
+    {
+      "chapter": 16,
+      "title": "The Divine and the Demoniac",
+      "sanskrit": "दैवासुर सम्पद्विभाग योग",
+      "totalVerses": 24,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "श्रीभगवानुवाच | अभयं सत्त्वसंशुद्धिर्ज्ञानयोगव्यवस्थितिः | दानं दमश्च यज्ञश्च स्वाध्यायस्तप आर्जवम् ||",
+          "english": "The Supreme Personality of Godhead said: Fearlessness; purification of one's existence; cultivation of spiritual knowledge; charity; self-control; performance of sacrifice; study of the Vedas; austerity; simplicity."
+        },
+        {
+          "verse": 24,
+          "sanskrit": "तस्माच्छास्त्रं प्रमाणं ते कार्याकार्यव्यवस्थितौ | ज्ञात्वा शास्त्रविधानोक्तं कर्म कर्तुमिहार्हसि ||",
+          "english": "One should therefore understand what is duty and what is not duty by the regulations of the scriptures. Knowing such rules and regulations, one should act so that he may gradually be elevated."
+        }
+      ]
+    },
+    {
+      "chapter": 17,
+      "title": "The Threefold Faith",
+      "sanskrit": "श्रद्धात्रय विभाग योग",
+      "totalVerses": 28,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "अर्जुन उवाच | ये शास्त्रविधिमुत्सृज्य यजन्ते श्रद्धयान्विताः | तेषां निष्ठा तु का कृष्ण सत्त्वमाहो रजस्तमः ||",
+          "english": "Arjuna said: O Krishna, what is the situation of those who do not follow the principles of scripture but worship according to their own imagination? Are they in goodness, in passion or in ignorance?"
+        },
+        {
+          "verse": 23,
+          "sanskrit": "ॐ तत्सदिति निर्देशो ब्रह्मणस्त्रिविधः स्मृतः | ब्राह्मणास्तेन वेदाश्च यज्ञाश्च विहिताः पुरा ||",
+          "english": "From the beginning of creation, the three words om tat sat were used to indicate the Supreme Absolute Truth. These three symbolic representations were used by brahmanas while chanting the hymns of the Vedas and during sacrifices for the satisfaction of the Supreme."
+        }
+      ]
+    },
+    {
+      "chapter": 18,
+      "title": "Liberation and Renunciation",
+      "sanskrit": "मोक्ष संन्यास योग",
+      "totalVerses": 78,
+      "verses": [
+        {
+          "verse": 1,
+          "sanskrit": "अर्जुन उवाच | संन्यासस्य महाबाहो तत्त्वमिच्छामि वेदितुम् | त्यागस्य च हृषीकेश पृथक्केशिनिषूदन ||",
+          "english": "Arjuna said: O mighty-armed one, I wish to understand the purpose of renunciation [tyaga] and of the renounced order of life [sannyasa], O killer of the Keshi demon, master of the senses."
+        },
+        {
+          "verse": 46,
+          "sanskrit": "यतः प्रवृत्तिर्भूतानां येन सर्वमिदं ततम् | स्वकर्मणा तमभ्यर्च्य सिद्धिं विन्दति मानवः ||",
+          "english": "By worship of the Lord, who is the source of all beings and who is all-pervading, a man can attain perfection through performing his own work."
+        },
+        {
+          "verse": 66,
+          "sanskrit": "सर्वधर्मान्परित्यज्य मामेकं शरणं व्रज | अहं त्वां सर्वपापेभ्यो मोक्षयिष्यामि मा शुचः ||",
+          "english": "Abandon all varieties of religion and just surrender unto Me. I shall deliver you from all sinful reactions. Do not fear."
+        },
+        {
+          "verse": 78,
+          "sanskrit": "यत्र योगेश्वरः कृष्णो यत्र पार्थो धनुर्धरः | तत्र श्रीर्विजयो भूतिर्ध्रुवा नीतिर्मतिर्मम ||",
+          "english": "Wherever there is Krishna, the master of all mystics, and wherever there is Arjuna, the supreme archer, there will also certainly be opulence, victory, extraordinary power, and morality. That is my opinion."
+        }
+      ]
+    }
+  ]
+}

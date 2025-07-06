@@ -38,31 +38,31 @@ export async function fetchBibleContent(book: string, chapter: number): Promise<
   }
 }
 
-// Bhagavad Gita API using publicapi.dev
+// Bhagavad Gita content from local JSON file
 export async function getBhagavadGitaContent(chapter: number): Promise<ExternalScripture[]> {
   try {
-    const response = await fetch(`https://api.publicapi.dev/bhagavad-gita/chapters/${chapter}/verses`);
+    const fs = require('fs');
+    const path = require('path');
     
-    if (!response.ok) {
-      throw new Error(`Bhagavad Gita API error: ${response.status}`);
-    }
+    const gitaPath = path.join(__dirname, '../data/bhagavad_gita.json');
+    const gitaData = JSON.parse(fs.readFileSync(gitaPath, 'utf8'));
     
-    const data = await response.json();
+    const chapterData = gitaData.chapters.find((ch: any) => ch.chapter === chapter);
     
-    if (!data || !Array.isArray(data)) {
+    if (!chapterData || !chapterData.verses) {
       return [];
     }
     
-    return data.map((verse: any) => ({
+    return chapterData.verses.map((verse: any) => ({
       religion: 'hindu' as Religion,
       book: 'Bhagavad Gita',
       chapter: chapter,
-      verse: verse.verse_number || verse.id || 1,
-      text: verse.text || verse.verse || verse.sanskrit || '',
-      translation: verse.translation || verse.english || 'Sanskrit'
+      verse: verse.verse,
+      text: `${verse.sanskrit}\n\n${verse.english}`,
+      translation: 'Sanskrit with English Translation'
     }));
   } catch (error) {
-    console.error('Error fetching Bhagavad Gita content:', error);
+    console.error('Error loading Bhagavad Gita content:', error);
     return [];
   }
 }
