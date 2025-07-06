@@ -236,36 +236,52 @@ Response format:
             })
           });
           
-          console.log('API Response:', response);
+          console.log('API Response Status:', response.status);
           
           if (!response.ok) {
-            throw new Error('Failed to get AI response');
+            console.error('API Error:', response.status, response.statusText);
+            throw new Error(`API Error: ${response.status}`);
           }
           
           const data = await response.json();
           console.log('API Response Data:', data);
-          console.log('API Response Keys:', Object.keys(data));
           
           // Handle API response format: { userMessage, aiMessage }
           let aiContent = '';
-          if (data.aiMessage && data.aiMessage.content) {
-            aiContent = data.aiMessage.content;
-            console.log('Using aiMessage.content:', aiContent);
-          } else if (data.aiResponse && data.aiResponse.content) {
-            aiContent = data.aiResponse.content;
-            console.log('Using aiResponse.content:', aiContent);
-          } else if (data.content) {
-            aiContent = data.content;
-            console.log('Using data.content:', aiContent);
-          } else if (data.message) {
-            aiContent = data.message;
-            console.log('Using data.message:', aiContent);
-          } else if (typeof data === 'string') {
-            aiContent = data;
-            console.log('Using string data:', aiContent);
-          } else {
-            aiContent = 'I received your message but had trouble formatting the response. Please try again.';
-            console.log('Using fallback response, data structure:', data);
+          
+          try {
+            if (data && typeof data === 'object') {
+              if (data.aiMessage && data.aiMessage.content) {
+                aiContent = data.aiMessage.content;
+                console.log('Successfully extracted aiMessage.content');
+              } else if (data.aiResponse && data.aiResponse.content) {
+                aiContent = data.aiResponse.content;
+                console.log('Successfully extracted aiResponse.content');
+              } else if (data.content) {
+                aiContent = data.content;
+                console.log('Successfully extracted data.content');
+              } else if (data.message) {
+                aiContent = data.message;
+                console.log('Successfully extracted data.message');
+              } else {
+                console.warn('No recognized content field in response:', Object.keys(data));
+                aiContent = 'I received your message but had trouble understanding the response format.';
+              }
+            } else if (typeof data === 'string') {
+              aiContent = data;
+              console.log('Using string response');
+            } else {
+              console.error('Unexpected response format:', typeof data, data);
+              aiContent = 'I received an unexpected response format. Please try again.';
+            }
+          } catch (parseError) {
+            console.error('Error parsing API response:', parseError);
+            aiContent = 'I had trouble processing the response. Please try again.';
+          }
+          
+          // Ensure we have valid content
+          if (!aiContent || typeof aiContent !== 'string') {
+            aiContent = 'I apologize, but I couldn\'t generate a proper response. Please try asking again.';
           }
           
           // Add AI response to chat state
@@ -274,20 +290,32 @@ Response format:
             isUser: false, 
             timestamp: new Date()
           };
-          console.log('Adding AI message:', aiMsg);
+          console.log('Adding AI message to chat:', aiMsg);
           addMessageToChat(aiMsg);
           
         } catch (error) {
           console.error('Chat error:', error);
           
-          // Fallback to mock response if API fails
-          const aiResponse = generateMockResponse(userInput);
-          const aiMsg = { 
-            text: aiResponse,
-            isUser: false, 
-            timestamp: new Date()
-          };
-          addMessageToChat(aiMsg);
+          // Always provide a fallback response
+          try {
+            const aiResponse = generateMockResponse(userInput);
+            const aiMsg = { 
+              text: aiResponse || 'I apologize, but I encountered an error. Please try again.',
+              isUser: false, 
+              timestamp: new Date()
+            };
+            console.log('Adding fallback message:', aiMsg);
+            addMessageToChat(aiMsg);
+          } catch (fallbackError) {
+            console.error('Error in fallback response:', fallbackError);
+            // Last resort message
+            const errorMsg = { 
+              text: 'I apologize, but I encountered a technical issue. Please refresh and try again.',
+              isUser: false, 
+              timestamp: new Date()
+            };
+            addMessageToChat(errorMsg);
+          }
         }
         
         setIsLoading(false);
@@ -305,10 +333,17 @@ Response format:
       }, [chatState]);
 
       const formatTime = (timestamp) => {
-        return new Date(timestamp).toLocaleTimeString([], { 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        });
+        try {
+          if (!timestamp) return '';
+          const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+          return date.toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          });
+        } catch (error) {
+          console.error('Error formatting time:', error);
+          return '';
+        }
       };
 
       return (
@@ -373,46 +408,66 @@ Response format:
               </div>
             ) : (
               <div className="space-y-3">
-                {chatState.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-start space-x-3 ${
-                      message.isUser ? 'flex-row-reverse space-x-reverse' : ''
-                    }`}
-                  >
-                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                      message.isUser 
-                        ? 'bg-blue-600 text-white' 
-                        : 'bg-gradient-to-br from-purple-500 to-blue-500 text-white'
-                    }`}>
-                      {message.isUser ? (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
-                      )}
-                    </div>
-                    <div className={`flex-1 max-w-[75%] ${
-                      message.isUser ? 'text-right' : 'text-left'
-                    }`}>
-                      <div className={`inline-block p-3 rounded-lg shadow-sm ${
-                        message.isUser
-                          ? 'bg-gray-100 text-gray-800 border border-gray-200 rounded-br-sm'
-                          : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm shadow-sm'
-                      }`}>
-                        <p className="text-sm leading-relaxed">{message.text}</p>
+                {chatState.map((message, index) => {
+                  try {
+                    // Validate message structure
+                    if (!message || typeof message !== 'object') {
+                      console.error('Invalid message at index', index, message);
+                      return null;
+                    }
+                    
+                    const messageText = message.text || message.content || '';
+                    const isUserMessage = Boolean(message.isUser);
+                    
+                    return (
+                      <div
+                        key={index}
+                        className={`flex items-start space-x-3 ${
+                          isUserMessage ? 'flex-row-reverse space-x-reverse' : ''
+                        }`}
+                      >
+                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                          isUserMessage 
+                            ? 'bg-blue-600 text-white' 
+                            : 'bg-gradient-to-br from-purple-500 to-blue-500 text-white'
+                        }`}>
+                          {isUserMessage ? (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className={`flex-1 max-w-[75%] ${
+                          isUserMessage ? 'text-right' : 'text-left'
+                        }`}>
+                          <div className={`inline-block p-3 rounded-lg shadow-sm ${
+                            isUserMessage
+                              ? 'bg-gray-100 text-gray-800 border border-gray-200 rounded-br-sm'
+                              : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm shadow-sm'
+                          }`}>
+                            <p className="text-sm leading-relaxed">{messageText}</p>
+                          </div>
+                          <div className={`text-xs text-gray-500 mt-1 ${
+                            isUserMessage ? 'text-right' : 'text-left'
+                          }`}>
+                            {formatTime(message.timestamp)}
+                          </div>
+                        </div>
                       </div>
-                      <div className={`text-xs text-gray-500 mt-1 ${
-                        message.isUser ? 'text-right' : 'text-left'
-                      }`}>
-                        {formatTime(message.timestamp)}
+                    );
+                  } catch (renderError) {
+                    console.error('Error rendering message at index', index, renderError, message);
+                    return (
+                      <div key={index} className="p-2 bg-red-50 border border-red-200 rounded text-xs text-red-600">
+                        Error displaying message
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  }
+                })}
               </div>
             )}
             
