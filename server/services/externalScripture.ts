@@ -120,14 +120,30 @@ export async function fetchTorahContent(book: string, chapter: number): Promise<
       return [];
     }
     
-    return data.text.map((verse: string, index: number) => ({
-      religion: 'torah' as Religion,
-      book: book,
-      chapter: chapter,
-      verse: index + 1,
-      text: verse || '',
-      translation: 'English'
-    }));
+    return data.text.map((verse: string, index: number) => {
+      // Clean the text by removing footnotes (usually marked with <i>, </i>, or numbered references)
+      let cleanedText = verse || '';
+      
+      // Remove HTML tags
+      cleanedText = cleanedText.replace(/<[^>]*>/g, '');
+      
+      // Remove footnote references (numbers in parentheses, square brackets, or standalone numbers)
+      cleanedText = cleanedText.replace(/\(\d+\)/g, '');
+      cleanedText = cleanedText.replace(/\[\d+\]/g, '');
+      cleanedText = cleanedText.replace(/\b\d+\s*$/, ''); // Remove trailing numbers
+      
+      // Remove extra whitespace and clean up
+      cleanedText = cleanedText.replace(/\s+/g, ' ').trim();
+      
+      return {
+        religion: 'torah' as Religion,
+        book: book,
+        chapter: chapter,
+        verse: index + 1,
+        text: cleanedText,
+        translation: 'English'
+      };
+    });
   } catch (error) {
     console.error('Error fetching Torah content:', error);
     return [];
