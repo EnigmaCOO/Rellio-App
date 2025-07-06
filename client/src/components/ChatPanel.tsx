@@ -209,8 +209,11 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
         </div>
         <p className="text-xs lg:text-sm text-scripture-600">
           {context.religion ? 
-            `Ask questions about ${context.religion === 'quran' ? 'Quran -' : ''} ${context.book}${context.religion === 'quran' ? ` (Chapter ${getQuranChapterNumber(context.book)})` : ` Chapter ${context.chapter}`}` :
-            "Welcome! I'm your AI Scripture Guide. Please select a text and book to start a conversation."
+            (context.book ? 
+              `Ask questions about ${context.religion === 'quran' ? 'Quran -' : ''} ${context.book}${context.religion === 'quran' ? ` (Chapter ${getQuranChapterNumber(context.book)})` : ` Chapter ${context.chapter}`}` :
+              `Ask general questions about ${context.religion === 'quran' ? 'the Quran' : context.religion === 'bible' ? 'the Bible' : context.religion === 'torah' ? 'the Torah' : context.religion === 'hindu' ? 'the Bhagavad Gita' : 'Buddhist teachings'}`
+            ) :
+            "Welcome! I'm your AI Scripture Guide. Please select a religious tradition to start our conversation."
           }
         </p>
       </div>
@@ -270,8 +273,11 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
               <Bot className="h-12 w-12 mx-auto mb-4 text-scripture-400" />
               <p className="text-sm">
                 {context.religion ? 
-                  `Hello! I'm here to help you explore and understand the scriptures. Ask me anything about ${context.religion === 'quran' ? 'this surah' : 'this passage'}.` :
-                  "Welcome! I'm your AI Scripture Guide. Select a religious text and book to start our conversation about sacred writings."
+                  (context.book ? 
+                    `Hello! I'm here to help you explore and understand the scriptures. Ask me anything about ${context.religion === 'quran' ? 'this surah' : 'this passage'}.` :
+                    `Hello! I'm your AI Scripture Guide for ${context.religion === 'quran' ? 'the Quran' : context.religion === 'bible' ? 'the Bible' : context.religion === 'torah' ? 'the Torah' : context.religion === 'hindu' ? 'the Bhagavad Gita' : 'Buddhist teachings'}. Ask me general questions about this religious tradition or select a specific book for detailed study.`
+                  ) :
+                  "Welcome! I'm your AI Scripture Guide. Select a religious tradition to start our conversation about sacred writings."
                 }
               </p>
             </div>
@@ -303,8 +309,11 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
           <Input
             type="text"
             placeholder={context.religion ? 
-              `Ask about ${context.religion === 'quran' ? 'this surah' : 'this passage'}...` :
-              "Select a text to start asking questions..."
+              (context.book ? 
+                `Ask about ${context.religion === 'quran' ? 'this surah' : 'this passage'}...` :
+                `Ask general questions about ${context.religion === 'quran' ? 'the Quran' : context.religion === 'bible' ? 'the Bible' : context.religion === 'torah' ? 'the Torah' : context.religion === 'hindu' ? 'the Bhagavad Gita' : 'Buddhist teachings'}...`
+              ) :
+              "Select a religious tradition to start asking questions..."
             }
             className="flex-1"
             value={newMessage}
