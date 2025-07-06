@@ -86,6 +86,7 @@ This is a full-stack web application for scripture study and AI-powered chat ass
 
 ## Changelog
 
+- **July 06, 2025 1:03 AM**: Enhanced Torah chapter display with verse counts - Torah chapters now show "Chapter 1 (31 verses)" in header and "31 verses in this chapter" in navigation, matching Bible's enhanced display format. All Torah books maintain accurate chapter counts (Bereshit: 50, Shemot: 40, Vayikra: 27, Bamidbar: 36, Devarim: 34).
 - **July 06, 2025 12:58 AM**: Fixed Bible chapter navigation to show all chapters dynamically - corrected API query to fetch proper chapter counts per book (Leviticus now shows 27 chapters instead of limiting to 10), ensuring complete access to all biblical content with accurate chapter ranges.
 - **July 06, 2025 12:52 AM**: Enhanced Bible chapter display with verse counts - Bible chapters now show "Chapter 1 (31 verses)" in header and "31 verses in this chapter" in navigation, providing clear chapter information while maintaining standard chapter-based navigation (different from Quran's page-based approach).
 - **July 06, 2025 12:45 AM**: Fixed Quran page navigation by enabling full surah content - modified external API to return all verses per surah instead of limiting to 10, implemented proper client-side pagination with 10 verses per page, and ensured accurate page counts (Al-Baqarah now shows "Page 1 of 29" with full 286 verses).
