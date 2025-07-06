@@ -86,6 +86,7 @@ This is a full-stack web application for scripture study and AI-powered chat ass
 
 ## Changelog
 
+- **July 06, 2025 12:38 AM**: Implemented page-based navigation for Quran chapters - displays "Page 1 of 3" instead of "Chapter 1", shows verse counts per page (10 verses per page), maintains accurate verse numbering across pages, and provides contextual navigation information (e.g., "5 verses on this page") for enhanced reading experience.
 - **July 06, 2025 12:30 AM**: Implemented comprehensive Quran navigation with all 114 surahs - added complete surah mapping with Arabic names, English translations, and verse counts, enhanced chapter selector to display surah numbers, names, and verse counts (e.g., "1 Al-Fatihah 7v"), and integrated smart chapter-to-surah navigation for seamless Quran study experience.
 - **July 06, 2025 12:18 AM**: Fixed text cleaning and chapter numbering - removed footnotes from Torah texts (HTML tags, parenthetical numbers, brackets), implemented proper Quran chapter display (Chapter 2 for Al-Baqarah instead of always Chapter 1), and ensured accurate Bible chapter counts are displayed when books are selected.
 - **July 06, 2025 12:07 AM**: Comprehensive UI enhancements for seamless launch - implemented search functionality for book filtering, cohesive state management across all panels, enhanced responsive design for mobile (lg: breakpoints), subtle fade-in animations for content updates, improved panel layouts with proper height management, and polished header design with responsive search bar.

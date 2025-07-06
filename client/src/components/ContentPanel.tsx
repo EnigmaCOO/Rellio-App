@@ -168,6 +168,20 @@ export function ContentPanel({
 
   const displayChapter = getDisplayChapter();
 
+  // Calculate pagination for Quran verses
+  const VERSES_PER_PAGE = 10; // Show 10 verses per page
+  const totalVerses = scriptures?.length || 0;
+  const totalPages = Math.ceil(totalVerses / VERSES_PER_PAGE);
+  const currentPage = selectedChapter;
+  const startVerseIndex = (currentPage - 1) * VERSES_PER_PAGE;
+  const endVerseIndex = Math.min(startVerseIndex + VERSES_PER_PAGE, totalVerses);
+  const versesOnCurrentPage = endVerseIndex - startVerseIndex;
+
+  // Get verses for current page (only for Quran)
+  const currentPageVerses = selectedReligion === 'quran' ? 
+    scriptures?.slice(startVerseIndex, endVerseIndex) || [] : 
+    scriptures || [];
+
   const recordReadingMutation = useMutation({
     mutationFn: async (reading: { userId: number; religion: Religion; book: string; chapter: number }) => {
       await apiRequest("POST", "/api/readings", reading);
@@ -178,18 +192,35 @@ export function ContentPanel({
   });
 
   const handleChapterNavigation = (direction: 'prev' | 'next') => {
-    const newChapter = direction === 'prev' ? selectedChapter - 1 : selectedChapter + 1;
-    if (newChapter > 0) {
-      onChapterChange(newChapter);
-      
-      // Record the reading (only if religion is selected)
-      if (selectedReligion) {
+    if (selectedReligion === 'quran') {
+      // For Quran, navigate through pages of verses
+      const newPage = direction === 'prev' ? currentPage - 1 : currentPage + 1;
+      if (newPage >= 1 && newPage <= totalPages) {
+        onChapterChange(newPage);
+        
+        // Record the reading
         recordReadingMutation.mutate({
           userId: 1, // Default user ID
           religion: selectedReligion as Religion,
           book: selectedBook,
-          chapter: newChapter,
+          chapter: newPage,
         });
+      }
+    } else {
+      // For other religions, navigate through chapters
+      const newChapter = direction === 'prev' ? selectedChapter - 1 : selectedChapter + 1;
+      if (newChapter > 0) {
+        onChapterChange(newChapter);
+        
+        // Record the reading
+        if (selectedReligion) {
+          recordReadingMutation.mutate({
+            userId: 1, // Default user ID
+            religion: selectedReligion as Religion,
+            book: selectedBook,
+            chapter: newChapter,
+          });
+        }
       }
     }
   };
@@ -243,7 +274,9 @@ export function ContentPanel({
         <div className="space-y-4 flex flex-col items-center justify-center min-h-[400px] animate-in fade-in-0 duration-300">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-scripture-600"></div>
           <div className="text-scripture-600 text-base lg:text-lg font-medium">Loading scripture content...</div>
-          <div className="text-scripture-500 text-sm">Fetching {religionName} - {selectedBook} Chapter {selectedChapter}</div>
+          <div className="text-scripture-500 text-sm">
+            Fetching {religionName} - {selectedBook} {selectedReligion === 'quran' ? `Page ${selectedChapter}` : `Chapter ${selectedChapter}`}
+          </div>
         </div>
       </div>
     );
@@ -274,7 +307,12 @@ export function ContentPanel({
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg lg:text-2xl font-bold text-scripture-800">
               {religionName} - {selectedBook}
-              <span className="text-scripture-500 ml-2">Chapter {displayChapter}</span>
+              <span className="text-scripture-500 ml-2">
+                {selectedReligion === 'quran' ? 
+                  `Page ${currentPage} of ${totalPages}` : 
+                  `Chapter ${displayChapter}`
+                }
+              </span>
             </h2>
             <div className="flex items-center space-x-2">
               <Button variant="ghost" size="sm" onClick={() => handleStudyTool("Bookmark")}>
@@ -289,22 +327,34 @@ export function ContentPanel({
             </div>
           </div>
           
-          {/* Chapter Navigation */}
+          {/* Chapter/Page Navigation */}
           <div className="flex items-center space-x-4 mb-6">
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleChapterNavigation('prev')}
-              disabled={selectedChapter <= 1}
+              disabled={selectedReligion === 'quran' ? currentPage <= 1 : selectedChapter <= 1}
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
               Previous
             </Button>
-            <span className="text-scripture-600">Chapter {displayChapter}</span>
+            <span className="text-scripture-600">
+              {selectedReligion === 'quran' ? (
+                <div className="text-center">
+                  <div>Page {currentPage} of {totalPages}</div>
+                  <div className="text-xs text-scripture-500">
+                    {versesOnCurrentPage} verses on this page
+                  </div>
+                </div>
+              ) : (
+                `Chapter ${displayChapter}`
+              )}
+            </span>
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleChapterNavigation('next')}
+              disabled={selectedReligion === 'quran' ? currentPage >= totalPages : false}
             >
               Next
               <ChevronRight className="h-4 w-4 ml-1" />
@@ -315,15 +365,18 @@ export function ContentPanel({
         {/* Scripture Content */}
         <div className="bg-scripture-50 rounded-lg p-4 lg:p-6 mb-6 animate-in fade-in-0 duration-500">
           <div className="space-y-4">
-            {scriptures && scriptures.length > 0 ? (
-              scriptures.map((scripture, index) => (
+            {currentPageVerses && currentPageVerses.length > 0 ? (
+              currentPageVerses.map((scripture, index) => (
                 <div
                   key={scripture.id || `${scripture.religion}-${scripture.book}-${scripture.chapter}-${scripture.verse || index}`}
                   className="flex items-start space-x-4 hover:bg-white rounded-lg p-3 transition-all duration-200 cursor-pointer group animate-in fade-in-0"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <span className="text-blue-600 font-bold text-sm mt-1 min-w-[2rem]">
-                    {scripture.verse}
+                    {selectedReligion === 'quran' ? 
+                      scripture.verse || (startVerseIndex + index + 1) : 
+                      scripture.verse
+                    }
                   </span>
                   <p className="text-scripture-800 leading-relaxed text-base lg:text-lg group-hover:text-scripture-900">
                     {scripture.text}
