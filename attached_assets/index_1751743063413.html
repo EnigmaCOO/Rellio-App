@@ -65,7 +65,8 @@
 
       // Context Management System
       const getContextKey = () => {
-        if (!selectedReligion || !selectedBook) return 'general';
+        if (!selectedReligion) return 'general';
+        if (!selectedBook) return `${selectedReligion}-general`;
         return `${selectedReligion}-${selectedBook}`;
       };
 
@@ -79,6 +80,10 @@
           hindu: 'Bhagavad Gita',
           buddhist: 'Tripitaka'
         };
+        
+        if (book === 'general') {
+          return `${religionNames[religion] || religion} - General Discussion`;
+        }
         return `${religionNames[religion] || religion} - ${book}`;
       };
 
@@ -280,21 +285,37 @@ Response format:
         const questionWords = ['what', 'why', 'how', 'when', 'where', 'who', 'explain', 'meaning', 'significance'];
         const hasQuestion = questionWords.some(word => userMessage.toLowerCase().includes(word));
         
-        if (hasQuestion && selectedReligion && selectedBook) {
+        if (hasQuestion && selectedReligion) {
           // Get current verse text if available
           const currentVerse = currentVerses && currentVerses.length > 0 ? currentVerses[0].text : '';
           
-          const religionResponses = {
-            bible: `This passage from ${selectedBook} teaches about divine truth and spiritual guidance. ${currentVerse ? 'The verse reveals God\'s plan for humanity through Christ\'s teachings.' : 'These scriptures provide wisdom for Christian living.'} What aspect would you like to explore further?`,
-            quran: `This surah from ${selectedBook} contains Allah's guidance with profound meaning. ${currentVerse ? 'The verse emphasizes submission to Allah and following the straight path.' : 'The Quranic teachings offer direction for righteous living.'} Which part interests you most?`,
-            torah: `This section from ${selectedBook} contains foundational Jewish teachings. ${currentVerse ? 'The verse reflects the covenant between God and His people.' : 'The Torah provides laws and wisdom for Jewish life.'} What questions do you have about its significance?`,
-            hindu: `This chapter from the ${selectedBook} presents dharmic wisdom about life's purpose. ${currentVerse ? 'The verse teaches about karma, dharma, and spiritual realization.' : 'The Bhagavad Gita offers guidance on righteous action.'} Which teaching resonates with you?`,
-            buddhist: `This passage from ${selectedBook} offers insight into the path of liberation. ${currentVerse ? 'The verse addresses suffering and the way to enlightenment.' : 'Buddhist teachings guide us toward mindfulness and compassion.'} What aspect of the dharma interests you?`
-          };
-          
-          return religionResponses[selectedReligion] || "This scripture offers timeless wisdom. What specific aspect would you like to understand better?";
+          if (selectedBook) {
+            // Specific book responses
+            const religionResponses = {
+              bible: `This passage from ${selectedBook} teaches about divine truth and spiritual guidance. ${currentVerse ? 'The verse reveals God\'s plan for humanity through Christ\'s teachings.' : 'These scriptures provide wisdom for Christian living.'} What aspect would you like to explore further?`,
+              quran: `This surah from ${selectedBook} contains Allah's guidance with profound meaning. ${currentVerse ? 'The verse emphasizes submission to Allah and following the straight path.' : 'The Quranic teachings offer direction for righteous living.'} Which part interests you most?`,
+              torah: `This section from ${selectedBook} contains foundational Jewish teachings. ${currentVerse ? 'The verse reflects the covenant between God and His people.' : 'The Torah provides laws and wisdom for Jewish life.'} What questions do you have about its significance?`,
+              hindu: `This chapter from the ${selectedBook} presents dharmic wisdom about life's purpose. ${currentVerse ? 'The verse teaches about karma, dharma, and spiritual realization.' : 'The Bhagavad Gita offers guidance on righteous action.'} Which teaching resonates with you?`,
+              buddhist: `This passage from ${selectedBook} offers insight into the path of liberation. ${currentVerse ? 'The verse addresses suffering and the way to enlightenment.' : 'Buddhist teachings guide us toward mindfulness and compassion.'} What aspect of the dharma interests you?`
+            };
+            
+            return religionResponses[selectedReligion] || "This scripture offers timeless wisdom. What specific aspect would you like to understand better?";
+          } else {
+            // General religious tradition responses
+            const generalResponses = {
+              bible: `The Bible contains profound wisdom about faith, love, and divine guidance. It offers teachings on salvation through Jesus Christ, moral living, and God's relationship with humanity. Would you like to explore specific themes like forgiveness, love, or prophecy?`,
+              quran: `The Quran is Allah's final revelation, offering guidance for all aspects of life. It emphasizes submission to Allah, the importance of community, and living righteously. Are you interested in learning about specific concepts like tawhid (unity of God), jihad, or Islamic ethics?`,
+              torah: `The Torah is the foundation of Jewish faith, containing God's covenant with the Jewish people. It includes laws, history, and wisdom about living a holy life. Would you like to discuss topics like the commandments, Jewish festivals, or the concept of covenant?`,
+              hindu: `The Bhagavad Gita teaches about dharma (righteous duty), karma (action), and the path to spiritual liberation. It explores the nature of reality, devotion, and self-realization. Are you curious about concepts like moksha, yoga, or the different paths to the divine?`,
+              buddhist: `Buddhist teachings focus on the Four Noble Truths, the Eightfold Path, and the goal of enlightenment. They address suffering, impermanence, and compassion. Would you like to explore meditation, mindfulness, or the concept of liberation from suffering?`
+            };
+            
+            return generalResponses[selectedReligion] || "This religious tradition offers profound wisdom. What specific teachings or concepts would you like to explore?";
+          }
         } else {
-          return "I'm here to help! Please ask a question about the scripture to begin our conversation.";
+          return selectedReligion 
+            ? "I'm here to help you explore this religious tradition! Please ask a question about its teachings, history, or spiritual concepts."
+            : "I'm here to help! Please ask a question about scripture or religious teachings to begin our conversation.";
         }
       };
 
@@ -485,9 +506,12 @@ Response format:
             </div>
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-600">
-                {selectedReligion && selectedBook ? 
-                  `Ask questions about ${selectedReligion === 'quran' ? 'Quran -' : ''} ${selectedBook} ${selectedReligion === 'quran' ? `(Surah ${selectedChapter})` : `Chapter ${selectedChapter}`}` :
-                  "Welcome! I'm your AI Scripture Guide. Please select a text and book to start our conversation."
+                {selectedReligion ? 
+                  (selectedBook ? 
+                    `Ask questions about ${selectedReligion === 'quran' ? 'Quran -' : ''} ${selectedBook} ${selectedReligion === 'quran' ? `(Surah ${selectedChapter})` : `Chapter ${selectedChapter}`}` :
+                    `Ask general questions about ${selectedReligion === 'quran' ? 'the Quran' : selectedReligion === 'bible' ? 'the Bible' : selectedReligion === 'torah' ? 'the Torah' : selectedReligion === 'hindu' ? 'the Bhagavad Gita' : 'Buddhist teachings'}`
+                  ) :
+                  "Welcome! I'm your AI Scripture Guide. Please select a religious tradition to start our conversation."
                 }
               </p>
               {chatState.length > 0 && (
@@ -570,8 +594,11 @@ Response format:
                 </div>
                 <p className="text-sm">
                   {selectedReligion ? 
-                    `Hello! I'm here to help you explore and understand the scriptures. Ask me anything about ${selectedReligion === 'quran' ? 'this surah' : 'this passage'}.` :
-                    "Welcome! I'm your AI Scripture Guide. Select a religious text and book to start our conversation about sacred writings."
+                    (selectedBook ? 
+                      `Hello! I'm here to help you explore and understand the scriptures. Ask me anything about ${selectedReligion === 'quran' ? 'this surah' : 'this passage'}.` :
+                      `Hello! I'm your AI Scripture Guide for ${selectedReligion === 'quran' ? 'the Quran' : selectedReligion === 'bible' ? 'the Bible' : selectedReligion === 'torah' ? 'the Torah' : selectedReligion === 'hindu' ? 'the Bhagavad Gita' : 'Buddhist teachings'}. Ask me general questions about this religious tradition or select a specific book for detailed study.`
+                    ) :
+                    "Welcome! I'm your AI Scripture Guide. Select a religious tradition to start our conversation about sacred writings."
                   }
                 </p>
                 {previousContexts.length === 0 && (
@@ -715,8 +742,11 @@ Response format:
               <input
                 type="text"
                 placeholder={selectedReligion ? 
-                  `Ask about ${selectedReligion === 'quran' ? 'this surah' : 'this passage'}...` :
-                  "Select a text to start asking questions..."
+                  (selectedBook ? 
+                    `Ask about ${selectedReligion === 'quran' ? 'this surah' : 'this passage'}...` :
+                    `Ask general questions about ${selectedReligion === 'quran' ? 'the Quran' : selectedReligion === 'bible' ? 'the Bible' : selectedReligion === 'torah' ? 'the Torah' : selectedReligion === 'hindu' ? 'the Bhagavad Gita' : 'Buddhist teachings'}...`
+                  ) :
+                  "Select a religious tradition to start asking questions..."
                 }
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={newMessage}
