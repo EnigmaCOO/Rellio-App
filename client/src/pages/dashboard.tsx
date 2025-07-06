@@ -4,7 +4,7 @@ import { ContentPanel } from "@/components/ContentPanel";
 import { ChatPanel } from "@/components/ChatPanel";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Settings, BookOpen } from "lucide-react";
-import rellioLogo from "@assets/image_1751781461744.png";
+import rellioLogo from "@assets/image_1751817332000.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";

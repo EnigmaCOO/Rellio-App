@@ -13,7 +13,7 @@ import {
   Quote,
   MessageCircle
 } from "lucide-react";
-import rellioLogo from "@assets/image_1751781461744.png";
+import rellioLogo from "@assets/image_1751817332000.png";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, Scripture } from "@shared/schema";
 
