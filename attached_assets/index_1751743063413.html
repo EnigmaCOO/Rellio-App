@@ -234,10 +234,27 @@ Response format:
           }
           
           const data = await response.json();
+          console.log('API Response:', data);
+          
+          // Handle API response format: { userMessage, aiMessage }
+          let aiContent = '';
+          if (data.aiMessage && data.aiMessage.content) {
+            aiContent = data.aiMessage.content;
+          } else if (data.aiResponse && data.aiResponse.content) {
+            aiContent = data.aiResponse.content;
+          } else if (data.content) {
+            aiContent = data.content;
+          } else if (data.message) {
+            aiContent = data.message;
+          } else if (typeof data === 'string') {
+            aiContent = data;
+          } else {
+            aiContent = 'I received your message but had trouble formatting the response. Please try again.';
+          }
           
           const aiMsg = { 
             type: 'ai', 
-            content: data.aiResponse.content,
+            content: aiContent,
             timestamp: new Date().toISOString(),
             context: { religion: selectedReligion, book: selectedBook, chapter: selectedChapter }
           };
