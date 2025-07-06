@@ -195,10 +195,8 @@ export function ContentPanel({
     if (selectedReligion === 'quran') {
       // For Quran, navigate through pages of verses
       const newPage = direction === 'prev' ? currentPage - 1 : currentPage + 1;
-      console.log(`Quran navigation: ${direction}, currentPage: ${currentPage}, newPage: ${newPage}, totalPages: ${totalPages}`);
       
       if (newPage >= 1 && newPage <= totalPages) {
-        console.log(`Navigating to page ${newPage}`);
         onChapterChange(newPage);
         
         // Record the reading
@@ -208,8 +206,6 @@ export function ContentPanel({
           book: selectedBook,
           chapter: newPage,
         });
-      } else {
-        console.log(`Invalid page navigation: newPage ${newPage} is out of bounds (1-${totalPages})`);
       }
     } else {
       // For other religions, navigate through chapters

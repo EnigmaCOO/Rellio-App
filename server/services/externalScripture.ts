@@ -85,11 +85,11 @@ export async function fetchQuranContent(surah: number, startVerse: number = 1, e
       return [];
     }
     
-    // For Quran, if chapter (verse range) is specified, return that range
+    // For Quran, return all verses in the surah (pagination handled client-side)
     const ayahs = data.data.ayahs;
     const filteredAyahs = endVerse 
       ? ayahs.slice(startVerse - 1, endVerse)
-      : ayahs.slice(startVerse - 1, Math.min(startVerse + 9, ayahs.length)); // Show 10 verses max per "chapter"
+      : ayahs; // Return all verses for client-side pagination
     
     return filteredAyahs.map((ayah: any) => ({
       religion: 'quran' as Religion,
