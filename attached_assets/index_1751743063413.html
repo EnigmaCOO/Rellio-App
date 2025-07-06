@@ -75,10 +75,15 @@
       // Add message to current group
       const addMessageToGroup = (message) => {
         const groupKey = getGroupKey();
-        setMessageGroups(prev => ({
-          ...prev,
-          [groupKey]: [...(prev[groupKey] || []), message]
-        }));
+        console.log('Adding message to group:', groupKey, message);
+        setMessageGroups(prev => {
+          const newGroups = {
+            ...prev,
+            [groupKey]: [...(prev[groupKey] || []), message]
+          };
+          console.log('Updated message groups:', newGroups);
+          return newGroups;
+        });
       };
 
       // Clear current group's history
@@ -235,21 +240,28 @@ Response format:
           
           const data = await response.json();
           console.log('API Response:', data);
+          console.log('API Response Keys:', Object.keys(data));
           
           // Handle API response format: { userMessage, aiMessage }
           let aiContent = '';
           if (data.aiMessage && data.aiMessage.content) {
             aiContent = data.aiMessage.content;
+            console.log('Using aiMessage.content:', aiContent);
           } else if (data.aiResponse && data.aiResponse.content) {
             aiContent = data.aiResponse.content;
+            console.log('Using aiResponse.content:', aiContent);
           } else if (data.content) {
             aiContent = data.content;
+            console.log('Using data.content:', aiContent);
           } else if (data.message) {
             aiContent = data.message;
+            console.log('Using data.message:', aiContent);
           } else if (typeof data === 'string') {
             aiContent = data;
+            console.log('Using string data:', aiContent);
           } else {
             aiContent = 'I received your message but had trouble formatting the response. Please try again.';
+            console.log('Using fallback response, data structure:', data);
           }
           
           const aiMsg = { 
@@ -258,7 +270,12 @@ Response format:
             timestamp: new Date().toISOString(),
             context: { religion: selectedReligion, book: selectedBook, chapter: selectedChapter }
           };
+          console.log('Adding AI message:', aiMsg);
           addMessageToGroup(aiMsg);
+          console.log('Current messages after adding:', getCurrentMessages());
+          
+          // Force a re-render by updating the state
+          setMessageGroups(prev => ({ ...prev }));
           
         } catch (error) {
           console.error('Chat error:', error);
