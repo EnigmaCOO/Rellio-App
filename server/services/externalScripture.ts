@@ -49,25 +49,27 @@ export async function getBhagavadGitaContent(chapter: number): Promise<ExternalS
     
     const gitaData = JSON.parse(fs.readFileSync(gitaPath, 'utf8'));
     console.log(`Found ${gitaData.chapters.length} chapters in Bhagavad Gita data`);
+    console.log(`Looking for chapter ${chapter} (type: ${typeof chapter})`);
+    console.log(`First chapter number: ${gitaData.chapters[0]?.number} (type: ${typeof gitaData.chapters[0]?.number})`);
     
-    const chapterData = gitaData.chapters.find((ch: any) => ch.chapter === chapter);
+    const chapterData = gitaData.chapters.find((ch: any) => ch.number === chapter);
     
     if (!chapterData) {
       console.log(`Chapter ${chapter} not found in Bhagavad Gita data`);
       return [];
     }
     
-    console.log(`Loading ${chapterData.totalVerses} verses from chapter ${chapter}: ${chapterData.title}`);
+    console.log(`Loading ${chapterData.verses.length} verses from chapter ${chapter}: ${chapterData.title}`);
     
-    // Generate verses dynamically based on totalVerses count
+    // Use the actual verse data from the JSON file
     const verses: ExternalScripture[] = [];
-    for (let i = 1; i <= chapterData.totalVerses; i++) {
+    for (const verseData of chapterData.verses) {
       verses.push({
         religion: 'hindu' as Religion,
         book: 'Bhagavad Gita',
         chapter: chapter,
-        verse: i,
-        text: `Verse ${i} of Chapter ${chapter}: ${chapterData.title}\n\n[Sanskrit text would be here]\n\n[English translation would be here]\n\nThis is a placeholder for the actual verse content from your PDF. The complete text extraction would require more detailed parsing of the PDF structure.`,
+        verse: verseData.number,
+        text: `${verseData.sanskrit}\n\n${verseData.transliteration}\n\n${verseData.translation}`,
         translation: 'Sanskrit with English Translation'
       });
     }
