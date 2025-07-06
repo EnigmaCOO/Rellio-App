@@ -171,10 +171,10 @@ export function ContentPanel({
   // Calculate pagination for Quran verses
   const VERSES_PER_PAGE = 10; // Show 10 verses per page
   const totalVerses = scriptures?.length || 0;
-  const totalPages = Math.ceil(totalVerses / VERSES_PER_PAGE);
-  const currentPage = selectedChapter;
-  const startVerseIndex = (currentPage - 1) * VERSES_PER_PAGE;
-  const endVerseIndex = Math.min(startVerseIndex + VERSES_PER_PAGE, totalVerses);
+  const totalPages = selectedReligion === 'quran' ? Math.ceil(totalVerses / VERSES_PER_PAGE) : 1;
+  const currentPage = selectedReligion === 'quran' ? selectedChapter : selectedChapter;
+  const startVerseIndex = selectedReligion === 'quran' ? (currentPage - 1) * VERSES_PER_PAGE : 0;
+  const endVerseIndex = selectedReligion === 'quran' ? Math.min(startVerseIndex + VERSES_PER_PAGE, totalVerses) : totalVerses;
   const versesOnCurrentPage = endVerseIndex - startVerseIndex;
 
   // Get verses for current page (only for Quran)
@@ -195,7 +195,10 @@ export function ContentPanel({
     if (selectedReligion === 'quran') {
       // For Quran, navigate through pages of verses
       const newPage = direction === 'prev' ? currentPage - 1 : currentPage + 1;
+      console.log(`Quran navigation: ${direction}, currentPage: ${currentPage}, newPage: ${newPage}, totalPages: ${totalPages}`);
+      
       if (newPage >= 1 && newPage <= totalPages) {
+        console.log(`Navigating to page ${newPage}`);
         onChapterChange(newPage);
         
         // Record the reading
@@ -205,6 +208,8 @@ export function ContentPanel({
           book: selectedBook,
           chapter: newPage,
         });
+      } else {
+        console.log(`Invalid page navigation: newPage ${newPage} is out of bounds (1-${totalPages})`);
       }
     } else {
       // For other religions, navigate through chapters

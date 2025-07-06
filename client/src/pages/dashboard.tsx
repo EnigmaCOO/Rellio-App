@@ -33,7 +33,7 @@ export default function Dashboard() {
   });
 
   const { data: scriptures, isLoading: scripturesLoading, error: scripturesError } = useQuery<Scripture[]>({
-    queryKey: [`/api/scriptures?religion=${selectedReligion}&book=${selectedBook}&chapter=${selectedChapter}`],
+    queryKey: [`/api/scriptures?religion=${selectedReligion}&book=${selectedBook}&chapter=${selectedReligion === 'quran' ? 1 : selectedChapter}`],
     enabled: !!selectedReligion && !!selectedBook && !!selectedChapter,
   });
 
