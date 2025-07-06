@@ -174,6 +174,7 @@ export function ContentPanel({
   const isQuranPagination = selectedReligion === 'quran';
   const isBibleChapter = selectedReligion === 'bible';
   const isTorahChapter = selectedReligion === 'torah';
+  const isHinduChapter = selectedReligion === 'hindu';
   
   // For Quran: page-based navigation within surahs
   // For Bible: chapter-based navigation with verse counts displayed
@@ -317,7 +318,7 @@ export function ContentPanel({
               <span className="text-scripture-500 ml-2">
                 {isQuranPagination ? 
                   `Page ${currentPage} of ${totalPages}` : 
-                  (isBibleChapter || isTorahChapter) ? 
+                  (isBibleChapter || isTorahChapter || isHinduChapter) ? 
                     `Chapter ${displayChapter} (${totalVerses} verses)` :
                     `Chapter ${displayChapter}`
                 }
@@ -355,7 +356,7 @@ export function ContentPanel({
                     {versesOnCurrentPage} verses on this page
                   </div>
                 </div>
-              ) : (isBibleChapter || isTorahChapter) ? (
+              ) : (isBibleChapter || isTorahChapter || isHinduChapter) ? (
                 <div className="text-center">
                   <div>Chapter {displayChapter}</div>
                   <div className="text-xs text-scripture-500">
