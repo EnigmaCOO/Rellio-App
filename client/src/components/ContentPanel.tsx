@@ -167,6 +167,11 @@ export function ContentPanel({
   };
 
   const displayChapter = getDisplayChapter();
+  
+  // Debug logging for Bible chapter display
+  if (selectedReligion === 'bible') {
+    console.log(`Bible Debug - selectedChapter: ${selectedChapter}, displayChapter: ${displayChapter}, selectedBook: ${selectedBook}`);
+  }
 
   // Calculate pagination for scriptures with verse counts
   const VERSES_PER_PAGE = 10; // Show 10 verses per page for Quran
