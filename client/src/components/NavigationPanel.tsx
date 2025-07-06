@@ -51,51 +51,37 @@ export function NavigationPanel({
 
   // Dynamic chapter calculation based on religion and book
   const getDynamicChapterCount = (): number => {
-    if (!selectedReligion || !selectedBook) return 10;
+    if (!selectedReligion || !selectedBook) return 0; // No chapters when no book selected
 
     switch (selectedReligion) {
       case 'bible':
         // Use the API-provided maxChapters for Bible books since we have accurate data
-        return maxChapters;
+        return maxChapters || 1;
       case 'quran':
-        // For Quran, show all 114 surahs as chapters for navigation
-        return 114; // Total surahs in Quran
+        // For Quran, each surah (book) typically has verse ranges that we can divide into "chapters"
+        // Most surahs can be divided into 1-10 sections for better navigation
+        return 10; // Each surah divided into manageable sections
       case 'hindu':
         return 18; // Bhagavad Gita chapters
       case 'torah':
         // Use the API-provided maxChapters for Torah books since we have accurate data
-        return maxChapters;
+        return maxChapters || 1;
       case 'buddhist':
         return 10; // Tripitaka sample
       default:
-        return maxChapters;
+        return maxChapters || 1;
     }
   };
 
   const dynamicChapterCount = getDynamicChapterCount();
 
-  // Special handler for Quran navigation
-  const handleQuranChapterClick = (chapterNum: number) => {
-    if (selectedReligion === 'quran' && books && books[chapterNum - 1]) {
-      // For Quran, chapter number maps to surah index
-      const surahName = books[chapterNum - 1];
-      onBookChange(surahName);
-      onChapterChange(1); // Each surah has only 1 chapter
-    } else {
-      onChapterChange(chapterNum);
-    }
+  // Standard chapter click handler for all religions
+  const handleChapterClick = (chapterNum: number) => {
+    onChapterChange(chapterNum);
   };
 
-  // Get the current chapter number for Quran (which surah number it is)
-  const getCurrentQuranChapter = (): number => {
-    if (selectedReligion === 'quran' && books && selectedBook) {
-      const surahIndex = books.findIndex(book => book === selectedBook);
-      return surahIndex >= 0 ? surahIndex + 1 : 1;
-    }
-    return selectedChapter;
-  };
-
-  const displayedSelectedChapter = selectedReligion === 'quran' ? getCurrentQuranChapter() : selectedChapter;
+  // Use standard chapter display for all religions
+  const displayedSelectedChapter = selectedChapter;
 
   if (isLoading) {
     return (
@@ -170,17 +156,18 @@ export function NavigationPanel({
           </ScrollArea>
         </div>
 
-        {/* Chapter Selector */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-scripture-700 mb-3">
-            {selectedReligion === 'quran' ? 'Surah' : 'Chapter'} (1-{dynamicChapterCount})
-          </label>
-          <div className={`grid gap-2 max-h-48 overflow-y-auto p-1 ${
-            dynamicChapterCount <= 20 ? 'grid-cols-4' : 
-            dynamicChapterCount <= 50 ? 'grid-cols-5' : 
-            'grid-cols-6'
-          }`}>
-            {Array.from({ length: dynamicChapterCount }, (_, i) => i + 1).map((chapter) => (
+        {/* Chapter Selector - Only show when a book is selected */}
+        {selectedBook && (
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-scripture-700 mb-3">
+              {selectedReligion === 'quran' ? 'Surah' : 'Chapter'} (1-{dynamicChapterCount})
+            </label>
+            <div className={`grid gap-2 max-h-48 overflow-y-auto p-1 ${
+              dynamicChapterCount <= 20 ? 'grid-cols-4' : 
+              dynamicChapterCount <= 50 ? 'grid-cols-5' : 
+              'grid-cols-6'
+            }`}>
+              {Array.from({ length: dynamicChapterCount }, (_, i) => i + 1).map((chapter) => (
               <Button
                 key={chapter}
                 variant={displayedSelectedChapter === chapter ? "default" : "outline"}
@@ -190,13 +177,14 @@ export function NavigationPanel({
                     ? 'bg-scripture-600 hover:bg-scripture-700 text-white shadow-md ring-2 ring-scripture-300'
                     : 'hover:bg-scripture-50 border-scripture-300 hover:border-scripture-400 text-scripture-700 hover:shadow-sm'
                 }`}
-                onClick={() => handleQuranChapterClick(chapter)}
+                onClick={() => handleChapterClick(chapter)}
               >
                 {chapter}
               </Button>
             ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Recent Readings */}
         <div className="border-t border-scripture-200 pt-4">
