@@ -49,8 +49,6 @@ export async function getBhagavadGitaContent(chapter: number): Promise<ExternalS
     
     const gitaData = JSON.parse(fs.readFileSync(gitaPath, 'utf8'));
     console.log(`Found ${gitaData.chapters.length} chapters in Bhagavad Gita data`);
-    console.log(`Looking for chapter ${chapter} (type: ${typeof chapter})`);
-    console.log(`First chapter number: ${gitaData.chapters[0]?.number} (type: ${typeof gitaData.chapters[0]?.number})`);
     
     const chapterData = gitaData.chapters.find((ch: any) => ch.number === chapter);
     
