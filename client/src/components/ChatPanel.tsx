@@ -147,9 +147,11 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
   };
 
   const { data: messages, isLoading } = useQuery<ChatMessage[]>({
-    queryKey: ['/api/chat', sessionId],
+    queryKey: [`/api/chat/${sessionId}`],
     staleTime: 30 * 1000, // 30 seconds
   });
+
+
 
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData: { message: string; sessionId: string; context: any }) => {
@@ -157,7 +159,7 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/chat/${sessionId}`] });
       setNewMessage("");
     },
     onError: (error) => {
