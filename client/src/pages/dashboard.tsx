@@ -3,11 +3,12 @@ import { NavigationPanel } from "@/components/NavigationPanel";
 import { ContentPanel } from "@/components/ContentPanel";
 import { ChatPanel } from "@/components/ChatPanel";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Settings, BookOpen } from "lucide-react";
+import { Search, Settings, BookOpen, Menu, MessageCircle, X, ChevronLeft, ChevronRight } from "lucide-react";
 import rellioLogo from "@assets/image_1751817332000.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useSwipeable } from "react-swipeable";
 import type { Religion, Scripture } from "@shared/schema";
 
 export default function Dashboard() {
@@ -16,7 +17,14 @@ export default function Dashboard() {
   const [selectedChapter, setSelectedChapter] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [chatSessionId] = useState<string>(() => `session_${Date.now()}`);
+  const [navigationVisible, setNavigationVisible] = useState<boolean>(true);
+  const [chatVisible, setChatVisible] = useState<boolean>(true);
   const { toast } = useToast();
+
+  // Debug panel visibility state
+  useEffect(() => {
+    console.log("Panel state:", { navigationVisible, chatVisible });
+  }, [navigationVisible, chatVisible]);
 
   const { data: religions, isLoading: religionsLoading } = useQuery<Array<{id: Religion, name: string, books: string[]}>>({
     queryKey: ['/api/religions'],
@@ -85,11 +93,55 @@ export default function Dashboard() {
     setSelectedChapter(chapter);
   };
 
+  // Panel toggle functions
+  const toggleNavigation = () => {
+    setNavigationVisible(!navigationVisible);
+  };
+
+  const toggleChat = () => {
+    setChatVisible(!chatVisible);
+  };
+
+  // Swipe handlers for navigation panel
+  const navigationSwipeHandlers = useSwipeable({
+    onSwipedLeft: () => setNavigationVisible(false),
+    onSwipedRight: () => setNavigationVisible(true),
+    trackMouse: true,
+    preventScrollOnSwipe: true,
+  });
+
+  // Swipe handlers for chat panel
+  const chatSwipeHandlers = useSwipeable({
+    onSwipedLeft: () => setChatVisible(true),
+    onSwipedRight: () => setChatVisible(false),
+    trackMouse: true,
+    preventScrollOnSwipe: true,
+  });
+
+  // Swipe handlers for content panel to show hidden panels
+  const contentSwipeHandlers = useSwipeable({
+    onSwipedRight: () => {
+      if (!navigationVisible) setNavigationVisible(true);
+    },
+    onSwipedLeft: () => {
+      if (!chatVisible) setChatVisible(true);
+    },
+    trackMouse: true,
+    preventScrollOnSwipe: true,
+  });
+
   const currentReligionData = religions?.find(r => r.id === selectedReligion);
   const currentContext = {
     religion: selectedReligion,
     book: selectedBook,
     chapter: selectedChapter,
+  };
+
+  // Calculate content panel width based on visible panels
+  const getContentWidth = () => {
+    if (!navigationVisible && !chatVisible) return 'w-full';
+    if (!navigationVisible || !chatVisible) return 'lg:w-3/4';
+    return 'lg:w-2/4';
   };
 
   return (
@@ -99,6 +151,35 @@ export default function Dashboard() {
         <div className="max-w-full px-4 lg:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 lg:space-x-3">
+              {/* Panel Toggle Buttons */}
+              <div className="flex items-center space-x-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleNavigation}
+                  className={`transition-colors ${
+                    navigationVisible 
+                      ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                  title={navigationVisible ? 'Hide Navigation' : 'Show Navigation'}
+                >
+                  <Menu className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleChat}
+                  className={`transition-colors ${
+                    chatVisible 
+                      ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                  title={chatVisible ? 'Hide AI Guide' : 'Show AI Guide'}
+                >
+                  <MessageCircle className="h-4 w-4" />
+                </Button>
+              </div>
               <img src={rellioLogo} alt="Rellio Logo" className="h-10 w-10 lg:h-15 lg:w-15" />
               <h1 className="text-lg lg:text-2xl font-bold text-scripture-800">Rellio Scripture Library</h1>
             </div>
@@ -121,25 +202,53 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)] gap-1">
-        {/* Enhanced responsive layout with animations */}
-        <div className="w-full lg:w-1/4 transition-all duration-300 ease-in-out">
-          <NavigationPanel
-            selectedReligion={selectedReligion}
-            selectedBook={selectedBook}
-            selectedChapter={selectedChapter}
-            religions={religions}
-            books={filteredBooks}
-            maxChapters={bookInfo?.chapters || 10}
-            onReligionChange={handleReligionChange}
-            onBookChange={handleBookChange}
-            onChapterChange={handleChapterChange}
-            isLoading={religionsLoading}
-            searchTerm={searchTerm}
-          />
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)] relative overflow-hidden">
+        {/* Navigation Panel - Swipeable and Collapsible */}
+        <div
+          {...navigationSwipeHandlers}
+          className={`${
+            navigationVisible ? 'w-full lg:w-1/4' : 'w-0'
+          } transition-all duration-300 ease-in-out overflow-hidden relative`}
+        >
+          {navigationVisible && (
+            <>
+              <NavigationPanel
+                selectedReligion={selectedReligion}
+                selectedBook={selectedBook}
+                selectedChapter={selectedChapter}
+                religions={religions}
+                books={filteredBooks}
+                maxChapters={bookInfo?.chapters || 10}
+                onReligionChange={handleReligionChange}
+                onBookChange={handleBookChange}
+                onChapterChange={handleChapterChange}
+                isLoading={religionsLoading}
+                searchTerm={searchTerm}
+              />
+              {/* Swipe indicator for navigation panel */}
+              <div className="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+                <ChevronLeft className="h-4 w-4" />
+              </div>
+            </>
+          )}
+          {!navigationVisible && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleNavigation}
+              className="absolute top-4 left-2 z-10 bg-white shadow-md hover:bg-gray-50"
+              title="Show Navigation"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          )}
         </div>
         
-        <div className="w-full lg:w-2/4 transition-all duration-300 ease-in-out">
+        {/* Content Panel - Expandable */}
+        <div
+          {...contentSwipeHandlers}
+          className={`${getContentWidth()} transition-all duration-300 ease-in-out flex-1 relative overflow-hidden`}
+        >
           <ContentPanel
             selectedReligion={selectedReligion}
             selectedBook={selectedBook}
@@ -149,14 +258,73 @@ export default function Dashboard() {
             isError={!!scripturesError}
             religionName={currentReligionData?.name || selectedReligion || 'Scripture'}
             onChapterChange={handleChapterChange}
+            isFullscreen={!navigationVisible && !chatVisible}
+            panelsVisible={{ navigation: navigationVisible, chat: chatVisible }}
           />
+          
+          {/* Hidden panel indicators */}
+          {!navigationVisible && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleNavigation}
+              className="absolute top-4 left-4 z-10 bg-white shadow-md hover:bg-gray-50 transition-opacity"
+              title="Show Navigation Panel"
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+          )}
+          
+          {!chatVisible && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleChat}
+              className="absolute top-4 right-4 z-10 bg-white shadow-md hover:bg-gray-50 transition-opacity"
+              title="Show AI Guide Panel"
+            >
+              <MessageCircle className="h-4 w-4" />
+            </Button>
+          )}
+          
+          {/* Swipe hints when both panels hidden */}
+          {!navigationVisible && !chatVisible && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white px-4 py-2 rounded-lg text-sm pointer-events-none">
+              Swipe left/right or use buttons to show panels
+            </div>
+          )}
         </div>
         
-        <div className="w-full lg:w-1/4 transition-all duration-300 ease-in-out">
-          <ChatPanel
-            sessionId={chatSessionId}
-            context={currentContext}
-          />
+        {/* Chat Panel - Swipeable and Collapsible */}
+        <div
+          {...chatSwipeHandlers}
+          className={`${
+            chatVisible ? 'w-full lg:w-1/4' : 'w-0'
+          } transition-all duration-300 ease-in-out overflow-hidden relative`}
+        >
+          {chatVisible && (
+            <>
+              <ChatPanel
+                sessionId={chatSessionId}
+                context={currentContext}
+              />
+              {/* Swipe indicator for chat panel */}
+              <div className="absolute top-1/2 left-2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+                <ChevronRight className="h-4 w-4" />
+              </div>
+            </>
+          )}
+          {!chatVisible && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleChat}
+              className="absolute top-4 right-2 z-10 bg-white shadow-md hover:bg-gray-50"
+              title="Show AI Guide"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
     </div>

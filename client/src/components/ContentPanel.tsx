@@ -26,6 +26,8 @@ interface ContentPanelProps {
   isError?: boolean;
   religionName: string;
   onChapterChange: (chapter: number) => void;
+  isFullscreen?: boolean;
+  panelsVisible?: { navigation: boolean; chat: boolean };
 }
 
 export function ContentPanel({
@@ -37,6 +39,8 @@ export function ContentPanel({
   isError = false,
   religionName,
   onChapterChange,
+  isFullscreen = false,
+  panelsVisible = { navigation: true, chat: true },
 }: ContentPanelProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -317,9 +321,17 @@ export function ContentPanel({
       <div className="p-4 lg:p-6">
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg lg:text-2xl font-bold text-scripture-800">
+            <h2 className={`font-bold text-scripture-800 transition-all duration-300 ${
+              isFullscreen 
+                ? 'text-2xl lg:text-4xl xl:text-5xl' 
+                : 'text-lg lg:text-2xl'
+            }`}>
               {religionName} - {selectedBook}
-              <span className="text-scripture-500 ml-2">
+              <span className={`text-scripture-500 ml-2 transition-all duration-300 ${
+                isFullscreen 
+                  ? 'text-lg lg:text-2xl xl:text-3xl' 
+                  : 'text-base lg:text-lg'
+              }`}>
                 {isQuranPagination ? 
                   `Page ${currentPage} of ${totalPages}` : 
                   (isBibleChapter || isTorahChapter || isHinduChapter) ? 
@@ -393,13 +405,21 @@ export function ContentPanel({
                   className="flex items-start space-x-4 hover:bg-white rounded-lg p-3 transition-all duration-200 cursor-pointer group animate-in fade-in-0"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <span className="text-blue-600 font-bold text-sm mt-1 min-w-[2rem]">
+                  <span className={`text-blue-600 font-bold mt-1 min-w-[2rem] transition-all duration-300 ${
+                    isFullscreen 
+                      ? 'text-base lg:text-xl xl:text-2xl' 
+                      : 'text-sm'
+                  }`}>
                     {isQuranPagination ? 
                       scripture.verse || (startVerseIndex + index + 1) : 
                       scripture.verse
                     }
                   </span>
-                  <p className="text-scripture-800 leading-relaxed text-base lg:text-lg group-hover:text-scripture-900">
+                  <p className={`text-scripture-800 leading-relaxed group-hover:text-scripture-900 transition-all duration-300 ${
+                    isFullscreen 
+                      ? 'text-lg lg:text-2xl xl:text-3xl leading-loose' 
+                      : 'text-base lg:text-lg'
+                  }`}>
                     {scripture.text}
                   </p>
                   <Button
