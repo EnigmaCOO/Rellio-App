@@ -5,9 +5,21 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Send, MoreVertical, Bot, User } from "lucide-react";
+import { Send, MoreVertical, Bot, User, Bookmark, BookmarkCheck, Trash2, X } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
+
+interface BookmarkedMessage {
+  id: string;
+  text: string;
+  timestamp: Date;
+  context: {
+    religion: Religion;
+    book: string;
+    chapter: number;
+    verses?: Array<{ number: number; text: string }>;
+  };
+}
 
 interface ChatPanelProps {
   sessionId: string;
@@ -20,9 +32,32 @@ interface ChatPanelProps {
 
 export function ChatPanel({ sessionId, context }: ChatPanelProps) {
   const [newMessage, setNewMessage] = useState("");
+  const [bookmarks, setBookmarks] = useState<BookmarkedMessage[]>([]);
+  const [showBookmarks, setShowBookmarks] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load bookmarks from localStorage on component mount
+  useEffect(() => {
+    const savedBookmarks = localStorage.getItem('scripture-bookmarks');
+    if (savedBookmarks) {
+      try {
+        const parsedBookmarks = JSON.parse(savedBookmarks).map((bookmark: any) => ({
+          ...bookmark,
+          timestamp: new Date(bookmark.timestamp)
+        }));
+        setBookmarks(parsedBookmarks);
+      } catch (error) {
+        console.error('Error loading bookmarks:', error);
+      }
+    }
+  }, []);
+
+  // Save bookmarks to localStorage whenever bookmarks change
+  useEffect(() => {
+    localStorage.setItem('scripture-bookmarks', JSON.stringify(bookmarks));
+  }, [bookmarks]);
 
   // Get Quran chapter number based on surah name
   const getQuranChapterNumber = (bookName: string): number => {
@@ -151,6 +186,46 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
     staleTime: 30 * 1000, // 30 seconds
   });
 
+  // Bookmark functionality
+  const bookmarkMessage = (message: ChatMessage) => {
+    if (message.type === 'user') return; // Don't bookmark user messages
+    
+    const bookmark: BookmarkedMessage = {
+      id: `bookmark-${Date.now()}`,
+      text: message.content,
+      timestamp: new Date(),
+      context: {
+        religion: context.religion!,
+        book: context.book,
+        chapter: context.chapter,
+      }
+    };
+    
+    setBookmarks(prev => [bookmark, ...prev]);
+    console.log('Chat State: Bookmarked message:', bookmark);
+    
+    toast({
+      title: "Response Bookmarked",
+      description: "AI response saved to your bookmarks",
+    });
+  };
+
+  // Remove bookmark
+  const removeBookmark = (bookmarkId: string) => {
+    setBookmarks(prev => prev.filter(bookmark => bookmark.id !== bookmarkId));
+    console.log('Chat State: Removed bookmark:', bookmarkId);
+  };
+
+  // Clear all bookmarks
+  const clearBookmarks = () => {
+    setBookmarks([]);
+    console.log('Chat State: Cleared all bookmarks');
+    toast({
+      title: "Bookmarks Cleared",
+      description: "All bookmarks have been removed",
+    });
+  };
+
 
 
   const sendMessageMutation = useMutation({
@@ -202,12 +277,40 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
 
   return (
     <div className="h-full bg-white shadow-md border-l border-scripture-200 flex flex-col">
-      <div className="p-4 lg:p-6 border-b border-scripture-200">
+      <div className="p-4 lg:p-6 border-b border-scripture-200 bg-gradient-to-r from-blue-50 to-purple-50">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-base lg:text-lg font-semibold text-scripture-800">AI Scripture Guide</h2>
-          <Button variant="ghost" size="sm">
-            <MoreVertical className="h-4 w-4" />
-          </Button>
+          <h2 className="text-base lg:text-lg font-semibold text-scripture-800 flex items-center">
+            <Bot className="w-5 h-5 mr-2 text-blue-600" />
+            AI Scripture Guide
+          </h2>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowBookmarks(!showBookmarks)}
+              className="text-xs border-blue-300 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+            >
+              <Bookmark className="h-3 w-3 mr-1" />
+              Bookmarks ({bookmarks.length})
+            </Button>
+            {messages && messages.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  queryClient.setQueryData([`/api/chat/${sessionId}`], []);
+                  toast({
+                    title: "Chat Cleared",
+                    description: "Chat history has been cleared",
+                  });
+                }}
+                className="text-xs border-red-300 text-red-600 hover:text-red-800 hover:bg-red-50"
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                Clear History
+              </Button>
+            )}
+          </div>
         </div>
         <p className="text-xs lg:text-sm text-scripture-600">
           {context.religion ? 
@@ -219,6 +322,74 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
           }
         </p>
       </div>
+
+      {/* Bookmarks Section */}
+      {showBookmarks && (
+        <div className="p-4 border-b border-scripture-200 bg-gray-50">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-700 flex items-center">
+              <BookmarkCheck className="w-4 h-4 mr-2 text-blue-600" />
+              Bookmarked Responses
+            </h3>
+            <div className="flex items-center space-x-2">
+              {bookmarks.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearBookmarks}
+                  className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50"
+                >
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  Clear All
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowBookmarks(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+          <ScrollArea className="max-h-40">
+            {bookmarks.length === 0 ? (
+              <p className="text-xs text-gray-500 text-center py-4">
+                No bookmarks yet. Click the bookmark button next to AI responses to save them.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {bookmarks.map(bookmark => (
+                  <div key={bookmark.id} className="p-3 bg-white border border-gray-200 rounded-lg">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-800 mb-1">
+                          {bookmark.text.length > 100 ? 
+                            `${bookmark.text.substring(0, 100)}...` : 
+                            bookmark.text
+                          }
+                        </p>
+                        <div className="text-xs text-gray-500">
+                          {bookmark.context.religion} - {bookmark.context.book} Ch. {bookmark.context.chapter} • {formatTime(bookmark.timestamp.toISOString())}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeBookmark(bookmark.id)}
+                        className="text-red-500 hover:text-red-700 ml-2 h-6 w-6 p-0"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </div>
+      )}
 
       {/* Chat Messages */}
       <ScrollArea className="flex-1 p-4">
@@ -246,7 +417,7 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
                 <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
                   message.type === 'user' 
                     ? 'bg-blue-600 text-white' 
-                    : 'bg-scripture-200 text-scripture-700'
+                    : 'bg-gradient-to-br from-purple-500 to-blue-500 text-white'
                 }`}>
                   {message.type === 'user' ? (
                     <User className="h-4 w-4" />
@@ -259,13 +430,28 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
                 }`}>
                   <div className={`inline-block p-3 rounded-lg shadow-sm ${
                     message.type === 'user'
-                      ? 'bg-blue-600 text-white rounded-br-sm'
-                      : 'bg-scripture-100 text-scripture-800 border border-scripture-200 rounded-bl-sm'
+                      ? 'bg-gray-100 text-gray-800 border border-gray-200 rounded-br-sm'
+                      : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm shadow-sm'
                   }`}>
                     <p className="text-sm leading-relaxed">{message.content}</p>
                   </div>
-                  <div className="text-xs text-scripture-500 mt-1">
-                    {formatTime(message.timestamp?.toString() || new Date().toISOString())}
+                  <div className={`flex items-center mt-1 ${
+                    message.type === 'user' ? 'justify-end' : 'justify-start'
+                  }`}>
+                    <div className="text-xs text-scripture-500">
+                      {formatTime(message.timestamp?.toString() || new Date().toISOString())}
+                    </div>
+                    {message.type !== 'user' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => bookmarkMessage(message)}
+                        className="ml-2 h-6 w-6 p-0 text-gray-400 hover:text-yellow-500 transition-colors"
+                        title="Bookmark this response"
+                      >
+                        <Bookmark className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -332,7 +518,7 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
           </Button>
         </div>
         <p className="text-xs text-scripture-500 mt-2">
-          AI responses are contextual to your selected scripture passage.
+          AI responses use authentic religious texts from verified APIs. Click the bookmark icon to save helpful responses.
         </p>
       </div>
     </div>
