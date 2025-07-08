@@ -28,9 +28,11 @@ interface ChatPanelProps {
     book: string;
     chapter: number;
   };
+  externalMessage?: string;
+  onExternalMessageProcessed?: () => void;
 }
 
-export function ChatPanel({ sessionId, context }: ChatPanelProps) {
+export function ChatPanel({ sessionId, context, externalMessage, onExternalMessageProcessed }: ChatPanelProps) {
   const [newMessage, setNewMessage] = useState("");
   const [bookmarks, setBookmarks] = useState<BookmarkedMessage[]>([]);
   const [showBookmarks, setShowBookmarks] = useState(false);
@@ -262,6 +264,23 @@ export function ChatPanel({ sessionId, context }: ChatPanelProps) {
       handleSendMessage();
     }
   };
+
+  // Handle external messages (from copy functionality)
+  useEffect(() => {
+    if (externalMessage && externalMessage.trim()) {
+      setNewMessage(externalMessage);
+      // Auto-send the external message
+      sendMessageMutation.mutate({
+        message: externalMessage,
+        sessionId,
+        context,
+      });
+      // Notify parent that message was processed
+      if (onExternalMessageProcessed) {
+        onExternalMessageProcessed();
+      }
+    }
+  }, [externalMessage]);
 
   // Scroll to bottom when messages change
   useEffect(() => {

@@ -11,7 +11,7 @@ import {
   Highlighter, 
   StickyNote, 
   Quote,
-  MessageCircle
+  Copy
 } from "lucide-react";
 import rellioLogo from "@assets/image_1751817332000.png";
 import { apiRequest } from "@/lib/queryClient";
@@ -28,6 +28,7 @@ interface ContentPanelProps {
   onChapterChange: (chapter: number) => void;
   isFullscreen?: boolean;
   panelsVisible?: { navigation: boolean; chat: boolean };
+  onCopyVerse?: (verseText: string) => void;
 }
 
 export function ContentPanel({
@@ -41,6 +42,7 @@ export function ContentPanel({
   onChapterChange,
   isFullscreen = false,
   panelsVisible = { navigation: true, chat: true },
+  onCopyVerse,
 }: ContentPanelProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -251,6 +253,39 @@ export function ContentPanel({
     window.print();
   };
 
+  const handleCopyVerse = async (verse: Scripture) => {
+    const verseText = `${verse.verse}. ${verse.text}`;
+    
+    try {
+      // Copy to clipboard
+      await navigator.clipboard.writeText(verseText);
+      console.log("Copied verse:", verseText);
+      
+      toast({
+        title: "Verse copied!",
+        description: "Verse has been copied to clipboard and sent to AI chat.",
+      });
+      
+      // Trigger AI chat message
+      if (onCopyVerse) {
+        onCopyVerse(verseText);
+      }
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      
+      toast({
+        title: "Copy failed",
+        description: "Failed to copy to clipboard, but sent to AI chat.",
+        variant: "destructive",
+      });
+      
+      // Still trigger chat message even if clipboard fails
+      if (onCopyVerse) {
+        onCopyVerse(verseText);
+      }
+    }
+  };
+
   const handleStudyTool = (tool: string) => {
     toast({
       title: `${tool} selected`,
@@ -425,10 +460,11 @@ export function ContentPanel({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => handleStudyTool("Comment")}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 hover:bg-blue-600 text-white"
+                    onClick={() => handleCopyVerse(scripture)}
+                    title="Copy verse and explain in chat"
                   >
-                    <MessageCircle className="h-4 w-4" />
+                    <Copy className="h-4 w-4" />
                   </Button>
                 </div>
               ))

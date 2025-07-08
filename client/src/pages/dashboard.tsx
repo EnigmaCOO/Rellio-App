@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [chatSessionId] = useState<string>(() => `session_${Date.now()}`);
   const [navigationVisible, setNavigationVisible] = useState<boolean>(true);
   const [chatVisible, setChatVisible] = useState<boolean>(true);
+  const [externalMessage, setExternalMessage] = useState<string>('');
   const { toast } = useToast();
 
   // Debug panel visibility state
@@ -144,6 +145,22 @@ export default function Dashboard() {
     return 'lg:w-2/4';
   };
 
+  // Handle copy verse functionality
+  const handleCopyVerse = (verseText: string) => {
+    const explanationMessage = `Explain the following verse ${verseText}`;
+    setExternalMessage(explanationMessage);
+    
+    // Ensure chat panel is visible
+    if (!chatVisible) {
+      setChatVisible(true);
+    }
+  };
+
+  // Handle external message processed
+  const handleExternalMessageProcessed = () => {
+    setExternalMessage('');
+  };
+
   return (
     <div className="min-h-screen bg-scripture-50">
       {/* Header */}
@@ -260,6 +277,7 @@ export default function Dashboard() {
             onChapterChange={handleChapterChange}
             isFullscreen={!navigationVisible && !chatVisible}
             panelsVisible={{ navigation: navigationVisible, chat: chatVisible }}
+            onCopyVerse={handleCopyVerse}
           />
           
           {/* Hidden panel indicators */}
@@ -307,6 +325,8 @@ export default function Dashboard() {
               <ChatPanel
                 sessionId={chatSessionId}
                 context={currentContext}
+                externalMessage={externalMessage}
+                onExternalMessageProcessed={handleExternalMessageProcessed}
               />
               {/* Swipe indicator for chat panel */}
               <div className="absolute top-1/2 left-2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
