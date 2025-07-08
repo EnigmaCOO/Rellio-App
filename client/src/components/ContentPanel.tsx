@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -11,11 +12,19 @@ import {
   Highlighter, 
   StickyNote, 
   Quote,
-  Copy
+  Copy,
+  Volume2
 } from "lucide-react";
 import rellioLogo from "@assets/image_1751817332000.png";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, Scripture } from "@shared/schema";
+
+// TTS Configuration
+const TTS_CONFIG = {
+  apiKey: "sk_31b38041319a566a772dd557e957debdafec8d0e4cc0fcc2", // Replace with your actual API key
+  voiceId: "21m00Tcm4TlvDq8ikWAM", // Rachel voice ID
+  model: "eleven_monolingual_v1"
+};
 
 interface ContentPanelProps {
   selectedReligion: Religion | null;
@@ -46,6 +55,7 @@ export function ContentPanel({
 }: ContentPanelProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [speakingStates, setSpeakingStates] = useState<Record<number, boolean>>({});
 
   // Get proper chapter display for Quran (shows surah number instead of always 1)
   const getDisplayChapter = (): number => {
@@ -286,6 +296,84 @@ export function ContentPanel({
     }
   };
 
+  const handleSpeakVerse = async (verse: Scripture) => {
+    const verseText = `${verse.verse}. ${verse.text}`;
+    console.log("Speaking verse:", verseText);
+    
+    // Set speaking state
+    setSpeakingStates(prev => ({ ...prev, [verse.verse]: true }));
+    
+    try {
+      // Create audio using ElevenLabs API
+      const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + TTS_CONFIG.voiceId, {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': TTS_CONFIG.apiKey
+        },
+        body: JSON.stringify({
+          text: verseText,
+          model_id: TTS_CONFIG.model,
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.5
+          }
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      // Play audio
+      const audio = new Audio(audioUrl);
+      audio.onended = () => {
+        setSpeakingStates(prev => ({ ...prev, [verse.verse]: false }));
+        URL.revokeObjectURL(audioUrl);
+      };
+      audio.onerror = () => {
+        setSpeakingStates(prev => ({ ...prev, [verse.verse]: false }));
+        URL.revokeObjectURL(audioUrl);
+        console.log("Audio Error: Failed to play audio");
+        toast({
+          title: "Audio Error",
+          description: "Failed to play audio",
+          variant: "destructive",
+        });
+      };
+      
+      await audio.play();
+      
+      toast({
+        title: "Playing verse",
+        description: "Verse is being spoken aloud",
+      });
+      
+    } catch (error) {
+      console.log("API Error:", error);
+      setSpeakingStates(prev => ({ ...prev, [verse.verse]: false }));
+      
+      // Check if it's a network/API error
+      if (error instanceof TypeError || (error as any).status === 401) {
+        toast({
+          title: "TTS service unavailable",
+          description: "Check your API key or try again later",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Audio unavailable",
+          description: "Please try again",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   const handleStudyTool = (tool: string) => {
     toast({
       title: `${tool} selected`,
@@ -457,15 +545,33 @@ export function ContentPanel({
                   }`}>
                     {scripture.text}
                   </p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 hover:bg-blue-600 text-white"
-                    onClick={() => handleCopyVerse(scripture)}
-                    title="Copy verse and explain in chat"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
+                  <div className="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="bg-blue-500 hover:bg-blue-600 text-white"
+                      onClick={() => handleCopyVerse(scripture)}
+                      title="Copy verse and explain in chat"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="bg-green-500 hover:bg-green-600 text-white"
+                      onClick={() => handleSpeakVerse(scripture)}
+                      title="Speak verse aloud"
+                      disabled={speakingStates[scripture.verse]}
+                    >
+                      {speakingStates[scripture.verse] ? (
+                        <>
+                          <Volume2 className="h-4 w-4 animate-pulse" />
+                        </>
+                      ) : (
+                        <Volume2 className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
               ))
             ) : (
