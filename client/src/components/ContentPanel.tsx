@@ -19,11 +19,11 @@ import rellioLogo from "@assets/image_1751817332000.png";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, Scripture } from "@shared/schema";
 
-// TTS Configuration
+// TTS Configuration - English only
 const TTS_CONFIG = {
   apiKey: "sk_31b38041319a566a772dd557e957debdafec8d0e4cc0fcc2", // Replace with your actual API key
-  voiceId: "21m00Tcm4TlvDq8ikWAM", // Rachel voice ID
-  model: "eleven_monolingual_v1"
+  voiceId: "21m00Tcm4TlvDq8ikWAM", // Rachel voice ID - English speaker
+  model: "eleven_monolingual_v1" // English monolingual model
 };
 
 interface ContentPanelProps {
@@ -303,75 +303,110 @@ export function ContentPanel({
     // Set speaking state
     setSpeakingStates(prev => ({ ...prev, [verse.verse]: true }));
     
+    // Try ElevenLabs API first, fallback to Web Speech API
     try {
-      // Create audio using ElevenLabs API
-      const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + TTS_CONFIG.voiceId, {
-        method: 'POST',
-        headers: {
-          'Accept': 'audio/mpeg',
-          'Content-Type': 'application/json',
-          'xi-api-key': TTS_CONFIG.apiKey
-        },
-        body: JSON.stringify({
-          text: verseText,
-          model_id: TTS_CONFIG.model,
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.5
-          }
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      
-      // Play audio
-      const audio = new Audio(audioUrl);
+      await speakWithElevenLabs(verseText);
+    } catch (elevenLabsError) {
+      console.log("ElevenLabs API failed, falling back to Web Speech API:", elevenLabsError);
+      await speakWithWebSpeechAPI(verseText);
+    } finally {
+      setSpeakingStates(prev => ({ ...prev, [verse.verse]: false }));
+    }
+  };
+
+  const speakWithElevenLabs = async (text: string) => {
+    const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + TTS_CONFIG.voiceId, {
+      method: 'POST',
+      headers: {
+        'Accept': 'audio/mpeg',
+        'Content-Type': 'application/json',
+        'xi-api-key': TTS_CONFIG.apiKey
+      },
+      body: JSON.stringify({
+        text: text,
+        model_id: TTS_CONFIG.model,
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.5
+        }
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`ElevenLabs API error! status: ${response.status}`);
+    }
+    
+    const audioBlob = await response.blob();
+    const audioUrl = URL.createObjectURL(audioBlob);
+    
+    const audio = new Audio(audioUrl);
+    
+    return new Promise<void>((resolve, reject) => {
       audio.onended = () => {
-        setSpeakingStates(prev => ({ ...prev, [verse.verse]: false }));
         URL.revokeObjectURL(audioUrl);
+        resolve();
       };
       audio.onerror = () => {
-        setSpeakingStates(prev => ({ ...prev, [verse.verse]: false }));
         URL.revokeObjectURL(audioUrl);
-        console.log("Audio Error: Failed to play audio");
-        toast({
-          title: "Audio Error",
-          description: "Failed to play audio",
-          variant: "destructive",
-        });
+        reject(new Error("Audio playback failed"));
       };
       
-      await audio.play();
+      audio.play().catch(reject);
+    });
+  };
+
+  const speakWithWebSpeechAPI = async (text: string) => {
+    if (!('speechSynthesis' in window)) {
+      throw new Error("Speech synthesis not supported");
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      // Stop any ongoing speech
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      // Configure for English only
+      utterance.lang = 'en-US';
+      utterance.rate = 0.8; // Slightly slower for better comprehension
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      
+      // Try to use a female English voice if available
+      const voices = window.speechSynthesis.getVoices();
+      const englishVoice = voices.find(voice => 
+        voice.lang.startsWith('en') && voice.name.toLowerCase().includes('female')
+      ) || voices.find(voice => voice.lang.startsWith('en'));
+      
+      if (englishVoice) {
+        utterance.voice = englishVoice;
+      }
+      
+      utterance.onend = () => {
+        toast({
+          title: "Verse spoken",
+          description: "Using device speech synthesis",
+        });
+        resolve();
+      };
+      
+      utterance.onerror = (event) => {
+        console.log("Speech synthesis error:", event.error);
+        toast({
+          title: "Speech failed",
+          description: "Unable to speak verse",
+          variant: "destructive",
+        });
+        reject(new Error(`Speech synthesis error: ${event.error}`));
+      };
+      
+      window.speechSynthesis.speak(utterance);
       
       toast({
-        title: "Playing verse",
-        description: "Verse is being spoken aloud",
+        title: "Speaking verse",
+        description: "Using device speech synthesis",
       });
-      
-    } catch (error) {
-      console.log("API Error:", error);
-      setSpeakingStates(prev => ({ ...prev, [verse.verse]: false }));
-      
-      // Check if it's a network/API error
-      if (error instanceof TypeError || (error as any).status === 401) {
-        toast({
-          title: "TTS service unavailable",
-          description: "Check your API key or try again later",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Audio unavailable",
-          description: "Please try again",
-          variant: "destructive",
-        });
-      }
-    }
+    });
   };
 
   const handleStudyTool = (tool: string) => {
