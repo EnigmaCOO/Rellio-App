@@ -240,62 +240,84 @@ export function NavigationPanel({
           <div className="flex items-center justify-center space-x-4 p-3 bg-gray-50 rounded-lg border border-scripture-200">
             {/* Christianity - Bible */}
             <div
-              className="text-2xl cursor-pointer hover:text-blue-500 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
+              className="cursor-pointer hover:text-blue-500 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
               onClick={() => {
                 console.log("Selected religion: bible");
                 onReligionChange('bible' as Religion);
               }}
               title="Holy Bible"
             >
-              ✝️
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-blue-600 hover:text-blue-500">
+                <path d="M12 2L12 22M12 2L8 6M12 2L16 6M12 12L8 16M12 12L16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              </svg>
             </div>
             
             {/* Islam - Quran */}
             <div
-              className="text-2xl cursor-pointer hover:text-green-500 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
+              className="cursor-pointer hover:text-green-500 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
               onClick={() => {
                 console.log("Selected religion: quran");
                 onReligionChange('quran' as Religion);
               }}
               title="Quran"
             >
-              ☪️
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-green-600 hover:text-green-500">
+                <path d="M12 2C12 8 8 12 2 12C8 12 12 16 12 22C12 16 16 12 22 12C16 12 12 8 12 2Z"/>
+                <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1"/>
+              </svg>
             </div>
             
             {/* Judaism - Torah */}
             <div
-              className="text-2xl cursor-pointer hover:text-blue-600 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
+              className="cursor-pointer hover:text-blue-600 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
               onClick={() => {
                 console.log("Selected religion: torah");
                 onReligionChange('torah' as Religion);
               }}
               title="Torah"
             >
-              ✡️
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-blue-700 hover:text-blue-600">
+                <path d="M12 2L14.5 8.5L22 9L16.5 14L18 21.5L12 18L6 21.5L7.5 14L2 9L9.5 8.5L12 2Z"/>
+                <path d="M12 2L14.5 8.5L22 9L16.5 14L18 21.5L12 18L6 21.5L7.5 14L2 9L9.5 8.5L12 2Z" fill="none" stroke="currentColor" strokeWidth="1"/>
+              </svg>
             </div>
             
             {/* Buddhism - Tripitaka */}
             <div
-              className="text-2xl cursor-pointer hover:text-orange-500 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
+              className="cursor-pointer hover:text-orange-500 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
               onClick={() => {
                 console.log("Selected religion: buddhist");
                 onReligionChange('buddhist' as Religion);
               }}
               title="Tripitaka"
             >
-              ☸️
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-orange-600 hover:text-orange-500">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2"/>
+                <path d="M12 2L14 8L20 8L15 13L17 20L12 16L7 20L9 13L4 8L10 8L12 2Z" fill="none" stroke="currentColor" strokeWidth="1"/>
+                <circle cx="12" cy="12" r="1" fill="currentColor"/>
+              </svg>
             </div>
             
             {/* Hinduism - Bhagavad Gita */}
             <div
-              className="text-2xl cursor-pointer hover:text-orange-600 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
+              className="cursor-pointer hover:text-orange-600 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
               onClick={() => {
                 console.log("Selected religion: hindu");
                 onReligionChange('hindu' as Religion);
               }}
               title="Bhagavad Gita"
             >
-              🪷
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-orange-700 hover:text-orange-600">
+                <path d="M12 2C13 4 14 6 12 8C10 6 11 4 12 2Z"/>
+                <path d="M12 8C14 9 16 10 14 12C12 10 13 9 12 8Z" transform="rotate(45 12 12)"/>
+                <path d="M12 8C14 9 16 10 14 12C12 10 13 9 12 8Z" transform="rotate(90 12 12)"/>
+                <path d="M12 8C14 9 16 10 14 12C12 10 13 9 12 8Z" transform="rotate(135 12 12)"/>
+                <path d="M12 8C14 9 16 10 14 12C12 10 13 9 12 8Z" transform="rotate(180 12 12)"/>
+                <path d="M12 8C14 9 16 10 14 12C12 10 13 9 12 8Z" transform="rotate(225 12 12)"/>
+                <path d="M12 8C14 9 16 10 14 12C12 10 13 9 12 8Z" transform="rotate(270 12 12)"/>
+                <path d="M12 8C14 9 16 10 14 12C12 10 13 9 12 8Z" transform="rotate(315 12 12)"/>
+                <circle cx="12" cy="12" r="2" fill="none" stroke="currentColor" strokeWidth="1"/>
+              </svg>
             </div>
           </div>
           
