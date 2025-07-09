@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useSwipeable } from "react-swipeable";
+import Draggable from 'react-draggable';
 import type { Religion, Scripture } from "@shared/schema";
 
 export default function Dashboard() {
@@ -21,12 +22,33 @@ export default function Dashboard() {
   const [chatVisible, setChatVisible] = useState<boolean>(true);
   const [externalMessage, setExternalMessage] = useState<string>('');
   const [isCopyOperation, setIsCopyOperation] = useState<boolean>(false);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [dragPosition, setDragPosition] = useState<{x: number, y: number}>({ x: 0, y: 0 });
   const { toast } = useToast();
 
   // Debug panel visibility state
   useEffect(() => {
     console.log("Panel state:", { navigationVisible, chatVisible });
   }, [navigationVisible, chatVisible]);
+
+  // Initialize drag position based on window size
+  useEffect(() => {
+    const updateDragPosition = () => {
+      const initialX = window.innerWidth * 0.75; // 75% of screen width
+      const initialY = 80; // Below header
+      setDragPosition({ x: initialX, y: initialY });
+    };
+    
+    updateDragPosition();
+    window.addEventListener('resize', updateDragPosition);
+    
+    // Check for top left bubble and log confirmation
+    console.log("Top left bubble removed or not found");
+    
+    return () => {
+      window.removeEventListener('resize', updateDragPosition);
+    };
+  }, []);
 
   // Add copy event listeners to detect manual copying
   useEffect(() => {
@@ -128,18 +150,38 @@ export default function Dashboard() {
     preventScrollOnSwipe: true,
   });
 
-  // Swipe handlers for chat panel
+  // Swipe handlers for chat panel (disabled when dragging)
   const chatSwipeHandlers = useSwipeable({
-    onSwipedLeft: () => setChatVisible(true),
+    onSwipedLeft: () => {
+      if (!isDragging) setChatVisible(true);
+    },
     onSwipedRight: () => {
-      // Don't close chat panel during copy operations or text selection
-      if (!isCopyOperation && !window.getSelection()?.toString()) {
+      // Don't close chat panel during copy operations, text selection, or dragging
+      if (!isCopyOperation && !window.getSelection()?.toString() && !isDragging) {
         setChatVisible(false);
       }
     },
     trackMouse: true,
     preventScrollOnSwipe: true,
   });
+
+  // Drag handlers for chat panel
+  const handleDrag = (e: any, data: any) => {
+    const { x, y } = data;
+    console.log("Dragging chat to:", { x, y });
+    setDragPosition({ x, y });
+  };
+
+  const handleDragStart = () => {
+    setIsDragging(true);
+    console.log("Started dragging chat panel");
+  };
+
+  const handleDragStop = (e: any, data: any) => {
+    setIsDragging(false);
+    setDragPosition({ x: data.x, y: data.y });
+    console.log("Stopped dragging chat panel at:", { x: data.x, y: data.y });
+  };
 
   // Swipe handlers for content panel to show hidden panels
   const contentSwipeHandlers = useSwipeable({
@@ -160,11 +202,10 @@ export default function Dashboard() {
     chapter: selectedChapter,
   };
 
-  // Calculate content panel width based on visible panels
+  // Calculate content panel width based on visible panels (chat is now floating)
   const getContentWidth = () => {
-    if (!navigationVisible && !chatVisible) return 'w-full';
-    if (!navigationVisible || !chatVisible) return 'lg:w-3/4';
-    return 'lg:w-2/4';
+    if (!navigationVisible) return 'w-full';
+    return 'lg:w-3/4';
   };
 
   // Handle copy verse functionality
@@ -312,7 +353,7 @@ export default function Dashboard() {
             isError={!!scripturesError}
             religionName={currentReligionData?.name || selectedReligion || 'Scripture'}
             onChapterChange={handleChapterChange}
-            isFullscreen={!navigationVisible && !chatVisible}
+            isFullscreen={!navigationVisible}
             panelsVisible={{ navigation: navigationVisible, chat: chatVisible }}
             onCopyVerse={handleCopyVerse}
           />
@@ -342,48 +383,60 @@ export default function Dashboard() {
             </Button>
           )}
           
-          {/* Swipe hints when both panels hidden */}
-          {!navigationVisible && !chatVisible && (
+          {/* Swipe hints when navigation panel hidden */}
+          {!navigationVisible && (
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white px-4 py-2 rounded-lg text-sm pointer-events-none">
-              Swipe left/right or use buttons to show panels
+              Swipe right or use button to show navigation panel
             </div>
           )}
         </div>
         
-        {/* Chat Panel - Swipeable and Collapsible */}
-        <div
-          {...chatSwipeHandlers}
-          className={`${
-            chatVisible ? 'w-full lg:w-1/4' : 'w-0'
-          } transition-all duration-300 ease-in-out overflow-hidden relative`}
-        >
-          {chatVisible && (
-            <>
-              <ChatPanel
-                sessionId={chatSessionId}
-                context={currentContext}
-                externalMessage={externalMessage}
-                onExternalMessageProcessed={handleExternalMessageProcessed}
-                onCopyOperation={handleCopyOperation}
-              />
-              {/* Swipe indicator for chat panel */}
-              <div className="absolute top-1/2 left-2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
-                <ChevronRight className="h-4 w-4" />
-              </div>
-            </>
-          )}
-          {!chatVisible && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleChat}
-              className="absolute top-4 right-2 z-10 bg-white shadow-md hover:bg-gray-50"
-              title="Show AI Guide"
+        {/* Draggable Chat Panel */}
+        {chatVisible && (
+          <Draggable
+            position={dragPosition}
+            onDrag={handleDrag}
+            onStart={handleDragStart}
+            onStop={handleDragStop}
+            bounds={{
+              left: 0,
+              top: 0,
+              right: window.innerWidth - 320, // 320px is the panel width
+              bottom: window.innerHeight - 500 // 500px is the panel height
+            }}
+            handle=".chat-drag-handle"
+          >
+            <div 
+              className="fixed z-50 w-80 h-[500px] bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col"
+              style={{ cursor: isDragging ? 'grabbing' : 'auto' }}
             >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+              {/* Drag Handle */}
+              <div className="chat-drag-handle bg-gradient-to-r from-blue-500 to-purple-600 text-white p-3 rounded-t-lg cursor-move flex items-center justify-between flex-shrink-0">
+                <h3 className="font-semibold text-sm">AI Scripture Guide</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleChat}
+                  className="text-white hover:bg-white hover:bg-opacity-20 p-1"
+                  title="Close AI Guide"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Chat Panel Content */}
+              <div className="flex-1 overflow-hidden">
+                <ChatPanel
+                  sessionId={chatSessionId}
+                  context={currentContext}
+                  externalMessage={externalMessage}
+                  onExternalMessageProcessed={handleExternalMessageProcessed}
+                  onCopyOperation={handleCopyOperation}
+                />
+              </div>
+            </div>
+          </Draggable>
+        )}
       </div>
     </div>
   );
