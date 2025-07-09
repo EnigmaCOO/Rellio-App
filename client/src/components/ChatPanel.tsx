@@ -550,7 +550,7 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
             <Send className="h-4 w-4" />
           </Button>
         </div>
-        <p className="text-xs text-scripture-500 mt-2">
+        <p className="text-[10px] text-gray-400 mt-2">
           AI responses use authentic religious texts from verified APIs. Click the bookmark icon to save helpful responses.
         </p>
       </div>
