@@ -440,8 +440,8 @@ export function ContentPanel({
                 }}
                 title="Holy Bible"
               >
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" className="text-blue-600 hover:text-blue-500">
-                  <path d="M12 2L12 22M12 2L8 6M12 2L16 6M12 12L8 16M12 12L16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-blue-600 hover:text-blue-500">
+                  <path d="M12 2v20M5 5l7 7-7 7M19 5l-7 7 7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
               
@@ -456,9 +456,9 @@ export function ContentPanel({
                 }}
                 title="Quran"
               >
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" className="text-green-600 hover:text-green-500">
-                  <path d="M12 2C12 8 8 12 2 12C8 12 12 16 12 22C12 16 16 12 22 12C16 12 12 8 12 2Z"/>
-                  <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1"/>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-green-600 hover:text-green-500">
+                  <path d="M21 16c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zM7 12c0-5.5 4.5-10 10-10v2c-4.4 0-8 3.6-8 8s3.6 8 8 8v2c-5.5 0-10-4.5-10-10z" fill="currentColor"/>
+                  <circle cx="17" cy="7" r="1.5" fill="currentColor"/>
                 </svg>
               </div>
               
@@ -473,9 +473,9 @@ export function ContentPanel({
                 }}
                 title="Torah"
               >
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" className="text-blue-700 hover:text-blue-600">
-                  <path d="M12 2L14.5 8.5L22 9L16.5 14L18 21.5L12 18L6 21.5L7.5 14L2 9L9.5 8.5L12 2Z"/>
-                  <path d="M12 2L14.5 8.5L22 9L16.5 14L18 21.5L12 18L6 21.5L7.5 14L2 9L9.5 8.5L12 2Z" fill="none" stroke="currentColor" strokeWidth="1"/>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-blue-700 hover:text-blue-600">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.77 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/>
+                  <path d="M12 6l2.12 4.26L18 11.02l-3.5 3.41L15.24 18 12 16.27 8.76 18 9.5 14.43 6 11.02l3.88-.76L12 6z" fill="none" stroke="white" strokeWidth="1"/>
                 </svg>
               </div>
               
@@ -490,10 +490,10 @@ export function ContentPanel({
                 }}
                 title="Tripitaka"
               >
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" className="text-orange-600 hover:text-orange-500">
-                  <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M12 2L14 8L20 8L15 13L17 20L12 16L7 20L9 13L4 8L10 8L12 2Z" fill="none" stroke="currentColor" strokeWidth="1"/>
-                  <circle cx="12" cy="12" r="1" fill="currentColor"/>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-orange-600 hover:text-orange-500">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 2v20M4.93 4.93l14.14 14.14M2 12h20M4.93 19.07l14.14-14.14" stroke="currentColor" strokeWidth="1"/>
+                  <circle cx="12" cy="12" r="2" fill="currentColor"/>
                 </svg>
               </div>
               
@@ -508,16 +508,13 @@ export function ContentPanel({
                 }}
                 title="Bhagavad Gita"
               >
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" className="text-orange-700 hover:text-orange-600">
-                  <path d="M12 2C13 4 14 6 12 8C10 6 11 4 12 2Z"/>
-                  <path d="M12 8C14 9 16 10 14 12C12 10 13 9 12 8Z" transform="rotate(45 12 12)"/>
-                  <path d="M12 8C14 9 16 10 14 12C12 10 13 9 12 8Z" transform="rotate(90 12 12)"/>
-                  <path d="M12 8C14 9 16 10 14 12C12 10 13 9 12 8Z" transform="rotate(135 12 12)"/>
-                  <path d="M12 8C14 9 16 10 14 12C12 10 13 9 12 8Z" transform="rotate(180 12 12)"/>
-                  <path d="M12 8C14 9 16 10 14 12C12 10 13 9 12 8Z" transform="rotate(225 12 12)"/>
-                  <path d="M12 8C14 9 16 10 14 12C12 10 13 9 12 8Z" transform="rotate(270 12 12)"/>
-                  <path d="M12 8C14 9 16 10 14 12C12 10 13 9 12 8Z" transform="rotate(315 12 12)"/>
-                  <circle cx="12" cy="12" r="2" fill="none" stroke="currentColor" strokeWidth="1"/>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-orange-700 hover:text-orange-600">
+                  <path d="M12 2C13.5 4 15 6 12 8C9 6 10.5 4 12 2Z" fill="currentColor"/>
+                  <path d="M12 8C14 9.5 16 11 14 12C12 9 13 9.5 12 8Z" fill="currentColor" transform="rotate(72 12 12)"/>
+                  <path d="M12 8C14 9.5 16 11 14 12C12 9 13 9.5 12 8Z" fill="currentColor" transform="rotate(144 12 12)"/>
+                  <path d="M12 8C14 9.5 16 11 14 12C12 9 13 9.5 12 8Z" fill="currentColor" transform="rotate(216 12 12)"/>
+                  <path d="M12 8C14 9.5 16 11 14 12C12 9 13 9.5 12 8Z" fill="currentColor" transform="rotate(288 12 12)"/>
+                  <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1.5"/>
                 </svg>
               </div>
             </div>
