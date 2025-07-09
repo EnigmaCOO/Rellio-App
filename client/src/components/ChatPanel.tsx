@@ -349,7 +349,7 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
               `Ask questions about ${context.religion === 'quran' ? 'Quran -' : ''} ${context.book}${context.religion === 'quran' ? ` (Chapter ${getQuranChapterNumber(context.book)})` : ` Chapter ${context.chapter}`}` :
               `Ask general questions about ${context.religion === 'quran' ? 'the Quran' : context.religion === 'bible' ? 'the Bible' : context.religion === 'torah' ? 'the Torah' : context.religion === 'hindu' ? 'the Bhagavad Gita' : 'Buddhist teachings'}`
             ) :
-            "Welcome! I'm your AI Scripture Guide. Please select a religious tradition to start our conversation."
+            ""
           }
         </p>
       </div>
