@@ -1,0 +1,12 @@
+Update the existing index.html (artifact_id: a1b2c3d4-e5f6-7890-a123-456789abcdef) to improve the AI Scripture Guide chat’s behavior when no book is selected, ensuring it provides meaningful general answers instead of always returning "Please select a book for context-specific answers or ask a general question!". Implement the following:
+
+Modify the chat submit handler to analyze the input text when selectedBook or context.religion is 'general'. If the input contains general topics (e.g., keywords like "purpose," "history," "religion," "scripture," "faith"), generate a relevant response (e.g., "The purpose of scripture is often to guide moral and spiritual life across cultures. Ask more about this!"), using mock data or broad knowledge since no API context is available. If the input is unclear or off-topic (e.g., "What’s the weather?"), return the fallback message: "Please select a book for context-specific answers or ask a general question!"
+Ensure the request payload still sets context.religion to 'general' when no book is selected, but update the AI response logic to process this context intelligently.
+Add console.log("Chat input and response:", { input, response }) after processing the input to debug the decision.
+Preserve the chat’s static sizing (300px width, 400px height), history, bookmarking, copy/speak triggers, and the middle content and Scripture Navigation panels.
+Maintain the existing behavior for selected books, using API data (https://scripture.api.bible/, https://alquran.cloud/api, https://api.bhagavadgita.io/v1/, https://www.sefaria.org/api, or local JSON for Tripitaka).
+Notes for Agent:
+
+Implement a simple keyword-based check (e.g., array of terms: ['purpose', 'history', 'religion', 'scripture', 'faith']) to determine if the input warrants a general response.
+Use a mock response generator for 'general' context (e.g., pre-defined answers or a basic template) since no API data is available without a book.
+Test with inputs like "What is the purpose of scripture?" and "What’s the weather?" to confirm varied responses.
