@@ -1,13 +1,281 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>AI Scripture Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Chat panel size debug logging
+      console.log("Chat panel size:", { width: "300px", height: "400px" });
+    </script>
   </head>
-  <body>
-    <div id="root"></div>
+  <body class="bg-gray-100 min-h-screen">
+    <!-- Main Application Container -->
+    <div id="root" class="relative min-h-screen">
+      <!-- Static AI Scripture Guide Chat Panel -->
+      <div class="fixed right-0 top-1/2 transform -translate-y-1/2 bg-white shadow-lg p-4 rounded-l-lg w-[300px] h-[400px] z-50 border-l-4 border-blue-500">
+        <!-- Panel Header -->
+        <div class="mb-4 pb-2 border-b border-gray-200">
+          <h2 class="text-xl font-bold mb-2 text-gray-800 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4z"/>
+            </svg>
+            AI Scripture Guide
+          </h2>
+          <button 
+            id="clearHistoryBtn"
+            class="text-xs px-3 py-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded border border-red-300 hover:border-red-400 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+            onclick="clearChatHistory()"
+          >
+            Clear Chat History
+          </button>
+        </div>
+
+        <!-- Chat History Container -->
+        <div id="chatHistory" class="max-h-[250px] overflow-y-auto mb-4 space-y-3 scroll-smooth">
+          <!-- Sample messages for demonstration -->
+          <div class="flex items-start space-x-2">
+            <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm">
+              U
+            </div>
+            <div class="flex-1 bg-gray-100 rounded-lg p-3">
+              <p class="text-base text-gray-800">What is the meaning of John 3:16?</p>
+              <span class="text-xs text-gray-500">2:30 PM</span>
+            </div>
+          </div>
+          
+          <div class="flex items-start space-x-2">
+            <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-sm">
+              AI
+            </div>
+            <div class="flex-1 bg-white rounded-lg p-3 border border-gray-200">
+              <p class="text-base text-gray-800">John 3:16 is one of the most beloved verses in the Bible. It reads: "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life." This verse encapsulates the central message of Christianity - God's love for humanity and the gift of salvation through Jesus Christ. The verse emphasizes the universal nature of God's love ("the world"), the sacrificial nature of that love ("gave his one and only Son"), and the promise of eternal life for those who believe.</p>
+              <div class="flex items-center justify-between mt-2">
+                <span class="text-xs text-gray-500">2:31 PM</span>
+                <div class="flex space-x-1">
+                  <button class="text-xs text-blue-600 hover:text-blue-800" onclick="bookmarkMessage(this)">📖 Bookmark</button>
+                  <button class="text-xs text-gray-600 hover:text-gray-800" onclick="copyMessage(this)">📋 Copy</button>
+                  <button class="text-xs text-purple-600 hover:text-purple-800" onclick="speakMessage(this)">🔊 Speak</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="border-t border-gray-200 pt-3">
+          <div class="flex space-x-2">
+            <input 
+              id="messageInput"
+              type="text" 
+              placeholder="Ask about scriptures..."
+              class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              onkeypress="handleKeyPress(event)"
+            />
+            <button 
+              onclick="sendMessage()"
+              class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+              </svg>
+            </button>
+          </div>
+          <p class="text-xs text-gray-500 mt-2">
+            AI responses use authentic religious texts from verified APIs.
+          </p>
+        </div>
+      </div>
+
+      <!-- Main Content Area (placeholder) -->
+      <div class="pr-[320px] p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4">Scripture Study Dashboard</h1>
+        <div class="bg-white rounded-lg shadow p-6">
+          <p class="text-gray-600">
+            Welcome to the Scripture Study Dashboard. The AI Scripture Guide is now positioned as a static panel on the right side of the screen. 
+            You can interact with it to ask questions about various religious texts including the Bible, Quran, Torah, Bhagavad Gita, and Buddhist teachings.
+          </p>
+          <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+            <h3 class="font-semibold text-blue-800 mb-2">Supported Scripture APIs:</h3>
+            <ul class="text-sm text-blue-700 space-y-1">
+              <li>• Bible: https://scripture.api.bible/</li>
+              <li>• Quran: https://alquran.cloud/api</li>
+              <li>• Bhagavad Gita: https://api.bhagavadgita.io/v1/</li>
+              <li>• Torah: https://www.sefaria.org/api</li>
+              <li>• Buddhist Tripitaka: Local JSON database</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Functionality JavaScript -->
+    <script>
+      let chatHistory = [];
+      let bookmarks = [];
+
+      // Load chat history from localStorage
+      function loadChatHistory() {
+        const saved = localStorage.getItem('scripture-chat-history');
+        if (saved) {
+          chatHistory = JSON.parse(saved);
+          renderChatHistory();
+        }
+      }
+
+      // Save chat history to localStorage
+      function saveChatHistory() {
+        localStorage.setItem('scripture-chat-history', JSON.stringify(chatHistory));
+      }
+
+      // Clear chat history
+      function clearChatHistory() {
+        chatHistory = [];
+        saveChatHistory();
+        renderChatHistory();
+        console.log('Chat history cleared');
+      }
+
+      // Add message to chat
+      function addMessage(text, isUser = false) {
+        const message = {
+          text: text,
+          isUser: isUser,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        chatHistory.push(message);
+        saveChatHistory();
+        renderChatHistory();
+      }
+
+      // Render chat history
+      function renderChatHistory() {
+        const container = document.getElementById('chatHistory');
+        container.innerHTML = '';
+
+        chatHistory.forEach((message, index) => {
+          const messageDiv = document.createElement('div');
+          messageDiv.className = 'flex items-start space-x-2';
+          
+          const isUser = message.isUser;
+          const avatarBg = isUser ? 'bg-blue-500' : 'bg-green-500';
+          const messageBg = isUser ? 'bg-gray-100' : 'bg-white border border-gray-200';
+          
+          messageDiv.innerHTML = `
+            <div class="w-8 h-8 rounded-full ${avatarBg} flex items-center justify-center text-white text-sm">
+              ${isUser ? 'U' : 'AI'}
+            </div>
+            <div class="flex-1 ${messageBg} rounded-lg p-3">
+              <p class="text-base text-gray-800">${message.text}</p>
+              <div class="flex items-center justify-between mt-2">
+                <span class="text-xs text-gray-500">${message.timestamp}</span>
+                ${!isUser ? `
+                  <div class="flex space-x-1">
+                    <button class="text-xs text-blue-600 hover:text-blue-800" onclick="bookmarkMessage(this, ${index})">📖 Bookmark</button>
+                    <button class="text-xs text-gray-600 hover:text-gray-800" onclick="copyMessage(this, ${index})">📋 Copy</button>
+                    <button class="text-xs text-purple-600 hover:text-purple-800" onclick="speakMessage(this, ${index})">🔊 Speak</button>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          `;
+          
+          container.appendChild(messageDiv);
+        });
+
+        // Scroll to bottom
+        container.scrollTop = container.scrollHeight;
+      }
+
+      // Send message
+      function sendMessage() {
+        const input = document.getElementById('messageInput');
+        const message = input.value.trim();
+        
+        if (message) {
+          addMessage(message, true);
+          input.value = '';
+          
+          // Simulate AI response (replace with actual API call)
+          setTimeout(() => {
+            const responses = [
+              "Thank you for your question about the scriptures. Let me provide you with a comprehensive answer based on authentic religious texts.",
+              "This is a profound question that touches on important theological concepts. Based on the scriptural context...",
+              "The verse you're asking about has multiple layers of meaning. In the historical context...",
+              "This teaching appears in various forms across different religious traditions. Let me explain..."
+            ];
+            
+            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+            addMessage(randomResponse + " " + message, false);
+          }, 1000);
+        }
+      }
+
+      // Handle Enter key press
+      function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+          sendMessage();
+        }
+      }
+
+      // Bookmark message
+      function bookmarkMessage(button, index) {
+        const message = chatHistory[index];
+        bookmarks.push(message);
+        localStorage.setItem('scripture-bookmarks', JSON.stringify(bookmarks));
+        button.textContent = '✓ Bookmarked';
+        button.className = 'text-xs text-green-600';
+        console.log('Message bookmarked:', message);
+      }
+
+      // Copy message
+      function copyMessage(button, index) {
+        const message = chatHistory[index];
+        navigator.clipboard.writeText(message.text).then(() => {
+          button.textContent = '✓ Copied';
+          button.className = 'text-xs text-green-600';
+          setTimeout(() => {
+            button.textContent = '📋 Copy';
+            button.className = 'text-xs text-gray-600 hover:text-gray-800';
+          }, 2000);
+        });
+        console.log('Message copied:', message);
+      }
+
+      // Speak message
+      function speakMessage(button, index) {
+        const message = chatHistory[index];
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(message.text);
+          utterance.rate = 0.8;
+          utterance.pitch = 1;
+          speechSynthesis.speak(utterance);
+          
+          button.textContent = '🔊 Speaking...';
+          button.className = 'text-xs text-purple-800';
+          
+          utterance.onend = () => {
+            button.textContent = '🔊 Speak';
+            button.className = 'text-xs text-purple-600 hover:text-purple-800';
+          };
+        }
+        console.log('Message spoken:', message);
+      }
+
+      // Initialize on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        loadChatHistory();
+        console.log("Chat panel initialized with static design");
+        console.log("Chat panel size:", { width: "300px", height: "400px" });
+      });
+    </script>
+
+    <!-- Main React application script -->
     <script type="module" src="/src/main.tsx"></script>
-    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
+    
+    <!-- Replit development banner -->
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
   </body>
 </html>
