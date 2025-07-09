@@ -368,7 +368,7 @@ export default function Dashboard() {
               <div className={`bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col transition-all duration-300 h-full`}>
                 {/* Header */}
                 <div 
-                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-3 rounded-t-lg flex items-center justify-between flex-shrink-0"
+                  className="bg-white text-gray-800 p-3 rounded-t-lg flex items-center justify-between flex-shrink-0 border-b border-gray-200"
                   onDoubleClick={handleHeaderDoubleClick}
                 >
                   <h3 className={`font-semibold ${isMaximized ? 'text-lg' : 'text-sm'}`}>
@@ -380,7 +380,7 @@ export default function Dashboard() {
                         variant="ghost"
                         size="sm"
                         onClick={handleHeaderDoubleClick}
-                        className="text-white hover:bg-white hover:bg-opacity-20 p-1"
+                        className="text-gray-600 hover:bg-gray-100 p-1"
                         title="Restore"
                       >
                         Restore
@@ -390,7 +390,7 @@ export default function Dashboard() {
                       variant="ghost"
                       size="sm"
                       onClick={toggleChat}
-                      className="text-white hover:bg-white hover:bg-opacity-20 p-1"
+                      className="text-gray-600 hover:bg-gray-100 p-1"
                       title="Close AI Guide"
                     >
                       <X className="h-4 w-4" />

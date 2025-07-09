@@ -314,7 +314,7 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
   return (
     <div className="h-full bg-white shadow-md border-l border-scripture-200 flex flex-col">
       {/* Header - Fixed Height */}
-      <div className="flex-shrink-0 p-3 lg:p-4 border-b border-scripture-200 bg-gradient-to-r from-blue-50 to-purple-50">
+      <div className="flex-shrink-0 p-3 lg:p-4 border-b border-scripture-200 bg-white">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-1">
             <Button
