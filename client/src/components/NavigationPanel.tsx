@@ -234,28 +234,93 @@ export function NavigationPanel({
       <div className="p-4 lg:p-6">
         <h2 className="text-lg font-semibold text-scripture-800 mb-4">Scripture Navigation</h2>
         
-        {/* Religion Selector */}
+        {/* Religious Symbols Selector */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-scripture-700 mb-3">Religious Text</label>
-          <Select
-            value={selectedReligion || ''}
-            onValueChange={onReligionChange}
-          >
-            <SelectTrigger className="w-full h-11 bg-white border-scripture-300 hover:border-scripture-400 focus:border-scripture-500 focus:ring-2 focus:ring-scripture-100 transition-all duration-200">
-              <SelectValue placeholder="Choose a religious text..." className="text-scripture-700" />
-            </SelectTrigger>
-            <SelectContent className="bg-white border-scripture-200 shadow-lg">
-              {religions?.map((religion) => (
-                <SelectItem 
-                  key={religion.id} 
-                  value={religion.id}
-                  className="cursor-pointer hover:bg-scripture-50 focus:bg-scripture-100 py-2.5 px-3 text-scripture-700 font-medium"
-                >
-                  {religion.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center justify-center space-x-4 p-3 bg-gray-50 rounded-lg border border-scripture-200">
+            {/* Christianity - Bible */}
+            <div
+              className="text-2xl cursor-pointer hover:text-blue-500 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
+              onClick={() => {
+                console.log("Selected religion: bible");
+                onReligionChange('bible' as Religion);
+              }}
+              title="Holy Bible"
+            >
+              ✝️
+            </div>
+            
+            {/* Islam - Quran */}
+            <div
+              className="text-2xl cursor-pointer hover:text-green-500 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
+              onClick={() => {
+                console.log("Selected religion: quran");
+                onReligionChange('quran' as Religion);
+              }}
+              title="Quran"
+            >
+              ☪️
+            </div>
+            
+            {/* Judaism - Torah */}
+            <div
+              className="text-2xl cursor-pointer hover:text-blue-600 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
+              onClick={() => {
+                console.log("Selected religion: torah");
+                onReligionChange('torah' as Religion);
+              }}
+              title="Torah"
+            >
+              ✡️
+            </div>
+            
+            {/* Buddhism - Tripitaka */}
+            <div
+              className="text-2xl cursor-pointer hover:text-orange-500 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
+              onClick={() => {
+                console.log("Selected religion: buddhist");
+                onReligionChange('buddhist' as Religion);
+              }}
+              title="Tripitaka"
+            >
+              ☸️
+            </div>
+            
+            {/* Hinduism - Bhagavad Gita */}
+            <div
+              className="text-2xl cursor-pointer hover:text-purple-500 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
+              onClick={() => {
+                console.log("Selected religion: hindu");
+                onReligionChange('hindu' as Religion);
+              }}
+              title="Bhagavad Gita"
+            >
+              🕉️
+            </div>
+          </div>
+          
+          {/* Fallback dropdown for manual selection */}
+          <div className="mt-3">
+            <Select
+              value={selectedReligion || ''}
+              onValueChange={onReligionChange}
+            >
+              <SelectTrigger className="w-full h-11 bg-white border-scripture-300 hover:border-scripture-400 focus:border-scripture-500 focus:ring-2 focus:ring-scripture-100 transition-all duration-200">
+                <SelectValue placeholder="Or select from dropdown..." className="text-scripture-700" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border-scripture-200 shadow-lg">
+                {religions?.map((religion) => (
+                  <SelectItem 
+                    key={religion.id} 
+                    value={religion.id}
+                    className="cursor-pointer hover:bg-scripture-50 focus:bg-scripture-100 py-2.5 px-3 text-scripture-700 font-medium"
+                  >
+                    {religion.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Book Selector */}
