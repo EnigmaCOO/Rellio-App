@@ -314,10 +314,6 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
       {/* Header - Fixed Height */}
       <div className="flex-shrink-0 p-3 lg:p-4 border-b border-scripture-200 bg-gradient-to-r from-blue-50 to-purple-50">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm lg:text-base font-semibold text-scripture-800 flex items-center">
-            <Bot className="w-4 h-4 mr-2 text-blue-600" />
-            AI Scripture Guide
-          </h2>
           <div className="flex items-center space-x-1">
             <Button
               variant="outline"
