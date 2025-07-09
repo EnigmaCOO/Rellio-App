@@ -177,8 +177,8 @@ export default function Dashboard() {
   // Calculate content panel width based on visible panels
   const getContentWidth = () => {
     if (!navigationVisible && !chatVisible) return 'w-full';
-    if (!navigationVisible || !chatVisible) return 'lg:w-3/4';
-    return 'lg:w-2/4';
+    if (!navigationVisible || !chatVisible) return 'lg:w-2/3';
+    return 'lg:w-1/3';
   };
 
   // Handle copy verse functionality
@@ -373,7 +373,7 @@ export default function Dashboard() {
         <div
           {...chatSwipeHandlers}
           className={`${
-            chatVisible ? (isMaximized ? 'fixed inset-4 z-50' : 'w-full lg:w-1/4') : 'w-0'
+            chatVisible ? (isMaximized ? 'fixed inset-4 z-50' : 'w-full lg:w-1/3') : 'w-0'
           } transition-all duration-300 ease-in-out overflow-hidden relative`}
         >
           {chatVisible && (
