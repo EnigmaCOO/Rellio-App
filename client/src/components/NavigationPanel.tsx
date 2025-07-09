@@ -5,6 +5,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Clock } from "lucide-react";
 import type { Religion } from "@shared/schema";
+import { useState } from "react";
+
+// Import the default religious symbols
+import christianSymbol from "@assets/image_1752101829300.png";
+import islamSymbol from "@assets/image_1752101791050.png";
+import judaismSymbol from "@assets/image_1752101819674.png";
+import hinduSymbol from "@assets/image_1752101837542.png";
+import buddhismSymbol from "@assets/image_1752101903156.png";
 
 interface NavigationPanelProps {
   selectedReligion: Religion | null;
@@ -37,6 +45,38 @@ export function NavigationPanel({
     queryKey: ['/api/readings', 1], // Using user ID 1 as default
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
+
+  // State for uploaded religious symbols
+  const [uploadedSymbols, setUploadedSymbols] = useState<{
+    christianity: string | null;
+    islam: string | null;
+    judaism: string | null;
+    buddhism: string | null;
+    hinduism: string | null;
+  }>({
+    christianity: christianSymbol,
+    islam: islamSymbol,
+    judaism: judaismSymbol,
+    buddhism: buddhismSymbol,
+    hinduism: hinduSymbol,
+  });
+
+  // Handle file upload
+  const handleFileUpload = (religion: keyof typeof uploadedSymbols, file: File) => {
+    try {
+      const imageUrl = URL.createObjectURL(file);
+      setUploadedSymbols(prev => ({ ...prev, [religion]: imageUrl }));
+      console.log("Uploaded symbols:", { ...uploadedSymbols, [religion]: imageUrl });
+    } catch (error) {
+      console.log("Upload error:", error);
+    }
+  };
+
+  // Handle symbol click
+  const handleSymbolClick = (religion: Religion) => {
+    console.log("Selected religion from image:", religion);
+    onReligionChange(religion);
+  };
 
   const formatTimeAgo = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -237,85 +277,129 @@ export function NavigationPanel({
         {/* Religious Symbols Selector */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-scripture-700 mb-3">Religious Text</label>
+          
+          {/* Image Upload Interface */}
+          <div className="mb-4 space-y-2">
+            <div className="grid grid-cols-1 gap-2">
+              <div className="flex items-center space-x-2">
+                <label className="text-xs text-scripture-600 w-20">Christian:</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload('christianity', file);
+                  }}
+                  className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-scripture-100 file:text-scripture-700 hover:file:bg-scripture-200"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <label className="text-xs text-scripture-600 w-20">Islam:</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload('islam', file);
+                  }}
+                  className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-scripture-100 file:text-scripture-700 hover:file:bg-scripture-200"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <label className="text-xs text-scripture-600 w-20">Judaism:</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload('judaism', file);
+                  }}
+                  className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-scripture-100 file:text-scripture-700 hover:file:bg-scripture-200"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <label className="text-xs text-scripture-600 w-20">Buddhism:</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload('buddhism', file);
+                  }}
+                  className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-scripture-100 file:text-scripture-700 hover:file:bg-scripture-200"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <label className="text-xs text-scripture-600 w-20">Hinduism:</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload('hinduism', file);
+                  }}
+                  className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-scripture-100 file:text-scripture-700 hover:file:bg-scripture-200"
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Religious Symbol Images */}
           <div className="flex items-center justify-center space-x-4 p-3 bg-gray-50 rounded-lg border border-scripture-200">
             {/* Christianity - Bible */}
-            <div
-              className="cursor-pointer hover:text-blue-500 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
-              onClick={() => {
-                console.log("Selected religion: bible");
-                onReligionChange('bible' as Religion);
-              }}
-              title="Holy Bible"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-blue-600 hover:text-blue-500">
-                <path d="M12 2v20M5 5l7 7-7 7M19 5l-7 7 7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
+            {uploadedSymbols.christianity && (
+              <img
+                src={uploadedSymbols.christianity}
+                alt="Christian Symbol"
+                className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
+                onClick={() => handleSymbolClick('bible')}
+                title="Holy Bible"
+              />
+            )}
             
             {/* Islam - Quran */}
-            <div
-              className="cursor-pointer hover:text-green-500 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
-              onClick={() => {
-                console.log("Selected religion: quran");
-                onReligionChange('quran' as Religion);
-              }}
-              title="Quran"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-green-600 hover:text-green-500">
-                <path d="M21 16c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zM7 12c0-5.5 4.5-10 10-10v2c-4.4 0-8 3.6-8 8s3.6 8 8 8v2c-5.5 0-10-4.5-10-10z" fill="currentColor"/>
-                <circle cx="17" cy="7" r="1.5" fill="currentColor"/>
-              </svg>
-            </div>
+            {uploadedSymbols.islam && (
+              <img
+                src={uploadedSymbols.islam}
+                alt="Islamic Symbol"
+                className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
+                onClick={() => handleSymbolClick('quran')}
+                title="Quran"
+              />
+            )}
             
             {/* Judaism - Torah */}
-            <div
-              className="cursor-pointer hover:text-blue-600 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
-              onClick={() => {
-                console.log("Selected religion: torah");
-                onReligionChange('torah' as Religion);
-              }}
-              title="Torah"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-blue-700 hover:text-blue-600">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.77 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/>
-                <path d="M12 6l2.12 4.26L18 11.02l-3.5 3.41L15.24 18 12 16.27 8.76 18 9.5 14.43 6 11.02l3.88-.76L12 6z" fill="none" stroke="white" strokeWidth="1"/>
-              </svg>
-            </div>
+            {uploadedSymbols.judaism && (
+              <img
+                src={uploadedSymbols.judaism}
+                alt="Jewish Symbol"
+                className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
+                onClick={() => handleSymbolClick('torah')}
+                title="Torah"
+              />
+            )}
             
             {/* Buddhism - Tripitaka */}
-            <div
-              className="cursor-pointer hover:text-orange-500 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
-              onClick={() => {
-                console.log("Selected religion: buddhist");
-                onReligionChange('buddhist' as Religion);
-              }}
-              title="Tripitaka"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-orange-600 hover:text-orange-500">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                <path d="M12 2v20M4.93 4.93l14.14 14.14M2 12h20M4.93 19.07l14.14-14.14" stroke="currentColor" strokeWidth="1"/>
-                <circle cx="12" cy="12" r="2" fill="currentColor"/>
-              </svg>
-            </div>
+            {uploadedSymbols.buddhism && (
+              <img
+                src={uploadedSymbols.buddhism}
+                alt="Buddhist Symbol"
+                className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
+                onClick={() => handleSymbolClick('buddhist')}
+                title="Tripitaka"
+              />
+            )}
             
             {/* Hinduism - Bhagavad Gita */}
-            <div
-              className="cursor-pointer hover:text-orange-600 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
-              onClick={() => {
-                console.log("Selected religion: hindu");
-                onReligionChange('hindu' as Religion);
-              }}
-              title="Bhagavad Gita"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-orange-700 hover:text-orange-600">
-                <path d="M12 2C13.5 4 15 6 12 8C9 6 10.5 4 12 2Z" fill="currentColor"/>
-                <path d="M12 8C14 9.5 16 11 14 12C12 9 13 9.5 12 8Z" fill="currentColor" transform="rotate(72 12 12)"/>
-                <path d="M12 8C14 9.5 16 11 14 12C12 9 13 9.5 12 8Z" fill="currentColor" transform="rotate(144 12 12)"/>
-                <path d="M12 8C14 9.5 16 11 14 12C12 9 13 9.5 12 8Z" fill="currentColor" transform="rotate(216 12 12)"/>
-                <path d="M12 8C14 9.5 16 11 14 12C12 9 13 9.5 12 8Z" fill="currentColor" transform="rotate(288 12 12)"/>
-                <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-              </svg>
-            </div>
+            {uploadedSymbols.hinduism && (
+              <img
+                src={uploadedSymbols.hinduism}
+                alt="Hindu Symbol"
+                className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
+                onClick={() => handleSymbolClick('hindu')}
+                title="Bhagavad Gita"
+              />
+            )}
           </div>
           
           {/* Fallback dropdown for manual selection */}

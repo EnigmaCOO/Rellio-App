@@ -18,6 +18,13 @@ import rellioLogo from "@assets/image_1751817332000.png";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, Scripture } from "@shared/schema";
 
+// Import the religious symbols
+import christianSymbol from "@assets/image_1752101829300.png";
+import islamSymbol from "@assets/image_1752101791050.png";
+import judaismSymbol from "@assets/image_1752101819674.png";
+import hinduSymbol from "@assets/image_1752101837542.png";
+import buddhismSymbol from "@assets/image_1752101903156.png";
+
 // TTS Configuration - English only
 const TTS_CONFIG = {
   apiKey: "sk_31b38041319a566a772dd557e957debdafec8d0e4cc0fcc2", // Replace with your actual API key
@@ -431,7 +438,7 @@ export function ContentPanel({
             <div className="flex items-center justify-center space-x-6 mt-8">
               {/* Christianity - Bible */}
               <div
-                className="cursor-pointer hover:text-blue-500 transition-colors duration-200 p-3 rounded-lg hover:bg-blue-50"
+                className="cursor-pointer hover:opacity-80 transition-opacity duration-200 p-3 rounded-lg hover:bg-blue-50"
                 onClick={() => {
                   console.log("Selected religion: bible");
                   if (onReligionChange) {
@@ -440,14 +447,16 @@ export function ContentPanel({
                 }}
                 title="Holy Bible"
               >
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-blue-600 hover:text-blue-500">
-                  <path d="M12 2v20M5 5l7 7-7 7M19 5l-7 7 7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <img
+                  src={christianSymbol}
+                  alt="Christian Symbol"
+                  className="w-12 h-12 object-cover rounded"
+                />
               </div>
               
               {/* Islam - Quran */}
               <div
-                className="cursor-pointer hover:text-green-500 transition-colors duration-200 p-3 rounded-lg hover:bg-green-50"
+                className="cursor-pointer hover:opacity-80 transition-opacity duration-200 p-3 rounded-lg hover:bg-green-50"
                 onClick={() => {
                   console.log("Selected religion: quran");
                   if (onReligionChange) {
@@ -456,15 +465,16 @@ export function ContentPanel({
                 }}
                 title="Quran"
               >
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-green-600 hover:text-green-500">
-                  <path d="M21 16c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zM7 12c0-5.5 4.5-10 10-10v2c-4.4 0-8 3.6-8 8s3.6 8 8 8v2c-5.5 0-10-4.5-10-10z" fill="currentColor"/>
-                  <circle cx="17" cy="7" r="1.5" fill="currentColor"/>
-                </svg>
+                <img
+                  src={islamSymbol}
+                  alt="Islamic Symbol"
+                  className="w-12 h-12 object-cover rounded"
+                />
               </div>
               
               {/* Judaism - Torah */}
               <div
-                className="cursor-pointer hover:text-blue-600 transition-colors duration-200 p-3 rounded-lg hover:bg-blue-50"
+                className="cursor-pointer hover:opacity-80 transition-opacity duration-200 p-3 rounded-lg hover:bg-blue-50"
                 onClick={() => {
                   console.log("Selected religion: torah");
                   if (onReligionChange) {
@@ -473,15 +483,16 @@ export function ContentPanel({
                 }}
                 title="Torah"
               >
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-blue-700 hover:text-blue-600">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.77 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/>
-                  <path d="M12 6l2.12 4.26L18 11.02l-3.5 3.41L15.24 18 12 16.27 8.76 18 9.5 14.43 6 11.02l3.88-.76L12 6z" fill="none" stroke="white" strokeWidth="1"/>
-                </svg>
+                <img
+                  src={judaismSymbol}
+                  alt="Jewish Symbol"
+                  className="w-12 h-12 object-cover rounded"
+                />
               </div>
               
               {/* Buddhism - Tripitaka */}
               <div
-                className="cursor-pointer hover:text-orange-500 transition-colors duration-200 p-3 rounded-lg hover:bg-orange-50"
+                className="cursor-pointer hover:opacity-80 transition-opacity duration-200 p-3 rounded-lg hover:bg-orange-50"
                 onClick={() => {
                   console.log("Selected religion: buddhist");
                   if (onReligionChange) {
@@ -490,16 +501,16 @@ export function ContentPanel({
                 }}
                 title="Tripitaka"
               >
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-orange-600 hover:text-orange-500">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M12 2v20M4.93 4.93l14.14 14.14M2 12h20M4.93 19.07l14.14-14.14" stroke="currentColor" strokeWidth="1"/>
-                  <circle cx="12" cy="12" r="2" fill="currentColor"/>
-                </svg>
+                <img
+                  src={buddhismSymbol}
+                  alt="Buddhist Symbol"
+                  className="w-12 h-12 object-cover rounded"
+                />
               </div>
               
               {/* Hinduism - Bhagavad Gita */}
               <div
-                className="cursor-pointer hover:text-orange-600 transition-colors duration-200 p-3 rounded-lg hover:bg-orange-50"
+                className="cursor-pointer hover:opacity-80 transition-opacity duration-200 p-3 rounded-lg hover:bg-orange-50"
                 onClick={() => {
                   console.log("Selected religion: hindu");
                   if (onReligionChange) {
@@ -508,14 +519,11 @@ export function ContentPanel({
                 }}
                 title="Bhagavad Gita"
               >
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-orange-700 hover:text-orange-600">
-                  <path d="M12 2C13.5 4 15 6 12 8C9 6 10.5 4 12 2Z" fill="currentColor"/>
-                  <path d="M12 8C14 9.5 16 11 14 12C12 9 13 9.5 12 8Z" fill="currentColor" transform="rotate(72 12 12)"/>
-                  <path d="M12 8C14 9.5 16 11 14 12C12 9 13 9.5 12 8Z" fill="currentColor" transform="rotate(144 12 12)"/>
-                  <path d="M12 8C14 9.5 16 11 14 12C12 9 13 9.5 12 8Z" fill="currentColor" transform="rotate(216 12 12)"/>
-                  <path d="M12 8C14 9.5 16 11 14 12C12 9 13 9.5 12 8Z" fill="currentColor" transform="rotate(288 12 12)"/>
-                  <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-                </svg>
+                <img
+                  src={hinduSymbol}
+                  alt="Hindu Symbol"
+                  className="w-12 h-12 object-cover rounded"
+                />
               </div>
             </div>
           </div>

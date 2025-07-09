@@ -1,0 +1,12 @@
+Update the existing index.html (artifact_id: a1b2c3d4-e5f6-7890-a123-456789abcdef) to replace the low-quality Unicode religious symbols (✝️, ☪️, ✡️, ☸️, 🕉️) in the Scripture Navigation panel with high-quality images uploaded by the user, mapping each to the corresponding religious text. Implement the following:
+
+Add an image upload interface above the symbol row in the navigation panel, allowing the user to upload one image for each religion: Christianity (Holy Bible), Islam (Quran), Judaism (Torah), Buddhism (Tripitaka), Hinduism (Bhagavad Gita). Use HTML input elements of type "file" (e.g., <input type="file" accept="image/*" />) with labels (e.g., "Upload Christian Symbol"), styled with Tailwind CSS (e.g., mb-2).
+Store the uploaded images in React state (e.g., as an object like { christianity: URL, islam: URL, ... } using URL.createObjectURL) and display them as a horizontal row in the navigation panel instead of the Unicode symbols. Style the images with Tailwind CSS (e.g., w-10 h-10 mx-2 cursor-pointer hover:opacity-80) and ensure consistent sizing.
+Update the click handler to map each image to its religious text (e.g., christianity image → "Holy Bible", islam image → "Quran") and set the "Religious Text" dropdown value, refreshing the middle panel with the default first book (e.g., Genesis for Bible, Surah 1 for Quran). Maintain the existing dropdown for manual selection.
+Preserve the chat’s static sizing (300px width, 400px height), history, bookmarking, copy/speak triggers, and the middle content panel, using APIs (https://scripture.api.bible/, https://alquran.cloud/api, https://api.bhagavadgita.io/v1/, https://www.sefaria.org/api, or local JSON for Tripitaka) for content.
+Add console.log("Uploaded symbols:", { christianity, islam, judaism, buddhism, hinduism }) after each upload and console.log("Selected religion from image:", selectedReligion) on image click to debug.
+Notes for Agent:
+
+Provide five file inputs, one per religion, and update the state only when a valid image is uploaded.
+Ensure the images load correctly by testing with common formats (PNG, JPG) and handle errors (e.g., console.log("Upload error:", error)).
+Verify the click logic works with the new image elements, overriding the dropdown state as before.
