@@ -341,36 +341,38 @@ export function NavigationPanel({
           </div>
         </div>
 
-        {/* Book Selector */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-scripture-700 mb-3">
-            Book {searchTerm && `(${books?.length || 0} found)`}
-          </label>
-          <ScrollArea className="h-60 border border-scripture-200 rounded-lg bg-gray-50/50">
-            <div className="p-2 space-y-1">
-              {books?.length === 0 && searchTerm ? (
-                <div className="text-center py-8 text-scripture-500">
-                  <p className="text-sm">No books found matching "{searchTerm}"</p>
-                </div>
-              ) : (
-                books?.map((book, index) => {
-                  // Handle both string and object formats
-                  const bookName = typeof book === 'string' ? book : (book as any)?.name || book;
-                  return (
-                    <Button
-                      key={`${bookName}-${index}`}
-                      variant={selectedBook === bookName ? "default" : "ghost"}
-                      className="w-full justify-start text-left h-9 px-3 font-medium hover:bg-scripture-100 transition-all duration-200 animate-in fade-in-0"
-                      onClick={() => onBookChange(bookName)}
-                    >
-                      {bookName}
-                    </Button>
-                  );
-                })
-              )}
-            </div>
-          </ScrollArea>
-        </div>
+        {/* Book Selector - Only show when a religion is selected */}
+        {selectedReligion && (
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-scripture-700 mb-3">
+              Book {searchTerm && `(${books?.length || 0} found)`}
+            </label>
+            <ScrollArea className="h-60 border border-scripture-200 rounded-lg bg-gray-50/50">
+              <div className="p-2 space-y-1">
+                {books?.length === 0 && searchTerm ? (
+                  <div className="text-center py-8 text-scripture-500">
+                    <p className="text-sm">No books found matching "{searchTerm}"</p>
+                  </div>
+                ) : (
+                  books?.map((book, index) => {
+                    // Handle both string and object formats
+                    const bookName = typeof book === 'string' ? book : (book as any)?.name || book;
+                    return (
+                      <Button
+                        key={`${bookName}-${index}`}
+                        variant={selectedBook === bookName ? "default" : "ghost"}
+                        className="w-full justify-start text-left h-9 px-3 font-medium hover:bg-scripture-100 transition-all duration-200 animate-in fade-in-0"
+                        onClick={() => onBookChange(bookName)}
+                      >
+                        {bookName}
+                      </Button>
+                    );
+                  })
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+        )}
 
         {/* Chapter Selector - Only show when a book is selected */}
         {selectedBook && (
