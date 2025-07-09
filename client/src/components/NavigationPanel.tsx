@@ -61,16 +61,7 @@ export function NavigationPanel({
     hinduism: hinduSymbol,
   });
 
-  // Handle file upload
-  const handleFileUpload = (religion: keyof typeof uploadedSymbols, file: File) => {
-    try {
-      const imageUrl = URL.createObjectURL(file);
-      setUploadedSymbols(prev => ({ ...prev, [religion]: imageUrl }));
-      console.log("Uploaded symbols:", { ...uploadedSymbols, [religion]: imageUrl });
-    } catch (error) {
-      console.log("Upload error:", error);
-    }
-  };
+
 
   // Handle symbol click
   const handleSymbolClick = (religion: Religion) => {
@@ -278,128 +269,52 @@ export function NavigationPanel({
         <div className="mb-6">
           <label className="block text-sm font-medium text-scripture-700 mb-3">Religious Text</label>
           
-          {/* Image Upload Interface */}
-          <div className="mb-4 space-y-2">
-            <div className="grid grid-cols-1 gap-2">
-              <div className="flex items-center space-x-2">
-                <label className="text-xs text-scripture-600 w-20">Christian:</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleFileUpload('christianity', file);
-                  }}
-                  className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-scripture-100 file:text-scripture-700 hover:file:bg-scripture-200"
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <label className="text-xs text-scripture-600 w-20">Islam:</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleFileUpload('islam', file);
-                  }}
-                  className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-scripture-100 file:text-scripture-700 hover:file:bg-scripture-200"
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <label className="text-xs text-scripture-600 w-20">Judaism:</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleFileUpload('judaism', file);
-                  }}
-                  className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-scripture-100 file:text-scripture-700 hover:file:bg-scripture-200"
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <label className="text-xs text-scripture-600 w-20">Buddhism:</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleFileUpload('buddhism', file);
-                  }}
-                  className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-scripture-100 file:text-scripture-700 hover:file:bg-scripture-200"
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <label className="text-xs text-scripture-600 w-20">Hinduism:</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleFileUpload('hinduism', file);
-                  }}
-                  className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-scripture-100 file:text-scripture-700 hover:file:bg-scripture-200"
-                />
-              </div>
-            </div>
-          </div>
-          
           {/* Religious Symbol Images */}
           <div className="flex items-center justify-center space-x-4 p-3 bg-gray-50 rounded-lg border border-scripture-200">
             {/* Christianity - Bible */}
-            {uploadedSymbols.christianity && (
-              <img
-                src={uploadedSymbols.christianity}
-                alt="Christian Symbol"
-                className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
-                onClick={() => handleSymbolClick('bible')}
-                title="Holy Bible"
-              />
-            )}
+            <img
+              src={uploadedSymbols.christianity}
+              alt="Christian Symbol"
+              className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
+              onClick={() => handleSymbolClick('bible')}
+              title="Holy Bible"
+            />
             
             {/* Islam - Quran */}
-            {uploadedSymbols.islam && (
-              <img
-                src={uploadedSymbols.islam}
-                alt="Islamic Symbol"
-                className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
-                onClick={() => handleSymbolClick('quran')}
-                title="Quran"
-              />
-            )}
+            <img
+              src={uploadedSymbols.islam}
+              alt="Islamic Symbol"
+              className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
+              onClick={() => handleSymbolClick('quran')}
+              title="Quran"
+            />
             
             {/* Judaism - Torah */}
-            {uploadedSymbols.judaism && (
-              <img
-                src={uploadedSymbols.judaism}
-                alt="Jewish Symbol"
-                className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
-                onClick={() => handleSymbolClick('torah')}
-                title="Torah"
-              />
-            )}
+            <img
+              src={uploadedSymbols.judaism}
+              alt="Jewish Symbol"
+              className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
+              onClick={() => handleSymbolClick('torah')}
+              title="Torah"
+            />
             
             {/* Buddhism - Tripitaka */}
-            {uploadedSymbols.buddhism && (
-              <img
-                src={uploadedSymbols.buddhism}
-                alt="Buddhist Symbol"
-                className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
-                onClick={() => handleSymbolClick('buddhist')}
-                title="Tripitaka"
-              />
-            )}
+            <img
+              src={uploadedSymbols.buddhism}
+              alt="Buddhist Symbol"
+              className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
+              onClick={() => handleSymbolClick('buddhist')}
+              title="Tripitaka"
+            />
             
             {/* Hinduism - Bhagavad Gita */}
-            {uploadedSymbols.hinduism && (
-              <img
-                src={uploadedSymbols.hinduism}
-                alt="Hindu Symbol"
-                className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
-                onClick={() => handleSymbolClick('hindu')}
-                title="Bhagavad Gita"
-              />
-            )}
+            <img
+              src={uploadedSymbols.hinduism}
+              alt="Hindu Symbol"
+              className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
+              onClick={() => handleSymbolClick('hindu')}
+              title="Bhagavad Gita"
+            />
           </div>
           
           {/* Fallback dropdown for manual selection */}
