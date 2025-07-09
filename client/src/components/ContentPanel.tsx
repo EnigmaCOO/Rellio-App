@@ -266,7 +266,7 @@ export function ContentPanel({
     try {
       // Copy to clipboard
       await navigator.clipboard.writeText(verseText);
-      console.log("Copied verse:", verseText);
+      console.log("Copy event, chat state: verse copied -", verseText);
       
       toast({
         title: "Verse copied!",

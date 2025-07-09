@@ -20,12 +20,29 @@ export default function Dashboard() {
   const [navigationVisible, setNavigationVisible] = useState<boolean>(true);
   const [chatVisible, setChatVisible] = useState<boolean>(true);
   const [externalMessage, setExternalMessage] = useState<string>('');
+  const [isCopyOperation, setIsCopyOperation] = useState<boolean>(false);
   const { toast } = useToast();
 
   // Debug panel visibility state
   useEffect(() => {
     console.log("Panel state:", { navigationVisible, chatVisible });
   }, [navigationVisible, chatVisible]);
+
+  // Add copy event listeners to detect manual copying
+  useEffect(() => {
+    const handleCopyEvent = () => {
+      console.log("Copy event, chat state:", { manualCopy: true, isChatVisible: chatVisible });
+      setIsCopyOperation(true);
+      setTimeout(() => {
+        setIsCopyOperation(false);
+      }, 1000);
+    };
+
+    document.addEventListener('copy', handleCopyEvent);
+    return () => {
+      document.removeEventListener('copy', handleCopyEvent);
+    };
+  }, [chatVisible]);
 
   const { data: religions, isLoading: religionsLoading } = useQuery<Array<{id: Religion, name: string, books: string[]}>>({
     queryKey: ['/api/religions'],
@@ -114,7 +131,12 @@ export default function Dashboard() {
   // Swipe handlers for chat panel
   const chatSwipeHandlers = useSwipeable({
     onSwipedLeft: () => setChatVisible(true),
-    onSwipedRight: () => setChatVisible(false),
+    onSwipedRight: () => {
+      // Don't close chat panel during copy operations or text selection
+      if (!isCopyOperation && !window.getSelection()?.toString()) {
+        setChatVisible(false);
+      }
+    },
     trackMouse: true,
     preventScrollOnSwipe: true,
   });
@@ -147,6 +169,11 @@ export default function Dashboard() {
 
   // Handle copy verse functionality
   const handleCopyVerse = (verseText: string) => {
+    console.log("Copy event, chat state:", { isChatVisible: chatVisible });
+    
+    // Set copy operation flag to prevent swipe handlers from closing the chat
+    setIsCopyOperation(true);
+    
     const explanationMessage = `Explain the following verse ${verseText}`;
     setExternalMessage(explanationMessage);
     
@@ -154,11 +181,21 @@ export default function Dashboard() {
     if (!chatVisible) {
       setChatVisible(true);
     }
+    
+    // Reset copy operation flag after a short delay
+    setTimeout(() => {
+      setIsCopyOperation(false);
+    }, 1000);
   };
 
   // Handle external message processed
   const handleExternalMessageProcessed = () => {
     setExternalMessage('');
+  };
+
+  // Handle copy operation from chat panel
+  const handleCopyOperation = (isActive: boolean) => {
+    setIsCopyOperation(isActive);
   };
 
   return (
@@ -327,6 +364,7 @@ export default function Dashboard() {
                 context={currentContext}
                 externalMessage={externalMessage}
                 onExternalMessageProcessed={handleExternalMessageProcessed}
+                onCopyOperation={handleCopyOperation}
               />
               {/* Swipe indicator for chat panel */}
               <div className="absolute top-1/2 left-2 transform -translate-y-1/2 text-gray-400 pointer-events-none">

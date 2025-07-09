@@ -30,9 +30,10 @@ interface ChatPanelProps {
   };
   externalMessage?: string;
   onExternalMessageProcessed?: () => void;
+  onCopyOperation?: (isActive: boolean) => void;
 }
 
-export function ChatPanel({ sessionId, context, externalMessage, onExternalMessageProcessed }: ChatPanelProps) {
+export function ChatPanel({ sessionId, context, externalMessage, onExternalMessageProcessed, onCopyOperation }: ChatPanelProps) {
   const [newMessage, setNewMessage] = useState("");
   const [bookmarks, setBookmarks] = useState<BookmarkedMessage[]>([]);
   const [showBookmarks, setShowBookmarks] = useState(false);
@@ -192,6 +193,13 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
   const bookmarkMessage = (message: ChatMessage) => {
     if (message.type === 'user') return; // Don't bookmark user messages
     
+    console.log("Copy event, chat state:", { isBookmarking: true });
+    
+    // Signal that a copy operation is active
+    if (onCopyOperation) {
+      onCopyOperation(true);
+    }
+    
     const bookmark: BookmarkedMessage = {
       id: `bookmark-${Date.now()}`,
       text: message.content,
@@ -210,6 +218,13 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
       title: "Response Bookmarked",
       description: "AI response saved to your bookmarks",
     });
+    
+    // Reset copy operation flag after a short delay
+    setTimeout(() => {
+      if (onCopyOperation) {
+        onCopyOperation(false);
+      }
+    }, 1000);
   };
 
   // Remove bookmark
