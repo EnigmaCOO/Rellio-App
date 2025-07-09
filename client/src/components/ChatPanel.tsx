@@ -266,6 +266,8 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
     
+    console.log("Chat input state:", { selectedBook: context.book, inputValue: newMessage });
+    
     sendMessageMutation.mutate({
       message: newMessage,
       sessionId,
@@ -534,17 +536,20 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
                 `Ask about ${context.religion === 'quran' ? 'this surah' : 'this passage'}...` :
                 `Ask general questions about ${context.religion === 'quran' ? 'the Quran' : context.religion === 'bible' ? 'the Bible' : context.religion === 'torah' ? 'the Torah' : context.religion === 'hindu' ? 'the Bhagavad Gita' : 'Buddhist teachings'}...`
               ) :
-              "Select a religious tradition to start asking questions..."
+              "Ask a general question or select a religious tradition for context..."
             }
             className="flex-1 text-sm"
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={(e) => {
+              setNewMessage(e.target.value);
+              console.log("Chat input state:", { selectedBook: context.book, inputValue: e.target.value });
+            }}
             onKeyPress={handleKeyPress}
-            disabled={sendMessageMutation.isPending || !context.religion}
+            disabled={sendMessageMutation.isPending}
           />
           <Button
             onClick={handleSendMessage}
-            disabled={!newMessage.trim() || sendMessageMutation.isPending || !context.religion}
+            disabled={!newMessage.trim() || sendMessageMutation.isPending}
             size="sm"
           >
             <Send className="h-4 w-4" />

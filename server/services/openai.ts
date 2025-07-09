@@ -17,6 +17,11 @@ export async function generateScriptureResponse(
   context?: ScriptureContext
 ): Promise<string> {
   try {
+    // Check if no book context is provided
+    if (!context || !context.book) {
+      return "Please select a book for context-specific answers or ask a general question!";
+    }
+
     let systemPrompt = `You are an expert scripture guide with deep knowledge of religious texts. Your role is to:
 
 1. Provide concise explanations (1-2 sentences) of scripture passages
