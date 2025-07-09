@@ -24,6 +24,9 @@ export default function Dashboard() {
   const [isCopyOperation, setIsCopyOperation] = useState<boolean>(false);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragPosition, setDragPosition] = useState<{x: number, y: number}>({ x: 0, y: 0 });
+  const [panelSize, setPanelSize] = useState<{width: number, height: number}>({ width: 320, height: 500 });
+  const [isMaximized, setIsMaximized] = useState<boolean>(false);
+  const [isResizing, setIsResizing] = useState<boolean>(false);
   const { toast } = useToast();
 
   // Debug panel visibility state
@@ -150,14 +153,14 @@ export default function Dashboard() {
     preventScrollOnSwipe: true,
   });
 
-  // Swipe handlers for chat panel (disabled when dragging)
+  // Swipe handlers for chat panel (disabled when dragging or resizing)
   const chatSwipeHandlers = useSwipeable({
     onSwipedLeft: () => {
-      if (!isDragging) setChatVisible(true);
+      if (!isDragging && !isResizing) setChatVisible(true);
     },
     onSwipedRight: () => {
-      // Don't close chat panel during copy operations, text selection, or dragging
-      if (!isCopyOperation && !window.getSelection()?.toString() && !isDragging) {
+      // Don't close chat panel during copy operations, text selection, dragging, or resizing
+      if (!isCopyOperation && !window.getSelection()?.toString() && !isDragging && !isResizing) {
         setChatVisible(false);
       }
     },
@@ -167,12 +170,14 @@ export default function Dashboard() {
 
   // Drag handlers for chat panel
   const handleDrag = (e: any, data: any) => {
+    if (isResizing) return; // Don't drag while resizing
     const { x, y } = data;
     console.log("Dragging chat to:", { x, y });
     setDragPosition({ x, y });
   };
 
   const handleDragStart = () => {
+    if (isResizing) return;
     setIsDragging(true);
     console.log("Started dragging chat panel");
   };
@@ -181,6 +186,50 @@ export default function Dashboard() {
     setIsDragging(false);
     setDragPosition({ x: data.x, y: data.y });
     console.log("Stopped dragging chat panel at:", { x: data.x, y: data.y });
+  };
+
+  // Double-click handler for maximizing/restoring panel
+  const handleHeaderDoubleClick = () => {
+    if (isMaximized) {
+      // Restore to previous size and position
+      setIsMaximized(false);
+      setPanelSize({ width: 320, height: 500 });
+      setDragPosition({ x: window.innerWidth * 0.75, y: 80 });
+    } else {
+      // Maximize to full screen
+      setIsMaximized(true);
+      setPanelSize({ width: window.innerWidth, height: window.innerHeight * 0.9 });
+      setDragPosition({ x: 0, y: 0 });
+    }
+    console.log("Panel size:", { width: panelSize.width, height: panelSize.height, isMaximized: !isMaximized });
+  };
+
+  // Resize handlers
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startWidth = panelSize.width;
+    const startHeight = panelSize.height;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = Math.min(Math.max(320, startWidth + (e.clientX - startX)), window.innerWidth * 0.5);
+      const newHeight = Math.min(Math.max(400, startHeight + (e.clientY - startY)), window.innerHeight * 0.75);
+      
+      setPanelSize({ width: newWidth, height: newHeight });
+      console.log("Panel size:", { width: newWidth, height: newHeight, isMaximized });
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   };
 
   // Swipe handlers for content panel to show hidden panels
@@ -391,6 +440,11 @@ export default function Dashboard() {
           )}
         </div>
         
+        {/* Maximize Overlay */}
+        {isMaximized && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300" />
+        )}
+
         {/* Draggable Chat Panel */}
         {chatVisible && (
           <Draggable
@@ -401,31 +455,56 @@ export default function Dashboard() {
             bounds={{
               left: 0,
               top: 0,
-              right: window.innerWidth - 320, // 320px is the panel width
-              bottom: window.innerHeight - 500 // 500px is the panel height
+              right: window.innerWidth - panelSize.width,
+              bottom: window.innerHeight - panelSize.height
             }}
+            disabled={isMaximized}
             handle=".chat-drag-handle"
           >
             <div 
-              className="fixed z-50 w-80 h-[500px] bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col"
-              style={{ cursor: isDragging ? 'grabbing' : 'auto' }}
+              className={`fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col transition-all duration-300 ${
+                isMaximized ? 'inset-4' : ''
+              }`}
+              style={{ 
+                width: panelSize.width,
+                height: panelSize.height,
+                cursor: isDragging ? 'grabbing' : 'auto'
+              }}
             >
               {/* Drag Handle */}
-              <div className="chat-drag-handle bg-gradient-to-r from-blue-500 to-purple-600 text-white p-3 rounded-t-lg cursor-move flex items-center justify-between flex-shrink-0">
-                <h3 className="font-semibold text-sm">AI Scripture Guide</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleChat}
-                  className="text-white hover:bg-white hover:bg-opacity-20 p-1"
-                  title="Close AI Guide"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+              <div 
+                className="chat-drag-handle bg-gradient-to-r from-blue-500 to-purple-600 text-white p-3 rounded-t-lg cursor-move flex items-center justify-between flex-shrink-0"
+                onDoubleClick={handleHeaderDoubleClick}
+              >
+                <h3 className={`font-semibold ${isMaximized ? 'text-lg' : 'text-sm'}`}>
+                  AI Scripture Guide
+                </h3>
+                <div className="flex items-center space-x-2">
+                  {isMaximized && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleHeaderDoubleClick}
+                      className="text-white hover:bg-white hover:bg-opacity-20 p-1"
+                      title="Restore"
+                    >
+                      Restore
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleChat}
+                    className="text-white hover:bg-white hover:bg-opacity-20 p-1"
+                    title="Close AI Guide"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               
               {/* Chat Panel Content */}
-              <div className="flex-1 overflow-hidden">
+              <div className={`flex-1 overflow-hidden ${isMaximized ? 'text-lg p-4' : ''}`}>
                 <ChatPanel
                   sessionId={chatSessionId}
                   context={currentContext}
@@ -434,6 +513,15 @@ export default function Dashboard() {
                   onCopyOperation={handleCopyOperation}
                 />
               </div>
+
+              {/* Resize Handle */}
+              {!isMaximized && (
+                <div
+                  className="absolute bottom-0 right-0 bg-gray-300 w-4 h-4 cursor-nwse-resize"
+                  onMouseDown={handleResizeStart}
+                  title="Resize panel"
+                />
+              )}
             </div>
           </Draggable>
         )}

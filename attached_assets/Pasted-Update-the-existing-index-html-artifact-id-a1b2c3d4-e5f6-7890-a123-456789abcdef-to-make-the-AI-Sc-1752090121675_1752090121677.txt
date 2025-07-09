@@ -1,0 +1,14 @@
+Update the existing index.html (artifact_id: a1b2c3d4-e5f6-7890-a123-456789abcdef) to make the AI Scripture Guide chat panel expandable to address visibility issues with full answer display, enhancing user experience with a smart and addictive design. Implement the following:
+
+Add an expandable feature with a resize handle (e.g., a small drag bar at the bottom-right corner, styled with Tailwind CSS as bg-gray-300 w-4 h-4 cursor-nwse-resize) that allows users to drag and increase the panel’s height and width. Constrain the maximum size to 50% of the dashboard width and 75% of the height to avoid overlapping content.
+Include a smart toggle: double-clicking the panel header (e.g., "AI Scripture Guide" title) maximizes the panel to full-screen mode (100% width, 90% height) with a centered layout, and a second double-click restores it to the dragged position. Use Tailwind CSS transitions (e.g., transition-all duration-300) for smooth animations.
+Ensure the draggable functionality (via react-draggable) works with the expanded state, updating the position dynamically, and integrate with the existing swipe/collapse logic (disable swipe during expansion).
+Maintain all chat features: history (scrollable), bookmarking, copy/speak triggers, and responses based on APIs (https://scripture.api.bible/, https://alquran.cloud/api, https://api.bhagavadgita.io/v1/, https://www.sefaria.org/api, or local JSON for Tripitaka). Style expanded content with larger text (e.g., text-lg) and padding for readability.
+Add console.log("Panel size:", { width, height, isMaximized }) on resize or toggle to debug.
+Keep the Scripture Navigation and middle content panels unchanged.
+Notes for Agent:
+
+Use React state to manage width, height, and isMaximized, updating them on drag, resize, or double-click.
+Implement the resize handle with a mousedown/move/up event listener, calculating new dimensions relative to the initial position.
+Ensure the full-screen mode includes a subtle overlay (e.g., bg-black bg-opacity-50) to focus attention, with an exit button (e.g., "Restore" in the corner, styled with Tailwind CSS).
+Test edge cases (e.g., dragging off-screen, maximizing on small screens) and adjust bounds accordingly.
