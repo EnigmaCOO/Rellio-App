@@ -311,18 +311,19 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
 
   return (
     <div className="h-full bg-white shadow-md border-l border-scripture-200 flex flex-col">
-      <div className="p-4 lg:p-6 border-b border-scripture-200 bg-gradient-to-r from-blue-50 to-purple-50">
+      {/* Header - Fixed Height */}
+      <div className="flex-shrink-0 p-3 lg:p-4 border-b border-scripture-200 bg-gradient-to-r from-blue-50 to-purple-50">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-base lg:text-lg font-semibold text-scripture-800 flex items-center">
-            <Bot className="w-5 h-5 mr-2 text-blue-600" />
+          <h2 className="text-sm lg:text-base font-semibold text-scripture-800 flex items-center">
+            <Bot className="w-4 h-4 mr-2 text-blue-600" />
             AI Scripture Guide
           </h2>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowBookmarks(!showBookmarks)}
-              className="text-xs border-blue-300 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+              className="text-xs border-blue-300 text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1"
             >
               <Bookmark className="h-3 w-3 mr-1" />
               Bookmarks ({bookmarks.length})
@@ -338,7 +339,7 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
                     description: "Chat history has been cleared",
                   });
                 }}
-                className="text-xs border-red-300 text-red-600 hover:text-red-800 hover:bg-red-50"
+                className="text-xs border-red-300 text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1"
               >
                 <Trash2 className="h-3 w-3 mr-1" />
                 Clear History
@@ -346,7 +347,7 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
             )}
           </div>
         </div>
-        <p className="text-xs lg:text-sm text-scripture-600">
+        <p className="text-xs text-scripture-600">
           {context.religion ? 
             (context.book ? 
               `Ask questions about ${context.religion === 'quran' ? 'Quran -' : ''} ${context.book}${context.religion === 'quran' ? ` (Chapter ${getQuranChapterNumber(context.book)})` : ` Chapter ${context.chapter}`}` :
@@ -357,21 +358,21 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
         </p>
       </div>
 
-      {/* Bookmarks Section */}
+      {/* Bookmarks Section - Fixed Height */}
       {showBookmarks && (
-        <div className="p-4 border-b border-scripture-200 bg-gray-50">
-          <div className="flex items-center justify-between mb-3">
+        <div className="flex-shrink-0 p-3 border-b border-scripture-200 bg-gray-50">
+          <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-gray-700 flex items-center">
               <BookmarkCheck className="w-4 h-4 mr-2 text-blue-600" />
               Bookmarked Responses
             </h3>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
               {bookmarks.length > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={clearBookmarks}
-                  className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50"
+                  className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1"
                 >
                   <Trash2 className="h-3 w-3 mr-1" />
                   Clear All
@@ -381,13 +382,13 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowBookmarks(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 px-2 py-1"
               >
                 <X className="h-3 w-3" />
               </Button>
             </div>
           </div>
-          <ScrollArea className="max-h-40">
+          <div className="max-h-32 overflow-y-auto">
             {bookmarks.length === 0 ? (
               <p className="text-xs text-gray-500 text-center py-4">
                 No bookmarks yet. Click the bookmark button next to AI responses to save them.
@@ -395,12 +396,12 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
             ) : (
               <div className="space-y-2">
                 {bookmarks.map(bookmark => (
-                  <div key={bookmark.id} className="p-3 bg-white border border-gray-200 rounded-lg">
+                  <div key={bookmark.id} className="p-2 bg-white border border-gray-200 rounded-lg">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <p className="text-sm text-gray-800 mb-1">
-                          {bookmark.text.length > 100 ? 
-                            `${bookmark.text.substring(0, 100)}...` : 
+                        <p className="text-xs text-gray-800 mb-1">
+                          {bookmark.text.length > 80 ? 
+                            `${bookmark.text.substring(0, 80)}...` : 
                             bookmark.text
                           }
                         </p>
@@ -412,7 +413,7 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
                         variant="ghost"
                         size="sm"
                         onClick={() => removeBookmark(bookmark.id)}
-                        className="text-red-500 hover:text-red-700 ml-2 h-6 w-6 p-0"
+                        className="text-red-500 hover:text-red-700 ml-2 h-5 w-5 p-0"
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -421,112 +422,114 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
                 ))}
               </div>
             )}
-          </ScrollArea>
+          </div>
         </div>
       )}
 
-      {/* Chat Messages */}
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
-          {isLoading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex space-x-3">
-                  <Skeleton className="h-8 w-8 rounded-full" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : messages && messages.length > 0 ? (
-            messages.map((message: ChatMessage) => (
-              <div
-                key={message.id}
-                className={`flex items-start space-x-3 ${
-                  message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-                }`}
-              >
-                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                  message.type === 'user' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gradient-to-br from-purple-500 to-blue-500 text-white'
-                }`}>
-                  {message.type === 'user' ? (
-                    <User className="h-4 w-4" />
-                  ) : (
-                    <Bot className="h-4 w-4" />
-                  )}
-                </div>
-                <div className={`flex-1 max-w-[75%] ${
-                  message.type === 'user' ? 'text-right' : 'text-left'
-                }`}>
-                  <div className={`inline-block p-3 rounded-lg shadow-sm ${
-                    message.type === 'user'
-                      ? 'bg-gray-100 text-gray-800 border border-gray-200 rounded-br-sm'
-                      : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm shadow-sm'
-                  }`}>
-                    <p className="text-sm leading-relaxed">{message.content}</p>
-                  </div>
-                  <div className={`flex items-center mt-1 ${
-                    message.type === 'user' ? 'justify-end' : 'justify-start'
-                  }`}>
-                    <div className="text-xs text-scripture-500">
-                      {formatTime(message.timestamp?.toString() || new Date().toISOString())}
+      {/* Chat Messages - Scrollable Area */}
+      <div className="flex-1 overflow-hidden">
+        <div className="max-h-[350px] overflow-y-auto p-3">
+          <div className="space-y-4">
+            {isLoading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex space-x-3">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
                     </div>
-                    {message.type !== 'user' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => bookmarkMessage(message)}
-                        className="ml-2 h-6 w-6 p-0 text-gray-400 hover:text-yellow-500 transition-colors"
-                        title="Bookmark this response"
-                      >
-                        <Bookmark className="h-3 w-3" />
-                      </Button>
+                  </div>
+                ))}
+              </div>
+            ) : messages && messages.length > 0 ? (
+              messages.map((message: ChatMessage) => (
+                <div
+                  key={message.id}
+                  className={`flex items-start space-x-3 ${
+                    message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+                  }`}
+                >
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                    message.type === 'user' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gradient-to-br from-purple-500 to-blue-500 text-white'
+                  }`}>
+                    {message.type === 'user' ? (
+                      <User className="h-4 w-4" />
+                    ) : (
+                      <Bot className="h-4 w-4" />
                     )}
                   </div>
+                  <div className={`flex-1 max-w-[75%] ${
+                    message.type === 'user' ? 'text-right' : 'text-left'
+                  }`}>
+                    <div className={`inline-block p-3 rounded-lg shadow-sm ${
+                      message.type === 'user'
+                        ? 'bg-gray-100 text-gray-800 border border-gray-200 rounded-br-sm'
+                        : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm shadow-sm'
+                    }`}>
+                      <p className="text-sm leading-relaxed">{message.content}</p>
+                    </div>
+                    <div className={`flex items-center mt-1 ${
+                      message.type === 'user' ? 'justify-end' : 'justify-start'
+                    }`}>
+                      <div className="text-xs text-scripture-500">
+                        {formatTime(message.timestamp?.toString() || new Date().toISOString())}
+                      </div>
+                      {message.type !== 'user' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => bookmarkMessage(message)}
+                          className="ml-2 h-6 w-6 p-0 text-gray-400 hover:text-yellow-500 transition-colors"
+                          title="Bookmark this response"
+                        >
+                          <Bookmark className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-scripture-600">
+                <Bot className="h-12 w-12 mx-auto mb-4 text-scripture-400" />
+                <p className="text-sm">
+                  {context.religion ? 
+                    (context.book ? 
+                      `Hello! I'm here to help you explore and understand the scriptures. Ask me anything about ${context.religion === 'quran' ? 'this surah' : 'this passage'}.` :
+                      `Hello! I'm your AI Scripture Guide for ${context.religion === 'quran' ? 'the Quran' : context.religion === 'bible' ? 'the Bible' : context.religion === 'torah' ? 'the Torah' : context.religion === 'hindu' ? 'the Bhagavad Gita' : 'Buddhist teachings'}. Ask me general questions about this religious tradition or select a specific book for detailed study.`
+                    ) :
+                    "Welcome! I'm your AI Scripture Guide. Select a religious tradition to start our conversation about sacred writings."
+                  }
+                </p>
+              </div>
+            )}
+            
+            {/* Loading indicator */}
+            {sendMessageMutation.isPending && (
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 rounded-full bg-scripture-200 flex items-center justify-center">
+                  <Bot className="h-4 w-4 text-scripture-700" />
+                </div>
+                <div className="bg-scripture-100 rounded-lg px-4 py-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-scripture-400 rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-scripture-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}} />
+                    <div className="w-2 h-2 bg-scripture-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
+                  </div>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="text-center py-8 text-scripture-600">
-              <Bot className="h-12 w-12 mx-auto mb-4 text-scripture-400" />
-              <p className="text-sm">
-                {context.religion ? 
-                  (context.book ? 
-                    `Hello! I'm here to help you explore and understand the scriptures. Ask me anything about ${context.religion === 'quran' ? 'this surah' : 'this passage'}.` :
-                    `Hello! I'm your AI Scripture Guide for ${context.religion === 'quran' ? 'the Quran' : context.religion === 'bible' ? 'the Bible' : context.religion === 'torah' ? 'the Torah' : context.religion === 'hindu' ? 'the Bhagavad Gita' : 'Buddhist teachings'}. Ask me general questions about this religious tradition or select a specific book for detailed study.`
-                  ) :
-                  "Welcome! I'm your AI Scripture Guide. Select a religious tradition to start our conversation about sacred writings."
-                }
-              </p>
-            </div>
-          )}
-          
-          {/* Loading indicator */}
-          {sendMessageMutation.isPending && (
-            <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 rounded-full bg-scripture-200 flex items-center justify-center">
-                <Bot className="h-4 w-4 text-scripture-700" />
-              </div>
-              <div className="bg-scripture-100 rounded-lg px-4 py-2">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-scripture-400 rounded-full animate-bounce" />
-                  <div className="w-2 h-2 bg-scripture-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}} />
-                  <div className="w-2 h-2 bg-scripture-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
-                </div>
-              </div>
-            </div>
-          )}
-          
-          <div ref={messagesEndRef} />
+            )}
+            
+            <div ref={messagesEndRef} />
+          </div>
         </div>
-      </ScrollArea>
+      </div>
 
-      {/* Chat Input */}
-      <div className="p-4 border-t border-scripture-200">
+      {/* Chat Input - Fixed at Bottom */}
+      <div className="flex-shrink-0 p-3 border-t border-scripture-200 bg-gray-50">
         <div className="flex space-x-2">
           <Input
             type="text"
@@ -537,7 +540,7 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
               ) :
               "Select a religious tradition to start asking questions..."
             }
-            className="flex-1"
+            className="flex-1 text-sm"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
