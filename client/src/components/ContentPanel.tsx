@@ -487,7 +487,7 @@ export function ContentPanel({
               
               {/* Hinduism - Bhagavad Gita */}
               <div
-                className="text-3xl cursor-pointer hover:text-purple-500 transition-colors duration-200 p-3 rounded-lg hover:bg-purple-50"
+                className="text-3xl cursor-pointer hover:text-orange-600 transition-colors duration-200 p-3 rounded-lg hover:bg-orange-50"
                 onClick={() => {
                   console.log("Selected religion: hindu");
                   if (onReligionChange) {
@@ -496,7 +496,7 @@ export function ContentPanel({
                 }}
                 title="Bhagavad Gita"
               >
-                🕉️
+                🪷
               </div>
             </div>
           </div>

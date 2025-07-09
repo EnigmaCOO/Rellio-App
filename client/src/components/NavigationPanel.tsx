@@ -288,14 +288,14 @@ export function NavigationPanel({
             
             {/* Hinduism - Bhagavad Gita */}
             <div
-              className="text-2xl cursor-pointer hover:text-purple-500 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
+              className="text-2xl cursor-pointer hover:text-orange-600 transition-colors duration-200 p-2 rounded-lg hover:bg-white"
               onClick={() => {
                 console.log("Selected religion: hindu");
                 onReligionChange('hindu' as Religion);
               }}
               title="Bhagavad Gita"
             >
-              🕉️
+              🪷
             </div>
           </div>
           
