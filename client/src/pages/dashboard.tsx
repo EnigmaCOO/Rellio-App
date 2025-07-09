@@ -3,7 +3,7 @@ import { NavigationPanel } from "@/components/NavigationPanel";
 import { ContentPanel } from "@/components/ContentPanel";
 import { ChatPanel } from "@/components/ChatPanel";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Settings, BookOpen, Menu, MessageCircle, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Settings, BookOpen, Menu, X, ChevronLeft, ChevronRight } from "lucide-react";
 import rellioLogo from "@assets/image_1751817332000.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -233,19 +233,6 @@ export default function Dashboard() {
                   title={navigationVisible ? 'Hide Navigation' : 'Show Navigation'}
                 >
                   <Menu className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleChat}
-                  className={`transition-colors ${
-                    chatVisible 
-                      ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
-                      : 'text-gray-400 hover:text-gray-600'
-                  }`}
-                  title={chatVisible ? 'Hide AI Guide' : 'Show AI Guide'}
-                >
-                  <MessageCircle className="h-4 w-4" />
                 </Button>
               </div>
               <img src={rellioLogo} alt="Rellio Logo" className="h-10 w-10 lg:h-15 lg:w-15" />
