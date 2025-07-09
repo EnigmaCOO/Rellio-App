@@ -130,6 +130,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { message, sessionId, context } = chatRequestSchema.parse(req.body);
       
+      console.log("Chat request payload:", { context });
+      
       // Save user message
       const userMessage = await storage.createChatMessage({
         sessionId,
@@ -140,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate AI response
       let scriptureContext;
-      if (context) {
+      if (context && context.religion && context.book && context.chapter) {
         const verses = await storage.getScriptures(context.religion, context.book, context.chapter);
         scriptureContext = {
           religion: context.religion,
@@ -160,7 +162,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         context: context || null
       });
 
-      res.json({ userMessage, aiMessage });
+      const response = { userMessage, aiMessage };
+      console.log("Chat response:", response);
+      
+      res.json(response);
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: "Invalid request", details: error.errors });

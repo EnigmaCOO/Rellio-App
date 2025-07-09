@@ -68,8 +68,8 @@ export const chatRequestSchema = z.object({
   message: z.string().min(1),
   sessionId: z.string(),
   context: z.object({
-    religion: religionSchema,
-    book: z.string(),
-    chapter: z.number(),
+    religion: religionSchema.nullable(),
+    book: z.string().nullable(),
+    chapter: z.number().nullable(),
   }).optional(),
 });

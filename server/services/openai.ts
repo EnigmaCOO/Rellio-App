@@ -18,7 +18,7 @@ export async function generateScriptureResponse(
 ): Promise<string> {
   try {
     // Check if no book context is provided
-    if (!context || !context.book) {
+    if (!context || !context.book || !context.religion) {
       return "Please select a book for context-specific answers or ask a general question!";
     }
 
