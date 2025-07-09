@@ -316,6 +316,7 @@ export default function Dashboard() {
             isFullscreen={!navigationVisible}
             panelsVisible={{ navigation: navigationVisible, chat: chatVisible }}
             onCopyVerse={handleCopyVerse}
+            onReligionChange={handleReligionChange}
           />
           
           {/* Hidden panel indicators */}

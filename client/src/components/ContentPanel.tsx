@@ -37,6 +37,7 @@ interface ContentPanelProps {
   isFullscreen?: boolean;
   panelsVisible?: { navigation: boolean; chat: boolean };
   onCopyVerse?: (verseText: string) => void;
+  onReligionChange?: (religion: Religion) => void;
 }
 
 export function ContentPanel({
@@ -51,6 +52,7 @@ export function ContentPanel({
   isFullscreen = false,
   panelsVisible = { navigation: true, chat: true },
   onCopyVerse,
+  onReligionChange,
 }: ContentPanelProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -426,12 +428,76 @@ export function ContentPanel({
             <p className="text-base lg:text-lg text-scripture-600 max-w-md mx-auto leading-relaxed">
               Please select a religious text and book from the navigation panel to begin exploring sacred writings.
             </p>
-            <div className="flex flex-wrap justify-center gap-2 mt-6">
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Bible</span>
-              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">Quran</span>
-              <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">Torah</span>
-              <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">Bhagavad Gita</span>
-              <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm">Tripitaka</span>
+            <div className="flex items-center justify-center space-x-6 mt-8">
+              {/* Christianity - Bible */}
+              <div
+                className="text-3xl cursor-pointer hover:text-blue-500 transition-colors duration-200 p-3 rounded-lg hover:bg-blue-50"
+                onClick={() => {
+                  console.log("Selected religion: bible");
+                  if (onReligionChange) {
+                    onReligionChange('bible' as Religion);
+                  }
+                }}
+                title="Holy Bible"
+              >
+                ✝️
+              </div>
+              
+              {/* Islam - Quran */}
+              <div
+                className="text-3xl cursor-pointer hover:text-green-500 transition-colors duration-200 p-3 rounded-lg hover:bg-green-50"
+                onClick={() => {
+                  console.log("Selected religion: quran");
+                  if (onReligionChange) {
+                    onReligionChange('quran' as Religion);
+                  }
+                }}
+                title="Quran"
+              >
+                ☪️
+              </div>
+              
+              {/* Judaism - Torah */}
+              <div
+                className="text-3xl cursor-pointer hover:text-blue-600 transition-colors duration-200 p-3 rounded-lg hover:bg-blue-50"
+                onClick={() => {
+                  console.log("Selected religion: torah");
+                  if (onReligionChange) {
+                    onReligionChange('torah' as Religion);
+                  }
+                }}
+                title="Torah"
+              >
+                ✡️
+              </div>
+              
+              {/* Buddhism - Tripitaka */}
+              <div
+                className="text-3xl cursor-pointer hover:text-orange-500 transition-colors duration-200 p-3 rounded-lg hover:bg-orange-50"
+                onClick={() => {
+                  console.log("Selected religion: buddhist");
+                  if (onReligionChange) {
+                    onReligionChange('buddhist' as Religion);
+                  }
+                }}
+                title="Tripitaka"
+              >
+                ☸️
+              </div>
+              
+              {/* Hinduism - Bhagavad Gita */}
+              <div
+                className="text-3xl cursor-pointer hover:text-purple-500 transition-colors duration-200 p-3 rounded-lg hover:bg-purple-50"
+                onClick={() => {
+                  console.log("Selected religion: hindu");
+                  if (onReligionChange) {
+                    onReligionChange('hindu' as Religion);
+                  }
+                }}
+                title="Bhagavad Gita"
+              >
+                🕉️
+              </div>
             </div>
           </div>
         </div>
