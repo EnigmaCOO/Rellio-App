@@ -8,7 +8,6 @@ import {
   ChevronRight, 
   Bookmark, 
   Share, 
-  Printer, 
   Highlighter, 
   StickyNote, 
   Quote,
@@ -259,9 +258,7 @@ export function ContentPanel({
     });
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
+
 
   const handleCopyVerse = async (verse: Scripture) => {
     const verseText = `${verse.verse}. ${verse.text}`;
@@ -504,9 +501,6 @@ export function ContentPanel({
               </Button>
               <Button variant="ghost" size="sm" onClick={handleShare}>
                 <Share className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="sm" onClick={handlePrint}>
-                <Printer className="h-4 w-4" />
               </Button>
             </div>
           </div>
