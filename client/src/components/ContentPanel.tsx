@@ -192,6 +192,9 @@ export function ContentPanel({
   };
 
   const displayChapter = getDisplayChapter();
+  
+  // Debug logging for navigation moved to bottom
+  console.log("Navigation moved to bottom, chapter:", displayChapter);
 
   // Calculate pagination for scriptures with verse counts
   const VERSES_PER_PAGE = 10; // Show 10 verses per page for Quran
@@ -598,46 +601,7 @@ export function ContentPanel({
             </div>
           </div>
           
-          {/* Chapter/Page Navigation */}
-          <div className="flex items-center space-x-4 mb-6">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleChapterNavigation('prev')}
-              disabled={isQuranPagination ? currentPage <= 1 : selectedChapter <= 1}
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Previous
-            </Button>
-            <span className="text-scripture-600">
-              {isQuranPagination ? (
-                <div className="text-center">
-                  <div>Page {currentPage} of {totalPages}</div>
-                  <div className="text-xs text-scripture-500">
-                    {versesOnCurrentPage} verses on this page
-                  </div>
-                </div>
-              ) : (isBibleChapter || isTorahChapter || isHinduChapter) ? (
-                <div className="text-center">
-                  <div>Chapter {displayChapter}</div>
-                  <div className="text-xs text-scripture-500">
-                    {totalVerses} verses in this chapter
-                  </div>
-                </div>
-              ) : (
-                `Chapter ${displayChapter}`
-              )}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleChapterNavigation('next')}
-              disabled={isQuranPagination ? currentPage >= totalPages : false}
-            >
-              Next
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
+
         </div>
 
         {/* Scripture Content */}
@@ -702,6 +666,55 @@ export function ContentPanel({
               </div>
             )}
           </div>
+        </div>
+
+        {/* Chapter/Page Navigation - Bottom */}
+        <div className="flex justify-between items-center p-4 border-t border-scripture-200 bg-scripture-25 rounded-lg mb-6">
+          <button
+            onClick={() => handleChapterNavigation('prev')}
+            disabled={isQuranPagination ? currentPage <= 1 : selectedChapter <= 1}
+            className={`text-blue-500 hover:underline hover:text-blue-700 transition-colors ${
+              (isQuranPagination ? currentPage <= 1 : selectedChapter <= 1) 
+                ? 'opacity-50 cursor-not-allowed' 
+                : 'cursor-pointer'
+            }`}
+          >
+            <ChevronLeft className="h-4 w-4 inline mr-1" />
+            Previous
+          </button>
+          
+          <div className="text-center text-scripture-600 font-medium">
+            {isQuranPagination ? (
+              <div>
+                <div>Page {currentPage} of {totalPages}</div>
+                <div className="text-xs text-scripture-500">
+                  {versesOnCurrentPage} verses on this page
+                </div>
+              </div>
+            ) : (isBibleChapter || isTorahChapter || isHinduChapter) ? (
+              <div>
+                <div>Chapter {displayChapter}</div>
+                <div className="text-xs text-scripture-500">
+                  {totalVerses} verses in this chapter
+                </div>
+              </div>
+            ) : (
+              `Chapter ${displayChapter}`
+            )}
+          </div>
+          
+          <button
+            onClick={() => handleChapterNavigation('next')}
+            disabled={isQuranPagination ? currentPage >= totalPages : false}
+            className={`text-blue-500 hover:underline hover:text-blue-700 transition-colors ${
+              (isQuranPagination ? currentPage >= totalPages : false) 
+                ? 'opacity-50 cursor-not-allowed' 
+                : 'cursor-pointer'
+            }`}
+          >
+            Next
+            <ChevronRight className="h-4 w-4 inline ml-1" />
+          </button>
         </div>
 
         {/* Study Tools */}
