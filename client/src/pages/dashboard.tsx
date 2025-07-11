@@ -3,7 +3,7 @@ import { NavigationPanel } from "@/components/NavigationPanel";
 import { ContentPanel } from "@/components/ContentPanel";
 import { ChatPanel } from "@/components/ChatPanel";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Settings, BookOpen, Menu, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Settings, BookOpen, Menu, X, ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
 import rellioLogo from "@assets/image_1751817332000.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,7 +123,9 @@ export default function Dashboard() {
   };
 
   const toggleChat = () => {
-    setChatVisible(!chatVisible);
+    const newChatVisible = !chatVisible;
+    console.log("Chat panel action:", { action: newChatVisible ? 'open' : 'close', showChat: newChatVisible });
+    setChatVisible(newChatVisible);
   };
 
   // Swipe handlers for navigation panel
