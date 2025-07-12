@@ -6,9 +6,6 @@ import { useState } from "react";
 import { 
   ChevronLeft, 
   ChevronRight, 
-  Highlighter, 
-  StickyNote, 
-  Quote,
   Copy,
   Volume2
 } from "lucide-react";
@@ -416,12 +413,7 @@ export function ContentPanel({
     });
   };
 
-  const handleStudyTool = (tool: string) => {
-    toast({
-      title: `${tool} selected`,
-      description: `${tool} functionality would be implemented here.`,
-    });
-  };
+
 
   // Show welcome message when no religion is selected
   if (!selectedReligion) {
@@ -708,36 +700,7 @@ export function ContentPanel({
           </button>
         </div>
 
-        {/* Study Tools */}
-        <div className="border-t border-scripture-200 pt-6">
-          <h3 className="text-lg font-semibold text-scripture-800 mb-4">Study Tools</h3>
-          <div className="grid grid-cols-3 gap-4">
-            <Button
-              variant="outline"
-              className="p-4 h-auto flex-col bg-blue-50 hover:bg-blue-100 border-blue-200"
-              onClick={() => handleStudyTool("Highlight")}
-            >
-              <Highlighter className="h-6 w-6 text-blue-600 mb-2" />
-              <span className="text-sm font-medium">Highlight</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="p-4 h-auto flex-col bg-green-50 hover:bg-green-100 border-green-200"
-              onClick={() => handleStudyTool("Add Note")}
-            >
-              <StickyNote className="h-6 w-6 text-green-600 mb-2" />
-              <span className="text-sm font-medium">Add Note</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="p-4 h-auto flex-col bg-amber-50 hover:bg-amber-100 border-amber-200"
-              onClick={() => handleStudyTool("Quote")}
-            >
-              <Quote className="h-6 w-6 text-amber-600 mb-2" />
-              <span className="text-sm font-medium">Quote</span>
-            </Button>
-          </div>
-        </div>
+
       </div>
     </div>
   );

@@ -86,6 +86,7 @@ This is a full-stack web application for scripture study and AI-powered chat ass
 
 ## Changelog
 
+- **July 12, 2025 5:18 AM**: Complete Study Tools removal - removed entire Study Tools section from content panel including Highlight, Add Note, and Quote buttons, removed handleStudyTool function, and cleaned up unused imports (Highlighter, StickyNote, Quote icons) for minimal interface design.
 - **July 11, 2025 11:03 PM**: Header cleanup - removed "Rellio Scripture Library" text and search bar from header, keeping only logo and settings button for minimal design. Also removed Recent Readings section entirely from navigation panel. Removed bookmark and share buttons from content panel header for cleaner interface.
 - **July 11, 2025 11:14 PM**: Enhanced navigation UX - moved chapter navigation (Previous/Next buttons, chapter numbers, verse counts) from top to bottom of verse list in content panel, styled with Tailwind CSS as clickable links with hover effects, added debug logging for navigation rendering.
 - **July 11, 2025 11:03 PM**: Fixed MessageCircle import error - resolved runtime error by importing MessageCircle icon from lucide-react library, added console logging for chat panel close action debugging.
