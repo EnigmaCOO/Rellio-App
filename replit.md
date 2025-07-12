@@ -86,7 +86,7 @@ This is a full-stack web application for scripture study and AI-powered chat ass
 
 ## Changelog
 
-- **July 11, 2025 11:03 PM**: Header cleanup - removed "Rellio Scripture Library" text from header, keeping only the logo for cleaner design.
+- **July 11, 2025 11:03 PM**: Header cleanup - removed "Rellio Scripture Library" text and search bar from header, keeping only logo and settings button for minimal design.
 - **July 11, 2025 11:14 PM**: Enhanced navigation UX - moved chapter navigation (Previous/Next buttons, chapter numbers, verse counts) from top to bottom of verse list in content panel, styled with Tailwind CSS as clickable links with hover effects, added debug logging for navigation rendering.
 - **July 11, 2025 11:03 PM**: Fixed MessageCircle import error - resolved runtime error by importing MessageCircle icon from lucide-react library, added console logging for chat panel close action debugging.
 - **July 07, 2025 12:40 AM**: Enhanced AI Scripture Guide with smart bookmarking features - implemented localStorage-based bookmark system for saving AI responses with context (religion, book, chapter), added collapsible bookmarks panel with toggle button showing bookmark count, enhanced message styling with gradient AI avatars and improved chat bubbles (light gray for users, white for AI), added bookmark buttons next to AI responses with toast notifications, implemented bookmark management (view, remove, clear all), updated header with gradient styling and enhanced UI controls, improved console logging for debugging chat state changes, and added informative footer text about authentic API usage and bookmarking functionality.
