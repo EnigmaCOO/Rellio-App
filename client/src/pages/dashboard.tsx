@@ -238,7 +238,6 @@ export default function Dashboard() {
                 </Button>
               </div>
               <img src={rellioLogo} alt="Rellio Logo" className="h-10 w-10 lg:h-15 lg:w-15" />
-              <h1 className="text-lg lg:text-2xl font-bold text-scripture-800">Rellio Scripture Library</h1>
             </div>
             <div className="flex items-center space-x-2 lg:space-x-4">
               <div className="relative">
