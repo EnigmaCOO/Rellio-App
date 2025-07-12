@@ -6,8 +6,6 @@ import { useState } from "react";
 import { 
   ChevronLeft, 
   ChevronRight, 
-  Bookmark, 
-  Share, 
   Highlighter, 
   StickyNote, 
   Quote,
@@ -591,14 +589,7 @@ export function ContentPanel({
                 }
               </span>
             </h2>
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="sm" onClick={() => handleStudyTool("Bookmark")}>
-                <Bookmark className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="sm" onClick={handleShare}>
-                <Share className="h-4 w-4" />
-              </Button>
-            </div>
+
           </div>
           
 
