@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Clock } from "lucide-react";
+
 import type { Religion } from "@shared/schema";
 import { useState } from "react";
 
@@ -41,10 +41,7 @@ export function NavigationPanel({
   isLoading,
   searchTerm,
 }: NavigationPanelProps) {
-  const { data: recentReadings } = useQuery<any[]>({
-    queryKey: ['/api/readings', 1], // Using user ID 1 as default
-    staleTime: 2 * 60 * 1000, // 2 minutes
-  });
+
 
   // State for uploaded religious symbols
   const [uploadedSymbols, setUploadedSymbols] = useState<{
@@ -69,16 +66,7 @@ export function NavigationPanel({
     onReligionChange(religion);
   };
 
-  const formatTimeAgo = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-    
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours < 24) return `${Math.floor(diffInHours)} hours ago`;
-    if (diffInHours < 48) return 'Yesterday';
-    return `${Math.floor(diffInHours / 24)} days ago`;
-  };
+
 
   // Dynamic chapter calculation based on religion and book
   const getDynamicChapterCount = (): number => {
@@ -429,31 +417,7 @@ export function NavigationPanel({
           </div>
         )}
 
-        {/* Recent Readings */}
-        <div className="border-t border-scripture-200 pt-4">
-          <h3 className="text-sm font-medium text-scripture-700 mb-3 flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Recent Readings
-          </h3>
-          <div className="space-y-2">
-            {recentReadings && recentReadings.length > 0 ? (
-              recentReadings.slice(0, 5).map((reading: any) => (
-                <div key={reading.id} className="p-2 bg-scripture-50 rounded-lg text-sm">
-                  <div className="font-medium text-scripture-700">
-                    {reading.book} {reading.chapter}
-                  </div>
-                  <div className="text-xs text-scripture-500">
-                    {formatTimeAgo(reading.timestamp)}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="p-2 bg-scripture-50 rounded-lg text-sm text-scripture-600">
-                No recent readings
-              </div>
-            )}
-          </div>
-        </div>
+
       </div>
     </div>
   );
