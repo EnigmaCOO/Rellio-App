@@ -18,9 +18,9 @@ export async function generateScriptureResponse(
   context?: ScriptureContext
 ): Promise<string> {
   try {
-    // Handle multi-religious perspective requests
-    if (context && context.multiReligiousPerspective) {
-      console.log("General question multi-response:", { question: userMessage, requestType: "multi-religious" });
+    // Handle multi-religious perspective requests FIRST
+    if (context && context.multiReligiousPerspective === true) {
+      console.log("Multi-religious perspective triggered:", { question: userMessage, context });
       
       const multiReligiousPrompt = `You are an expert comparative religion scholar. The user has asked a general question about spirituality/religion without selecting a specific religious text. Provide a comprehensive response that includes perspectives from all 5 major religious traditions available on this platform.
 
@@ -49,12 +49,12 @@ User's question: "${userMessage}"`;
       });
 
       const multiResponse = response.choices[0].message.content || "I apologize, but I couldn't generate a multi-religious response at this time.";
-      console.log("General question multi-response:", { question: userMessage, responses: multiResponse });
+      console.log("Multi-religious response generated:", { question: userMessage, response: multiResponse });
       return multiResponse;
     }
 
-    // Check if no book context is provided
-    if (!context || !context.book || !context.religion) {
+    // Check if no book context is provided AND not a multi-religious request
+    if (!context || (!context.book && !context.multiReligiousPerspective) || (!context.religion && !context.multiReligiousPerspective)) {
       // Handle general questions with meaningful responses
       const generalKeywords = [
         'purpose', 'history', 'religion', 'scripture', 'faith', 'spiritual', 'moral', 'meaning',

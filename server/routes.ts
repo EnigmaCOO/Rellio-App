@@ -131,6 +131,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { message, sessionId, context } = chatRequestSchema.parse(req.body);
       
       console.log("Chat request payload:", { context });
+      console.log("Context multiReligiousPerspective:", context?.multiReligiousPerspective);
+      console.log("Context type:", typeof context?.multiReligiousPerspective);
       
       // Save user message
       const userMessage = await storage.createChatMessage({
@@ -150,6 +152,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           chapter: context.chapter,
           verses: verses.map(v => ({ number: v.verse, text: v.text }))
         };
+      } else if (context && context.multiReligiousPerspective) {
+        // Handle multi-religious perspective requests
+        console.log("Multi-religious perspective context being set:", context);
+        scriptureContext = {
+          religion: context.religion || "",
+          book: context.book || "",
+          chapter: context.chapter || 1,
+          multiReligiousPerspective: true
+        };
+        console.log("Scripture context for multi-religious:", scriptureContext);
       }
 
       const aiResponse = await generateScriptureResponse(message, scriptureContext);
