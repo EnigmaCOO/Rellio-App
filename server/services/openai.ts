@@ -10,6 +10,7 @@ export interface ScriptureContext {
   book: string;
   chapter: number;
   verses?: Array<{ number: number; text: string }>;
+  multiReligiousPerspective?: boolean;
 }
 
 export async function generateScriptureResponse(
@@ -17,6 +18,41 @@ export async function generateScriptureResponse(
   context?: ScriptureContext
 ): Promise<string> {
   try {
+    // Handle multi-religious perspective requests
+    if (context && context.multiReligiousPerspective) {
+      console.log("General question multi-response:", { question: userMessage, requestType: "multi-religious" });
+      
+      const multiReligiousPrompt = `You are an expert comparative religion scholar. The user has asked a general question about spirituality/religion without selecting a specific religious text. Provide a comprehensive response that includes perspectives from all 5 major religious traditions available on this platform.
+
+Structure your response as follows:
+1. Start with a brief general statement about the topic
+2. Then provide specific perspectives from each tradition:
+   - **From the Bible perspective:** [Answer based on Christian/Biblical teachings]
+   - **From the Quran perspective:** [Answer based on Islamic teachings]
+   - **From the Torah perspective:** [Answer based on Jewish teachings]
+   - **From the Bhagavad Gita perspective:** [Answer based on Hindu teachings]
+   - **From the Tripitaka perspective:** [Answer based on Buddhist teachings]
+3. End with a brief conclusion highlighting common themes or key differences
+
+Keep each perspective concise (1-2 sentences) but meaningful. Focus on authentic religious teachings and avoid generalizations.
+
+User's question: "${userMessage}"`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: multiReligiousPrompt },
+          { role: "user", content: userMessage }
+        ],
+        max_tokens: 600,
+        temperature: 0.7,
+      });
+
+      const multiResponse = response.choices[0].message.content || "I apologize, but I couldn't generate a multi-religious response at this time.";
+      console.log("General question multi-response:", { question: userMessage, responses: multiResponse });
+      return multiResponse;
+    }
+
     // Check if no book context is provided
     if (!context || !context.book || !context.religion) {
       // Handle general questions with meaningful responses

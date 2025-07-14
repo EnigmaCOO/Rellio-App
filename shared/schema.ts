@@ -71,5 +71,6 @@ export const chatRequestSchema = z.object({
     religion: religionSchema.nullable(),
     book: z.string().nullable(),
     chapter: z.number().nullable(),
+    multiReligiousPerspective: z.boolean().optional(),
   }).optional(),
 });

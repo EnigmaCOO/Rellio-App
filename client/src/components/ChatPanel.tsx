@@ -266,13 +266,63 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
     
-    console.log("Chat input state:", { selectedBook: context.book, inputValue: newMessage });
+    // Check if no book is selected and this is a general question
+    const isGeneralQuestion = !context.book || context.book === "";
+    const input = newMessage.toLowerCase();
+    const hasSpecificVerseReference = input.includes('verse') || input.includes('chapter');
     
-    sendMessageMutation.mutate({
-      message: newMessage,
-      sessionId,
-      context,
+    console.log("Chat input state:", { 
+      selectedBook: context.book, 
+      inputValue: newMessage,
+      isGeneralQuestion,
+      hasSpecificVerseReference
     });
+    
+    // For general questions without verse references, request multi-religious perspective
+    if (isGeneralQuestion && !hasSpecificVerseReference) {
+      sendMessageMutation.mutate({
+        message: newMessage,
+        sessionId,
+        context: {
+          ...context,
+          multiReligiousPerspective: true // Flag for backend to generate multi-religious response
+        },
+      });
+    } else if (isGeneralQuestion && hasSpecificVerseReference) {
+      // Handle case where user asks about verses but no book is selected
+      // Create a special AI response directly without calling the backend
+      const fallbackMessage = "Please select a book for context-specific answers or ask a general question!";
+      
+      // Add the fallback message to the chat directly
+      queryClient.setQueryData([`/api/chat/${sessionId}`], (oldData: ChatMessage[] | undefined) => {
+        const userMessage: ChatMessage = {
+          id: Date.now(),
+          sessionId,
+          type: 'user',
+          content: newMessage,
+          context: context || null,
+          timestamp: new Date(),
+        };
+        const aiMessage: ChatMessage = {
+          id: Date.now() + 1,
+          sessionId,
+          type: 'ai',
+          content: fallbackMessage,
+          context: context || null,
+          timestamp: new Date(),
+        };
+        return [...(oldData || []), userMessage, aiMessage];
+      });
+      
+      setNewMessage("");
+    } else {
+      // Normal context-specific question
+      sendMessageMutation.mutate({
+        message: newMessage,
+        sessionId,
+        context,
+      });
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -467,7 +517,70 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
                         ? 'bg-gray-100 text-gray-800 border border-gray-200 rounded-br-sm'
                         : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm shadow-sm'
                     }`}>
-                      <p className="text-sm leading-relaxed">{message.content}</p>
+                      {message.type === 'ai' && message.content.includes('From the Bible perspective:') ? (
+                        // Multi-religious response formatting
+                        <div className="text-sm leading-relaxed">
+                          {message.content.split('\n').map((line, index) => {
+                            if (line.includes('**From the Bible perspective:**')) {
+                              return (
+                                <div key={index} className="mb-2">
+                                  <div className="font-bold text-blue-700 border-t border-gray-200 pt-2">
+                                    📖 Biblical Perspective
+                                  </div>
+                                  <p className="mt-1 text-gray-700">{line.replace('**From the Bible perspective:**', '').trim()}</p>
+                                </div>
+                              );
+                            }
+                            if (line.includes('**From the Quran perspective:**')) {
+                              return (
+                                <div key={index} className="mb-2">
+                                  <div className="font-bold text-green-700 border-t border-gray-200 pt-2">
+                                    📜 Islamic Perspective
+                                  </div>
+                                  <p className="mt-1 text-gray-700">{line.replace('**From the Quran perspective:**', '').trim()}</p>
+                                </div>
+                              );
+                            }
+                            if (line.includes('**From the Torah perspective:**')) {
+                              return (
+                                <div key={index} className="mb-2">
+                                  <div className="font-bold text-purple-700 border-t border-gray-200 pt-2">
+                                    ✡️ Jewish Perspective
+                                  </div>
+                                  <p className="mt-1 text-gray-700">{line.replace('**From the Torah perspective:**', '').trim()}</p>
+                                </div>
+                              );
+                            }
+                            if (line.includes('**From the Bhagavad Gita perspective:**')) {
+                              return (
+                                <div key={index} className="mb-2">
+                                  <div className="font-bold text-orange-700 border-t border-gray-200 pt-2">
+                                    🕉️ Hindu Perspective
+                                  </div>
+                                  <p className="mt-1 text-gray-700">{line.replace('**From the Bhagavad Gita perspective:**', '').trim()}</p>
+                                </div>
+                              );
+                            }
+                            if (line.includes('**From the Tripitaka perspective:**')) {
+                              return (
+                                <div key={index} className="mb-2">
+                                  <div className="font-bold text-amber-700 border-t border-gray-200 pt-2">
+                                    ☸️ Buddhist Perspective
+                                  </div>
+                                  <p className="mt-1 text-gray-700">{line.replace('**From the Tripitaka perspective:**', '').trim()}</p>
+                                </div>
+                              );
+                            }
+                            if (line.trim() && !line.includes('**From the') && !line.includes('perspective:**')) {
+                              return <p key={index} className="mb-2 text-gray-800">{line}</p>;
+                            }
+                            return null;
+                          })}
+                        </div>
+                      ) : (
+                        // Regular response formatting
+                        <p className="text-sm leading-relaxed">{message.content}</p>
+                      )}
                     </div>
                     <div className={`flex items-center mt-1 ${
                       message.type === 'user' ? 'justify-end' : 'justify-start'
