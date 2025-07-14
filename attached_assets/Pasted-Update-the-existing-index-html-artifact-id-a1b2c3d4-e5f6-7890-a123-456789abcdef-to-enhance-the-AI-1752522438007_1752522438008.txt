@@ -1,0 +1,12 @@
+Update the existing index.html (artifact_id: a1b2c3d4-e5f6-7890-a123-456789abcdef) to enhance the AI Scripture Guide chat’s behavior when no book is selected, allowing it to answer general questions from all five religious perspectives (Bible, Quran, Torah, Bhagavad Gita, Tripitaka) for comparison. Implement the following:
+
+Modify the chat submit handler to detect when no book is selected (selectedBook is null or undefined). For general questions (e.g., inputs without specific verse references, detected via keyword absence like "verse," "chapter"), generate a response that includes answers from all five religions, structured as a comparison (e.g., "From the Bible perspective: [answer]. From the Quran perspective: [answer]. ..." using mock or API-based summaries).
+Use the respective APIs (https://scripture.api.bible/ for Bible, https://alquran.cloud/api for Quran, https://www.sefaria.org/api for Torah, https://api.bhagavadgita.io/v1/ for Bhagavad Gita, and local JSON for Tripitaka) to fetch or simulate context-specific answers for each religion, combining them into a single response. If the question is unclear, return the fallback message: "Please select a book for context-specific answers or ask a general question!"
+Format the multi-perspective response with Tailwind CSS styling in the chat (e.g., section headers for each religion with font-bold, bullet points for answers, and dividers like border-t for separation) to make it easy to compare.
+Add console.log("General question multi-response:", { question, responses }) after generating the combined answer to debug.
+Preserve the chat’s static sizing (300px width, 400px height), history, bookmarking, copy/speak triggers, religious symbol images in navigation, and the middle content and Scripture Navigation panels.
+Notes for Agent:
+
+Implement a simple question classifier (e.g., if !input.includes('verse') || !input.includes('chapter'), treat as general and query all religions).
+For each religion, fetch a general summary or verse if applicable; if API limits are an issue, use pre-defined mock responses for general topics.
+Test with questions like "What is the meaning of life?" (expect multi-perspective answers) and "Explain verse 1" (fallback or error if no book selected).
