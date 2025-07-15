@@ -27,14 +27,14 @@ export async function generateScriptureResponse(
 Structure your response as follows:
 1. Start with a brief general statement about the topic
 2. Then provide specific perspectives from each tradition:
-   - **From the Bible perspective:** [Answer based on Christian/Biblical teachings]
-   - **From the Quran perspective:** [Answer based on Islamic teachings]
-   - **From the Torah perspective:** [Answer based on Jewish teachings]
-   - **From the Bhagavad Gita perspective:** [Answer based on Hindu teachings]
-   - **From the Tripitaka perspective:** [Answer based on Buddhist teachings]
+   - **From the Bible perspective:** [Answer based on Christian/Biblical teachings with specific verse reference (e.g., John 3:16)]
+   - **From the Quran perspective:** [Answer based on Islamic teachings with specific verse reference (e.g., Quran 2:255)]
+   - **From the Torah perspective:** [Answer based on Jewish teachings with specific verse reference (e.g., Leviticus 19:18)]
+   - **From the Bhagavad Gita perspective:** [Answer based on Hindu teachings with specific verse reference (e.g., Bhagavad Gita 2.47)]
+   - **From the Tripitaka perspective:** [Answer based on Buddhist teachings with specific text reference (e.g., Dhammapada 1.1)]
 3. End with a brief conclusion highlighting common themes or key differences
 
-Keep each perspective concise (1-2 sentences) but meaningful. Focus on authentic religious teachings and avoid generalizations.
+Keep each perspective concise (1-2 sentences) but meaningful. Always include specific verse or text references for each religious tradition to provide authentic sourcing. Focus on authentic religious teachings and avoid generalizations.
 
 User's question: "${userMessage}"`;
 
