@@ -9,6 +9,93 @@ import { Send, MoreVertical, Bot, User, Bookmark, BookmarkCheck, Trash2, X } fro
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
 
+// Component to render clickable scripture references
+interface ClickableMessageProps {
+  content: string;
+  onScriptureClick: (religion: Religion, book: string, chapter: number, verse?: number) => void;
+}
+
+function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) {
+  const [processedContent, setProcessedContent] = useState<string>("");
+
+  useEffect(() => {
+    // Parse scripture references and make them clickable
+    const parseScriptureReferences = (text: string) => {
+      // Bible references
+      const biblePattern = /\b(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|1 Samuel|2 Samuel|1 Kings|2 Kings|1 Chronicles|2 Chronicles|Ezra|Nehemiah|Esther|Job|Psalms|Proverbs|Ecclesiastes|Song of Songs|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|1 Corinthians|2 Corinthians|Galatians|Ephesians|Philippians|Colossians|1 Thessalonians|2 Thessalonians|1 Timothy|2 Timothy|Titus|Philemon|Hebrews|James|1 Peter|2 Peter|1 John|2 John|3 John|Jude|Revelation)\s+(\d+):(\d+)/gi;
+      
+      // Quran references
+      const quranPattern = /\b(Quran|Surah)\s+(\d+):(\d+)/gi;
+      
+      // Torah references
+      const torahPattern = /\b(Bereshit|Shemot|Vayikra|Bamidbar|Devarim)\s+(\d+):(\d+)/gi;
+      
+      // Hindu references
+      const hinduPattern = /\b(Bhagavad\s+Gita|Gita)\s+(\d+):(\d+)/gi;
+      
+      // Buddhist references
+      const buddhistPattern = /\b(Dhammapada|Tripitaka)\s+(\d+):?(\d+)?/gi;
+
+      let processedText = text;
+      
+      // Replace Bible references
+      processedText = processedText.replace(biblePattern, (match, book, chapter, verse) => {
+        return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="window.handleScriptureClick('bible', '${book}', ${chapter}, ${verse})">${match}</span>`;
+      });
+      
+      // Replace Quran references
+      processedText = processedText.replace(quranPattern, (match, type, chapter, verse) => {
+        const surahMap: Record<number, string> = {
+          1: "Al-Fatihah (The Opening)", 2: "Al-Baqarah (The Cow)", 3: "Al-Imran (The Family of Imran)",
+          4: "An-Nisa (The Women)", 5: "Al-Maidah (The Table)", 35: "Fatir (Originator)", 36: "Ya-Sin (Ya Sin)"
+        };
+        const book = surahMap[parseInt(chapter)] || `Surah ${chapter}`;
+        return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="window.handleScriptureClick('quran', '${book}', ${chapter}, ${verse})">${match}</span>`;
+      });
+      
+      // Replace Torah references
+      processedText = processedText.replace(torahPattern, (match, book, chapter, verse) => {
+        return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="window.handleScriptureClick('torah', '${book}', ${chapter}, ${verse})">${match}</span>`;
+      });
+      
+      // Replace Hindu references
+      processedText = processedText.replace(hinduPattern, (match, type, chapter, verse) => {
+        return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="window.handleScriptureClick('hindu', 'Bhagavad Gita', ${chapter}, ${verse})">${match}</span>`;
+      });
+      
+      // Replace Buddhist references
+      processedText = processedText.replace(buddhistPattern, (match, book, chapter, verse) => {
+        const verseParam = verse ? `, ${verse}` : '';
+        return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="window.handleScriptureClick('buddhist', '${book}', ${chapter}${verseParam})">${match}</span>`;
+      });
+      
+      return processedText;
+    };
+
+    const parsed = parseScriptureReferences(content);
+    setProcessedContent(parsed);
+  }, [content]);
+
+  useEffect(() => {
+    // Set up global handler for scripture clicks
+    (window as any).handleScriptureClick = (religion: Religion, book: string, chapter: number, verse?: number) => {
+      onScriptureClick(religion, book, chapter, verse);
+    };
+    
+    return () => {
+      // Clean up global handler
+      delete (window as any).handleScriptureClick;
+    };
+  }, [onScriptureClick]);
+
+  return (
+    <div 
+      className="text-sm leading-relaxed"
+      dangerouslySetInnerHTML={{ __html: processedContent }}
+    />
+  );
+}
+
 interface BookmarkedMessage {
   id: string;
   text: string;
@@ -31,9 +118,10 @@ interface ChatPanelProps {
   externalMessage?: string;
   onExternalMessageProcessed?: () => void;
   onCopyOperation?: (isActive: boolean) => void;
+  onNavigateToVerse?: (religion: Religion, book: string, chapter: number, verse?: number) => void;
 }
 
-export function ChatPanel({ sessionId, context, externalMessage, onExternalMessageProcessed, onCopyOperation }: ChatPanelProps) {
+export function ChatPanel({ sessionId, context, externalMessage, onExternalMessageProcessed, onCopyOperation, onNavigateToVerse }: ChatPanelProps) {
   const [newMessage, setNewMessage] = useState("");
   const [bookmarks, setBookmarks] = useState<BookmarkedMessage[]>([]);
   const [showBookmarks, setShowBookmarks] = useState(false);
@@ -182,6 +270,16 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
     };
     
     return quranMapping[bookName] || 1;
+  };
+
+
+
+  // Handle click on scripture reference
+  const handleScriptureClick = (religion: Religion, book: string, chapter: number, verse?: number) => {
+    console.log("Chat link clicked:", { religion, book, chapter, verse });
+    if (onNavigateToVerse) {
+      onNavigateToVerse(religion, book, chapter, verse);
+    }
   };
 
   const { data: messages, isLoading } = useQuery<ChatMessage[]>({
@@ -518,7 +616,7 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
                         : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm shadow-sm'
                     }`}>
                       {message.type === 'ai' && message.content.includes('From the Bible perspective:') ? (
-                        // Multi-religious response formatting
+                        // Multi-religious response formatting with clickable references
                         <div className="text-sm leading-relaxed">
                           {message.content.split('\n').map((line, index) => {
                             if (line.includes('**From the Bible perspective:**')) {
@@ -527,7 +625,10 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
                                   <div className="font-bold text-blue-700 border-t border-gray-200 pt-2">
                                     📖 Biblical Perspective
                                   </div>
-                                  <p className="mt-1 text-gray-700">{line.replace('**From the Bible perspective:**', '').trim()}</p>
+                                  <ClickableMessage 
+                                    content={line.replace('**From the Bible perspective:**', '').trim()}
+                                    onScriptureClick={handleScriptureClick}
+                                  />
                                 </div>
                               );
                             }
@@ -537,7 +638,10 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
                                   <div className="font-bold text-green-700 border-t border-gray-200 pt-2">
                                     📜 Islamic Perspective
                                   </div>
-                                  <p className="mt-1 text-gray-700">{line.replace('**From the Quran perspective:**', '').trim()}</p>
+                                  <ClickableMessage 
+                                    content={line.replace('**From the Quran perspective:**', '').trim()}
+                                    onScriptureClick={handleScriptureClick}
+                                  />
                                 </div>
                               );
                             }
@@ -547,7 +651,10 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
                                   <div className="font-bold text-purple-700 border-t border-gray-200 pt-2">
                                     ✡️ Jewish Perspective
                                   </div>
-                                  <p className="mt-1 text-gray-700">{line.replace('**From the Torah perspective:**', '').trim()}</p>
+                                  <ClickableMessage 
+                                    content={line.replace('**From the Torah perspective:**', '').trim()}
+                                    onScriptureClick={handleScriptureClick}
+                                  />
                                 </div>
                               );
                             }
@@ -557,7 +664,10 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
                                   <div className="font-bold text-orange-700 border-t border-gray-200 pt-2">
                                     🕉️ Hindu Perspective
                                   </div>
-                                  <p className="mt-1 text-gray-700">{line.replace('**From the Bhagavad Gita perspective:**', '').trim()}</p>
+                                  <ClickableMessage 
+                                    content={line.replace('**From the Bhagavad Gita perspective:**', '').trim()}
+                                    onScriptureClick={handleScriptureClick}
+                                  />
                                 </div>
                               );
                             }
@@ -567,19 +677,31 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
                                   <div className="font-bold text-amber-700 border-t border-gray-200 pt-2">
                                     ☸️ Buddhist Perspective
                                   </div>
-                                  <p className="mt-1 text-gray-700">{line.replace('**From the Tripitaka perspective:**', '').trim()}</p>
+                                  <ClickableMessage 
+                                    content={line.replace('**From the Tripitaka perspective:**', '').trim()}
+                                    onScriptureClick={handleScriptureClick}
+                                  />
                                 </div>
                               );
                             }
                             if (line.trim() && !line.includes('**From the') && !line.includes('perspective:**')) {
-                              return <p key={index} className="mb-2 text-gray-800">{line}</p>;
+                              return (
+                                <ClickableMessage 
+                                  key={index}
+                                  content={line}
+                                  onScriptureClick={handleScriptureClick}
+                                />
+                              );
                             }
                             return null;
                           })}
                         </div>
                       ) : (
-                        // Regular response formatting
-                        <p className="text-sm leading-relaxed">{message.content}</p>
+                        // Regular response formatting with clickable scripture references
+                        <ClickableMessage 
+                          content={message.content}
+                          onScriptureClick={handleScriptureClick}
+                        />
                       )}
                     </div>
                     <div className={`flex items-center mt-1 ${

@@ -214,6 +214,36 @@ export default function Dashboard() {
     setIsCopyOperation(isActive);
   };
 
+  // Handle navigation to verse from chat panel
+  const handleNavigateToVerse = (religion: Religion, book: string, chapter: number, verse?: number) => {
+    console.log("Chat link clicked:", { religion, book, chapter, verse });
+    
+    // Update navigation state
+    setSelectedReligion(religion);
+    setSelectedBook(book);
+    setSelectedChapter(chapter);
+    
+    // Ensure navigation panel is visible
+    if (!navigationVisible) {
+      setNavigationVisible(true);
+    }
+    
+    // Wait for content to load, then scroll to verse if specified
+    if (verse) {
+      setTimeout(() => {
+        const verseElement = document.getElementById(`verse-${verse}`);
+        if (verseElement) {
+          verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Add temporary highlight
+          verseElement.classList.add('bg-yellow-200');
+          setTimeout(() => {
+            verseElement.classList.remove('bg-yellow-200');
+          }, 3000);
+        }
+      }, 1000);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-scripture-50">
       {/* Header */}
@@ -398,6 +428,7 @@ export default function Dashboard() {
                     externalMessage={externalMessage}
                     onExternalMessageProcessed={handleExternalMessageProcessed}
                     onCopyOperation={handleCopyOperation}
+                    onNavigateToVerse={handleNavigateToVerse}
                   />
                 </div>
               </div>

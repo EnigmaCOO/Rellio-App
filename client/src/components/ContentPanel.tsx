@@ -594,6 +594,7 @@ export function ContentPanel({
               currentPageVerses.map((scripture, index) => (
                 <div
                   key={scripture.id || `${scripture.religion}-${scripture.book}-${scripture.chapter}-${scripture.verse || index}`}
+                  id={`verse-${scripture.verse || (startVerseIndex + index + 1)}`}
                   className="flex items-start space-x-4 hover:bg-white rounded-lg p-3 transition-all duration-200 cursor-pointer group animate-in fade-in-0"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
