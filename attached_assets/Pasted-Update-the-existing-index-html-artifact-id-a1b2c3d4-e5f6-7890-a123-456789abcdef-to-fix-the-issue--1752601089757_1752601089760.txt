@@ -1,0 +1,12 @@
+Update the existing index.html (artifact_id: a1b2c3d4-e5f6-7890-a123-456789abcdef) to fix the issue where clickable verse references in the AI Scripture Guide chat answers do not open the correct spot in the book. Implement the following:
+
+Ensure each clickable verse reference in chat answers (e.g., "Quran 5:11") includes metadata (e.g., { religion: 'quran', chapter: 5, verse: 11 }) and, on click, updates the navigation state to select the corresponding "Religious Text" (e.g., "Quran" for 'quran', "Holy Bible" for 'bible'), loads the specific chapter (e.g., Surah 5) in the middle panel using the respective API (https://alquran.cloud/api for Quran, https://scripture.api.bible/ for Bible, etc.), scrolls to the verse element (e.g., using document.getElementById('verse-5-11').scrollIntoView({ behavior: 'smooth' })), and highlights it temporarily (e.g., add bg-yellow-200 class for 3 seconds, then remove).
+Adjust the verse rendering in the middle panel to include unique IDs for each verse (e.g., id="verse-${chapter}-${verse}") to enable accurate scrolling and highlighting.
+Handle different religious formats (e.g., Bible: book-chapter-verse, Quran: surah-ayah, Torah: book-parsha-verse, Bhagavad Gita: chapter-verse, Tripitaka: sutta-section) by mapping the metadata appropriately and fetching the correct data.
+Preserve the chat’s static sizing (300px width, 400px height), history, bookmarking, copy/speak triggers, religious symbol images, and the middle content and Scripture Navigation panels.
+Add console.log("Verse reference clicked:", { religion, chapter, verse }) on click and console.log("Highlighted verse ID:", verseId) after highlighting to debug.
+Notes for Agent:
+
+Use the existing clickable spans in chat responses to trigger the handler; ensure the highlight is removed after a timeout (e.g., setTimeout(removeHighlight, 3000)).
+Test with examples like "Quran 5:11" (open Surah 5, scroll/highlight ayah 11) and "Bible Genesis 1:1" (open Genesis chapter 1, scroll/highlight verse 1).
+If the API fetch fails, log the error and show a fallback message in the middle panel (e.g., "Unable to load verse, please try again").

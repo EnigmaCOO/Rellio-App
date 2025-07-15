@@ -22,6 +22,7 @@ export default function Dashboard() {
   const [externalMessage, setExternalMessage] = useState<string>('');
   const [isCopyOperation, setIsCopyOperation] = useState<boolean>(false);
   const [isMaximized, setIsMaximized] = useState<boolean>(false);
+  const [highlightedVerse, setHighlightedVerse] = useState<number | undefined>(undefined);
   const { toast } = useToast();
 
   // Debug panel visibility state
@@ -216,7 +217,7 @@ export default function Dashboard() {
 
   // Handle navigation to verse from chat panel
   const handleNavigateToVerse = (religion: Religion, book: string, chapter: number, verse?: number) => {
-    console.log("Chat link clicked:", { religion, book, chapter, verse });
+    console.log("Navigating to verse:", { religion, book, chapter, verse });
     
     // Update navigation state
     setSelectedReligion(religion);
@@ -228,19 +229,14 @@ export default function Dashboard() {
       setNavigationVisible(true);
     }
     
-    // Wait for content to load, then scroll to verse if specified
+    // Set highlighted verse for the ContentPanel
     if (verse) {
+      setHighlightedVerse(verse);
+      
+      // Clear the highlighted verse after a delay
       setTimeout(() => {
-        const verseElement = document.getElementById(`verse-${verse}`);
-        if (verseElement) {
-          verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          // Add temporary highlight
-          verseElement.classList.add('bg-yellow-200');
-          setTimeout(() => {
-            verseElement.classList.remove('bg-yellow-200');
-          }, 3000);
-        }
-      }, 1000);
+        setHighlightedVerse(undefined);
+      }, 4000);
     }
   };
 
@@ -338,6 +334,7 @@ export default function Dashboard() {
             panelsVisible={{ navigation: navigationVisible, chat: chatVisible }}
             onCopyVerse={handleCopyVerse}
             onReligionChange={handleReligionChange}
+            highlightedVerse={highlightedVerse}
           />
           
           {/* Hidden panel indicators */}

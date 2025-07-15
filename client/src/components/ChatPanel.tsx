@@ -295,7 +295,7 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
 
   // Handle click on scripture reference
   const handleScriptureClick = (religion: Religion, book: string, chapter: number, verse?: number) => {
-    console.log("Chat link clicked:", { religion, book, chapter, verse });
+    console.log("Verse reference clicked:", { religion, chapter, verse });
     if (onNavigateToVerse) {
       onNavigateToVerse(religion, book, chapter, verse);
     }

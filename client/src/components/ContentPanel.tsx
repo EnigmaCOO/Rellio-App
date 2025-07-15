@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -40,6 +40,7 @@ interface ContentPanelProps {
   panelsVisible?: { navigation: boolean; chat: boolean };
   onCopyVerse?: (verseText: string) => void;
   onReligionChange?: (religion: Religion) => void;
+  highlightedVerse?: number;
 }
 
 export function ContentPanel({
@@ -55,10 +56,39 @@ export function ContentPanel({
   panelsVisible = { navigation: true, chat: true },
   onCopyVerse,
   onReligionChange,
+  highlightedVerse,
 }: ContentPanelProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [speakingStates, setSpeakingStates] = useState<Record<number, boolean>>({});
+
+  // Handle verse highlighting when highlightedVerse prop changes
+  useEffect(() => {
+    if (highlightedVerse) {
+      const verseId = `verse-${highlightedVerse}`;
+      const verseElement = document.getElementById(verseId);
+      
+      console.log("Highlighted verse ID:", verseId);
+      
+      if (verseElement) {
+        // Scroll to verse
+        verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Add highlight effect
+        verseElement.style.backgroundColor = '#fef3c7'; // yellow-100
+        verseElement.style.borderLeft = '4px solid #f59e0b'; // yellow-600
+        verseElement.style.transition = 'all 0.3s ease';
+        
+        // Remove highlight after 3 seconds
+        setTimeout(() => {
+          verseElement.style.backgroundColor = '';
+          verseElement.style.borderLeft = '';
+        }, 3000);
+      } else {
+        console.error("Verse element not found:", verseId);
+      }
+    }
+  }, [highlightedVerse]);
 
   // Get proper chapter display for Quran (shows surah number instead of always 1)
   const getDisplayChapter = (): number => {
