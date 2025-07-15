@@ -21,33 +21,52 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
   useEffect(() => {
     // Parse scripture references and make them clickable
     const parseScriptureReferences = (text: string) => {
-      // Bible references
-      const biblePattern = /\b(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|1 Samuel|2 Samuel|1 Kings|2 Kings|1 Chronicles|2 Chronicles|Ezra|Nehemiah|Esther|Job|Psalms|Proverbs|Ecclesiastes|Song of Songs|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|1 Corinthians|2 Corinthians|Galatians|Ephesians|Philippians|Colossians|1 Thessalonians|2 Thessalonians|1 Timothy|2 Timothy|Titus|Philemon|Hebrews|James|1 Peter|2 Peter|1 John|2 John|3 John|Jude|Revelation)\s+(\d+):(\d+)/gi;
+      // Bible references - including both "Mark 12:31" and "Genesis Chapter 1" formats
+      const biblePattern = /\b(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|1 Samuel|2 Samuel|1 Kings|2 Kings|1 Chronicles|2 Chronicles|Ezra|Nehemiah|Esther|Job|Psalms|Proverbs|Ecclesiastes|Song of Songs|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|1 Corinthians|2 Corinthians|Galatians|Ephesians|Philippians|Colossians|1 Thessalonians|2 Thessalonians|1 Timothy|2 Timothy|Titus|Philemon|Hebrews|James|1 Peter|2 Peter|1 John|2 John|3 John|Jude|Revelation)\s+(?:Chapter\s+)?(\d+)(?::(\d+))?/gi;
       
-      // Quran references
-      const quranPattern = /\b(Quran|Surah)\s+(\d+):(\d+)/gi;
+      // Quran references - including surah names
+      const quranPattern = /\b(?:Quran|Surah)\s+(?:Al-)?([A-Z][a-z-]+(?:\s+[A-Z][a-z-]+)*)\s*\((\d+):(\d+)\)/gi;
+      const quranSimplePattern = /\b(Quran)\s+(\d+):(\d+)/gi;
       
       // Torah references
       const torahPattern = /\b(Bereshit|Shemot|Vayikra|Bamidbar|Devarim)\s+(\d+):(\d+)/gi;
       
-      // Hindu references
-      const hinduPattern = /\b(Bhagavad\s+Gita|Gita)\s+(\d+):(\d+)/gi;
+      // Hindu references - handle "Bhagavad Gita 12:13-14" format
+      const hinduPattern = /\b(Bhagavad\s+Gita)\s+(\d+):(\d+)(?:[-–]\d+)?/gi;
       
-      // Buddhist references
-      const buddhistPattern = /\b(Dhammapada|Tripitaka)\s+(\d+):?(\d+)?/gi;
+      // Buddhist references - handle "Sutta Nipata 1.8" format
+      const buddhistPattern = /\b(Dhammapada|Tripitaka|Sutta\s+Nipata)\s+(\d+)[\.:]?(\d+)?/gi;
 
       let processedText = text;
       
-      // Replace Bible references
+      // Replace Bible references - handle both simple and complex formats
       processedText = processedText.replace(biblePattern, (match, book, chapter, verse) => {
-        return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="window.handleScriptureClick('bible', '${book}', ${chapter}, ${verse})">${match}</span>`;
+        const chapterNum = parseInt(chapter);
+        const verseNum = verse ? parseInt(verse) : 1;
+        return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="window.handleScriptureClick('bible', '${book}', ${chapterNum}, ${verseNum})">${match}</span>`;
       });
       
-      // Replace Quran references
-      processedText = processedText.replace(quranPattern, (match, type, chapter, verse) => {
+      // Replace Quran references with surah names
+      processedText = processedText.replace(quranPattern, (match, surahName, chapter, verse) => {
+        const surahMap: Record<string, string> = {
+          "Kahf": "Al-Kahf (The Cave)",
+          "Anbiya": "Al-Anbiya (The Prophets)",
+          "Fatihah": "Al-Fatihah (The Opening)",
+          "Baqarah": "Al-Baqarah (The Cow)",
+          "Imran": "Al-Imran (The Family of Imran)",
+          "Nisa": "An-Nisa (The Women)",
+          "Maidah": "Al-Maidah (The Table)"
+        };
+        const fullSurahName = surahMap[surahName] || `Al-${surahName}`;
+        return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="window.handleScriptureClick('quran', '${fullSurahName}', ${chapter}, ${verse})">${match}</span>`;
+      });
+      
+      // Replace simple Quran references
+      processedText = processedText.replace(quranSimplePattern, (match, type, chapter, verse) => {
         const surahMap: Record<number, string> = {
           1: "Al-Fatihah (The Opening)", 2: "Al-Baqarah (The Cow)", 3: "Al-Imran (The Family of Imran)",
-          4: "An-Nisa (The Women)", 5: "Al-Maidah (The Table)", 35: "Fatir (Originator)", 36: "Ya-Sin (Ya Sin)"
+          4: "An-Nisa (The Women)", 5: "Al-Maidah (The Table)", 18: "Al-Kahf (The Cave)", 
+          21: "Al-Anbiya (The Prophets)", 35: "Fatir (Originator)", 36: "Ya-Sin (Ya Sin)"
         };
         const book = surahMap[parseInt(chapter)] || `Surah ${chapter}`;
         return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="window.handleScriptureClick('quran', '${book}', ${chapter}, ${verse})">${match}</span>`;
@@ -65,8 +84,8 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
       
       // Replace Buddhist references
       processedText = processedText.replace(buddhistPattern, (match, book, chapter, verse) => {
-        const verseParam = verse ? `, ${verse}` : '';
-        return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="window.handleScriptureClick('buddhist', '${book}', ${chapter}${verseParam})">${match}</span>`;
+        const verseNum = verse ? parseInt(verse) : 1;
+        return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="window.handleScriptureClick('buddhist', '${book}', ${chapter}, ${verseNum})">${match}</span>`;
       });
       
       return processedText;
