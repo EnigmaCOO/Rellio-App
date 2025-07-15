@@ -40,6 +40,8 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
       // Quran references - including surah names
       const quranPattern = /\b(?:Quran|Surah)\s+(?:Al-)?([A-Z][a-z-]+(?:\s+[A-Z][a-z-]+)*)\s*\((\d+):(\d+)\)/gi;
       const quranSimplePattern = /\b(Quran)\s+(\d+):(\d+)(?:[-–]\d+)?/gi;
+      // New pattern for "Surah Al-Hijr 15:28-29" format
+      const quranSurahPattern = /\b(?:Surah)\s+(Al-[A-Z][a-z-]+)\s+(\d+):(\d+)(?:[-–](\d+))?/gi;
       
       // Torah references
       const torahPattern = /\b(Bereshit|Shemot|Vayikra|Bamidbar|Devarim)\s+(\d+):(\d+)/gi;
@@ -74,6 +76,54 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
         return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="window.handleScriptureClick('quran', '${fullSurahName}', ${chapter}, ${verse})">${match}</span>`;
       });
       
+      // Replace "Surah Al-Hijr 15:28-29" format
+      processedText = processedText.replace(quranSurahPattern, (match, surahName, chapter, verse, endVerse) => {
+        console.log("Found Surah reference:", { match, surahName, chapter, verse, endVerse });
+        // Map surah names to full names with English translations
+        const surahMap: Record<string, string> = {
+          "Al-Hijr": "Al-Hijr (The Rock)",
+          "Al-Fatihah": "Al-Fatihah (The Opening)",
+          "Al-Baqarah": "Al-Baqarah (The Cow)",
+          "Al-Imran": "Al-Imran (The Family of Imran)",
+          "Al-Nisa": "An-Nisa (The Women)",
+          "Al-Maidah": "Al-Maidah (The Table)",
+          "Al-An'am": "Al-An'am (The Cattle)",
+          "Al-A'raf": "Al-A'raf (The Heights)",
+          "Al-Anfal": "Al-Anfal (The Spoils of War)",
+          "At-Tawbah": "At-Tawbah (The Repentance)",
+          "Al-Yunus": "Yunus (Jonah)",
+          "Al-Hud": "Hud",
+          "Al-Yusuf": "Yusuf (Joseph)",
+          "Ar-Ra'd": "Ar-Ra'd (The Thunder)",
+          "Al-Ibrahim": "Ibrahim (Abraham)",
+          "Al-Kahf": "Al-Kahf (The Cave)",
+          "Al-Maryam": "Maryam (Mary)",
+          "Al-Ta-Ha": "Ta-Ha",
+          "Al-Anbiya": "Al-Anbiya (The Prophets)",
+          "Al-Hajj": "Al-Hajj (The Pilgrimage)",
+          "Al-Mu'minun": "Al-Mu'minun (The Believers)",
+          "An-Nur": "An-Nur (The Light)",
+          "Al-Furqan": "Al-Furqan (The Criterion)",
+          "Ash-Shu'ara": "Ash-Shu'ara (The Poets)",
+          "An-Naml": "An-Naml (The Ants)",
+          "Al-Qasas": "Al-Qasas (The Stories)",
+          "Al-Ankabut": "Al-Ankabut (The Spider)",
+          "Ar-Rum": "Ar-Rum (The Romans)",
+          "Al-Luqman": "Luqman",
+          "As-Sajda": "As-Sajda (The Prostration)",
+          "Al-Ahzab": "Al-Ahzab (The Clans)",
+          "Al-Saba": "Saba (Sheba)",
+          "Al-Fatir": "Fatir (Originator)",
+          "Ya-Sin": "Ya-Sin (Ya Sin)",
+          "Al-Ikhlas": "Al-Ikhlas (The Sincerity)"
+        };
+        const book = surahMap[surahName] || surahName;
+        console.log("Mapped surah to book:", book, "verse:", verse);
+        const clickHandler = `window.handleScriptureClick('quran', '${book}', 1, ${verse})`;
+        console.log("Generated surah click handler:", clickHandler);
+        return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="${clickHandler}">${match}</span>`;
+      });
+
       // Replace simple Quran references
       processedText = processedText.replace(quranSimplePattern, (match, type, chapter, verse) => {
         console.log("Found Quran reference:", { match, type, chapter, verse });
