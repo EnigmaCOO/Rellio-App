@@ -1,0 +1,57 @@
+Implement “Verse Spotlight” Card on Welcome Screen
+
+Goal: Enhance the landing/welcome screen (displayed before any scripture is selected) by adding a futuristic “Verse Spotlight” card that dynamically cycles through random verses from all supported texts (Qur’an, Bible, Torah, Gita, Tarpatika). The card must show the verse reference, text, and a concise AI-generated insight. Use a white background with neon accents for a modern, engaging look. Reference the attached wireframe for visual design: dark navy card with neon-turquoise text, circular refresh button at bottom-left, and thin progress bar at bottom.
+
+Tech Stack Assumptions:
+
+React for UI (use functional components with hooks).
+Tailwind CSS for styling (or your existing framework; no inline CSS).
+Existing API endpoints for scriptures (e.g., /api/verse/random) and AI Scholar (/api/scholar/explain).
+No additional dependencies unless specified (e.g., if needed, suggest Heroicons for icons).
+Requirements:
+
+Data & APIs
+On load or refresh, randomly select a religion/text (Bible, Qur’an, Torah, Gita, Hadith) and fetch a random verse.
+Fetch details:
+Verse text (in English translation).
+Reference (e.g., “Matthew 5:9” or “Qur’an 2:255”).
+API Call Example: GET /api/verse/random?faith=random (return { faith, book, chapter, verse, text }).
+Error Handling: If fetch fails, show a fallback verse from local mock data (e.g., pre-load 5 sample verses).
+AI Explanation
+Send the fetched verse to the AI Scholar endpoint: POST /api/scholar/explain { "reference": "Matthew 5:9", "text": "Blessed are the peacemakers..." }
+Expect response: { "insight": "One–two sentence explanation emphasizing key theme." }
+Fallback: If API fails, use a template like "This verse from [faith] highlights [theme], encouraging [action]."
+UI Component: <versespotlight></versespotlight>
+Container: Rounded 12px card with dark navy background (#0A1F2D), white text, neon-turquoise accents (#00D5FF).
+Header: “VERSE SPOTLIGHT” uppercase, small, centered, white text.
+Reference: Large bold text (e.g., text-2xl font-bold), white.
+Verse Text: Medium text (text-lg), left-aligned, white, with comfortable line-height (leading-relaxed).
+Insight: Smaller text (text-md), neon-turquoise, below the verse, italicized for emphasis.
+Refresh Control: Bottom-left circular button (40px diameter, white border, rotating arrow icon from Heroicons or similar), labeled "Refresh" on hover.
+Auto-Refresh Bar: Thin neon-turquoise progress bar at bottom (e.g.,
+), refills over 60 seconds then auto-refreshes.
+“Learn More” Link: Small neon-turquoise link under the insight: “Read full chapter →”, navigates to /read?faith=<faith>&#x26;book=<book>&#x26;chapter=<chap>#verse=<verse>.</verse></chap></book></faith>
+Placement & Behavior
+Render <versespotlight> in the middle panel on /welcome or /dashboard when no scripture is loaded (e.g., useState for selectedFaith === null).</versespotlight>
+On component mount, fetch and display the first random verse + insight.
+Refresh Button: Manual fetch on click, reset progress bar.
+Auto-Refresh: Use useEffect with setInterval to trigger after 60s progress completes.
+Hide the card when a user selects a scripture (e.g., on selectedFaith change, set showSpotlight = false).
+Styling & Animations
+Card Fade-In: 200ms fade on load (opacity-0 to opacity-100 via transition-opacity).
+Progress Bar: Animate width from 0% to 100% over 60s (use CSS @keyframes or Tailwind transitions).
+Hover Effects: Scale refresh icon to 1.1x on hover (transition-transform).
+Responsiveness: Max-width 400px on mobile, centered (mx-auto), with padding adjustments.
+Accessibility: Aria-label on refresh ("Refresh verse"), alt text for any icons, proper headings (h3 for header).
+Deliverable:
+
+New React component: VerseSpotlight.jsx (or equivalent TSX if using TypeScript), including hooks for fetching (useRandomVerse, useAIInsight).
+Integrate into Welcome/Dashboard component (e.g., conditional render: {!selectedFaith && <versespotlight>}).</versespotlight>
+Any helper files (e.g., api/verse.js for random fetch logic).
+Commit message: "Add Verse Spotlight card to welcome screen with auto-refresh and AI insights"
+Test Cases:
+
+Load page: Card appears with random verse.
+Refresh: New verse from different faith.
+Select scripture: Card hides, full text loads.
+API Failure: Fallback verse shown.
