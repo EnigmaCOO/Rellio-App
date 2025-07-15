@@ -109,7 +109,7 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
 
   return (
     <div 
-      className="text-sm leading-relaxed"
+      className="text-sm leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere"
       dangerouslySetInnerHTML={{ __html: processedContent }}
     />
   );
@@ -469,6 +469,12 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    
+    // Debug logging for chat content height
+    const chatContainer = messagesEndRef.current?.parentElement?.parentElement;
+    if (chatContainer) {
+      console.log("Chat content height:", chatContainer.scrollHeight);
+    }
   }, [messages]);
 
   const formatTime = (timestamp: string) => {
@@ -593,7 +599,7 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
 
       {/* Chat Messages - Scrollable Area */}
       <div className="flex-1 overflow-hidden">
-        <div className="max-h-[350px] overflow-y-auto p-3">
+        <div className="h-full overflow-y-auto p-3">
           <div className="space-y-4">
             {isLoading ? (
               <div className="space-y-4">
@@ -636,7 +642,7 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
                     }`}>
                       {message.type === 'ai' && message.content.includes('From the Bible perspective:') ? (
                         // Multi-religious response formatting with clickable references
-                        <div className="text-sm leading-relaxed">
+                        <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                           {message.content.split('\n').map((line, index) => {
                             if (line.includes('**From the Bible perspective:**')) {
                               return (
@@ -717,10 +723,12 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
                         </div>
                       ) : (
                         // Regular response formatting with clickable scripture references
-                        <ClickableMessage 
-                          content={message.content}
-                          onScriptureClick={handleScriptureClick}
-                        />
+                        <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                          <ClickableMessage 
+                            content={message.content}
+                            onScriptureClick={handleScriptureClick}
+                          />
+                        </div>
                       )}
                     </div>
                     <div className={`flex items-center mt-1 ${
