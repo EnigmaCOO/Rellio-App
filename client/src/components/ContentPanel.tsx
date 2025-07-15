@@ -66,31 +66,40 @@ export function ContentPanel({
   useEffect(() => {
     if (highlightedVerse) {
       const verseId = `verse-${highlightedVerse}`;
-      const verseElement = document.getElementById(verseId);
       
-      console.log("Attempting to highlight verse:", { verseId, highlightedVerse, element: verseElement });
+      // Try to find the verse element multiple times with delays
+      const attemptHighlight = (attempts = 0) => {
+        const verseElement = document.getElementById(verseId);
+        
+        console.log(`Attempt ${attempts + 1} to highlight verse:`, { verseId, highlightedVerse, element: verseElement });
+        
+        if (verseElement) {
+          // Scroll to verse
+          verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // Add highlight effect
+          verseElement.style.backgroundColor = '#fef3c7'; // yellow-100
+          verseElement.style.borderLeft = '4px solid #f59e0b'; // yellow-600
+          verseElement.style.transition = 'all 0.3s ease';
+          
+          console.log("Successfully highlighted verse:", verseId);
+          
+          // Remove highlight after 3 seconds
+          setTimeout(() => {
+            verseElement.style.backgroundColor = '';
+            verseElement.style.borderLeft = '';
+            console.log("Removed highlight from verse:", verseId);
+          }, 3000);
+        } else if (attempts < 5) {
+          // Retry up to 5 times with increasing delays
+          setTimeout(() => attemptHighlight(attempts + 1), 500 * (attempts + 1));
+        } else {
+          console.error("Verse element not found after 5 attempts:", verseId, "Available elements:", 
+            Array.from(document.querySelectorAll('[id^="verse-"]')).map(el => el.id));
+        }
+      };
       
-      if (verseElement) {
-        // Scroll to verse
-        verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // Add highlight effect
-        verseElement.style.backgroundColor = '#fef3c7'; // yellow-100
-        verseElement.style.borderLeft = '4px solid #f59e0b'; // yellow-600
-        verseElement.style.transition = 'all 0.3s ease';
-        
-        console.log("Successfully highlighted verse:", verseId);
-        
-        // Remove highlight after 3 seconds
-        setTimeout(() => {
-          verseElement.style.backgroundColor = '';
-          verseElement.style.borderLeft = '';
-          console.log("Removed highlight from verse:", verseId);
-        }, 3000);
-      } else {
-        console.error("Verse element not found:", verseId, "Available elements:", 
-          Array.from(document.querySelectorAll('[id^="verse-"]')).map(el => el.id));
-      }
+      attemptHighlight();
     }
   }, [highlightedVerse, scriptures]); // Add scriptures dependency to re-run when content changes
 

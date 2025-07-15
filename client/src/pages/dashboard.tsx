@@ -247,7 +247,7 @@ export default function Dashboard() {
         setTimeout(() => {
           setHighlightedVerse(undefined);
         }, 4000);
-      }, 1000); // Longer delay for Quran to ensure content loads first
+      }, 2000); // Longer delay to ensure content loads first
     }
   };
 
