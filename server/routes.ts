@@ -214,6 +214,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get random verse from any religion
+  app.get("/api/verse/random", async (req, res) => {
+    try {
+      const religions = getAvailableReligions();
+      const randomReligion = religions[Math.floor(Math.random() * religions.length)];
+      const religionConfig = getReligionConfig(randomReligion);
+      
+      // Get random book
+      const books = religionConfig.books;
+      const randomBook = books[Math.floor(Math.random() * books.length)];
+      
+      // Get random chapter
+      const randomChapter = Math.floor(Math.random() * randomBook.chapters) + 1;
+      
+      // Fetch verses from that chapter
+      const verses = await fetchScriptureContent(randomReligion, randomBook.name, randomChapter);
+      
+      if (verses.length === 0) {
+        // Fallback to predefined verses if external API fails
+        const fallbackVerses = [
+          {
+            religion: "bible",
+            book: "Matthew",
+            chapter: 5,
+            verse: 9,
+            text: "Blessed are the peacemakers, for they will be called children of God."
+          },
+          {
+            religion: "quran",
+            book: "Al-Baqarah",
+            chapter: 2,
+            verse: 255,
+            text: "Allah - there is no deity except Him, the Ever-Living, the Sustainer of existence."
+          },
+          {
+            religion: "torah",
+            book: "Leviticus",
+            chapter: 19,
+            verse: 18,
+            text: "Do not seek revenge or bear a grudge against anyone among your people, but love your neighbor as yourself."
+          },
+          {
+            religion: "hindu",
+            book: "Bhagavad Gita",
+            chapter: 2,
+            verse: 47,
+            text: "You have a right to perform your prescribed duty, but not to the fruits of action."
+          },
+          {
+            religion: "buddhist",
+            book: "Tripitaka",
+            chapter: 1,
+            verse: 1,
+            text: "All conditioned things are impermanent. Work out your salvation with diligence."
+          }
+        ];
+        
+        const randomFallback = fallbackVerses[Math.floor(Math.random() * fallbackVerses.length)];
+        return res.json({
+          faith: randomFallback.religion,
+          book: randomFallback.book,
+          chapter: randomFallback.chapter,
+          verse: randomFallback.verse,
+          text: randomFallback.text,
+          reference: `${randomFallback.book} ${randomFallback.chapter}:${randomFallback.verse}`
+        });
+      }
+      
+      // Get random verse from the fetched verses
+      const randomVerse = verses[Math.floor(Math.random() * verses.length)];
+      
+      res.json({
+        faith: randomVerse.religion,
+        book: randomVerse.book,
+        chapter: randomVerse.chapter,
+        verse: randomVerse.verse,
+        text: randomVerse.text,
+        reference: `${randomVerse.book} ${randomVerse.chapter}:${randomVerse.verse}`
+      });
+    } catch (error) {
+      console.error("Random verse error:", error);
+      res.status(500).json({ error: "Failed to fetch random verse" });
+    }
+  });
+
+  // Generate AI insight for a verse
+  app.post("/api/scholar/explain", async (req, res) => {
+    try {
+      const { reference, text, faith } = req.body;
+      
+      if (!reference || !text) {
+        return res.status(400).json({ error: "Reference and text are required" });
+      }
+      
+      const prompt = `You are a scholarly expert in religious texts. Provide a concise, insightful explanation (1-2 sentences) of the following verse, emphasizing its key theme and practical application. Keep it respectful and accessible.
+
+Verse: "${text}"
+Reference: ${reference}
+Faith tradition: ${faith || 'Unknown'}
+
+Focus on the universal wisdom and practical guidance this verse offers.`;
+
+      const response = await generateScriptureResponse(prompt);
+      
+      res.json({
+        insight: response
+      });
+    } catch (error) {
+      console.error("AI insight error:", error);
+      res.status(500).json({ error: "Failed to generate insight" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

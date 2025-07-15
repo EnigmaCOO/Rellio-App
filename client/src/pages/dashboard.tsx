@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { NavigationPanel } from "@/components/NavigationPanel";
 import { ContentPanel } from "@/components/ContentPanel";
 import { ChatPanel } from "@/components/ChatPanel";
+import { VerseSpotlight } from "@/components/VerseSpotlight";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Settings, BookOpen, Menu, X, ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
 import rellioLogo from "@assets/image_1751817332000.png";
@@ -339,21 +340,27 @@ export default function Dashboard() {
           {...contentSwipeHandlers}
           className={`${getContentWidth()} transition-all duration-300 ease-in-out flex-1 relative overflow-hidden`}
         >
-          <ContentPanel
-            selectedReligion={selectedReligion}
-            selectedBook={selectedBook}
-            selectedChapter={selectedChapter}
-            scriptures={scriptures}
-            isLoading={scripturesLoading}
-            isError={!!scripturesError}
-            religionName={currentReligionData?.name || selectedReligion || 'Scripture'}
-            onChapterChange={handleChapterChange}
-            isFullscreen={!navigationVisible}
-            panelsVisible={{ navigation: navigationVisible, chat: chatVisible }}
-            onCopyVerse={handleCopyVerse}
-            onReligionChange={handleReligionChange}
-            highlightedVerse={highlightedVerse}
-          />
+          {selectedReligion ? (
+            <ContentPanel
+              selectedReligion={selectedReligion}
+              selectedBook={selectedBook}
+              selectedChapter={selectedChapter}
+              scriptures={scriptures}
+              isLoading={scripturesLoading}
+              isError={!!scripturesError}
+              religionName={currentReligionData?.name || selectedReligion || 'Scripture'}
+              onChapterChange={handleChapterChange}
+              isFullscreen={!navigationVisible}
+              panelsVisible={{ navigation: navigationVisible, chat: chatVisible }}
+              onCopyVerse={handleCopyVerse}
+              onReligionChange={handleReligionChange}
+              highlightedVerse={highlightedVerse}
+            />
+          ) : (
+            <div className="h-full flex items-center justify-center bg-scripture-50 p-8">
+              <VerseSpotlight onNavigateToVerse={handleNavigateToVerse} />
+            </div>
+          )}
           
           {/* Hidden panel indicators */}
           {!navigationVisible && (
