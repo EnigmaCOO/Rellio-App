@@ -22,10 +22,18 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
     // Parse scripture references and make them clickable
     const parseScriptureReferences = (text: string) => {
       console.log("Parsing scripture references from text:", text.substring(0, 200));
+      console.log("Full text being processed:", text);
       // Test specifically for Quran 33:40 pattern
       const testQuranPattern = /\b(Quran)\s+(\d+):(\d+)(?:[-–]\d+)?/gi;
       const quranMatches = text.match(testQuranPattern);
       console.log("Quran references found:", quranMatches);
+      
+      // Also test if text contains "Quran 33:40" specifically
+      if (text.includes("Quran 33:40")) {
+        console.log("Text contains 'Quran 33:40' - checking pattern match");
+        const testMatch = testQuranPattern.exec(text);
+        console.log("Pattern exec result:", testMatch);
+      }
       // Bible references - including both "Mark 12:31" and "Genesis Chapter 1" formats
       const biblePattern = /\b(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|1 Samuel|2 Samuel|1 Kings|2 Kings|1 Chronicles|2 Chronicles|Ezra|Nehemiah|Esther|Job|Psalms|Proverbs|Ecclesiastes|Song of Songs|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|1 Corinthians|2 Corinthians|Galatians|Ephesians|Philippians|Colossians|1 Thessalonians|2 Thessalonians|1 Timothy|2 Timothy|Titus|Philemon|Hebrews|James|1 Peter|2 Peter|1 John|2 John|3 John|Jude|Revelation)\s+(?:Chapter\s+)?(\d+)(?::(\d+))?/gi;
       

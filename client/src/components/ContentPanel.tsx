@@ -72,6 +72,7 @@ export function ContentPanel({
         const verseElement = document.getElementById(verseId);
         
         console.log(`Attempt ${attempts + 1} to highlight verse:`, { verseId, highlightedVerse, element: verseElement });
+        console.log("All verse elements available:", Array.from(document.querySelectorAll('[id^="verse-"]')).map(el => el.id));
         
         if (verseElement) {
           // Scroll to verse
