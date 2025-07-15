@@ -1,0 +1,14 @@
+Update the existing index.html (artifact_id: a1b2c3d4-e5f6-7890-a123-456789abcdef) to add a futuristic card/section on the welcome screen in the middle panel (before any book is selected), displaying a random verse from one of the five books (Holy Bible, Quran, Torah, Bhagavad Gita, Tripitaka) with its reference and an AI-generated explanation. Implement the following:
+
+Create a futuristic card below the welcome message and religious symbols, styled with Tailwind CSS (e.g., bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-6 rounded-xl shadow-2xl hover:shadow-3xl transition-shadow duration-300 max-w-lg mx-auto for a futuristic look with gradients and shadows).
+On page load or when the welcome screen is active (no book selected), randomly select one of the five religions and fetch a random verse from its API (https://scripture.api.bible/ for Bible, https://alquran.cloud/api for Quran, https://www.sefaria.org/api for Torah, https://api.bhagavadgita.io/v1/ for Bhagavad Gita, or local JSON for Tripitaka). Display the verse text, reference (e.g., "Bible - Genesis 1:1"), and a concise AI explanation (e.g., "This verse describes the creation of the heavens and earth, symbolizing divine order.").
+Use the existing AI logic to generate the explanation (1-2 sentences), based on the verse text; if no AI is available, use a mock template like "This verse from [book] emphasizes [key theme], reflecting [context].".
+Add a "Refresh Verse" button on the card, styled with Tailwind CSS (e.g., bg-white text-indigo-600 px-4 py-2 rounded-full hover:bg-indigo-100), to fetch and update with a new random verse from a random religion on click.
+Ensure the card is only visible on the welcome screen (hide when a book is selected) and integrates with the existing layout without overlapping.
+Preserve the chat’s static sizing (300px width, 400px height), history, bookmarking, copy/speak triggers, religious symbol images, and the middle content and Scripture Navigation panels.
+Add console.log("Random verse loaded:", { religion, book, verse, explanation }) on load or refresh to debug.
+Notes for Agent:
+
+Use JavaScript's Math.random() to select a random religion and verse (e.g., random chapter/verse within API limits).
+Fetch verses dynamically with the Fetch API, handling errors with a fallback message (e.g., "Unable to load verse, try refreshing").
+Test with no book selected to confirm the card appears, updates on refresh, and hides when a book is chosen.
