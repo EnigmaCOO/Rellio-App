@@ -222,7 +222,13 @@ export default function Dashboard() {
     // Update navigation state
     setSelectedReligion(religion);
     setSelectedBook(book);
-    setSelectedChapter(chapter);
+    
+    // For Quran, we need to set chapter to 1 since we're using surah-based navigation
+    if (religion === 'quran') {
+      setSelectedChapter(1);
+    } else {
+      setSelectedChapter(chapter);
+    }
     
     // Ensure navigation panel is visible
     if (!navigationVisible) {

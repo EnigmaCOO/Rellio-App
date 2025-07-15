@@ -26,7 +26,7 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
       
       // Quran references - including surah names
       const quranPattern = /\b(?:Quran|Surah)\s+(?:Al-)?([A-Z][a-z-]+(?:\s+[A-Z][a-z-]+)*)\s*\((\d+):(\d+)\)/gi;
-      const quranSimplePattern = /\b(Quran)\s+(\d+):(\d+)/gi;
+      const quranSimplePattern = /\b(Quran)\s+(\d+):(\d+)(?:[-–]\d+)?/gi;
       
       // Torah references
       const torahPattern = /\b(Bereshit|Shemot|Vayikra|Bamidbar|Devarim)\s+(\d+):(\d+)/gi;
@@ -66,7 +66,8 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
         const surahMap: Record<number, string> = {
           1: "Al-Fatihah (The Opening)", 2: "Al-Baqarah (The Cow)", 3: "Al-Imran (The Family of Imran)",
           4: "An-Nisa (The Women)", 5: "Al-Maidah (The Table)", 18: "Al-Kahf (The Cave)", 
-          21: "Al-Anbiya (The Prophets)", 35: "Fatir (Originator)", 36: "Ya-Sin (Ya Sin)"
+          21: "Al-Anbiya (The Prophets)", 35: "Fatir (Originator)", 36: "Ya-Sin (Ya Sin)",
+          112: "Al-Ikhlas (The Sincerity)"
         };
         const book = surahMap[parseInt(chapter)] || `Surah ${chapter}`;
         return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="window.handleScriptureClick('quran', '${book}', ${chapter}, ${verse})">${match}</span>`;
