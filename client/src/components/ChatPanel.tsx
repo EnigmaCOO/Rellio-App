@@ -22,6 +22,10 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
     // Parse scripture references and make them clickable
     const parseScriptureReferences = (text: string) => {
       console.log("Parsing scripture references from text:", text.substring(0, 200));
+      // Test specifically for Quran 33:40 pattern
+      const testQuranPattern = /\b(Quran)\s+(\d+):(\d+)(?:[-–]\d+)?/gi;
+      const quranMatches = text.match(testQuranPattern);
+      console.log("Quran references found:", quranMatches);
       // Bible references - including both "Mark 12:31" and "Genesis Chapter 1" formats
       const biblePattern = /\b(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|1 Samuel|2 Samuel|1 Kings|2 Kings|1 Chronicles|2 Chronicles|Ezra|Nehemiah|Esther|Job|Psalms|Proverbs|Ecclesiastes|Song of Songs|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|1 Corinthians|2 Corinthians|Galatians|Ephesians|Philippians|Colossians|1 Thessalonians|2 Thessalonians|1 Timothy|2 Timothy|Titus|Philemon|Hebrews|James|1 Peter|2 Peter|1 John|2 John|3 John|Jude|Revelation)\s+(?:Chapter\s+)?(\d+)(?::(\d+))?/gi;
       
@@ -79,8 +83,10 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
           34: "Saba (Sheba)", 35: "Fatir (Originator)", 36: "Ya-Sin (Ya Sin)", 112: "Al-Ikhlas (The Sincerity)"
         };
         const book = surahMap[parseInt(chapter)] || `Surah ${chapter}`;
-        console.log("Mapped to book:", book);
-        return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="window.handleScriptureClick('quran', '${book}', 1, ${verse})">${match}</span>`;
+        console.log("Mapped to book:", book, "verse:", verse);
+        const clickHandler = `window.handleScriptureClick('quran', '${book}', 1, ${verse})`;
+        console.log("Generated click handler:", clickHandler);
+        return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="${clickHandler}">${match}</span>`;
       });
       
       // Replace Torah references
