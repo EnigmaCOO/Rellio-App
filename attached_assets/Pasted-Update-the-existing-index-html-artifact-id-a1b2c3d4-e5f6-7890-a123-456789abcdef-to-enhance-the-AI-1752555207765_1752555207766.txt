@@ -1,0 +1,13 @@
+Update the existing index.html (artifact_id: a1b2c3d4-e5f6-7890-a123-456789abcdef) to enhance the AI Scripture Guide chat answers by making quoted scriptures and verse references clickable, allowing users to open the book or specific verse in the middle panel. Implement the following:
+
+For all chat answers (generalized questions without a selected book or specific book questions), when quoting scripture or referring to verses, render the quote or verse number as a clickable link styled with Tailwind CSS (e.g., text-blue-500 hover:underline cursor-pointer).
+When a quote or verse number is clicked in the chat, update the navigation state to select the corresponding "Religious Text" and "Book" (e.g., from the answer's context), load the chapter containing the verse in the middle panel, and scroll to or highlight the exact verse (e.g., using element.scrollIntoView() or adding a temporary bg-yellow-200 class for highlight).
+For general answers (no book selected, multi-religion comparison), include clickable quotes/verses for each religion's perspective, mapping clicks to the respective text (e.g., Bible quote opens Holy Bible, Quran quote opens Quran).
+Ensure the chat response generation includes metadata for quotes/verses (e.g., { religion: 'bible', book: 'Genesis', chapter: 1, verse: 1 }) to enable accurate navigation on click.
+Preserve the chat’s static sizing (300px width, 400px height), history, bookmarking, copy/speak triggers, religious symbol images, and the middle content and Scripture Navigation panels, using APIs (https://scripture.api.bible/, https://alquran.cloud/api, https://api.bhagavadgita.io/v1/, https://www.sefaria.org/api, or local JSON for Tripitaka) for content and navigation.
+Add console.log("Chat link clicked:", { religion, book, chapter, verse }) on click to debug the navigation update.
+Notes for Agent:
+
+Use React event handlers on the clickable spans in the chat response JSX to trigger state updates for navigation and content refresh.
+Handle multi-religion answers by structuring responses with separate sections, each with clickable elements tied to their metadata.
+Test with general questions (e.g., "What is creation?") for multi-religion clicks and specific questions (e.g., "Explain Genesis 1:1") for single-verse navigation. Ensure scrolling/highlighting works after loading.
