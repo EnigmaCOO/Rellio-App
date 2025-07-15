@@ -223,7 +223,8 @@ export default function Dashboard() {
     setSelectedReligion(religion);
     setSelectedBook(book);
     
-    // For Quran, we need to set chapter to 1 since we're using surah-based navigation
+    // For Quran, we always use chapter 1 since we're using surah-based navigation
+    // For other religions, use the actual chapter number
     if (religion === 'quran') {
       setSelectedChapter(1);
     } else {
@@ -239,13 +240,14 @@ export default function Dashboard() {
     if (verse) {
       // Wait for navigation to complete, then highlight verse
       setTimeout(() => {
+        console.log("Setting highlighted verse:", verse);
         setHighlightedVerse(verse);
         
         // Clear the highlighted verse after a delay
         setTimeout(() => {
           setHighlightedVerse(undefined);
         }, 4000);
-      }, 500); // Small delay to ensure content loads first
+      }, 1000); // Longer delay for Quran to ensure content loads first
     }
   };
 

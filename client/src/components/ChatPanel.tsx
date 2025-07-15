@@ -77,7 +77,7 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
         };
         const book = surahMap[parseInt(chapter)] || `Surah ${chapter}`;
         console.log("Mapped to book:", book);
-        return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="window.handleScriptureClick('quran', '${book}', ${chapter}, ${verse})">${match}</span>`;
+        return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="window.handleScriptureClick('quran', '${book}', 1, ${verse})">${match}</span>`;
       });
       
       // Replace Torah references
