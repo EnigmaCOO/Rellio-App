@@ -237,12 +237,15 @@ export default function Dashboard() {
     
     // Set highlighted verse for the ContentPanel
     if (verse) {
-      setHighlightedVerse(verse);
-      
-      // Clear the highlighted verse after a delay
+      // Wait for navigation to complete, then highlight verse
       setTimeout(() => {
-        setHighlightedVerse(undefined);
-      }, 4000);
+        setHighlightedVerse(verse);
+        
+        // Clear the highlighted verse after a delay
+        setTimeout(() => {
+          setHighlightedVerse(undefined);
+        }, 4000);
+      }, 500); // Small delay to ensure content loads first
     }
   };
 

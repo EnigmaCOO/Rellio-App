@@ -68,7 +68,7 @@ export function ContentPanel({
       const verseId = `verse-${highlightedVerse}`;
       const verseElement = document.getElementById(verseId);
       
-      console.log("Highlighted verse ID:", verseId);
+      console.log("Attempting to highlight verse:", { verseId, highlightedVerse, element: verseElement });
       
       if (verseElement) {
         // Scroll to verse
@@ -79,16 +79,20 @@ export function ContentPanel({
         verseElement.style.borderLeft = '4px solid #f59e0b'; // yellow-600
         verseElement.style.transition = 'all 0.3s ease';
         
+        console.log("Successfully highlighted verse:", verseId);
+        
         // Remove highlight after 3 seconds
         setTimeout(() => {
           verseElement.style.backgroundColor = '';
           verseElement.style.borderLeft = '';
+          console.log("Removed highlight from verse:", verseId);
         }, 3000);
       } else {
-        console.error("Verse element not found:", verseId);
+        console.error("Verse element not found:", verseId, "Available elements:", 
+          Array.from(document.querySelectorAll('[id^="verse-"]')).map(el => el.id));
       }
     }
-  }, [highlightedVerse]);
+  }, [highlightedVerse, scriptures]); // Add scriptures dependency to re-run when content changes
 
   // Get proper chapter display for Quran (shows surah number instead of always 1)
   const getDisplayChapter = (): number => {
