@@ -109,6 +109,7 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
   useEffect(() => {
     // Set up global handler for scripture clicks
     (window as any).handleScriptureClick = (religion: Religion, book: string, chapter: number, verse?: number) => {
+      console.log("Global handleScriptureClick called with:", { religion, book, chapter, verse });
       onScriptureClick(religion, book, chapter, verse);
     };
     
@@ -306,9 +307,13 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
 
   // Handle click on scripture reference
   const handleScriptureClick = (religion: Religion, book: string, chapter: number, verse?: number) => {
-    console.log("Verse reference clicked:", { religion, chapter, verse });
+    console.log("Scripture reference clicked:", { religion, book, chapter, verse });
+    console.log("onNavigateToVerse function available:", !!onNavigateToVerse);
     if (onNavigateToVerse) {
+      console.log("Calling onNavigateToVerse with parameters:", { religion, book, chapter, verse });
       onNavigateToVerse(religion, book, chapter, verse);
+    } else {
+      console.error("onNavigateToVerse function not provided to ChatPanel");
     }
   };
 

@@ -217,7 +217,7 @@ export default function Dashboard() {
 
   // Handle navigation to verse from chat panel
   const handleNavigateToVerse = (religion: Religion, book: string, chapter: number, verse?: number) => {
-    console.log("Navigating to verse:", { religion, book, chapter, verse });
+    console.log("Dashboard handleNavigateToVerse called:", { religion, book, chapter, verse });
     
     // Update navigation state
     setSelectedReligion(religion);
@@ -226,18 +226,22 @@ export default function Dashboard() {
     // For Quran, we always use chapter 1 since we're using surah-based navigation
     // For other religions, use the actual chapter number
     if (religion === 'quran') {
+      console.log("Setting Quran chapter to 1 for surah-based navigation");
       setSelectedChapter(1);
     } else {
+      console.log("Setting chapter to:", chapter);
       setSelectedChapter(chapter);
     }
     
     // Ensure navigation panel is visible
     if (!navigationVisible) {
+      console.log("Making navigation panel visible");
       setNavigationVisible(true);
     }
     
     // Set highlighted verse for the ContentPanel
     if (verse) {
+      console.log("Setting up verse highlighting for verse:", verse);
       // Wait for navigation to complete, then highlight verse
       setTimeout(() => {
         console.log("Setting highlighted verse:", verse);
@@ -245,9 +249,12 @@ export default function Dashboard() {
         
         // Clear the highlighted verse after a delay
         setTimeout(() => {
+          console.log("Clearing highlighted verse");
           setHighlightedVerse(undefined);
         }, 4000);
       }, 2000); // Longer delay to ensure content loads first
+    } else {
+      console.log("No verse provided for highlighting");
     }
   };
 
