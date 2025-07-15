@@ -8,14 +8,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       // Chat panel size debug logging
-      console.log("Chat panel size:", { width: "300px", height: "400px" });
+      console.log("Chat panel size:", { width: "300px", height: "500px" });
     </script>
   </head>
   <body class="bg-gray-100 min-h-screen">
     <!-- Main Application Container -->
     <div id="root" class="relative min-h-screen">
       <!-- Static AI Scripture Guide Chat Panel -->
-      <div class="fixed right-0 top-1/2 transform -translate-y-1/2 bg-white shadow-lg p-4 rounded-l-lg w-[300px] h-[400px] z-50 border-l-4 border-blue-500">
+      <div class="fixed right-0 top-1/2 transform -translate-y-1/2 bg-white shadow-lg p-4 rounded-l-lg w-[300px] h-[500px] z-50 border-l-4 border-blue-500">
         <!-- Panel Header -->
         <div class="mb-3 pb-2 border-b border-gray-200">
           <div class="flex items-center justify-between mb-2">
@@ -37,7 +37,7 @@
         </div>
 
         <!-- Chat History Container -->
-        <div id="chatHistory" class="max-h-[260px] overflow-y-auto mb-3 space-y-3 scroll-smooth">
+        <div id="chatHistory" class="max-h-[450px] overflow-y-auto mb-3 space-y-3 scroll-smooth">
           <!-- Sample messages for demonstration -->
           <div class="flex items-start space-x-2">
             <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm">
@@ -54,7 +54,7 @@
               AI
             </div>
             <div class="flex-1 bg-white rounded-lg p-3 border border-gray-200">
-              <p class="text-base text-gray-800">John 3:16 is one of the most beloved verses in the Bible. It reads: "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life." This verse encapsulates the central message of Christianity - God's love for humanity and the gift of salvation through Jesus Christ. The verse emphasizes the universal nature of God's love ("the world"), the sacrificial nature of that love ("gave his one and only Son"), and the promise of eternal life for those who believe.</p>
+              <p class="text-base text-gray-800 whitespace-pre-wrap break-words leading-relaxed">John 3:16 is one of the most beloved verses in the Bible. It reads: "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life." This verse encapsulates the central message of Christianity - God's love for humanity and the gift of salvation through Jesus Christ. The verse emphasizes the universal nature of God's love ("the world"), the sacrificial nature of that love ("gave his one and only Son"), and the promise of eternal life for those who believe.</p>
               <div class="flex items-center justify-between mt-2">
                 <span class="text-xs text-gray-500">2:31 PM</span>
                 <div class="flex space-x-1">
@@ -171,7 +171,7 @@
               ${isUser ? 'U' : 'AI'}
             </div>
             <div class="flex-1 ${messageBg} rounded-lg p-3">
-              <p class="text-base text-gray-800">${message.text}</p>
+              <p class="text-base text-gray-800 whitespace-pre-wrap break-words leading-relaxed">${message.text}</p>
               <div class="flex items-center justify-between mt-2">
                 <span class="text-xs text-gray-500">${message.timestamp}</span>
                 ${!isUser ? `
@@ -190,6 +190,9 @@
 
         // Scroll to bottom
         container.scrollTop = container.scrollHeight;
+        
+        // Debug logging for chat content height
+        console.log("Chat content height:", container.scrollHeight);
       }
 
       // Send message
@@ -204,14 +207,14 @@
           // Simulate AI response (replace with actual API call)
           setTimeout(() => {
             const responses = [
-              "Thank you for your question about the scriptures. Let me provide you with a comprehensive answer based on authentic religious texts.",
-              "This is a profound question that touches on important theological concepts. Based on the scriptural context...",
-              "The verse you're asking about has multiple layers of meaning. In the historical context...",
-              "This teaching appears in various forms across different religious traditions. Let me explain..."
+              "Thank you for your question about the scriptures. Let me provide you with a comprehensive answer based on authentic religious texts.\n\n- **From the Bible perspective:** The concept you're asking about is richly explored in biblical teachings, particularly in the Old Testament prophets and New Testament epistles. The theological implications span both historical and contemporary understanding.\n\n- **From the Quran perspective:** Islamic teachings offer a unique perspective on this matter, with detailed explanations found in various surahs that complement and expand upon the biblical narrative.\n\n- **From the Torah perspective:** Jewish scholarship has extensively analyzed this topic, with rabbinical commentaries providing deep insights into the original Hebrew meanings and cultural contexts.\n\n- **From the Bhagavad Gita perspective:** Hindu philosophy approaches this concept through the lens of dharma and spiritual consciousness, offering a different but complementary understanding.\n\n- **From the Tripitaka perspective:** Buddhist teachings emphasize the impermanence of all things and the path to enlightenment, providing wisdom that transcends cultural boundaries.\n\nThis multi-religious perspective shows how spiritual truths often transcend individual traditions while maintaining their unique cultural expressions.",
+              "This is a profound question that touches on important theological concepts. Based on the scriptural context, we can examine multiple perspectives:\n\nThe historical development of this teaching shows remarkable consistency across different religious traditions. In Christianity, we see the emphasis on divine love and sacrifice. In Islam, the focus shifts to submission to Allah's will and the importance of community (ummah). Judaism provides the foundational understanding through covenant relationships and ethical monotheism.\n\nHindu traditions offer insights through the concept of dharma (righteous duty) and the eternal nature of the soul (atman). Buddhist philosophy contributes understanding through the Four Noble Truths and the Eightfold Path, emphasizing liberation from suffering.\n\nEach tradition provides unique insights while addressing fundamental human questions about purpose, morality, and spiritual fulfillment. The convergence of these teachings suggests universal spiritual principles that transcend cultural boundaries.",
+              "The verse you're asking about has multiple layers of meaning that have been interpreted differently across various religious traditions throughout history.\n\nIn the original Hebrew/Greek/Arabic contexts, the linguistic nuances reveal deeper meanings that may not be immediately apparent in translation. For instance, the Hebrew concept of 'hesed' (lovingkindness) encompasses both mercy and covenant faithfulness. The Greek 'agape' represents unconditional divine love. The Arabic 'rahma' (compassion) derives from the root meaning 'womb,' suggesting nurturing care.\n\nSanskrit terminology in Hindu texts uses words like 'bhakti' (devotion) and 'moksha' (liberation) to express spiritual concepts. Pali Buddhist texts employ terms like 'metta' (loving-kindness) and 'nirvana' (ultimate peace).\n\nThese linguistic distinctions help us understand how different cultures have grappled with similar spiritual realities while developing their own unique theological vocabularies and interpretive frameworks.",
+              "This teaching appears in various forms across different religious traditions, each offering unique insights while addressing common human concerns about meaning, purpose, and transcendence.\n\nFrom a comparative religion perspective, we can observe how different cultures have developed similar ethical principles while maintaining distinct theological frameworks. The Golden Rule, for example, appears in various forms across traditions: 'Do unto others as you would have them do unto you' (Christianity), 'None of you believes until he wishes for his brother what he wishes for himself' (Islam), 'What is hateful to you, do not do to your neighbor' (Judaism).\n\nSimilarly, concepts of compassion, justice, and spiritual transformation are universal themes that manifest differently across traditions. Hindu concepts of karma and dharma parallel Christian teachings on moral responsibility and divine justice. Buddhist emphasis on mindfulness and compassion resonates with Islamic principles of consciousness (taqwa) and mercy (rahma).\n\nThese convergences suggest that while religious expressions vary culturally, the underlying spiritual truths and ethical principles often transcend individual traditions, pointing toward universal human experiences of the sacred."
             ];
             
             const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-            addMessage(randomResponse + " " + message, false);
+            addMessage(randomResponse, false);
           }, 1000);
         }
       }
@@ -271,7 +274,7 @@
       document.addEventListener('DOMContentLoaded', function() {
         loadChatHistory();
         console.log("Chat panel initialized with static design");
-        console.log("Chat panel size:", { width: "300px", height: "400px" });
+        console.log("Chat panel size:", { width: "300px", height: "500px" });
       });
     </script>
 
