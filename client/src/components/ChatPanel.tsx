@@ -72,8 +72,11 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
           10: "Yunus (Jonah)", 11: "Hud", 12: "Yusuf (Joseph)", 13: "Ar-Ra'd (The Thunder)",
           14: "Ibrahim (Abraham)", 15: "Al-Hijr", 16: "An-Nahl (The Bees)", 17: "Al-Isra (The Night Journey)",
           18: "Al-Kahf (The Cave)", 19: "Maryam (Mary)", 20: "Ta-Ha", 21: "Al-Anbiya (The Prophets)",
-          22: "Al-Hajj (The Pilgrimage)", 35: "Fatir (Originator)", 36: "Ya-Sin (Ya Sin)",
-          112: "Al-Ikhlas (The Sincerity)"
+          22: "Al-Hajj (The Pilgrimage)", 23: "Al-Mu'minun (The Believers)", 24: "An-Nur (The Light)",
+          25: "Al-Furqan (The Criterion)", 26: "Ash-Shu'ara (The Poets)", 27: "An-Naml (The Ants)",
+          28: "Al-Qasas (The Stories)", 29: "Al-Ankabut (The Spider)", 30: "Ar-Rum (The Romans)",
+          31: "Luqman", 32: "As-Sajda (The Prostration)", 33: "Al-Ahzab (The Clans)",
+          34: "Saba (Sheba)", 35: "Fatir (Originator)", 36: "Ya-Sin (Ya Sin)", 112: "Al-Ikhlas (The Sincerity)"
         };
         const book = surahMap[parseInt(chapter)] || `Surah ${chapter}`;
         console.log("Mapped to book:", book);
