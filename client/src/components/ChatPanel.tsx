@@ -21,6 +21,7 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
   useEffect(() => {
     // Parse scripture references and make them clickable
     const parseScriptureReferences = (text: string) => {
+      console.log("Parsing scripture references from text:", text.substring(0, 200));
       // Bible references - including both "Mark 12:31" and "Genesis Chapter 1" formats
       const biblePattern = /\b(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|1 Samuel|2 Samuel|1 Kings|2 Kings|1 Chronicles|2 Chronicles|Ezra|Nehemiah|Esther|Job|Psalms|Proverbs|Ecclesiastes|Song of Songs|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|1 Corinthians|2 Corinthians|Galatians|Ephesians|Philippians|Colossians|1 Thessalonians|2 Thessalonians|1 Timothy|2 Timothy|Titus|Philemon|Hebrews|James|1 Peter|2 Peter|1 John|2 John|3 John|Jude|Revelation)\s+(?:Chapter\s+)?(\d+)(?::(\d+))?/gi;
       
@@ -63,13 +64,19 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
       
       // Replace simple Quran references
       processedText = processedText.replace(quranSimplePattern, (match, type, chapter, verse) => {
+        console.log("Found Quran reference:", { match, type, chapter, verse });
         const surahMap: Record<number, string> = {
           1: "Al-Fatihah (The Opening)", 2: "Al-Baqarah (The Cow)", 3: "Al-Imran (The Family of Imran)",
-          4: "An-Nisa (The Women)", 5: "Al-Maidah (The Table)", 18: "Al-Kahf (The Cave)", 
-          21: "Al-Anbiya (The Prophets)", 35: "Fatir (Originator)", 36: "Ya-Sin (Ya Sin)",
+          4: "An-Nisa (The Women)", 5: "Al-Maidah (The Table)", 6: "Al-An'am (The Cattle)",
+          7: "Al-A'raf (The Heights)", 8: "Al-Anfal (The Spoils of War)", 9: "At-Tawbah (The Repentance)",
+          10: "Yunus (Jonah)", 11: "Hud", 12: "Yusuf (Joseph)", 13: "Ar-Ra'd (The Thunder)",
+          14: "Ibrahim (Abraham)", 15: "Al-Hijr", 16: "An-Nahl (The Bees)", 17: "Al-Isra (The Night Journey)",
+          18: "Al-Kahf (The Cave)", 19: "Maryam (Mary)", 20: "Ta-Ha", 21: "Al-Anbiya (The Prophets)",
+          22: "Al-Hajj (The Pilgrimage)", 35: "Fatir (Originator)", 36: "Ya-Sin (Ya Sin)",
           112: "Al-Ikhlas (The Sincerity)"
         };
         const book = surahMap[parseInt(chapter)] || `Surah ${chapter}`;
+        console.log("Mapped to book:", book);
         return `<span class="text-blue-500 hover:underline cursor-pointer" onclick="window.handleScriptureClick('quran', '${book}', ${chapter}, ${verse})">${match}</span>`;
       });
       
