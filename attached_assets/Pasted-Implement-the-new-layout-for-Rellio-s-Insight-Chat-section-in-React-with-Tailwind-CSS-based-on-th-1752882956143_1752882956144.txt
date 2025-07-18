@@ -1,0 +1,42 @@
+Implement the new layout for Rellio's Insight + Chat section in React with Tailwind CSS, based on the attached picture and the following specifications. The app has a three-column layout: Scripture Navigation (left, unchanged), Verse List (center), and a full-width IlluminVerse Chat panel directly under the Verse List in the main column. All cards and panels should be pure white (#FFFFFF) with subtle shadows for depth.
+
+Key Changes and Goals:
+
+Move the Chat Beneath the Verse Card:
+Remove any right-hand side chat pane.
+Place the IlluminVerse Chat directly under the verse list in the main (center) column, making it full-width to prevent cut-offs and improve readability.
+Verse Card Design:
+Use a white background with rounded corners (12px radius) and subtle drop-shadow (e.g., shadow-md in Tailwind).
+Display the selected verse text in 18px dark-gray (#1F2937) font, left-aligned.
+Show the verse reference (e.g., “At-Tin 1:8”) in 14px bold font, directly under the verse text.
+Omit any extra explanatory paragraphs below the verse.
+Keep audio (speaker icon) and clipboard (copy icon) flush right on the highlighted verse row.
+IlluminVerse Chat Design:
+Header Controls (aligned left to right):
+“Day X Streak 🔥” badge (e.g., a green or yellow rounded pill with emoji).
+“History” toggle button (opens a vertical timeline of past Q&As in a sidebar or modal).
+“Compare Mode” toggle button (switches the chat to a grid comparison view for verses across traditions).
+“Bookmarks” count button (shows number of saved items).
+Conversation Area:
+User messages: Left-aligned with avatar icon, text in light-gray bubble (rounded, bg-gray-100).
+AI responses: White card with 1px gray border and subtle shadow, text in dark-gray.
+Under each AI response, show perspective chips (small rounded pills): [Biblical] [Islamic] [Hindu] [More…] in accent teal (#00D5FF).
+Quick Suggestions:
+Below the conversation: Dynamic rounded pills like “Compare with Genesis 1:1”, “Define ‘mercy’”, “Random Topic”, styled in teal accents.
+Input Bar:
+Full-width input field with 24px height, rounded corners, placeholder “Ask a new question…”.
+Floating send button (arrow icon) at the far right, which pulses on hover (use Tailwind animations).
+Responsive Design & Styling:
+Use React + Tailwind CSS for all components.
+Define theme tokens in Tailwind config: white (#FFFFFF), dark-gray (#1F2937), accent-teal (#00D5FF), and shadows (e.g., shadow-md).
+Add fade-in animations (200ms) on component mount using Tailwind's transition classes or Framer Motion if needed.
+When "History" is toggled, slide in the history panel from the right.
+Ensure responsiveness: On mobile, stack elements vertically; chat remains full-width without cut-offs.
+Deliverables:
+
+<verselist> component: Renders the verse list with the updated white card design for selected verses.</verselist>
+<insightchat> component: Implements the full chat pane under the verses, including header, conversation, suggestions, and input.</insightchat>
+Sub-components: <streakbadge>, <historypanel> (vertical timeline), <comparegrid> (grid view for comparisons).</comparegrid></historypanel></streakbadge>
+Tailwind config snippet: Updates for new color tokens (e.g., extend colors in tailwind.config.js).
+State and Hooks Description: Briefly describe required React hooks, e.g., useState for toggles (historyOpen, compareMode), useEffect for fetching chat history or streak data from API/local storage.
+Output the complete React JSX code for these components with Tailwind classes, and include the state/hooks explanation at the end. Ensure the design matches the attached picture's aesthetic while incorporating the changes.
