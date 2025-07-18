@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Send, MoreVertical, Bot, User, Bookmark, BookmarkCheck, Trash2, X } from "lucide-react";
+import { Send, MoreVertical, Bot, User, X } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
 
@@ -191,17 +191,7 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
   );
 }
 
-interface BookmarkedMessage {
-  id: string;
-  text: string;
-  timestamp: Date;
-  context: {
-    religion: Religion;
-    book: string;
-    chapter: number;
-    verses?: Array<{ number: number; text: string }>;
-  };
-}
+
 
 interface ChatPanelProps {
   sessionId: string;
@@ -218,32 +208,11 @@ interface ChatPanelProps {
 
 export function ChatPanel({ sessionId, context, externalMessage, onExternalMessageProcessed, onCopyOperation, onNavigateToVerse }: ChatPanelProps) {
   const [newMessage, setNewMessage] = useState("");
-  const [bookmarks, setBookmarks] = useState<BookmarkedMessage[]>([]);
-  const [showBookmarks, setShowBookmarks] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load bookmarks from localStorage on component mount
-  useEffect(() => {
-    const savedBookmarks = localStorage.getItem('scripture-bookmarks');
-    if (savedBookmarks) {
-      try {
-        const parsedBookmarks = JSON.parse(savedBookmarks).map((bookmark: any) => ({
-          ...bookmark,
-          timestamp: new Date(bookmark.timestamp)
-        }));
-        setBookmarks(parsedBookmarks);
-      } catch (error) {
-        console.error('Error loading bookmarks:', error);
-      }
-    }
-  }, []);
 
-  // Save bookmarks to localStorage whenever bookmarks change
-  useEffect(() => {
-    localStorage.setItem('scripture-bookmarks', JSON.stringify(bookmarks));
-  }, [bookmarks]);
 
   // Get Quran chapter number based on surah name
   const getQuranChapterNumber = (bookName: string): number => {
@@ -386,59 +355,7 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
     staleTime: 30 * 1000, // 30 seconds
   });
 
-  // Bookmark functionality
-  const bookmarkMessage = (message: ChatMessage) => {
-    if (message.type === 'user') return; // Don't bookmark user messages
-    
-    console.log("Copy event, chat state:", { isBookmarking: true });
-    
-    // Signal that a copy operation is active
-    if (onCopyOperation) {
-      onCopyOperation(true);
-    }
-    
-    const bookmark: BookmarkedMessage = {
-      id: `bookmark-${Date.now()}`,
-      text: message.content,
-      timestamp: new Date(),
-      context: {
-        religion: context.religion!,
-        book: context.book,
-        chapter: context.chapter,
-      }
-    };
-    
-    setBookmarks(prev => [bookmark, ...prev]);
-    console.log('Chat State: Bookmarked message:', bookmark);
-    
-    toast({
-      title: "Response Bookmarked",
-      description: "AI response saved to your bookmarks",
-    });
-    
-    // Reset copy operation flag after a short delay
-    setTimeout(() => {
-      if (onCopyOperation) {
-        onCopyOperation(false);
-      }
-    }, 1000);
-  };
 
-  // Remove bookmark
-  const removeBookmark = (bookmarkId: string) => {
-    setBookmarks(prev => prev.filter(bookmark => bookmark.id !== bookmarkId));
-    console.log('Chat State: Removed bookmark:', bookmarkId);
-  };
-
-  // Clear all bookmarks
-  const clearBookmarks = () => {
-    setBookmarks([]);
-    console.log('Chat State: Cleared all bookmarks');
-    toast({
-      title: "Bookmarks Cleared",
-      description: "All bookmarks have been removed",
-    });
-  };
 
 
 
@@ -570,15 +487,7 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
       <div className="flex-shrink-0 p-3 lg:p-4 border-b border-scripture-200 bg-white">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-1">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowBookmarks(!showBookmarks)}
-              className="text-xs border-blue-300 text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1"
-            >
-              <Bookmark className="h-3 w-3 mr-1" />
-              Bookmarks ({bookmarks.length})
-            </Button>
+
             {messages && messages.length > 0 && (
               <Button
                 variant="outline"
@@ -609,73 +518,7 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
         </p>
       </div>
 
-      {/* Bookmarks Section - Fixed Height */}
-      {showBookmarks && (
-        <div className="flex-shrink-0 p-3 border-b border-scripture-200 bg-gray-50">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-gray-700 flex items-center">
-              <BookmarkCheck className="w-4 h-4 mr-2 text-blue-600" />
-              Bookmarked Responses
-            </h3>
-            <div className="flex items-center space-x-1">
-              {bookmarks.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearBookmarks}
-                  className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1"
-                >
-                  <Trash2 className="h-3 w-3 mr-1" />
-                  Clear All
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowBookmarks(false)}
-                className="text-gray-500 hover:text-gray-700 px-2 py-1"
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          </div>
-          <div className="max-h-32 overflow-y-auto">
-            {bookmarks.length === 0 ? (
-              <p className="text-xs text-gray-500 text-center py-4">
-                No bookmarks yet. Click the bookmark button next to AI responses to save them.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {bookmarks.map(bookmark => (
-                  <div key={bookmark.id} className="p-2 bg-white border border-gray-200 rounded-lg">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <p className="text-xs text-gray-800 mb-1">
-                          {bookmark.text.length > 80 ? 
-                            `${bookmark.text.substring(0, 80)}...` : 
-                            bookmark.text
-                          }
-                        </p>
-                        <div className="text-xs text-gray-500">
-                          {bookmark.context.religion} - {bookmark.context.book} Ch. {bookmark.context.chapter} • {formatTime(bookmark.timestamp.toISOString())}
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeBookmark(bookmark.id)}
-                        className="text-red-500 hover:text-red-700 ml-2 h-5 w-5 p-0"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+
 
       {/* Chat Messages - Scrollable Area */}
       <div className="flex-1 overflow-hidden">
@@ -817,17 +660,7 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
                       <div className="text-xs text-scripture-500">
                         {formatTime(message.timestamp?.toString() || new Date().toISOString())}
                       </div>
-                      {message.type !== 'user' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => bookmarkMessage(message)}
-                          className="ml-2 h-6 w-6 p-0 text-gray-400 hover:text-yellow-500 transition-colors"
-                          title="Bookmark this response"
-                        >
-                          <Bookmark className="h-3 w-3" />
-                        </Button>
-                      )}
+
                     </div>
                   </div>
                 </div>
@@ -898,7 +731,7 @@ export function ChatPanel({ sessionId, context, externalMessage, onExternalMessa
           </Button>
         </div>
         <p className="text-[10px] text-gray-400 mt-2">
-          AI responses use authentic religious texts from verified APIs. Click the bookmark icon to save helpful responses.
+          AI responses use authentic religious texts from verified APIs.
         </p>
       </div>
     </div>
