@@ -169,6 +169,18 @@ export function getTripitakaContent(book: string, chapter: number): ExternalScri
         "If a man speaks or acts with an evil thought, pain follows him, as the wheel follows the foot of the ox that draws the carriage.",
         "If a man speaks or acts with a pure thought, happiness follows him, like a shadow that never leaves him.",
         "Look upon the world as a bubble, look upon it as a mirage: one who looks upon the world in this way the king of death does not see."
+      ],
+      2: [
+        "Earnestness is the path of immortality, thoughtlessness the path of death.",
+        "Those who are earnest do not die, those who are thoughtless are as if dead already.",
+        "Those who are advanced in earnestness, having understood this clearly, delight in earnestness and rejoice in the knowledge of the noble ones.",
+        "These wise people, meditative, persevering, always possessed of strong powers, attain to nirvana, the highest happiness."
+      ],
+      3: [
+        "As a fletcher makes straight his arrow, a wise man makes straight his trembling and unsteady thought.",
+        "As a fish taken from his watery home and thrown on dry ground, our thought trembles all over in order to escape the dominion of Mara.",
+        "It is good to tame the mind, which is difficult to hold in and flighty, rushing wherever it listeth; a tamed mind brings happiness.",
+        "Let the wise man guard his thoughts, for they are difficult to perceive, very artful, and they rush wherever they list: thoughts well guarded bring happiness."
       ]
     },
     'Lotus Sutra': {
@@ -177,6 +189,12 @@ export function getTripitakaContent(book: string, chapter: number): ExternalScri
         "The wisdom of the Buddhas is infinitely profound and immeasurable.",
         "The door to this wisdom is difficult to understand and difficult to enter.",
         "Not even the voice-hearers or pratyekabuddhas can comprehend it."
+      ],
+      2: [
+        "Why is this so? Because a Buddha has personally attained this dharma that is without superior, extremely profound, and difficult to understand.",
+        "Only a Buddha together with a Buddha can fathom the Reality of All Existence.",
+        "That is to say, its true entity, its nature, its embodiment, its power, its action, its causes, its conditions, its effects, its retributions, and the ultimate state of its beginning and end.",
+        "At that time the World-Honored One, wishing to restate this meaning, spoke in verse."
       ]
     },
     'Sutta Pitaka': {
@@ -185,6 +203,12 @@ export function getTripitakaContent(book: string, chapter: number): ExternalScri
         "There the Buddha addressed the monks: 'Monks, I will teach you the Four Noble Truths.'",
         "What are the Four Noble Truths? The truth of suffering, the truth of the cause of suffering, the truth of the cessation of suffering, and the truth of the path leading to the cessation of suffering.",
         "This is the First Noble Truth: Life is suffering. Birth is suffering, aging is suffering, illness is suffering, death is suffering."
+      ],
+      2: [
+        "This is the Second Noble Truth: The cause of suffering is craving, which leads to rebirth, accompanied by delight and lust, seeking pleasure here and there.",
+        "This is the Third Noble Truth: The cessation of suffering, which is the relinquishment, the letting go, the giving up, the rejection of this very craving.",
+        "This is the Fourth Noble Truth: The path leading to the cessation of suffering, which is the Noble Eightfold Path.",
+        "Right understanding, right intention, right speech, right action, right livelihood, right effort, right mindfulness, right concentration."
       ]
     },
     'Vinaya Pitaka': {
@@ -193,6 +217,12 @@ export function getTripitakaContent(book: string, chapter: number): ExternalScri
         "The Buddha said to the monks: 'I will now establish the rules of conduct for the monastic community.'",
         "These rules are for the benefit of the community, for the comfort of the community, for the restraint of the ill-behaved.",
         "Listen well and remember these precepts, for they lead to the end of suffering."
+      ],
+      2: [
+        "A monk should not intentionally deprive a living being of life, not even an ant.",
+        "A monk should not take what is not given, not even a blade of grass.",
+        "A monk should not engage in sexual activity; he should be completely celibate.",
+        "A monk should not speak falsely; he should always speak truthfully and beneficially."
       ]
     }
   };
