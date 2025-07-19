@@ -332,8 +332,21 @@ export default function Dashboard() {
               />
             </div>
           ) : (
-            <div className="h-full flex items-center justify-center bg-gray-50 p-8">
-              <VerseSpotlight onNavigateToVerse={handleNavigateToVerse} />
+            <div className="h-full bg-gray-50 p-4 space-y-4 overflow-y-auto">
+              {/* Verse Spotlight */}
+              <div className="flex items-center justify-center">
+                <VerseSpotlight onNavigateToVerse={handleNavigateToVerse} />
+              </div>
+              
+              {/* IlluminVerse Chat - Always visible */}
+              <IlluminVerseChat
+                sessionId={chatSessionId}
+                context={currentContext}
+                externalMessage={externalMessage}
+                onExternalMessageProcessed={handleExternalMessageProcessed}
+                onCopyOperation={handleCopyOperation}
+                onNavigateToVerse={handleNavigateToVerse}
+              />
             </div>
           )}
           
