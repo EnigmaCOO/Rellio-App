@@ -51,6 +51,10 @@ export default {
           "4": "var(--chart-4)",
           "5": "var(--chart-5)",
         },
+        // Rellio color scheme
+        'rellio-white': '#FFFFFF',
+        'rellio-dark-gray': '#1F2937',
+        'rellio-accent-teal': '#00D5FF',
         sidebar: {
           DEFAULT: "var(--sidebar-background)",
           foreground: "var(--sidebar-foreground)",

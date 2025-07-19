@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { NavigationPanel } from "@/components/NavigationPanel";
-import { ContentPanel } from "@/components/ContentPanel";
-import { ChatPanel } from "@/components/ChatPanel";
 import { VerseSpotlight } from "@/components/VerseSpotlight";
+import { VerseList } from "@/components/IlluminVerse/VerseList";
+import { IlluminVerseChat } from "@/components/IlluminVerse/IlluminVerseChat";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Settings, BookOpen, Menu, X, ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
 import rellioLogo from "@assets/image_1751817332000.png";
@@ -19,17 +19,15 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [chatSessionId] = useState<string>(() => `session_${Date.now()}`);
   const [navigationVisible, setNavigationVisible] = useState<boolean>(true);
-  const [chatVisible, setChatVisible] = useState<boolean>(true);
   const [externalMessage, setExternalMessage] = useState<string>('');
   const [isCopyOperation, setIsCopyOperation] = useState<boolean>(false);
-  const [isMaximized, setIsMaximized] = useState<boolean>(false);
   const [highlightedVerse, setHighlightedVerse] = useState<number | undefined>(undefined);
   const { toast } = useToast();
 
   // Debug panel visibility state
   useEffect(() => {
-    console.log("Panel state:", { navigationVisible, chatVisible });
-  }, [navigationVisible, chatVisible]);
+    console.log("Panel state:", { navigationVisible });
+  }, [navigationVisible]);
 
   // Check for top left bubble and log confirmation
   useEffect(() => {
@@ -39,7 +37,7 @@ export default function Dashboard() {
   // Add copy event listeners to detect manual copying
   useEffect(() => {
     const handleCopyEvent = () => {
-      console.log("Copy event, chat state:", { manualCopy: true, isChatVisible: chatVisible });
+      console.log("Copy event, chat state:", { manualCopy: true });
       setIsCopyOperation(true);
       setTimeout(() => {
         setIsCopyOperation(false);
@@ -50,7 +48,7 @@ export default function Dashboard() {
     return () => {
       document.removeEventListener('copy', handleCopyEvent);
     };
-  }, [chatVisible]);
+  }, []);
 
   const { data: religions, isLoading: religionsLoading } = useQuery<Array<{id: Religion, name: string, books: string[]}>>({
     queryKey: ['/api/religions'],
@@ -124,11 +122,7 @@ export default function Dashboard() {
     setNavigationVisible(!navigationVisible);
   };
 
-  const toggleChat = () => {
-    const newChatVisible = !chatVisible;
-    console.log("Chat panel action:", { action: newChatVisible ? 'open' : 'close', showChat: newChatVisible });
-    setChatVisible(newChatVisible);
-  };
+
 
   // Swipe handlers for navigation panel
   const navigationSwipeHandlers = useSwipeable({
@@ -138,34 +132,10 @@ export default function Dashboard() {
     preventScrollOnSwipe: true,
   });
 
-  // Swipe handlers for chat panel
-  const chatSwipeHandlers = useSwipeable({
-    onSwipedLeft: () => setChatVisible(true),
-    onSwipedRight: () => {
-      // Don't close chat panel during copy operations or text selection
-      if (!isCopyOperation && !window.getSelection()?.toString()) {
-        setChatVisible(false);
-      }
-    },
-    trackMouse: true,
-    preventScrollOnSwipe: true,
-  });
-
-  // Double-click handler for maximizing/restoring panel
-  const handleHeaderDoubleClick = () => {
-    setIsMaximized(!isMaximized);
-    console.log("Panel maximized:", !isMaximized);
-  };
-
-
-
   // Swipe handlers for content panel to show hidden panels
   const contentSwipeHandlers = useSwipeable({
     onSwipedRight: () => {
       if (!navigationVisible) setNavigationVisible(true);
-    },
-    onSwipedLeft: () => {
-      if (!chatVisible) setChatVisible(true);
     },
     trackMouse: true,
     preventScrollOnSwipe: true,
@@ -180,25 +150,19 @@ export default function Dashboard() {
 
   // Calculate content panel width based on visible panels
   const getContentWidth = () => {
-    if (!navigationVisible && !chatVisible) return 'w-full';
-    if (!navigationVisible || !chatVisible) return 'lg:w-2/3';
-    return 'lg:w-1/3';
+    if (!navigationVisible) return 'w-full';
+    return 'lg:w-3/4';
   };
 
   // Handle copy verse functionality
   const handleCopyVerse = (verseText: string) => {
-    console.log("Copy event, chat state:", { isChatVisible: chatVisible });
+    console.log("Copy event:", { verseText });
     
-    // Set copy operation flag to prevent swipe handlers from closing the chat
+    // Set copy operation flag
     setIsCopyOperation(true);
     
     const explanationMessage = `Explain the following verse ${verseText}`;
     setExternalMessage(explanationMessage);
-    
-    // Ensure chat panel is visible
-    if (!chatVisible) {
-      setChatVisible(true);
-    }
     
     // Reset copy operation flag after a short delay
     setTimeout(() => {
@@ -335,29 +299,40 @@ export default function Dashboard() {
           )}
         </div>
         
-        {/* Content Panel - Expandable */}
+        {/* Main Content Area */}
         <div
           {...contentSwipeHandlers}
           className={`${getContentWidth()} transition-all duration-300 ease-in-out flex-1 relative overflow-hidden`}
         >
           {selectedReligion ? (
-            <ContentPanel
-              selectedReligion={selectedReligion}
-              selectedBook={selectedBook}
-              selectedChapter={selectedChapter}
-              scriptures={scriptures}
-              isLoading={scripturesLoading}
-              isError={!!scripturesError}
-              religionName={currentReligionData?.name || selectedReligion || 'Scripture'}
-              onChapterChange={handleChapterChange}
-              isFullscreen={!navigationVisible}
-              panelsVisible={{ navigation: navigationVisible, chat: chatVisible }}
-              onCopyVerse={handleCopyVerse}
-              onReligionChange={handleReligionChange}
-              highlightedVerse={highlightedVerse}
-            />
+            <div className="h-full bg-gray-50 p-4 space-y-4 overflow-y-auto">
+              {/* Verse List */}
+              <VerseList
+                selectedReligion={selectedReligion}
+                selectedBook={selectedBook}
+                selectedChapter={selectedChapter}
+                scriptures={scriptures}
+                isLoading={scripturesLoading}
+                isError={!!scripturesError}
+                religionName={currentReligionData?.name || selectedReligion || 'Scripture'}
+                onChapterChange={handleChapterChange}
+                onCopyVerse={handleCopyVerse}
+                highlightedVerse={highlightedVerse}
+                maxChapters={bookInfo?.chapters || 10}
+              />
+              
+              {/* IlluminVerse Chat */}
+              <IlluminVerseChat
+                sessionId={chatSessionId}
+                context={currentContext}
+                externalMessage={externalMessage}
+                onExternalMessageProcessed={handleExternalMessageProcessed}
+                onCopyOperation={handleCopyOperation}
+                onNavigateToVerse={handleNavigateToVerse}
+              />
+            </div>
           ) : (
-            <div className="h-full flex items-center justify-center bg-scripture-50 p-8">
+            <div className="h-full flex items-center justify-center bg-gray-50 p-8">
               <VerseSpotlight onNavigateToVerse={handleNavigateToVerse} />
             </div>
           )}
@@ -375,18 +350,6 @@ export default function Dashboard() {
             </Button>
           )}
           
-          {!chatVisible && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleChat}
-              className="absolute top-4 right-4 z-10 bg-white shadow-md hover:bg-gray-50 transition-opacity"
-              title="Show AI Guide Panel"
-            >
-              <MessageCircle className="h-4 w-4" />
-            </Button>
-          )}
-          
           {/* Swipe hints when navigation panel hidden */}
           {!navigationVisible && (
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white px-4 py-2 rounded-lg text-sm pointer-events-none">
@@ -394,85 +357,7 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-        
-        {/* Maximize Overlay */}
-        {isMaximized && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300" />
-        )}
 
-        {/* Static Chat Panel - Swipeable and Collapsible */}
-        <div
-          {...chatSwipeHandlers}
-          className={`${
-            chatVisible ? (isMaximized ? 'fixed inset-4 z-50' : 'w-full lg:w-1/3') : 'w-0'
-          } transition-all duration-300 ease-in-out overflow-hidden relative`}
-        >
-          {chatVisible && (
-            <>
-              <div className={`bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col transition-all duration-300 h-full`}>
-                {/* Header */}
-                <div 
-                  className="bg-white text-gray-800 p-3 rounded-t-lg flex items-center justify-between flex-shrink-0 border-b border-gray-200"
-                  onDoubleClick={handleHeaderDoubleClick}
-                >
-                  <h3 className={`font-semibold ${isMaximized ? 'text-lg' : 'text-sm'}`}>
-                    AI Scripture Guide
-                  </h3>
-                  <div className="flex items-center space-x-2">
-                    {isMaximized && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleHeaderDoubleClick}
-                        className="text-gray-600 hover:bg-gray-100 p-1"
-                        title="Restore"
-                      >
-                        Restore
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={toggleChat}
-                      className="text-gray-600 hover:bg-gray-100 p-1"
-                      title="Close AI Guide"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Chat Panel Content */}
-                <div className={`flex-1 overflow-hidden ${isMaximized ? 'text-lg p-4' : ''}`}>
-                  <ChatPanel
-                    sessionId={chatSessionId}
-                    context={currentContext}
-                    externalMessage={externalMessage}
-                    onExternalMessageProcessed={handleExternalMessageProcessed}
-                    onCopyOperation={handleCopyOperation}
-                    onNavigateToVerse={handleNavigateToVerse}
-                  />
-                </div>
-              </div>
-              
-              {/* Swipe indicator for chat panel */}
-              <div className="absolute top-1/2 left-2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
-                <ChevronRight className="h-4 w-4" />
-              </div>
-            </>
-          )}
-          {!chatVisible && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleChat}
-              className="absolute top-4 right-2 z-10 bg-white shadow-md hover:bg-gray-50"
-              title="Show AI Guide"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
       </div>
     </div>
   );
