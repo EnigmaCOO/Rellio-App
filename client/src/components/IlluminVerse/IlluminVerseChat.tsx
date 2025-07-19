@@ -20,7 +20,7 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
 
 // Import sub-components
-import { StreakBadge } from "./StreakBadge";
+
 import { HistoryPanel } from "./HistoryPanel";
 import { CompareGrid } from "./CompareGrid";
 
@@ -232,8 +232,6 @@ export function IlluminVerseChat({
           <h2 className="text-xl font-semibold text-rellio-dark-gray">IlluminVerse Chat</h2>
           
           <div className="flex items-center gap-2">
-            <StreakBadge />
-            
             <Button
               variant="outline"
               size="sm"
