@@ -20,7 +20,6 @@ interface VerseSpotlightProps {
 
 export function VerseSpotlight({ onNavigateToVerse }: VerseSpotlightProps) {
   const [verse, setVerse] = useState<VerseData | null>(null);
-  const [insight, setInsight] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -60,27 +59,6 @@ export function VerseSpotlight({ onNavigateToVerse }: VerseSpotlightProps) {
       const verseData = await verseResponse.json();
       console.log("Fetched verse:", verseData);
       setVerse(verseData);
-      
-      // Fetch AI insight
-      const insightResponse = await fetch("/api/scholar/explain", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          reference: verseData.reference,
-          text: verseData.text,
-          faith: verseData.faith
-        })
-      });
-      
-      if (!insightResponse.ok) {
-        throw new Error(`Failed to fetch insight: ${insightResponse.status}`);
-      }
-      
-      const insightData = await insightResponse.json();
-      console.log("Fetched insight:", insightData);
-      
-      setInsight(insightData.insight);
       setProgress(0); // Reset progress bar
     } catch (error) {
       console.error("Error fetching verse:", error);
@@ -131,7 +109,6 @@ export function VerseSpotlight({ onNavigateToVerse }: VerseSpotlightProps) {
       
       const randomFallback = fallbackVerses[Math.floor(Math.random() * fallbackVerses.length)];
       setVerse(randomFallback);
-      setInsight(`This verse from ${randomFallback.faith} tradition highlights the importance of spiritual wisdom and ethical living, encouraging us to seek deeper understanding and compassionate action.`);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -156,47 +133,31 @@ export function VerseSpotlight({ onNavigateToVerse }: VerseSpotlightProps) {
 
   if (isLoading && !verse) {
     return (
-      <div className="max-w-md mx-auto p-6 bg-slate-800 rounded-xl shadow-lg animate-pulse">
-        <div className="h-4 bg-slate-700 rounded w-32 mx-auto mb-4"></div>
-        <div className="h-6 bg-slate-700 rounded w-48 mx-auto mb-4"></div>
+      <div className="max-w-md mx-auto p-6 bg-card rounded-xl shadow-lg animate-pulse border">
+        <div className="h-6 bg-muted rounded w-48 mx-auto mb-4"></div>
         <div className="space-y-2 mb-4">
-          <div className="h-4 bg-slate-700 rounded w-full"></div>
-          <div className="h-4 bg-slate-700 rounded w-5/6"></div>
+          <div className="h-4 bg-muted rounded w-full"></div>
+          <div className="h-4 bg-muted rounded w-5/6"></div>
         </div>
-        <div className="h-4 bg-slate-700 rounded w-3/4"></div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-slate-800 rounded-xl shadow-lg text-white transition-opacity duration-200 opacity-100 relative">
-      {/* Header */}
-      <div className="text-center mb-4">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-white">
-          VERSE SPOTLIGHT
-        </h2>
-      </div>
-
+    <div className="max-w-md mx-auto p-6 bg-card border rounded-xl shadow-lg text-card-foreground transition-opacity duration-200 opacity-100 relative">
       {verse && (
         <>
           {/* Reference */}
           <div className="text-center mb-4">
-            <h3 className="text-2xl font-bold text-white">
+            <h3 className="text-2xl font-bold text-card-foreground">
               {verse.reference}
             </h3>
           </div>
 
           {/* Verse Text */}
-          <div className="mb-4">
-            <p className="text-lg leading-relaxed text-white">
-              "{verse.text}"
-            </p>
-          </div>
-
-          {/* AI Insight */}
           <div className="mb-6">
-            <p className="text-md text-cyan-400 italic">
-              {insight}
+            <p className="text-lg leading-relaxed text-card-foreground">
+              "{verse.text}"
             </p>
           </div>
 
@@ -204,7 +165,7 @@ export function VerseSpotlight({ onNavigateToVerse }: VerseSpotlightProps) {
           <div className="text-center mb-4">
             <button
               onClick={handleLearnMore}
-              className="text-cyan-400 hover:text-cyan-300 transition-colors duration-200 text-sm flex items-center justify-center gap-1 mx-auto"
+              className="text-primary hover:text-primary/80 transition-colors duration-200 text-sm flex items-center justify-center gap-1 mx-auto"
             >
               Read full chapter <ArrowRight className="h-3 w-3" />
             </button>
@@ -218,7 +179,7 @@ export function VerseSpotlight({ onNavigateToVerse }: VerseSpotlightProps) {
         <Button
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="w-10 h-10 rounded-full bg-transparent border-2 border-white text-white hover:bg-white hover:text-slate-800 transition-all duration-200 transform hover:scale-110 p-0 flex items-center justify-center"
+          className="w-10 h-10 rounded-full bg-transparent border-2 border-border text-foreground hover:bg-muted hover:text-foreground transition-all duration-200 transform hover:scale-110 p-0 flex items-center justify-center"
           title="Refresh verse"
         >
           <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -226,16 +187,16 @@ export function VerseSpotlight({ onNavigateToVerse }: VerseSpotlightProps) {
 
         {/* Progress Bar */}
         <div className="flex-1 mx-4">
-          <div className="h-1 bg-slate-700 rounded-full overflow-hidden">
+          <div className="h-1 bg-muted rounded-full overflow-hidden">
             <div
-              className="h-full bg-cyan-400 transition-all duration-1000 ease-linear"
+              className="h-full bg-primary transition-all duration-1000 ease-linear"
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
 
         {/* Timer Display */}
-        <div className="text-xs text-gray-400 min-w-0">
+        <div className="text-xs text-muted-foreground min-w-0">
           {Math.ceil((100 - progress) * 0.6)}s
         </div>
       </div>
