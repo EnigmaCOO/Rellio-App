@@ -354,7 +354,7 @@ export function IlluminVerseChat({
           ) : (
             <div className="text-center text-gray-500 py-8">
               <Bot className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-lg font-medium mb-2">Welcome to IlluminVerse Chat</p>
+              <p className="text-lg font-medium mb-2">Welcome to Aura Archivist</p>
               <p className="text-sm">Ask questions about scriptures or explore comparative religious insights.</p>
             </div>
           )}
