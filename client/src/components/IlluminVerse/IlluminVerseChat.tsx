@@ -229,7 +229,7 @@ export function IlluminVerseChat({
       {/* Header Controls */}
       <div className="bg-rellio-white p-4 border-b border-gray-100">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xl font-semibold text-rellio-dark-gray">IlluminVerse Chat</h2>
+          <h2 className="text-xl font-semibold text-rellio-dark-gray">Aura Archivist</h2>
           
           <div className="flex items-center gap-2">
             <Button
