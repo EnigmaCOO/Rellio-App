@@ -66,7 +66,7 @@ export default function Dashboard() {
   });
 
   const { data: scriptures, isLoading: scripturesLoading, error: scripturesError } = useQuery<Scripture[]>({
-    queryKey: [`/api/scriptures?religion=${selectedReligion}&book=${selectedBook}&chapter=${selectedReligion === 'quran' ? 1 : selectedChapter}`],
+    queryKey: [`/api/scriptures?religion=${selectedReligion}&book=${selectedBook}&chapter=${selectedChapter}`],
     enabled: !!selectedReligion && !!selectedBook && !!selectedChapter,
   });
 
@@ -187,16 +187,9 @@ export default function Dashboard() {
     // Update navigation state
     setSelectedReligion(religion);
     setSelectedBook(book);
+    setSelectedChapter(chapter); // Always use the actual chapter number provided
     
-    // For Quran, we always use chapter 1 since we're using surah-based navigation
-    // For other religions, use the actual chapter number
-    if (religion === 'quran') {
-      console.log("Setting Quran chapter to 1 for surah-based navigation");
-      setSelectedChapter(1);
-    } else {
-      console.log("Setting chapter to:", chapter);
-      setSelectedChapter(chapter);
-    }
+    console.log("Setting chapter to:", chapter);
     
     // Ensure navigation panel is visible
     if (!navigationVisible) {
