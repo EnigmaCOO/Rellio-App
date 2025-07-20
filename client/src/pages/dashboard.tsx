@@ -186,7 +186,38 @@ export default function Dashboard() {
     
     // Update navigation state
     setSelectedReligion(religion);
-    setSelectedBook(book);
+    
+    // For Quran, we need to map the book name to match the available books
+    if (religion === 'quran') {
+      const currentBooks = religions?.find(r => r.id === 'quran')?.books || [];
+      
+      // Try to find an exact match first
+      let matchingBook = currentBooks.find(b => b === book);
+      
+      // If no exact match, try fuzzy matching
+      if (!matchingBook) {
+        matchingBook = currentBooks.find(b => 
+          b.toLowerCase().includes(book.toLowerCase()) || 
+          book.toLowerCase().includes(b.toLowerCase()) ||
+          b.toLowerCase().replace(/[^a-z]/g, '') === book.toLowerCase().replace(/[^a-z]/g, '')
+        );
+      }
+      
+      // If still no match, try matching without prefixes (Al-, An-, etc.)
+      if (!matchingBook) {
+        const bookWithoutPrefix = book.replace(/^(Al-|An-|As-|At-|Ar-|Az-)/, '');
+        matchingBook = currentBooks.find(b => 
+          b.toLowerCase().includes(bookWithoutPrefix.toLowerCase()) ||
+          b.toLowerCase().replace(/^(al-|an-|as-|at-|ar-|az-)/, '').includes(bookWithoutPrefix.toLowerCase())
+        );
+      }
+      
+      console.log("Quran book mapping:", { originalBook: book, matchingBook, availableBooks: currentBooks });
+      setSelectedBook(matchingBook || currentBooks[0] || book);
+    } else {
+      setSelectedBook(book);
+    }
+    
     setSelectedChapter(chapter); // Always use the actual chapter number provided
     
     console.log("Setting chapter to:", chapter);
