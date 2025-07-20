@@ -1,0 +1,26 @@
+Implement updates to Rellio's Scripture Reading and Chat layout to address excessive scrolling and confusion when viewing book content. Based on the attached screenshots, where the verse list expands vertically causing users to scroll extensively, and the chat section below can cut off or require additional scrolling, redesign the main content area as follows:
+
+Key Changes and Goals:
+
+Fixed Verse Card:
+Convert the verse list (book text) into a fixed-height card (e.g., 50vh or 400px) with internal vertical scrolling for long chapters.
+The card should have a white background, rounded corners (12px), subtle shadow, and a sticky header with the book title (e.g., "Holy Quran – Al-Fatihah") and pagination (e.g., "Page 1 of 1").
+Verses remain numbered, left-aligned in 18px dark-gray text, with reference below each (e.g., "Al-Fatihah 1:1"), and audio/copy icons flush right.
+On mobile, the card height adjusts to 40vh for better usability.
+Controllable Chat Section:
+Place the "Aura Archivist" chat directly below the fixed verse card, full-width in the main column.
+Make the chat panel expandable/collapsible: Start with a fixed height (e.g., 30vh) showing the welcome message, quick suggestions, and input bar; include a toggle button (e.g., "Expand Chat" with arrow icon) to increase height to 60vh or full available space.
+Conversation area uses internal scrolling to prevent cut-offs, with user/AI bubbles as before (user: light-gray, AI: white with border).
+Header controls (Streak badge, History, Compare Mode, Bookmarks) remain sticky at the top of the chat panel.
+Quick suggestions and input bar are always visible at the bottom, without requiring scroll.
+Overall Layout Improvements:
+Ensure the entire page fits within viewport height where possible: Navigation sidebar fixed-position, main column flex-column with verse card and chat stacked vertically.
+Add subtle dividers between verse card and chat for clarity.
+Responsive: On smaller screens, collapse navigation to a hamburger menu; prioritize verse card visibility.
+Animations: Smooth scroll for internal elements, fade-in for chat expansion.
+Deliverables:
+
+Updated <versecard> component: Fixed-height with internal scroll.</versecard>
+Updated <insightchat> component: Expandable height, internal scroll for conversation, sticky header and footer.</insightchat>
+Tailwind/CSS adjustments for fixed heights, overflows, and stickies.
+State/Hooks: useState for chatExpanded toggle, useRef for scroll management.
