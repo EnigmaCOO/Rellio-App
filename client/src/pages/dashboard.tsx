@@ -305,8 +305,8 @@ export default function Dashboard() {
           className={`${getContentWidth()} transition-all duration-300 ease-in-out flex-1 relative overflow-hidden`}
         >
           {selectedReligion ? (
-            <div className="h-full bg-gray-50 p-4 space-y-4 overflow-y-auto">
-              {/* Verse List */}
+            <div className="h-full bg-gray-50 flex flex-col p-4 gap-4">
+              {/* Fixed Verse Card */}
               <VerseList
                 selectedReligion={selectedReligion}
                 selectedBook={selectedBook}
@@ -321,7 +321,10 @@ export default function Dashboard() {
                 maxChapters={bookInfo?.chapters || 10}
               />
               
-              {/* IlluminVerse Chat */}
+              {/* Subtle Divider */}
+              <div className="border-t border-gray-200"></div>
+              
+              {/* Controllable Chat Section */}
               <IlluminVerseChat
                 sessionId={chatSessionId}
                 context={currentContext}

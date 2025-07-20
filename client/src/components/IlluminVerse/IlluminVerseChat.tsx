@@ -14,7 +14,9 @@ import {
   History, 
   Grid3X3, 
   Bookmark,
-  ChevronRight
+  ChevronRight,
+  ChevronUp,
+  ChevronDown
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
@@ -121,6 +123,7 @@ export function IlluminVerseChat({
   const [historyOpen, setHistoryOpen] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [bookmarkCount, setBookmarkCount] = useState(0);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Quick suggestions
   const quickSuggestions = [
@@ -225,18 +228,20 @@ export function IlluminVerseChat({
   };
 
   return (
-    <Card className="bg-rellio-white rounded-xl shadow-md overflow-hidden">
-      {/* Header Controls */}
-      <div className="bg-rellio-white p-4 border-b border-gray-100">
+    <Card className={`bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 ${
+      isExpanded ? 'h-[60vh]' : 'h-[30vh]'
+    } flex flex-col`}>
+      {/* Sticky Header Controls */}
+      <div className="bg-white p-4 border-b border-gray-100 flex-shrink-0 sticky top-0 z-10">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xl font-semibold text-rellio-dark-gray">Aura Archivist</h2>
+          <h2 className="text-xl font-semibold text-gray-800">Aura Archivist</h2>
           
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setHistoryOpen(true)}
-              className="text-rellio-dark-gray hover:bg-gray-50"
+              className="text-gray-700 hover:bg-gray-50"
             >
               <History className="h-4 w-4 mr-1" />
               History
@@ -246,8 +251,8 @@ export function IlluminVerseChat({
               variant="outline"
               size="sm"
               onClick={() => setCompareMode(!compareMode)}
-              className={`text-rellio-dark-gray hover:bg-gray-50 ${
-                compareMode ? 'bg-rellio-accent-teal/10 border-rellio-accent-teal' : ''
+              className={`text-gray-700 hover:bg-gray-50 ${
+                compareMode ? 'bg-blue-50 border-blue-300' : ''
               }`}
             >
               <Grid3X3 className="h-4 w-4 mr-1" />
@@ -257,10 +262,25 @@ export function IlluminVerseChat({
             <Button
               variant="outline"
               size="sm"
-              className="text-rellio-dark-gray hover:bg-gray-50"
+              className="text-gray-700 hover:bg-gray-50"
             >
               <Bookmark className="h-4 w-4 mr-1" />
               Bookmarks ({bookmarkCount})
+            </Button>
+            
+            {/* Expand/Collapse Toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-gray-700 hover:bg-gray-50"
+              title={isExpanded ? "Collapse Chat" : "Expand Chat"}
+            >
+              {isExpanded ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronUp className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </div>
@@ -274,9 +294,9 @@ export function IlluminVerseChat({
         />
       )}
 
-      {/* Conversation Area */}
-      <div className="flex-1">
-        <ScrollArea ref={scrollAreaRef} className="h-64 p-4">
+      {/* Conversation Area with Internal Scrolling */}
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea ref={scrollAreaRef} className="h-full p-4">
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
@@ -297,7 +317,7 @@ export function IlluminVerseChat({
                     {/* Avatar */}
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                       message.type === 'user' 
-                        ? 'bg-rellio-accent-teal text-white' 
+                        ? 'bg-blue-600 text-white' 
                         : 'bg-gray-100 text-gray-600'
                     }`}>
                       {message.type === 'user' ? (
@@ -311,8 +331,8 @@ export function IlluminVerseChat({
                     <div className="flex-1">
                       <div className={`p-3 rounded-lg ${
                         message.type === 'user' 
-                          ? 'bg-gray-100 text-rellio-dark-gray' 
-                          : 'bg-rellio-white border border-gray-200 text-rellio-dark-gray shadow-sm'
+                          ? 'bg-gray-100 text-gray-800' 
+                          : 'bg-white border border-gray-200 text-gray-800 shadow-sm'
                       }`}>
                         {message.type === 'user' ? (
                           <p className="text-sm">{message.content}</p>
@@ -331,7 +351,7 @@ export function IlluminVerseChat({
                             <Badge 
                               key={perspective} 
                               variant="secondary" 
-                              className="text-xs bg-rellio-accent-teal/10 text-rellio-accent-teal border-rellio-accent-teal/20"
+                              className="text-xs bg-blue-50 text-blue-600 border-blue-200"
                             >
                               {perspective}
                             </Badge>
@@ -361,45 +381,48 @@ export function IlluminVerseChat({
         </ScrollArea>
       </div>
 
-      {/* Quick Suggestions */}
-      <div className="px-4 py-2 border-t border-gray-100">
-        <div className="flex flex-wrap gap-2">
-          {quickSuggestions.map((suggestion) => (
-            <Button
-              key={suggestion}
-              variant="outline"
-              size="sm"
-              onClick={() => handleQuickSuggestion(suggestion)}
-              className="text-xs text-rellio-accent-teal border-rellio-accent-teal/30 hover:bg-rellio-accent-teal/10"
-            >
-              {suggestion}
-            </Button>
-          ))}
+      {/* Sticky Footer */}
+      <div className="flex-shrink-0 bg-white">
+        {/* Quick Suggestions */}
+        <div className="px-4 py-2 border-t border-gray-100">
+          <div className="flex flex-wrap gap-2">
+            {quickSuggestions.map((suggestion) => (
+              <Button
+                key={suggestion}
+                variant="outline"
+                size="sm"
+                onClick={() => handleQuickSuggestion(suggestion)}
+                className="text-xs text-blue-600 border-blue-200 hover:bg-blue-50"
+              >
+                {suggestion}
+              </Button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Input Bar */}
-      <div className="p-4 border-t border-gray-100">
-        <div className="flex gap-2">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-            placeholder="Ask a new question..."
-            className="flex-1 h-10 rounded-lg border-gray-200 focus:border-rellio-accent-teal focus:ring-rellio-accent-teal"
-            disabled={sendMessageMutation.isPending}
-          />
-          <Button
-            onClick={() => handleSendMessage()}
-            disabled={!newMessage.trim() || sendMessageMutation.isPending}
-            className="h-10 w-10 rounded-lg bg-rellio-accent-teal hover:bg-rellio-accent-teal/90 text-white flex items-center justify-center transition-all hover:scale-105"
-          >
-            {sendMessageMutation.isPending ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-          </Button>
+        {/* Input Bar */}
+        <div className="p-4 border-t border-gray-100">
+          <div className="flex gap-2">
+            <Input
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+              placeholder="Ask a new question..."
+              className="flex-1 h-10 rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+              disabled={sendMessageMutation.isPending}
+            />
+            <Button
+              onClick={() => handleSendMessage()}
+              disabled={!newMessage.trim() || sendMessageMutation.isPending}
+              className="h-10 w-10 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-all hover:scale-105"
+            >
+              {sendMessageMutation.isPending ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
