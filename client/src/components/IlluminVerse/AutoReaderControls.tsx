@@ -224,7 +224,10 @@ export function AutoReaderControls({
                                      name.includes('susan') || name.includes('anna');
                       const isMale = name.includes('male') || name.includes('man') || 
                                    name.includes('david') || name.includes('alex') || 
-                                   name.includes('daniel') || name.includes('tom');
+                                   name.includes('daniel') || name.includes('tom') ||
+                                   name.includes('james') || name.includes('john') ||
+                                   name.includes('microsoft david') || name.includes('google us-english-wavenet-a') ||
+                                   name.includes('google us-english-wavenet-b') || name.includes('google us-english-wavenet-d');
                       
                       const genderIcon = isFemale ? "♀" : isMale ? "♂" : "";
                       const qualityIcon = isNatural ? "✨" : voice.localService ? "🔊" : "";

@@ -83,18 +83,21 @@ export function useAutoReader({
       
       setAvailableVoices(finalVoices);
       
-      // Select the best quality female English voice by default
-      const femaleVoiceIndex = finalVoices.findIndex(voice => 
+      // Select the best quality male English voice by default
+      const maleVoiceIndex = finalVoices.findIndex(voice => 
         voice.lang.startsWith('en') && 
-        (voice.name.toLowerCase().includes('female') || 
-         voice.name.toLowerCase().includes('woman') ||
-         voice.name.toLowerCase().includes('sara') ||
-         voice.name.toLowerCase().includes('allison') ||
-         voice.name.toLowerCase().includes('karen') ||
-         voice.name.toLowerCase().includes('samantha'))
+        (voice.name.toLowerCase().includes('male') || 
+         voice.name.toLowerCase().includes('man') ||
+         voice.name.toLowerCase().includes('david') ||
+         voice.name.toLowerCase().includes('alex') ||
+         voice.name.toLowerCase().includes('daniel') ||
+         voice.name.toLowerCase().includes('tom') ||
+         voice.name.toLowerCase().includes('james') ||
+         voice.name.toLowerCase().includes('john') ||
+         voice.name.toLowerCase().includes('microsoft david'))
       );
       
-      const defaultIndex = femaleVoiceIndex >= 0 ? femaleVoiceIndex : 0;
+      const defaultIndex = maleVoiceIndex >= 0 ? maleVoiceIndex : 0;
       setSelectedVoiceIndex(defaultIndex);
     };
 
@@ -112,8 +115,10 @@ export function useAutoReader({
       // Prefer system voices over web voices
       if (voice.localService) score += 5;
       
-      // Gender preference (slight preference for female voices for religious texts)
-      if (name.includes('female') || name.includes('woman')) score += 2;
+      // Gender preference (preference for male voices)
+      if (name.includes('male') || name.includes('man') || name.includes('david') || 
+          name.includes('alex') || name.includes('daniel') || name.includes('tom') ||
+          name.includes('james') || name.includes('john')) score += 3;
       
       // Penalize robotic-sounding voices
       if (name.includes('robot')) score -= 5;
