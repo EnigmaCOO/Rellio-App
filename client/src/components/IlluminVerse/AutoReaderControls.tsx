@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Play, Pause, Square, Settings, Volume2 } from "lucide-react";
+import { Play, Pause, Square, Settings, Volume2, TestTube } from "lucide-react";
 
 interface AutoReaderControlsProps {
   isPlaying: boolean;
@@ -50,6 +50,30 @@ export function AutoReaderControls({
   disabled = false
 }: AutoReaderControlsProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [testingVoice, setTestingVoice] = useState(false);
+
+  const testVoice = (voiceIndex: number) => {
+    if (testingVoice) return;
+    
+    setTestingVoice(true);
+    speechSynthesis.cancel();
+    
+    const testPhrase = "This is a preview of the selected voice for reading sacred texts.";
+    const utterance = new SpeechSynthesisUtterance(testPhrase);
+    
+    if (availableVoices[voiceIndex]) {
+      utterance.voice = availableVoices[voiceIndex];
+    }
+    
+    utterance.rate = speed * 0.85;
+    utterance.pitch = 0.9;
+    utterance.volume = volume;
+    
+    utterance.onend = () => setTestingVoice(false);
+    utterance.onerror = () => setTestingVoice(false);
+    
+    speechSynthesis.speak(utterance);
+  };
 
   const handleKeyboardShortcuts = (e: KeyboardEvent) => {
     // Only handle shortcuts when not typing in an input
@@ -182,7 +206,7 @@ export function AutoReaderControls({
             {/* Voice Selection */}
             {availableVoices.length > 0 && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Voice</label>
+                <label className="text-sm font-medium">Voice & Gender</label>
                 <Select 
                   value={selectedVoiceIndex.toString()} 
                   onValueChange={(value) => onVoiceChange(parseInt(value))}
@@ -190,14 +214,52 @@ export function AutoReaderControls({
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    {availableVoices.map((voice, index) => (
-                      <SelectItem key={index} value={index.toString()}>
-                        {voice.name} ({voice.lang})
-                      </SelectItem>
-                    ))}
+                  <SelectContent className="max-h-64 overflow-y-auto">
+                    {availableVoices.map((voice, index) => {
+                      const name = voice.name.toLowerCase();
+                      const isNatural = name.includes('natural') || name.includes('neural') || name.includes('premium');
+                      const isFemale = name.includes('female') || name.includes('woman') || 
+                                     name.includes('sara') || name.includes('allison') || 
+                                     name.includes('karen') || name.includes('samantha') ||
+                                     name.includes('susan') || name.includes('anna');
+                      const isMale = name.includes('male') || name.includes('man') || 
+                                   name.includes('david') || name.includes('alex') || 
+                                   name.includes('daniel') || name.includes('tom');
+                      
+                      const genderIcon = isFemale ? "♀" : isMale ? "♂" : "";
+                      const qualityIcon = isNatural ? "✨" : voice.localService ? "🔊" : "";
+                      
+                      return (
+                        <SelectItem key={index} value={index.toString()}>
+                          <div className="flex items-center justify-between w-full">
+                            <span className="truncate">
+                              {genderIcon} {voice.name}
+                            </span>
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              {qualityIcon}
+                              <span>({voice.lang})</span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => testVoice(selectedVoiceIndex)}
+                    disabled={testingVoice || availableVoices.length === 0}
+                    className="text-xs"
+                  >
+                    {testingVoice ? "Testing..." : "Test Voice"}
+                  </Button>
+                </div>
+                <div className="text-xs text-gray-500 space-y-1">
+                  <p>✨ = High-quality voice • 🔊 = System voice</p>
+                  <p>♀ = Female • ♂ = Male</p>
+                </div>
               </div>
             )}
 

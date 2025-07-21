@@ -58,12 +58,68 @@ export function useAutoReader({
   // Load available voices
   useEffect(() => {
     const loadVoices = () => {
-      const voices = speechSynthesis.getVoices();
-      setAvailableVoices(voices);
+      const allVoices = speechSynthesis.getVoices();
       
-      // Select first English voice by default, or first available voice
-      const englishVoice = voices.findIndex(voice => voice.lang.startsWith('en'));
-      setSelectedVoiceIndex(englishVoice >= 0 ? englishVoice : 0);
+      // Filter and prioritize natural-sounding English voices
+      const englishVoices = allVoices.filter(voice => 
+        voice.lang.startsWith('en') && voice.name.toLowerCase().includes('natural') ||
+        voice.lang.startsWith('en') && voice.name.toLowerCase().includes('neural') ||
+        voice.lang.startsWith('en') && voice.name.toLowerCase().includes('premium') ||
+        voice.lang.startsWith('en') && !voice.name.toLowerCase().includes('microsoft') ||
+        voice.lang.startsWith('en')
+      );
+      
+      // Sort voices to prioritize better quality ones
+      const sortedVoices = englishVoices.sort((a, b) => {
+        // Prioritize voices with quality indicators
+        const aScore = getVoiceQualityScore(a);
+        const bScore = getVoiceQualityScore(b);
+        return bScore - aScore;
+      });
+      
+      // Add non-English voices at the end
+      const otherVoices = allVoices.filter(voice => !voice.lang.startsWith('en'));
+      const finalVoices = [...sortedVoices, ...otherVoices];
+      
+      setAvailableVoices(finalVoices);
+      
+      // Select the best quality female English voice by default
+      const femaleVoiceIndex = finalVoices.findIndex(voice => 
+        voice.lang.startsWith('en') && 
+        (voice.name.toLowerCase().includes('female') || 
+         voice.name.toLowerCase().includes('woman') ||
+         voice.name.toLowerCase().includes('sara') ||
+         voice.name.toLowerCase().includes('allison') ||
+         voice.name.toLowerCase().includes('karen') ||
+         voice.name.toLowerCase().includes('samantha'))
+      );
+      
+      const defaultIndex = femaleVoiceIndex >= 0 ? femaleVoiceIndex : 0;
+      setSelectedVoiceIndex(defaultIndex);
+    };
+
+    const getVoiceQualityScore = (voice: SpeechSynthesisVoice): number => {
+      let score = 0;
+      const name = voice.name.toLowerCase();
+      
+      // Higher scores for better quality indicators
+      if (name.includes('natural')) score += 10;
+      if (name.includes('neural')) score += 8;
+      if (name.includes('premium')) score += 6;
+      if (name.includes('enhanced')) score += 4;
+      if (name.includes('high quality')) score += 4;
+      
+      // Prefer system voices over web voices
+      if (voice.localService) score += 5;
+      
+      // Gender preference (slight preference for female voices for religious texts)
+      if (name.includes('female') || name.includes('woman')) score += 2;
+      
+      // Penalize robotic-sounding voices
+      if (name.includes('robot')) score -= 5;
+      if (name.includes('microsoft')) score -= 2; // Often more robotic
+      
+      return score;
     };
 
     // Load voices immediately if available
@@ -141,9 +197,20 @@ export function useAutoReader({
     speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(verse.text);
-    utterance.rate = speed;
-    utterance.pitch = 1;
+    utterance.rate = speed * 0.85; // Slightly slower for better comprehension
+    utterance.pitch = 0.9; // Slightly lower pitch for more natural sound
     utterance.volume = volume;
+    
+    // Add natural pauses for better readability
+    const textWithPauses = verse.text
+      .replace(/\./g, '.')  // Keep periods
+      .replace(/,/g, ', ')  // Add slight pause after commas
+      .replace(/;/g, '; ')  // Add pause after semicolons
+      .replace(/:/g, ': ')  // Add pause after colons
+      .replace(/\?/g, '? ') // Add pause after questions
+      .replace(/!/g, '! '); // Add pause after exclamations
+    
+    utterance.text = textWithPauses;
     
     if (availableVoices.length > 0 && availableVoices[selectedVoiceIndex]) {
       utterance.voice = availableVoices[selectedVoiceIndex];
