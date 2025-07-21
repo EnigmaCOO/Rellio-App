@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Volume2, Copy, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAutoReader } from "@/hooks/useAutoReader";
+import { AutoReaderControls } from "./AutoReaderControls";
 import type { Religion, Scripture } from "@shared/schema";
 
 interface VerseListProps {
@@ -35,6 +37,12 @@ export function VerseList({
 }: VerseListProps) {
   const { toast } = useToast();
   const [speakingStates, setSpeakingStates] = useState<Record<number, boolean>>({});
+  
+  // Auto-reader functionality
+  const autoReader = useAutoReader({
+    scriptures: scriptures || [],
+    onVerseHighlight: undefined // We'll handle highlighting directly in the component
+  });
 
   // Handle verse highlighting when highlightedVerse prop changes
   useEffect(() => {
@@ -150,7 +158,7 @@ export function VerseList({
     <Card className="bg-white rounded-xl shadow-md overflow-hidden h-[50vh] md:h-[40vh] flex flex-col">
       {/* Sticky Header */}
       <div className="bg-white p-4 border-b border-gray-100 flex-shrink-0 sticky top-0 z-10">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-xl font-semibold text-gray-800">
               {religionName} — {selectedBook}
@@ -182,64 +190,97 @@ export function VerseList({
             </Button>
           </div>
         </div>
+        
+        {/* Auto-Reader Controls */}
+        {scriptures && scriptures.length > 0 && (
+          <div className="flex items-center justify-center">
+            <AutoReaderControls
+              isPlaying={autoReader.isPlaying}
+              isPaused={autoReader.isPaused}
+              speed={autoReader.speed}
+              volume={autoReader.volume}
+              pauseDuration={autoReader.pauseDuration}
+              onPlay={() => autoReader.startReading()}
+              onPause={autoReader.pauseReading}
+              onStop={autoReader.stopReading}
+              onSpeedChange={autoReader.setSpeed}
+              onVolumeChange={autoReader.setVolume}
+              onPauseDurationChange={autoReader.setPauseDuration}
+              onVoiceChange={autoReader.setVoice}
+              availableVoices={autoReader.availableVoices}
+              selectedVoiceIndex={autoReader.selectedVoiceIndex}
+              disabled={!scriptures || scriptures.length === 0}
+            />
+          </div>
+        )}
       </div>
 
       {/* Verses with Internal Scrolling */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 space-y-4">
           {scriptures && scriptures.length > 0 ? (
-            scriptures.map((scripture) => (
-              <div
-                key={scripture.verse}
-                id={`verse-${scripture.verse}`}
-                className="group relative p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <div className="flex justify-between items-start gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-start gap-3">
-                      <span className="text-lg font-bold text-blue-600 mt-1 min-w-[2rem]">
-                        {scripture.verse}
-                      </span>
+            scriptures.map((scripture, index) => {
+              const isCurrentlyReading = autoReader.isPlaying && 
+                                       !autoReader.isPaused && 
+                                       autoReader.currentVerseIndex === index;
+              
+              return (
+                <div
+                  key={scripture.verse}
+                  id={`verse-${scripture.verse}`}
+                  className={`group relative p-4 rounded-lg transition-all ${
+                    isCurrentlyReading 
+                      ? 'bg-blue-100 border-l-4 border-blue-500 shadow-sm' 
+                      : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                    <div className="flex justify-between items-start gap-4">
                       <div className="flex-1">
-                        <p className="text-lg text-gray-800 leading-relaxed">
-                          {scripture.text}
-                        </p>
-                        <p className="text-sm font-semibold text-gray-600 mt-2">
-                          {selectedBook} {selectedChapter}:{scripture.verse}
-                        </p>
+                        <div className="flex items-start gap-3">
+                          <span className="text-lg font-bold text-blue-600 mt-1 min-w-[2rem]">
+                            {scripture.verse}
+                          </span>
+                          <div className="flex-1">
+                            <p className="text-lg text-gray-800 leading-relaxed">
+                              {scripture.text}
+                            </p>
+                            <p className="text-sm font-semibold text-gray-600 mt-2">
+                              {selectedBook} {selectedChapter}:{scripture.verse}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSpeakVerse(scripture.text, scripture.verse)}
+                          className={`text-gray-500 hover:text-blue-600 ${
+                            speakingStates[scripture.verse] ? 'text-blue-600' : ''
+                          }`}
+                          title="Read aloud"
+                        >
+                          <Volume2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCopyVerse(
+                            scripture.text, 
+                            `${selectedBook} ${selectedChapter}:${scripture.verse}`
+                          )}
+                          className="text-gray-500 hover:text-blue-600"
+                          title="Copy verse"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Action Buttons */}
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleSpeakVerse(scripture.text, scripture.verse)}
-                      className={`text-gray-500 hover:text-blue-600 ${
-                        speakingStates[scripture.verse] ? 'text-blue-600' : ''
-                      }`}
-                      title="Read aloud"
-                    >
-                      <Volume2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleCopyVerse(
-                        scripture.text, 
-                        `${selectedBook} ${selectedChapter}:${scripture.verse}`
-                      )}
-                      className="text-gray-500 hover:text-blue-600"
-                      title="Copy verse"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))
+                );
+              })
           ) : (
             <div className="text-center text-gray-500 py-8">
               <p>No verses available for this selection.</p>
