@@ -33,6 +33,15 @@ export function useAutoReader({
   const { toast } = useToast();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
   const [speed, setSpeed] = useState(1);
   const [volume, setVolume] = useState(0.8);
@@ -43,6 +52,8 @@ export function useAutoReader({
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isPlayingRef = useRef(false);
+  const isPausedRef = useRef(false);
 
   // Load available voices
   useEffect(() => {
@@ -139,20 +150,40 @@ export function useAutoReader({
     }
 
     utterance.onstart = () => {
+      console.log(`Starting to read verse ${index + 1} of ${scriptures.length}: "${verse.text.slice(0, 50)}..."`);
       setCurrentVerseIndex(index);
       highlightVerse(verse.verse);
     };
 
     utterance.onend = () => {
-      if (isPlaying && !isPaused) {
+      console.log(`Finished reading verse ${index + 1}. IsPlaying: ${isPlayingRef.current}, IsPaused: ${isPausedRef.current}`);
+      if (isPlayingRef.current && !isPausedRef.current) {
         // Pause between verses
         pauseTimeoutRef.current = setTimeout(() => {
           const nextIndex = index + 1;
-          if (nextIndex < scriptures.length) {
+          console.log(`After pause, moving to verse ${nextIndex + 1}. Total verses: ${scriptures.length}`);
+          if (nextIndex < scriptures.length && isPlayingRef.current && !isPausedRef.current) {
             speakVerse(scriptures[nextIndex], nextIndex);
-          } else {
-            // Finished reading all verses
-            stopReading();
+          } else if (nextIndex >= scriptures.length) {
+            // Finished reading all verses - directly stop here
+            speechSynthesis.cancel();
+            setIsPlaying(false);
+            setIsPaused(false);
+            setCurrentVerseIndex(0);
+            
+            // Clear any timeouts
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+              timeoutRef.current = null;
+            }
+            if (pauseTimeoutRef.current) {
+              clearTimeout(pauseTimeoutRef.current);
+              pauseTimeoutRef.current = null;
+            }
+
+            // Remove highlights
+            highlightVerse(null);
+            
             toast({
               title: "Chapter Complete",
               description: "Finished reading all verses in this chapter",
@@ -174,7 +205,7 @@ export function useAutoReader({
 
     utteranceRef.current = utterance;
     speechSynthesis.speak(utterance);
-  }, [speed, volume, selectedVoiceIndex, availableVoices, pauseDuration, isPlaying, isPaused, scriptures, toast, highlightVerse]);
+  }, [speed, volume, selectedVoiceIndex, availableVoices, pauseDuration, scriptures, toast, highlightVerse]);
 
   const startReading = useCallback((fromIndex = 0) => {
     if (scriptures.length === 0) {
