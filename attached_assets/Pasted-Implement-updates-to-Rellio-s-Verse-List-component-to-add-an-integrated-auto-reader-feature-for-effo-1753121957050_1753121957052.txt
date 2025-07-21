@@ -1,0 +1,29 @@
+Implement updates to Rellio's Verse List component to add an integrated auto-reader feature for effortless reading and learning of sacred texts. Based on the current app state where individual speak buttons exist next to each verse, introduce a global play button for the book/chapter that sequentially reads verses aloud, highlights the current verse, and provides controls for a smooth, hands-free experience.
+
+Key Changes and Goals:
+
+Global Play Button:
+Add a prominent play button (e.g., circular icon with play triangle) at the top of the Verse List card, next to the book title or pagination.
+When clicked, it starts auto-playing the verses from the beginning (or from the selected verse), reading them one by one using text-to-speech (integrate with Web Speech API or existing speech synthesis library).
+Include pause/resume, stop, and speed controls (e.g., 1x, 1.5x, 2x) as small icons next to the play button.
+Retain individual speak buttons per verse for manual playback.
+Verse Highlighting:
+As the auto-reader progresses, dynamically highlight the current verse (e.g., change background to light blue #E0F7FA, bold text, or add a glowing border).
+Scroll the verse into view automatically if the list is long (using scrollIntoView with smooth behavior).
+After finishing a verse, pause briefly (e.g., 1-2 seconds) before moving to the next, with an option to adjust pause duration.
+Audio Integration:
+Use the browser's SpeechSynthesis API for text-to-speech, with fallback to pre-recorded audio if available.
+Support voice selection (e.g., dropdown for language/accent) and volume control.
+Ensure accessibility: ARIA labels for buttons, screen reader compatibility, and keyboard shortcuts (e.g., spacebar for play/pause).
+User Experience Enhancements:
+Make the feature optional and intuitive to promote effortless learning—e.g., a tooltip on hover: "Play entire chapter aloud".
+Handle interruptions: Pause on user scroll or manual verse selection; resume from current verse.
+Responsive: On mobile, position controls at the bottom for thumb-friendly access.
+Deliverables:
+
+Updated <verselist> component: Include play button, controls, and highlighting logic.</verselist>
+<autoreadercontrols> sub-component: For play/pause/stop/speed icons.</autoreadercontrols>
+Integration with SpeechSynthesis: Hook for managing playback state, verse queue, and highlighting.
+Tailwind/CSS: Styles for highlights (e.g., bg-blue-100 transition-all), buttons (rounded-full shadow-sm hover:scale-105).
+State/Hooks: useState for playback state (isPlaying, currentVerseIndex, speed), useEffect for speech events (onend to advance verse), useRef for speech instance and verse elements.
+Provide React JSX code with Tailwind classes for these components, and describe any new state or effects needed. Ensure the design aligns with the app's white-themed, clean aesthetic for an immersive, educational experience.
