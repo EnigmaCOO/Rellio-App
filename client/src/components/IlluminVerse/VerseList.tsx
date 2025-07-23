@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -50,6 +50,8 @@ export function VerseList({
   const [pauseDuration, setPauseDuration] = useState(1.5);
   const [isVoicesLoading, setIsVoicesLoading] = useState(true);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
+  const isPlayingRef = useRef(false);
+  const isPausedRef = useRef(false);
   
   // Load ElevenLabs voices
   useEffect(() => {
@@ -127,44 +129,46 @@ export function VerseList({
         
         console.log('🔊 About to play audio...');
         
-        // Use a Promise to handle audio playback completion
-        const playAudioCompletely = () => {
-          return new Promise<void>((resolve, reject) => {
-            audio.onloadstart = () => console.log('📥 Audio loading started');
-            audio.oncanplay = () => console.log('✅ Audio can play');
-            audio.onplay = () => console.log('▶️ Audio playback started');
-            audio.onerror = (e) => {
-              console.error('❌ Audio error:', e);
-              reject(e);
-            };
-            
-            audio.onended = () => {
-              console.log('🏁 Audio ended, cleaning up');
-              URL.revokeObjectURL(audioUrl);
-              resolve();
-            };
-            
-            audio.play().catch(reject);
-          });
-        };
+        // Set up event handlers
+        audio.onloadstart = () => console.log('📥 Audio loading started');
+        audio.oncanplay = () => console.log('✅ Audio can play');
+        audio.onplay = () => console.log('▶️ Audio playback started');
+        audio.onerror = (e) => console.error('❌ Audio error:', e);
         
-        // Wait for audio to complete, then continue
-        try {
-          await playAudioCompletely();
-          console.log('🎵 Audio completed successfully');
+        audio.onended = () => {
+          console.log('🏁 Audio ended for verse', verse.verse);
+          URL.revokeObjectURL(audioUrl);
           
-          // Continue to next verse if still playing
-          if (isPlaying && !isPaused && verseIndex + 1 < scriptures.length) {
-            console.log('🔄 Moving to next verse after', pauseDuration, 'seconds');
-            await new Promise(resolve => setTimeout(resolve, pauseDuration * 1000));
-            playVerse(verseIndex + 1);
+          // Check if we should continue to next verse
+          const nextVerseIndex = verseIndex + 1;
+          console.log('Next verse check:', {
+            currentVerse: verseIndex + 1,
+            totalVerses: scriptures.length,
+            nextIndex: nextVerseIndex,
+            hasNext: nextVerseIndex < scriptures.length,
+            isStillPlaying: isPlaying,
+            isNotPaused: !isPaused
+          });
+          
+          if (isPlayingRef.current && !isPausedRef.current && nextVerseIndex < scriptures.length) {
+            console.log('🔄 Continuing to verse', nextVerseIndex + 1, 'after', pauseDuration, 'seconds');
+            setTimeout(() => {
+              playVerse(nextVerseIndex);
+            }, pauseDuration * 1000);
           } else {
-            console.log('🏁 Sequence complete or stopped');
+            console.log('🏁 Reading sequence complete or stopped');
             setIsPlaying(false);
+            isPlayingRef.current = false;
             setCurrentReadingVerse(null);
           }
+        };
+        
+        try {
+          await audio.play();
+          console.log('🎵 Audio play() started successfully for verse', verse.verse);
         } catch (playError) {
           console.error('❌ Audio play failed:', playError);
+          URL.revokeObjectURL(audioUrl);
           // Try next verse on error
           if (isPlaying && !isPaused) {
             setTimeout(() => playVerse(verseIndex + 1), 500);
@@ -189,11 +193,14 @@ export function VerseList({
     });
     setIsPlaying(true);
     setIsPaused(false);
+    isPlayingRef.current = true;
+    isPausedRef.current = false;
     playVerse(0);
   };
   
   const pauseReading = () => {
     setIsPaused(true);
+    isPausedRef.current = true;
     if (currentAudio) {
       currentAudio.pause();
     }
@@ -202,6 +209,8 @@ export function VerseList({
   const stopReading = () => {
     setIsPlaying(false);
     setIsPaused(false);
+    isPlayingRef.current = false;
+    isPausedRef.current = false;
     setCurrentReadingVerse(null);
     cleanupCurrentAudio();
   };
