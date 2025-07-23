@@ -73,6 +73,7 @@ export function VerseList({
   // Direct audio playback function
   const playVerse = async (verseIndex: number) => {
     if (!scriptures || verseIndex >= scriptures.length) {
+      console.log('🏁 Finished reading all verses in chapter');
       setIsPlaying(false);
       setCurrentReadingVerse(null);
       return;
@@ -118,9 +119,20 @@ export function VerseList({
         
         audio.onended = () => {
           console.log('🏁 Audio ended, cleaning up');
+          console.log('Next verse info:', {
+            currentIndex: verseIndex,
+            nextIndex: verseIndex + 1,
+            totalVerses: scriptures?.length,
+            isPlaying,
+            isPaused,
+            pauseDuration
+          });
           URL.revokeObjectURL(audioUrl);
           if (isPlaying && !isPaused) {
+            console.log('🔄 Moving to next verse after', pauseDuration, 'seconds');
             setTimeout(() => playVerse(verseIndex + 1), pauseDuration * 1000);
+          } else {
+            console.log('⏹️ Not continuing - isPlaying:', isPlaying, 'isPaused:', isPaused);
           }
         };
         
@@ -142,7 +154,11 @@ export function VerseList({
   };
   
   const startReading = () => {
-    console.log('▶️ Starting reading...');
+    console.log('▶️ Starting reading...', {
+      scripturesCount: scriptures?.length || 0,
+      firstVerse: scriptures?.[0]?.verse,
+      lastVerse: scriptures?.[scriptures.length - 1]?.verse
+    });
     setIsPlaying(true);
     setIsPaused(false);
     playVerse(0);
