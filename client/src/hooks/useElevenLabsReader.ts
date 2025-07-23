@@ -87,12 +87,10 @@ export function useElevenLabsReader({
           // Auto-select the first recommended male voice
           if (maleVoices.length > 0) {
             setSelectedVoiceIndex(0);
+            console.log('🎤 Voice auto-selected:', maleVoices[0]);
           }
           
-          toast({
-            title: "ElevenLabs Ready",
-            description: `${maleVoices.length} premium voices loaded`,
-          });
+          console.log('✅ ElevenLabs ready:', { maleVoicesCount: maleVoices.length });
         } else {
           const error = await response.json().catch(() => ({ error: 'Unknown error' }));
           console.warn('ElevenLabs voices not available:', error);
@@ -147,7 +145,17 @@ export function useElevenLabsReader({
 
   const generateAudio = async (text: string): Promise<string> => {
     const selectedVoice = availableVoices[selectedVoiceIndex];
-    if (!selectedVoice) throw new Error('No voice selected');
+    console.log('🎤 GenerateAudio called:', { 
+      selectedVoiceIndex, 
+      selectedVoice: selectedVoice?.name,
+      voiceId: selectedVoice?.voice_id,
+      textLength: text.length 
+    });
+    
+    if (!selectedVoice) {
+      console.error('❌ No voice selected');
+      throw new Error('No voice selected');
+    }
 
     // If it's a browser voice, use Web Speech API
     if (selectedVoice.voice_id.startsWith('browser_')) {
@@ -328,11 +336,6 @@ export function useElevenLabsReader({
     setIsPlaying(true);
     setIsPaused(false);
     playVerse(fromIndex);
-    
-    toast({
-      title: "Reading Started",
-      description: `Starting from verse ${fromIndex + 1}`,
-    });
   }, [scriptures, playVerse, cleanupAudio, toast, isLoading, availableVoices.length]);
 
   const pauseReading = useCallback(() => {
@@ -345,10 +348,7 @@ export function useElevenLabsReader({
       pauseTimeoutRef.current = null;
     }
     
-    toast({
-      title: "Reading Paused",
-      description: "Auto-reader has been paused",
-    });
+    // Removed toast notification
   }, [toast]);
 
   const resumeReading = useCallback(() => {
@@ -360,10 +360,7 @@ export function useElevenLabsReader({
       playVerse(currentVerseIndexRef.current);
     }
     
-    toast({
-      title: "Reading Resumed",
-      description: "Auto-reader has been resumed",
-    });
+    // Removed toast notification
   }, [playVerse, toast]);
 
   const stopReading = useCallback(() => {
@@ -372,10 +369,7 @@ export function useElevenLabsReader({
     cleanupAudio();
     onVerseHighlight?.(null);
     
-    toast({
-      title: "Reading Stopped",
-      description: "Auto-reader has been stopped",
-    });
+    // Removed toast notification
   }, [cleanupAudio, onVerseHighlight, toast]);
 
   // Cleanup on unmount
