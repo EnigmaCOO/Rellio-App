@@ -165,7 +165,21 @@ export function ElevenLabsControls({
     <div className="flex items-center gap-2 p-4 bg-white/50 backdrop-blur-sm rounded-lg border">
       {/* Play/Pause Button */}
       <Button
-        onClick={isPlaying && !isPaused ? onPause : onPlay}
+        onClick={() => {
+          console.log('🎯 Play button clicked!', { 
+            isPlaying, 
+            isPaused, 
+            disabled,
+            availableVoicesCount: availableVoices.length 
+          });
+          if (isPlaying && !isPaused) {
+            console.log('📥 Calling onPause');
+            onPause();
+          } else {
+            console.log('▶️ Calling onPlay');
+            onPlay();
+          }
+        }}
         disabled={disabled || availableVoices.length === 0}
         size="sm"
         className="flex items-center gap-2"

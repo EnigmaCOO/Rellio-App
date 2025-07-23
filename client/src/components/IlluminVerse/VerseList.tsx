@@ -215,7 +215,10 @@ export function VerseList({
               speed={autoReader.speed}
               volume={autoReader.volume}
               pauseDuration={autoReader.pauseDuration}
-              onPlay={() => autoReader.startReading()}
+              onPlay={() => {
+                console.log('🚀 VerseList onPlay called!');
+                autoReader.startReading();
+              }}
               onPause={autoReader.pauseReading}
               onStop={autoReader.stopReading}
               onSpeedChange={autoReader.setSpeed}
