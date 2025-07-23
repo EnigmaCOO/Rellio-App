@@ -199,13 +199,17 @@ export function useElevenLabsReader({
   };
 
   const playVerse = useCallback(async (verseIndex: number) => {
+    console.log('🎵 PlayVerse called:', { verseIndex, scripturesLength: scriptures.length, isPlaying: isPlayingRef.current });
+    
     if (verseIndex >= scriptures.length || !isPlayingRef.current) {
+      console.log('🛑 Stopping reading - end of verses or not playing');
       stopReading();
       return;
     }
 
     const verse = scriptures[verseIndex];
     if (!verse || !verse.text) {
+      console.log('⚠️ Invalid verse, skipping to next');
       // Skip to next verse if current one is invalid
       setCurrentVerseIndex(verseIndex + 1);
       currentVerseIndexRef.current = verseIndex + 1;
@@ -214,11 +218,14 @@ export function useElevenLabsReader({
     }
 
     try {
+      console.log('📖 Reading verse:', { verse: verse.verse, text: verse.text.substring(0, 50) + '...' });
       setCurrentVerseIndex(verseIndex);
       currentVerseIndexRef.current = verseIndex;
       onVerseHighlight?.(verse.verse);
 
+      console.log('🎤 Generating audio...');
       const audioUrl = await generateAudio(verse.text);
+      console.log('✅ Audio generated:', audioUrl.substring(0, 50) + '...');
       
       // If using browser speech, handle differently
       if (audioUrl === 'browser_speech') {
@@ -279,7 +286,15 @@ export function useElevenLabsReader({
   }, [scriptures, onVerseHighlight, pauseDuration, volume, speed, toast]);
 
   const startReading = useCallback((fromIndex: number = 0) => {
+    console.log('🎯 StartReading called:', { 
+      scripturesCount: scriptures.length, 
+      fromIndex, 
+      isLoading,
+      availableVoicesCount: availableVoices.length 
+    });
+
     if (scriptures.length === 0) {
+      console.log('❌ No scriptures available');
       toast({
         title: "No Content",
         description: "No verses available to read",
@@ -289,6 +304,7 @@ export function useElevenLabsReader({
     }
 
     if (isLoading) {
+      console.log('❌ Still loading voices');
       toast({
         title: "Loading",
         description: "Voices are still loading, please wait...",
@@ -297,6 +313,17 @@ export function useElevenLabsReader({
       return;
     }
 
+    if (availableVoices.length === 0) {
+      console.log('❌ No voices available');
+      toast({
+        title: "No Voices",
+        description: "No voices available for reading",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    console.log('✅ Starting reading process...');
     cleanupAudio();
     setIsPlaying(true);
     setIsPaused(false);
@@ -306,7 +333,7 @@ export function useElevenLabsReader({
       title: "Reading Started",
       description: `Starting from verse ${fromIndex + 1}`,
     });
-  }, [scriptures, playVerse, cleanupAudio, toast, isLoading]);
+  }, [scriptures, playVerse, cleanupAudio, toast, isLoading, availableVoices.length]);
 
   const pauseReading = useCallback(() => {
     setIsPaused(true);

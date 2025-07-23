@@ -38,10 +38,13 @@ export function VerseList({
   const { toast } = useToast();
   const [speakingStates, setSpeakingStates] = useState<Record<number, boolean>>({});
   
+  // State for verse highlighting
+  const [currentReadingVerse, setCurrentReadingVerse] = useState<number | null>(null);
+  
   // Auto-reader functionality
   const autoReader = useElevenLabsReader({
     scriptures: scriptures || [],
-    onVerseHighlight: undefined // We'll handle highlighting directly in the component
+    onVerseHighlight: setCurrentReadingVerse
   });
 
   // Handle verse highlighting when highlightedVerse prop changes
@@ -71,6 +74,18 @@ export function VerseList({
       attemptHighlight();
     }
   }, [highlightedVerse, scriptures]);
+
+  // Handle auto-reader verse highlighting
+  useEffect(() => {
+    if (currentReadingVerse) {
+      const verseId = `verse-${currentReadingVerse}`;
+      const verseElement = document.getElementById(verseId);
+      
+      if (verseElement) {
+        verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [currentReadingVerse]);
 
   const handleCopyVerse = (verseText: string, verseRef: string) => {
     const fullText = `"${verseText}" - ${verseRef}`;
@@ -225,13 +240,18 @@ export function VerseList({
                                        !autoReader.isPaused && 
                                        autoReader.currentVerseIndex === index;
               
+              const isHighlighted = currentReadingVerse === scripture.verse || 
+                                  highlightedVerse === scripture.verse;
+              
               return (
                 <div
                   key={scripture.verse}
                   id={`verse-${scripture.verse}`}
                   className={`group relative p-4 rounded-lg transition-all ${
                     isCurrentlyReading 
-                      ? 'bg-blue-100 border-l-4 border-blue-500 shadow-sm' 
+                      ? 'bg-blue-200 border-l-4 border-blue-600 shadow-md' 
+                      : isHighlighted
+                      ? 'bg-yellow-100 border-l-4 border-yellow-500 shadow-sm'
                       : 'bg-gray-50 hover:bg-gray-100'
                   }`}
                 >
