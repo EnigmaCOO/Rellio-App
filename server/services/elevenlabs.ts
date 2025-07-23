@@ -109,19 +109,17 @@ export class ElevenLabsService {
 
   // Get recommended male voices for scripture reading
   getRecommendedMaleVoices(voices: ElevenLabsVoice[]): ElevenLabsVoice[] {
-    return voices.filter(voice => 
-      voice.gender?.toLowerCase() === 'male' &&
-      (voice.category === 'premade' || voice.category === 'professional') &&
-      (voice.use_case?.includes('narration') || 
-       voice.use_case?.includes('audiobook') ||
-       voice.description?.includes('clear') ||
-       voice.description?.includes('warm'))
+    const maleVoices = voices.filter(voice => 
+      voice.gender?.toLowerCase() === 'male'
     ).sort((a, b) => {
       // Prioritize voices with good characteristics for scripture reading
       const aScore = this.getVoiceScore(a);
       const bScore = this.getVoiceScore(b);
       return bScore - aScore;
     });
+    
+    console.log(`Found ${maleVoices.length} male voices:`, maleVoices.map(v => `${v.name} (${v.use_case})`));
+    return maleVoices;
   }
 
   private getVoiceScore(voice: ElevenLabsVoice): number {
@@ -140,9 +138,15 @@ export class ElevenLabsService {
     if (voice.description?.includes('warm')) score += 3;
     if (voice.description?.includes('deep')) score += 2;
     
-    // Prefer narration/audiobook use cases
-    if (voice.use_case?.includes('narration')) score += 4;
+    // Prefer educational/informative/narrative use cases for scripture
+    if (voice.use_case?.includes('narration')) score += 8;
+    if (voice.use_case?.includes('informative_educational')) score += 7;
+    if (voice.use_case?.includes('conversational')) score += 5;
+    if (voice.use_case?.includes('narrative_story')) score += 6;
     if (voice.use_case?.includes('audiobook')) score += 4;
+    
+    // Prefer British/American accents for clarity
+    if (voice.accent === 'american' || voice.accent === 'british') score += 3;
     
     return score;
   }

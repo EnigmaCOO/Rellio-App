@@ -345,7 +345,9 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
       }
 
       const voices = await elevenLabsService.getVoices();
+      console.log('Raw voices data:', voices.slice(0, 3)); // Log first 3 voices for debugging
       const maleVoices = elevenLabsService.getRecommendedMaleVoices(voices);
+      console.log('Filtered male voices:', maleVoices.length);
       
       res.json({
         allVoices: voices,
