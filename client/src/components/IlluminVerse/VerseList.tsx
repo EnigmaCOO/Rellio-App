@@ -4,8 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Volume2, Copy, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAutoReader } from "@/hooks/useAutoReader";
-import { AutoReaderControls } from "./AutoReaderControls";
+import { useElevenLabsReader } from "@/hooks/useElevenLabsReader";
+import { ElevenLabsControls } from "./ElevenLabsControls";
 import type { Religion, Scripture } from "@shared/schema";
 
 interface VerseListProps {
@@ -39,7 +39,7 @@ export function VerseList({
   const [speakingStates, setSpeakingStates] = useState<Record<number, boolean>>({});
   
   // Auto-reader functionality
-  const autoReader = useAutoReader({
+  const autoReader = useElevenLabsReader({
     scriptures: scriptures || [],
     onVerseHighlight: undefined // We'll handle highlighting directly in the component
   });
@@ -194,7 +194,7 @@ export function VerseList({
         {/* Auto-Reader Controls */}
         {scriptures && scriptures.length > 0 && (
           <div className="flex items-center justify-center">
-            <AutoReaderControls
+            <ElevenLabsControls
               isPlaying={autoReader.isPlaying}
               isPaused={autoReader.isPaused}
               speed={autoReader.speed}
@@ -210,6 +210,7 @@ export function VerseList({
               availableVoices={autoReader.availableVoices}
               selectedVoiceIndex={autoReader.selectedVoiceIndex}
               disabled={!scriptures || scriptures.length === 0}
+              isLoading={autoReader.isLoading}
             />
           </div>
         )}

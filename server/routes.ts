@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { generateScriptureResponse } from "./services/openai";
 import { getReligionConfig, getAvailableReligions } from "./services/scripture";
 import { fetchScriptureContent } from "./services/externalScripture";
+import { ElevenLabsService } from "./services/elevenlabs";
 import { 
   scriptureRequestSchema, 
   chatRequestSchema, 
@@ -324,6 +325,63 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
     } catch (error) {
       console.error("AI insight error:", error);
       res.status(500).json({ error: "Failed to generate insight" });
+    }
+  });
+
+  // ElevenLabs voice routes
+  let elevenLabsService: ElevenLabsService | null = null;
+  
+  try {
+    elevenLabsService = new ElevenLabsService();
+  } catch (error) {
+    console.warn("ElevenLabs service not available:", error);
+  }
+
+  // Get available ElevenLabs voices
+  app.get("/api/elevenlabs/voices", async (req, res) => {
+    try {
+      if (!elevenLabsService) {
+        return res.status(503).json({ error: "ElevenLabs service not available" });
+      }
+
+      const voices = await elevenLabsService.getVoices();
+      const maleVoices = elevenLabsService.getRecommendedMaleVoices(voices);
+      
+      res.json({
+        allVoices: voices,
+        recommendedMaleVoices: maleVoices
+      });
+    } catch (error) {
+      console.error("Error fetching ElevenLabs voices:", error);
+      res.status(500).json({ error: "Failed to fetch voices" });
+    }
+  });
+
+  // Generate speech using ElevenLabs
+  app.post("/api/elevenlabs/speak", async (req, res) => {
+    try {
+      if (!elevenLabsService) {
+        return res.status(503).json({ error: "ElevenLabs service not available" });
+      }
+
+      const { text, voiceId, settings } = req.body;
+      
+      if (!text || !voiceId) {
+        return res.status(400).json({ error: "Text and voiceId are required" });
+      }
+
+      const audioBuffer = await elevenLabsService.generateSpeech(text, voiceId, settings);
+      
+      res.set({
+        'Content-Type': 'audio/mpeg',
+        'Content-Length': audioBuffer.length,
+        'Cache-Control': 'public, max-age=3600' // Cache for 1 hour
+      });
+      
+      res.send(audioBuffer);
+    } catch (error) {
+      console.error("Error generating speech:", error);
+      res.status(500).json({ error: "Failed to generate speech" });
     }
   });
 
