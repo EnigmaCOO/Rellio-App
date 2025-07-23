@@ -38,14 +38,128 @@ export function VerseList({
   const { toast } = useToast();
   const [speakingStates, setSpeakingStates] = useState<Record<number, boolean>>({});
   
-  // State for verse highlighting
+  // State for verse highlighting and auto-reader
   const [currentReadingVerse, setCurrentReadingVerse] = useState<number | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
+  const [availableVoices, setAvailableVoices] = useState<any[]>([]);
+  const [selectedVoiceIndex, setSelectedVoiceIndex] = useState(0);
+  const [speed, setSpeed] = useState(1);
+  const [volume, setVolume] = useState(0.8);
+  const [pauseDuration, setPauseDuration] = useState(1.5);
+  const [isVoicesLoading, setIsVoicesLoading] = useState(true);
   
-  // Auto-reader functionality
-  const autoReader = useElevenLabsReader({
-    scriptures: scriptures || [],
-    onVerseHighlight: setCurrentReadingVerse
-  });
+  // Load ElevenLabs voices
+  useEffect(() => {
+    const loadVoices = async () => {
+      try {
+        const response = await fetch('/api/elevenlabs/voices');
+        if (response.ok) {
+          const data = await response.json();
+          const maleVoices = data.recommendedMaleVoices || [];
+          setAvailableVoices(maleVoices);
+          console.log('✅ Voices loaded:', maleVoices.length);
+        }
+      } catch (error) {
+        console.error('Voice loading error:', error);
+      } finally {
+        setIsVoicesLoading(false);
+      }
+    };
+    loadVoices();
+  }, []);
+  
+  // Direct audio playback function
+  const playVerse = async (verseIndex: number) => {
+    if (!scriptures || verseIndex >= scriptures.length) {
+      setIsPlaying(false);
+      setCurrentReadingVerse(null);
+      return;
+    }
+    
+    const verse = scriptures[verseIndex];
+    if (!verse) return;
+    
+    try {
+      setCurrentVerseIndex(verseIndex);
+      setCurrentReadingVerse(verse.verse);
+      
+      const selectedVoice = availableVoices[selectedVoiceIndex];
+      if (!selectedVoice) return;
+      
+      console.log('🎵 Playing verse:', verse.verse, verse.text.substring(0, 50));
+      
+      const response = await fetch('/api/elevenlabs/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: verse.text,
+          voiceId: selectedVoice.voice_id,
+          settings: { stability: 0.5, similarityBoost: 0.75 }
+        }),
+      });
+      
+      if (response.ok) {
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        audio.volume = volume;
+        audio.playbackRate = speed;
+        
+        audio.onended = () => {
+          URL.revokeObjectURL(audioUrl);
+          if (isPlaying && !isPaused) {
+            setTimeout(() => playVerse(verseIndex + 1), pauseDuration * 1000);
+          }
+        };
+        
+        await audio.play();
+      }
+    } catch (error) {
+      console.error('Playback error:', error);
+      if (isPlaying && !isPaused) {
+        setTimeout(() => playVerse(verseIndex + 1), 500);
+      }
+    }
+  };
+  
+  const startReading = () => {
+    console.log('▶️ Starting reading...');
+    setIsPlaying(true);
+    setIsPaused(false);
+    playVerse(0);
+  };
+  
+  const pauseReading = () => {
+    setIsPaused(true);
+  };
+  
+  const stopReading = () => {
+    setIsPlaying(false);
+    setIsPaused(false);
+    setCurrentReadingVerse(null);
+  };
+  
+  // Create autoReader object for compatibility
+  const autoReader = {
+    isPlaying,
+    isPaused,
+    currentVerseIndex,
+    speed,
+    volume,
+    pauseDuration,
+    availableVoices,
+    selectedVoiceIndex,
+    startReading,
+    pauseReading,
+    stopReading,
+    setSpeed,
+    setVolume,
+    setPauseDuration,
+    setVoice: setSelectedVoiceIndex,
+    isLoading: isVoicesLoading
+  };
 
   // Handle verse highlighting when highlightedVerse prop changes
   useEffect(() => {
@@ -215,10 +329,7 @@ export function VerseList({
               speed={autoReader.speed}
               volume={autoReader.volume}
               pauseDuration={autoReader.pauseDuration}
-              onPlay={() => {
-                console.log('🚀 VerseList onPlay called!');
-                autoReader.startReading();
-              }}
+              onPlay={autoReader.startReading}
               onPause={autoReader.pauseReading}
               onStop={autoReader.stopReading}
               onSpeedChange={autoReader.setSpeed}
