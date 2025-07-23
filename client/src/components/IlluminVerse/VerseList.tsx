@@ -49,6 +49,7 @@ export function VerseList({
   const [volume, setVolume] = useState(0.8);
   const [pauseDuration, setPauseDuration] = useState(1.5);
   const [isVoicesLoading, setIsVoicesLoading] = useState(true);
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   
   // Load ElevenLabs voices
   useEffect(() => {
@@ -70,12 +71,22 @@ export function VerseList({
     loadVoices();
   }, []);
   
+  // Clean up current audio
+  const cleanupCurrentAudio = () => {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.src = '';
+      setCurrentAudio(null);
+    }
+  };
+
   // Direct audio playback function
   const playVerse = async (verseIndex: number) => {
     if (!scriptures || verseIndex >= scriptures.length) {
       console.log('🏁 Finished reading all verses in chapter');
       setIsPlaying(false);
       setCurrentReadingVerse(null);
+      cleanupCurrentAudio();
       return;
     }
     
@@ -83,6 +94,9 @@ export function VerseList({
     if (!verse) return;
     
     try {
+      // Clean up previous audio
+      cleanupCurrentAudio();
+      
       setCurrentVerseIndex(verseIndex);
       setCurrentReadingVerse(verse.verse);
       
@@ -109,38 +123,52 @@ export function VerseList({
         const audio = new Audio(audioUrl);
         audio.volume = volume;
         audio.playbackRate = speed;
+        setCurrentAudio(audio);
         
         console.log('🔊 About to play audio...');
         
-        audio.onloadstart = () => console.log('📥 Audio loading started');
-        audio.oncanplay = () => console.log('✅ Audio can play');
-        audio.onplay = () => console.log('▶️ Audio playback started');
-        audio.onerror = (e) => console.error('❌ Audio error:', e);
-        
-        audio.onended = () => {
-          console.log('🏁 Audio ended, cleaning up');
-          console.log('Next verse info:', {
-            currentIndex: verseIndex,
-            nextIndex: verseIndex + 1,
-            totalVerses: scriptures?.length,
-            isPlaying,
-            isPaused,
-            pauseDuration
+        // Use a Promise to handle audio playback completion
+        const playAudioCompletely = () => {
+          return new Promise<void>((resolve, reject) => {
+            audio.onloadstart = () => console.log('📥 Audio loading started');
+            audio.oncanplay = () => console.log('✅ Audio can play');
+            audio.onplay = () => console.log('▶️ Audio playback started');
+            audio.onerror = (e) => {
+              console.error('❌ Audio error:', e);
+              reject(e);
+            };
+            
+            audio.onended = () => {
+              console.log('🏁 Audio ended, cleaning up');
+              URL.revokeObjectURL(audioUrl);
+              resolve();
+            };
+            
+            audio.play().catch(reject);
           });
-          URL.revokeObjectURL(audioUrl);
-          if (isPlaying && !isPaused) {
-            console.log('🔄 Moving to next verse after', pauseDuration, 'seconds');
-            setTimeout(() => playVerse(verseIndex + 1), pauseDuration * 1000);
-          } else {
-            console.log('⏹️ Not continuing - isPlaying:', isPlaying, 'isPaused:', isPaused);
-          }
         };
         
+        // Wait for audio to complete, then continue
         try {
-          await audio.play();
-          console.log('🎵 Audio play() completed successfully');
+          await playAudioCompletely();
+          console.log('🎵 Audio completed successfully');
+          
+          // Continue to next verse if still playing
+          if (isPlaying && !isPaused && verseIndex + 1 < scriptures.length) {
+            console.log('🔄 Moving to next verse after', pauseDuration, 'seconds');
+            await new Promise(resolve => setTimeout(resolve, pauseDuration * 1000));
+            playVerse(verseIndex + 1);
+          } else {
+            console.log('🏁 Sequence complete or stopped');
+            setIsPlaying(false);
+            setCurrentReadingVerse(null);
+          }
         } catch (playError) {
           console.error('❌ Audio play failed:', playError);
+          // Try next verse on error
+          if (isPlaying && !isPaused) {
+            setTimeout(() => playVerse(verseIndex + 1), 500);
+          }
         }
       } else {
         console.error('❌ API response not ok:', response.status, response.statusText);
@@ -166,12 +194,16 @@ export function VerseList({
   
   const pauseReading = () => {
     setIsPaused(true);
+    if (currentAudio) {
+      currentAudio.pause();
+    }
   };
   
   const stopReading = () => {
     setIsPlaying(false);
     setIsPaused(false);
     setCurrentReadingVerse(null);
+    cleanupCurrentAudio();
   };
   
   // Create autoReader object for compatibility
