@@ -102,19 +102,36 @@ export function VerseList({
       
       if (response.ok) {
         const audioBlob = await response.blob();
+        console.log('📊 Audio blob size:', audioBlob.size, 'bytes');
+        
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
         audio.volume = volume;
         audio.playbackRate = speed;
         
+        console.log('🔊 About to play audio...');
+        
+        audio.onloadstart = () => console.log('📥 Audio loading started');
+        audio.oncanplay = () => console.log('✅ Audio can play');
+        audio.onplay = () => console.log('▶️ Audio playback started');
+        audio.onerror = (e) => console.error('❌ Audio error:', e);
+        
         audio.onended = () => {
+          console.log('🏁 Audio ended, cleaning up');
           URL.revokeObjectURL(audioUrl);
           if (isPlaying && !isPaused) {
             setTimeout(() => playVerse(verseIndex + 1), pauseDuration * 1000);
           }
         };
         
-        await audio.play();
+        try {
+          await audio.play();
+          console.log('🎵 Audio play() completed successfully');
+        } catch (playError) {
+          console.error('❌ Audio play failed:', playError);
+        }
+      } else {
+        console.error('❌ API response not ok:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('Playback error:', error);
