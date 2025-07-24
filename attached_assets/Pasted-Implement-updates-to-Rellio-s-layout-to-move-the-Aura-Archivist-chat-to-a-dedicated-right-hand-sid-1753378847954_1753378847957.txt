@@ -1,0 +1,29 @@
+Implement updates to Rellio's layout to move the "Aura Archivist" chat to a dedicated right-hand side column, ensuring it is tall enough to display full answers without cut-offs and providing an optimal user experience for reading verses, playing audio, and chatting. Based on the attached screenshot, where the chat is below the verse list and responses are hard to read due to limited height, redesign the app into a three-column structure: Left (Scripture Navigation, fixed), Center (Verse List card with fixed height and auto-reader), Right (Full-height IlluminVerse Chat with internal scrolling).
+
+Key Changes and Goals:
+
+Three-Column Layout:
+Use CSS Grid or Flexbox for a responsive three-column setup: Left column (20-25% width for navigation), Center (50% width for verses), Right (25-30% width for chat).
+On mobile/small screens, stack columns vertically (navigation top, verses middle, chat bottom) with full-width chat to maintain readability.
+Chat Relocation and Design:
+Move the chat to the right column, making it full-height (e.g., 100vh minus header) with internal vertical scrolling for long conversations to prevent cut-offs.
+Chat panel: White background, rounded corners (12px), subtle shadow; sticky header with controls (Streak badge, History, Compare Mode, Bookmarks).
+Conversation bubbles: User (left-aligned, light-gray), AI (right-aligned, white with border); include perspective chips below AI responses.
+Quick suggestions and input bar sticky at the bottom of the chat panel for easy access.
+Ensure chat integrates with verses: e.g., clicking a verse highlights it and auto-suggests chat queries like "Explain this verse".
+Verse List Enhancements:
+Keep the center column as a fixed-height card (e.g., 80vh) with internal scrolling, auto-reader play button at top (sequential reading with highlighting), and individual speak icons.
+Sync with chat: Selecting a verse could trigger chat options like "Discuss this" or "Compare across traditions".
+User Experience Optimizations:
+Perfect integration: Allow seamless flow—read/play verses in center while chatting on right without scrolling conflicts.
+Accessibility: Ensure chat text is readable (16px+ font, high contrast), with ARIA labels; audio playback doesn't interrupt chat.
+Animations: Fade-in for chat responses, smooth scroll for highlights; pulse on play button.
+Responsiveness: Right chat column collapses below on narrow screens, becoming full-width with no cut-offs.
+Deliverables:
+
+Updated main layout component: <applayout> or similar, using grid-template-columns for three columns.</applayout>
+<insightchat> component: Adapted for right-column placement, full-height with overflow-y-auto.</insightchat>
+Integration hooks: Link verse selection to chat (e.g., useContext for shared state).
+Tailwind/CSS: Styles for grid layout (e.g., grid grid-cols-3 gap-4), full-height (h-screen overflow-hidden), internal scrolls.
+State/Hooks: useState for chat scroll position, useEffect for auto-scrolling to latest message; shared state for verse-chat sync.
+Provide React JSX code with Tailwind classes for these components, and describe any new state or effects needed. Ensure the design creates an immersive experience like never before, with effortless reading, audio playback, and interactive chatting.
