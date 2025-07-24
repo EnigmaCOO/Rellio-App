@@ -128,14 +128,29 @@ export function RightColumnChat({
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
       setIsStreaming(true);
-      const response = await fetch(`/api/chat/${sessionId}`, {
+      
+      // Prepare context to match schema requirements
+      const requestContext = context.religion ? {
+        religion: context.religion,
+        book: context.book || null,
+        chapter: context.chapter || null,
+        multiReligiousPerspective: false
+      } : undefined;
+      
+      console.log('Sending chat request:', { message, sessionId, context: requestContext });
+      
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message, context })
+        body: JSON.stringify({ message, sessionId, context: requestContext })
       });
-      if (!response.ok) throw new Error('Failed to send message');
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Chat API error:', errorData);
+        throw new Error(errorData.error || 'Failed to send message');
+      }
       return response.json();
     },
     onSuccess: () => {
