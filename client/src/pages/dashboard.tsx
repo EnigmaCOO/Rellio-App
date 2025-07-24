@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { NavigationPanel } from "@/components/NavigationPanel";
 import { VerseSpotlight } from "@/components/VerseSpotlight";
 import { VerseList } from "@/components/IlluminVerse/VerseList";
-import { IlluminVerseChat } from "@/components/IlluminVerse/IlluminVerseChat";
+import { RightColumnChat } from "@/components/RightColumnChat";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Settings, BookOpen, Menu, X, ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
 import rellioLogo from "@assets/image_1751817332000.png";
@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [chatSessionId] = useState<string>(() => `session_${Date.now()}`);
   const [navigationVisible, setNavigationVisible] = useState<boolean>(true);
+  const [chatVisible, setChatVisible] = useState<boolean>(true);
   const [externalMessage, setExternalMessage] = useState<string>('');
   const [isCopyOperation, setIsCopyOperation] = useState<boolean>(false);
   const [highlightedVerse, setHighlightedVerse] = useState<number | undefined>(undefined);
@@ -26,8 +27,8 @@ export default function Dashboard() {
 
   // Debug panel visibility state
   useEffect(() => {
-    console.log("Panel state:", { navigationVisible });
-  }, [navigationVisible]);
+    console.log("Panel state:", { navigationVisible, chatVisible });
+  }, [navigationVisible, chatVisible]);
 
   // Check for top left bubble and log confirmation
   useEffect(() => {
@@ -122,6 +123,10 @@ export default function Dashboard() {
     setNavigationVisible(!navigationVisible);
   };
 
+  const toggleChat = () => {
+    setChatVisible(!chatVisible);
+  };
+
 
 
   // Swipe handlers for navigation panel
@@ -150,8 +155,26 @@ export default function Dashboard() {
 
   // Calculate content panel width based on visible panels
   const getContentWidth = () => {
-    if (!navigationVisible) return 'w-full';
-    return 'lg:w-3/4';
+    // Mobile: full width (columns stack vertically)
+    // Desktop: responsive based on visible panels
+    if (!navigationVisible && !chatVisible) return 'w-full';
+    if (!navigationVisible && chatVisible) return 'lg:w-3/4';
+    if (navigationVisible && !chatVisible) return 'lg:w-3/4';
+    return 'lg:w-1/2'; // Both panels visible
+  };
+
+  // Calculate chat panel classes for responsive layout
+  const getChatClasses = () => {
+    return chatVisible 
+      ? 'w-full lg:w-1/4 order-3 lg:order-none' 
+      : 'w-0 order-3 lg:order-none';
+  };
+
+  // Calculate navigation panel classes for responsive layout
+  const getNavigationClasses = () => {
+    return navigationVisible 
+      ? 'w-full lg:w-1/4 order-1 lg:order-none' 
+      : 'w-0 order-1 lg:order-none';
   };
 
   // Handle copy verse functionality
@@ -269,6 +292,19 @@ export default function Dashboard() {
                 >
                   <Menu className="h-4 w-4" />
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleChat}
+                  className={`transition-colors ${
+                    chatVisible 
+                      ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                  title={chatVisible ? 'Hide Chat' : 'Show Chat'}
+                >
+                  <MessageCircle className="h-4 w-4" />
+                </Button>
               </div>
               <img src={rellioLogo} alt="Rellio Logo" className="h-10 w-10 lg:h-15 lg:w-15" />
             </div>
@@ -281,13 +317,13 @@ export default function Dashboard() {
         </div>
       </header>
 
+      {/* Three-Column Responsive Layout */}
       <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)] relative overflow-hidden">
-        {/* Navigation Panel - Swipeable and Collapsible */}
+        
+        {/* Left Column - Navigation Panel */}
         <div
           {...navigationSwipeHandlers}
-          className={`${
-            navigationVisible ? 'w-full lg:w-1/4' : 'w-0'
-          } transition-all duration-300 ease-in-out overflow-hidden relative`}
+          className={`${getNavigationClasses()} transition-all duration-300 ease-in-out overflow-hidden relative border-r border-gray-200`}
         >
           {navigationVisible && (
             <>
@@ -305,32 +341,21 @@ export default function Dashboard() {
                 searchTerm={searchTerm}
               />
               {/* Swipe indicator for navigation panel */}
-              <div className="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+              <div className="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-400 pointer-events-none lg:hidden">
                 <ChevronLeft className="h-4 w-4" />
               </div>
             </>
           )}
-          {!navigationVisible && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleNavigation}
-              className="absolute top-4 left-2 z-10 bg-white shadow-md hover:bg-gray-50"
-              title="Show Navigation"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          )}
         </div>
         
-        {/* Main Content Area */}
+        {/* Center Column - Verse Content */}
         <div
           {...contentSwipeHandlers}
-          className={`${getContentWidth()} transition-all duration-300 ease-in-out flex-1 relative overflow-hidden`}
+          className={`${getContentWidth()} transition-all duration-300 ease-in-out relative overflow-hidden order-2`}
         >
           {selectedReligion ? (
-            <div className="h-full bg-gray-50 flex flex-col p-4 gap-4">
-              {/* Fixed Verse Card */}
+            <div className="h-full bg-gray-50 flex flex-col p-4">
+              {/* Verse List - Full height without chat */}
               <VerseList
                 selectedReligion={selectedReligion}
                 selectedBook={selectedBook}
@@ -344,36 +369,13 @@ export default function Dashboard() {
                 highlightedVerse={highlightedVerse}
                 maxChapters={bookInfo?.chapters || 10}
               />
-              
-              {/* Subtle Divider */}
-              <div className="border-t border-gray-200"></div>
-              
-              {/* Controllable Chat Section */}
-              <IlluminVerseChat
-                sessionId={chatSessionId}
-                context={currentContext}
-                externalMessage={externalMessage}
-                onExternalMessageProcessed={handleExternalMessageProcessed}
-                onCopyOperation={handleCopyOperation}
-                onNavigateToVerse={handleNavigateToVerse}
-              />
             </div>
           ) : (
             <div className="h-full bg-gray-50 p-4 space-y-4 overflow-y-auto">
               {/* Verse Spotlight */}
-              <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center h-full">
                 <VerseSpotlight onNavigateToVerse={handleNavigateToVerse} />
               </div>
-              
-              {/* IlluminVerse Chat - Always visible */}
-              <IlluminVerseChat
-                sessionId={chatSessionId}
-                context={currentContext}
-                externalMessage={externalMessage}
-                onExternalMessageProcessed={handleExternalMessageProcessed}
-                onCopyOperation={handleCopyOperation}
-                onNavigateToVerse={handleNavigateToVerse}
-              />
             </div>
           )}
           
@@ -390,10 +392,52 @@ export default function Dashboard() {
             </Button>
           )}
           
-          {/* Swipe hints when navigation panel hidden */}
-          {!navigationVisible && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white px-4 py-2 rounded-lg text-sm pointer-events-none">
-              Swipe right or use button to show navigation panel
+          {!chatVisible && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleChat}
+              className="absolute top-4 right-4 z-10 bg-white shadow-md hover:bg-gray-50 transition-opacity"
+              title="Show Chat Panel"
+            >
+              <MessageCircle className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+
+        {/* Right Column - Chat Panel */}
+        <div
+          className={`${getChatClasses()} transition-all duration-300 ease-in-out overflow-hidden relative border-l border-gray-200`}
+        >
+          {chatVisible && (
+            <div className="h-full bg-white rounded-l-lg lg:rounded-none shadow-lg lg:shadow-none">
+              {/* Chat Header with Controls */}
+              <div className="sticky top-0 bg-white border-b border-gray-200 p-4 rounded-t-lg lg:rounded-none">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">AI Scripture Guide</h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleChat}
+                    className="lg:hidden"
+                    title="Hide Chat"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Chat Content - Full Height */}
+              <div className="h-[calc(100%-80px)]">
+                <RightColumnChat
+                  sessionId={chatSessionId}
+                  context={currentContext}
+                  externalMessage={externalMessage}
+                  onExternalMessageProcessed={handleExternalMessageProcessed}
+                  onCopyOperation={handleCopyOperation}
+                  onNavigateToVerse={handleNavigateToVerse}
+                />
+              </div>
             </div>
           )}
         </div>
