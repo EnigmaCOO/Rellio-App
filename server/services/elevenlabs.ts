@@ -20,6 +20,7 @@ export class ElevenLabsService {
     if (!this.apiKey) {
       throw new Error('ELEVENLABS_API_KEY environment variable is required');
     }
+    console.log('ElevenLabs API key loaded:', this.apiKey ? `${this.apiKey.substring(0, 6)}...` : 'NOT FOUND');
   }
 
   async getVoices(): Promise<ElevenLabsVoice[]> {
@@ -97,7 +98,14 @@ export class ElevenLabsService {
       });
 
       if (!response.ok) {
-        throw new Error(`ElevenLabs TTS error: ${response.status}`);
+        const errorText = await response.text().catch(() => 'Unknown error');
+        console.error('ElevenLabs TTS error details:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+          headers: Object.fromEntries(response.headers.entries())
+        });
+        throw new Error(`ElevenLabs TTS error: ${response.status} - ${errorText}`);
       }
 
       return Buffer.from(await response.arrayBuffer());
