@@ -358,38 +358,48 @@ export function VerseList({
   }
 
   return (
-    <Card className="bg-white rounded-xl shadow-md overflow-hidden h-[50vh] md:h-[40vh] flex flex-col">
+    <Card className="bg-white rounded-xl shadow-md overflow-hidden h-full flex flex-col">
       {/* Sticky Header */}
-      <div className="bg-white p-4 border-b border-gray-100 flex-shrink-0 sticky top-0 z-10">
-        <div className="flex items-center justify-between mb-3">
+      <div className="bg-white p-6 border-b border-gray-100 flex-shrink-0 sticky top-0 z-10">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-800">
+            <h2 className="text-2xl font-bold text-gray-900">
               {religionName} — {selectedBook}
             </h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Page {selectedChapter} of {maxChapters}
+            <p className="text-lg text-gray-600 mt-1">
+              Chapter {selectedChapter} of {maxChapters}
+              {scriptures && scriptures.length > 0 && (
+                <span className="ml-2 text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                  {scriptures.length} verses
+                </span>
+              )}
             </p>
           </div>
           
           {/* Chapter Navigation */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Button
               variant="outline"
-              size="sm"
+              size="default"
               onClick={() => onChapterChange(Math.max(1, selectedChapter - 1))}
               disabled={selectedChapter <= 1}
-              className="text-gray-700"
+              className="text-gray-700 hover:bg-blue-50 border-blue-200 px-4 py-2"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
             </Button>
+            <span className="text-lg font-semibold text-gray-700 px-3">
+              {selectedChapter}
+            </span>
             <Button
               variant="outline"
-              size="sm"
+              size="default"
               onClick={() => onChapterChange(Math.min(maxChapters, selectedChapter + 1))}
               disabled={selectedChapter >= maxChapters}
-              className="text-gray-700"
+              className="text-gray-700 hover:bg-blue-50 border-blue-200 px-4 py-2"
             >
-              <ChevronRight className="h-4 w-4" />
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
         </div>
@@ -421,7 +431,7 @@ export function VerseList({
 
       {/* Verses with Internal Scrolling */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-4 space-y-4">
+        <div className="p-6 space-y-6">
           {scriptures && scriptures.length > 0 ? (
             scriptures.map((scripture, index) => {
               const isCurrentlyReading = autoReader.isPlaying && 
@@ -435,25 +445,25 @@ export function VerseList({
                 <div
                   key={scripture.verse}
                   id={`verse-${scripture.verse}`}
-                  className={`group relative p-4 rounded-lg transition-all ${
+                  className={`group relative p-6 rounded-xl transition-all shadow-sm ${
                     isCurrentlyReading 
-                      ? 'bg-blue-200 border-l-4 border-blue-600 shadow-md' 
+                      ? 'bg-blue-50 border-l-4 border-blue-600 shadow-lg' 
                       : isHighlighted
-                      ? 'bg-yellow-100 border-l-4 border-yellow-500 shadow-sm'
-                      : 'bg-gray-50 hover:bg-gray-100'
+                      ? 'bg-yellow-50 border-l-4 border-yellow-500 shadow-md'
+                      : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
                   }`}
                 >
-                    <div className="flex justify-between items-start gap-4">
+                    <div className="flex justify-between items-start gap-6">
                       <div className="flex-1">
-                        <div className="flex items-start gap-3">
-                          <span className="text-lg font-bold text-blue-600 mt-1 min-w-[2rem]">
+                        <div className="flex items-start gap-4">
+                          <span className="text-2xl font-bold text-blue-600 mt-1 min-w-[3rem] bg-blue-100 px-3 py-1 rounded-full">
                             {scripture.verse}
                           </span>
                           <div className="flex-1">
-                            <p className="text-lg text-gray-800 leading-relaxed">
+                            <p className="text-xl text-gray-800 leading-relaxed mb-3 font-medium">
                               {scripture.text}
                             </p>
-                            <p className="text-sm font-semibold text-gray-600 mt-2">
+                            <p className="text-base font-semibold text-gray-600 bg-gray-200 px-3 py-1 rounded-full inline-block">
                               {selectedBook} {selectedChapter}:{scripture.verse}
                             </p>
                           </div>
@@ -461,27 +471,27 @@ export function VerseList({
                       </div>
                       
                       {/* Action Buttons */}
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => handleSpeakVerse(scripture.text, scripture.verse)}
-                          className={`text-gray-500 hover:text-blue-600 ${
-                            speakingStates[scripture.verse] ? 'text-blue-600' : ''
+                          className={`hover:bg-blue-50 border-blue-200 ${
+                            speakingStates[scripture.verse] ? 'bg-blue-100 text-blue-700 border-blue-300' : 'text-gray-600'
                           }`}
                           title="Read aloud"
                         >
                           <Volume2 className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => handleCopyVerse(
                             scripture.text, 
                             `${selectedBook} ${selectedChapter}:${scripture.verse}`
                           )}
-                          className="text-gray-500 hover:text-blue-600"
-                          title="Copy verse"
+                          className="text-gray-600 hover:bg-blue-50 hover:text-blue-700 border-blue-200"
+                          title="Copy verse and send to chat"
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -491,11 +501,46 @@ export function VerseList({
                 );
               })
           ) : (
-            <div className="text-center text-gray-500 py-8">
-              <p>No verses available for this selection.</p>
+            <div className="text-center text-gray-500 py-12">
+              <p className="text-lg">No verses available for this selection.</p>
+              <p className="text-sm mt-2">Please select a different book or chapter.</p>
             </div>
           )}
         </div>
+        
+        {/* Bottom Navigation Footer */}
+        {scriptures && scriptures.length > 0 && (
+          <div className="border-t border-gray-200 bg-gray-50 p-4 flex items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={() => onChapterChange(Math.max(1, selectedChapter - 1))}
+              disabled={selectedChapter <= 1}
+              className="flex items-center gap-2 text-gray-700 hover:bg-blue-50 border-blue-200"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous Chapter
+            </Button>
+            
+            <div className="text-center">
+              <p className="text-sm text-gray-600">
+                Chapter {selectedChapter} of {maxChapters}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {scriptures.length} verses in this chapter
+              </p>
+            </div>
+            
+            <Button
+              variant="outline"
+              onClick={() => onChapterChange(Math.min(maxChapters, selectedChapter + 1))}
+              disabled={selectedChapter >= maxChapters}
+              className="flex items-center gap-2 text-gray-700 hover:bg-blue-50 border-blue-200"
+            >
+              Next Chapter
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
     </Card>
   );
