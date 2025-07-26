@@ -261,7 +261,7 @@ export function NavigationPanel({
           <div className="flex items-center justify-center space-x-4 p-3 bg-gray-50 rounded-lg border border-scripture-200">
             {/* Christianity - Bible */}
             <img
-              src={uploadedSymbols.christianity}
+              src={uploadedSymbols.christianity || undefined}
               alt="Christian Symbol"
               className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
               onClick={() => handleSymbolClick('bible')}
@@ -270,7 +270,7 @@ export function NavigationPanel({
             
             {/* Islam - Quran */}
             <img
-              src={uploadedSymbols.islam}
+              src={uploadedSymbols.islam || undefined}
               alt="Islamic Symbol"
               className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
               onClick={() => handleSymbolClick('quran')}
@@ -279,7 +279,7 @@ export function NavigationPanel({
             
             {/* Judaism - Torah */}
             <img
-              src={uploadedSymbols.judaism}
+              src={uploadedSymbols.judaism || undefined}
               alt="Jewish Symbol"
               className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
               onClick={() => handleSymbolClick('torah')}
@@ -288,7 +288,7 @@ export function NavigationPanel({
             
             {/* Buddhism - Tripitaka */}
             <img
-              src={uploadedSymbols.buddhism}
+              src={uploadedSymbols.buddhism || undefined}
               alt="Buddhist Symbol"
               className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
               onClick={() => handleSymbolClick('buddhist')}
@@ -297,7 +297,7 @@ export function NavigationPanel({
             
             {/* Hinduism - Bhagavad Gita */}
             <img
-              src={uploadedSymbols.hinduism}
+              src={uploadedSymbols.hinduism || undefined}
               alt="Hindu Symbol"
               className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
               onClick={() => handleSymbolClick('hindu')}
@@ -332,88 +332,30 @@ export function NavigationPanel({
         {/* Book Selector - Only show when a religion is selected */}
         {selectedReligion && (
           <div className="mb-6">
-            <label className="block text-sm font-medium text-scripture-700 mb-3">
-              Book {searchTerm && `(${books?.length || 0} found)`}
-            </label>
-            <ScrollArea className="h-60 border border-scripture-200 rounded-lg bg-gray-50/50">
-              <div className="p-2 space-y-1">
-                {books?.length === 0 && searchTerm ? (
-                  <div className="text-center py-8 text-scripture-500">
-                    <p className="text-sm">No books found matching "{searchTerm}"</p>
-                  </div>
-                ) : (
-                  books?.map((book, index) => {
-                    // Handle both string and object formats
-                    const bookName = typeof book === 'string' ? book : (book as any)?.name || book;
-                    return (
-                      <Button
-                        key={`${bookName}-${index}`}
-                        variant={selectedBook === bookName ? "default" : "ghost"}
-                        className="w-full justify-start text-left h-9 px-3 font-medium hover:bg-scripture-100 transition-all duration-200 animate-in fade-in-0"
-                        onClick={() => onBookChange(bookName)}
-                      >
-                        {bookName}
-                      </Button>
-                    );
-                  })
-                )}
-              </div>
-            </ScrollArea>
-          </div>
-        )}
-
-        {/* Chapter Selector - Only show when a book is selected */}
-        {selectedBook && (
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-scripture-700 mb-3">
-              {selectedReligion === 'quran' ? 'Surah' : 'Chapter'} (1-{dynamicChapterCount})
-            </label>
-            <div className={`grid gap-2 max-h-48 overflow-y-auto p-1 ${
-              dynamicChapterCount <= 20 ? 'grid-cols-4' : 
-              dynamicChapterCount <= 50 ? 'grid-cols-5' : 
-              'grid-cols-6'
-            }`}>
-              {selectedReligion === 'quran' ? (
-                // Special display for Quran surahs with names and verse counts
-                quranSurahs.map((surah) => (
-                  <Button
-                    key={surah.number}
-                    variant={displayedSelectedChapter === surah.number ? "default" : "outline"}
-                    size="sm"
-                    className={`h-auto p-2 text-xs font-medium transition-all duration-200 ${
-                      displayedSelectedChapter === surah.number
-                        ? 'bg-scripture-600 hover:bg-scripture-700 text-white shadow-md ring-2 ring-scripture-300'
-                        : 'hover:bg-scripture-50 border-scripture-300 hover:border-scripture-400 text-scripture-700 hover:shadow-sm'
-                    }`}
-                    onClick={() => handleChapterClick(surah.number)}
-                    title={`${surah.name} (${surah.transliteration}) - ${surah.verses} verses`}
-                  >
-                    <div className="text-center">
-                      <div className="font-bold">{surah.number}</div>
-                      <div className="text-[10px] leading-tight">{surah.name}</div>
-                      <div className="text-[9px] opacity-75">{surah.verses}v</div>
-                    </div>
-                  </Button>
-                ))
-              ) : (
-                // Standard chapter display for other religions
-                Array.from({ length: dynamicChapterCount }, (_, i) => i + 1).map((chapter) => (
-                  <Button
-                    key={chapter}
-                    variant={displayedSelectedChapter === chapter ? "default" : "outline"}
-                    size="sm"
-                    className={`h-9 text-xs font-medium transition-all duration-200 ${
-                      displayedSelectedChapter === chapter
-                        ? 'bg-scripture-600 hover:bg-scripture-700 text-white shadow-md ring-2 ring-scripture-300'
-                        : 'hover:bg-scripture-50 border-scripture-300 hover:border-scripture-400 text-scripture-700 hover:shadow-sm'
-                    }`}
-                    onClick={() => handleChapterClick(chapter)}
-                  >
-                    {chapter}
-                  </Button>
-                ))
-              )}
-            </div>
+            <label className="block text-sm font-medium text-scripture-700 mb-3">Book</label>
+            <Select
+              value={selectedBook || ''}
+              onValueChange={onBookChange}
+            >
+              <SelectTrigger className="w-full h-11 bg-white border-scripture-300 hover:border-scripture-400 focus:border-scripture-500 focus:ring-2 focus:ring-scripture-100 transition-all duration-200">
+                <SelectValue placeholder="Select a book..." className="text-scripture-700" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border-scripture-200 shadow-lg max-h-60">
+                {books?.map((book, index) => {
+                  // Handle both string and object formats
+                  const bookName = typeof book === 'string' ? book : (book as any)?.name || book;
+                  return (
+                    <SelectItem 
+                      key={`${bookName}-${index}`} 
+                      value={bookName}
+                      className="cursor-pointer hover:bg-scripture-50 focus:bg-scripture-100 py-2.5 px-3 text-scripture-700 font-medium"
+                    >
+                      {bookName}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
           </div>
         )}
 

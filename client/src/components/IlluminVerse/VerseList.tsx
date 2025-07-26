@@ -357,31 +357,34 @@ export function VerseList({
     );
   }
 
-  return (
-    <Card className="bg-white rounded-xl shadow-md overflow-hidden h-full flex flex-col">
-      {/* Sticky Header */}
-      <div className="bg-white p-6 border-b border-gray-100 flex-shrink-0 sticky top-0 z-10">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              {religionName} — {selectedBook}
-            </h2>
-            <p className="text-lg text-gray-600 mt-1">
-              Chapter {selectedChapter} of {maxChapters}
-              {scriptures && scriptures.length > 0 && (
-                <span className="ml-2 text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                  {scriptures.length} verses
-                </span>
-              )}
-            </p>
-          </div>
-          
+  // Generate chapter tabs
+  const generateChapterTabs = () => {
+    const tabs = [];
+    const maxTabsToShow = 12;
+    
+    if (maxChapters <= maxTabsToShow) {
+      // Show all chapters if we have few
+      for (let i = 1; i <= maxChapters; i++) {
+        tabs.push(i);
+      }
+    } else {
+      // Smart pagination for many chapters
+      const start = Math.max(1, selectedChapter - 5);
+      const end = Math.min(maxChapters, start + maxTabsToShow - 1);
+      for (let i = start; i <= end; i++) {
+        tabs.push(i);
+      }
+    }
+    return tabs;
+  };
 
-        </div>
-        
+  return (
+    <div className="h-full bg-gray-50 flex flex-col">
+      {/* Top Controls Section */}
+      <div className="bg-white p-4 border-b border-gray-200">
         {/* Auto-Reader Controls */}
         {scriptures && scriptures.length > 0 && (
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center mb-4">
             <ElevenLabsControls
               isPlaying={autoReader.isPlaying}
               isPaused={autoReader.isPaused}
@@ -402,123 +405,141 @@ export function VerseList({
             />
           </div>
         )}
-      </div>
 
-      {/* Verses with Internal Scrolling */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-6 space-y-6">
-          {scriptures && scriptures.length > 0 ? (
-            scriptures.map((scripture, index) => {
-              const isCurrentlyReading = autoReader.isPlaying && 
-                                       !autoReader.isPaused && 
-                                       autoReader.currentVerseIndex === index;
-              
-              const isHighlighted = currentReadingVerse === scripture.verse || 
-                                  highlightedVerse === scripture.verse;
-              
-              return (
-                <div
-                  key={scripture.verse}
-                  id={`verse-${scripture.verse}`}
-                  className={`group relative p-6 rounded-xl transition-all shadow-sm ${
-                    isCurrentlyReading 
-                      ? 'bg-blue-50 border-l-4 border-blue-600 shadow-lg' 
-                      : isHighlighted
-                      ? 'bg-yellow-50 border-l-4 border-yellow-500 shadow-md'
-                      : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                  }`}
-                >
-                    <div className="flex justify-between items-start gap-6">
-                      <div className="flex-1">
-                        <div className="flex items-start gap-4">
-                          <span className="text-2xl font-bold text-blue-600 mt-1 min-w-[3rem] bg-blue-100 px-3 py-1 rounded-full">
-                            {scripture.verse}
-                          </span>
-                          <div className="flex-1">
-                            <p className="text-xl text-gray-800 leading-relaxed mb-3 font-medium">
-                              {scripture.text}
-                            </p>
-                            <p className="text-base font-semibold text-gray-600 bg-gray-200 px-3 py-1 rounded-full inline-block">
-                              {selectedBook} {selectedChapter}:{scripture.verse}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Action Buttons */}
-                      <div className="flex items-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSpeakVerse(scripture.text, scripture.verse)}
-                          className={`hover:bg-blue-50 border-blue-200 ${
-                            speakingStates[scripture.verse] ? 'bg-blue-100 text-blue-700 border-blue-300' : 'text-gray-600'
-                          }`}
-                          title="Read aloud"
-                        >
-                          <Volume2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleCopyVerse(
-                            scripture.text, 
-                            `${selectedBook} ${selectedChapter}:${scripture.verse}`
-                          )}
-                          className="text-gray-600 hover:bg-blue-50 hover:text-blue-700 border-blue-200"
-                          title="Copy verse and send to chat"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-          ) : (
-            <div className="text-center text-gray-500 py-12">
-              <p className="text-lg">No verses available for this selection.</p>
-              <p className="text-sm mt-2">Please select a different book or chapter.</p>
-            </div>
-          )}
+        {/* Title and Subtitle */}
+        <div className="text-center mb-4">
+          <h1 className="text-xl font-bold text-gray-900">
+            {religionName} — {selectedBook}
+          </h1>
+          <p className="text-sm text-gray-600 mt-1">
+            {selectedReligion === 'quran' ? 'Surah' : 'Chapter'} {selectedChapter} of {maxChapters}
+          </p>
         </div>
-        
-        {/* Bottom Navigation Footer */}
-        {scriptures && scriptures.length > 0 && (
-          <div className="border-t border-gray-200 bg-gray-50 p-4 flex items-center justify-between">
-            <div className="text-center flex-1">
-              <p className="text-sm text-gray-600">
-                Chapter {selectedChapter} of {maxChapters}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {scriptures.length} verses in this chapter
-              </p>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                onClick={() => onChapterChange(Math.max(1, selectedChapter - 1))}
-                disabled={selectedChapter <= 1}
-                className="flex items-center gap-2 text-gray-700 hover:bg-blue-50 border-blue-200"
+
+        {/* Chapter Tabs */}
+        {maxChapters > 1 && (
+          <div className="flex gap-2 overflow-x-auto bg-gray-100 p-2 rounded-lg">
+            {generateChapterTabs().map(chapter => (
+              <button
+                key={chapter}
+                onClick={() => onChapterChange(chapter)}
+                className={`px-3 py-1 text-sm font-medium rounded-full whitespace-nowrap transition-all ${
+                  selectedChapter === chapter
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                }`}
+                aria-label={`Go to chapter ${chapter}`}
               >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-              
-              <Button
-                variant="outline"
-                onClick={() => onChapterChange(Math.min(maxChapters, selectedChapter + 1))}
-                disabled={selectedChapter >= maxChapters}
-                className="flex items-center gap-2 text-gray-700 hover:bg-blue-50 border-blue-200"
+                {chapter}
+              </button>
+            ))}
+            {maxChapters > 12 && selectedChapter < maxChapters - 6 && (
+              <button
+                onClick={() => onChapterChange(Math.min(maxChapters, selectedChapter + 10))}
+                className="px-3 py-1 text-sm font-medium rounded-full bg-white text-gray-500 hover:bg-blue-50 hover:text-blue-600"
+                aria-label="Show more chapters"
               >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+                ...
+              </button>
+            )}
           </div>
         )}
       </div>
-    </Card>
+
+      {/* Verse Display Card - Fixed Height with Internal Scrolling */}
+      <div className="flex-1 p-4">
+        <Card className="h-full bg-white shadow-md rounded-xl border border-gray-200 flex flex-col" style={{ height: '60vh' }}>
+          <div className="flex-1 overflow-y-auto p-6">
+            {isLoading ? (
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-24 w-full" />
+                ))}
+              </div>
+            ) : isError ? (
+              <div className="text-center text-red-500 py-12">
+                <p className="text-lg">Error loading verses</p>
+                <p className="text-sm mt-2">Please try again or select a different chapter.</p>
+              </div>
+            ) : scriptures && scriptures.length > 0 ? (
+              <div className="space-y-6">
+                {scriptures.map((scripture, index) => {
+                  const isCurrentlyReading = autoReader.isPlaying && 
+                                           !autoReader.isPaused && 
+                                           autoReader.currentVerseIndex === index;
+                  
+                  const isHighlighted = currentReadingVerse === scripture.verse || 
+                                      highlightedVerse === scripture.verse;
+                  
+                  return (
+                    <div
+                      key={scripture.verse}
+                      id={`verse-${scripture.verse}`}
+                      className={`group relative p-4 rounded-lg transition-all shadow-sm ${
+                        isCurrentlyReading 
+                          ? 'bg-blue-50 border-l-4 border-blue-600 shadow-lg' 
+                          : isHighlighted
+                          ? 'bg-yellow-50 border-l-4 border-yellow-500 shadow-md'
+                          : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-start gap-3">
+                            <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                              {scripture.verse}
+                            </span>
+                            <div className="flex-1">
+                              <p className="text-lg text-gray-800 leading-relaxed mb-2">
+                                {scripture.text}
+                              </p>
+                              <p className="text-sm font-bold text-gray-600">
+                                {selectedBook} {selectedChapter}:{scripture.verse}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSpeakVerse(scripture.text, scripture.verse)}
+                            className={`hover:bg-blue-50 border-blue-200 ${
+                              speakingStates[scripture.verse] ? 'bg-blue-100 text-blue-700 border-blue-300' : 'text-gray-600'
+                            }`}
+                            title="Read aloud"
+                          >
+                            <Volume2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyVerse(
+                              scripture.text, 
+                              `${selectedBook} ${selectedChapter}:${scripture.verse}`
+                            )}
+                            className="text-gray-600 hover:bg-blue-50 hover:text-blue-700 border-blue-200"
+                            title="Copy verse and send to chat"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 py-12">
+                <p className="text-lg">No verses available for this selection.</p>
+                <p className="text-sm mt-2">Please select a different book or chapter.</p>
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+    </div>
   );
 }

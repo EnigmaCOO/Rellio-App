@@ -16,7 +16,8 @@ import {
   Bookmark,
   MessageCircle,
   Sparkles,
-  Clock
+  Clock,
+  BookOpen
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
@@ -219,15 +220,15 @@ export function RightColumnChat({
       <div className="sticky top-0 bg-white border-b border-gray-200 p-4 z-10">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center shadow-md">
+              <BookOpen className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">AI Scripture Guide</h3>
+              <h3 className="text-base font-bold text-gray-900">Aura Archivist</h3>
               <p className="text-xs text-gray-500">
                 {context.religion && context.book 
                   ? `${context.book} ${context.chapter}` 
-                  : 'Ready to help'}
+                  : 'Your spiritual guide'}
               </p>
             </div>
           </div>
@@ -257,10 +258,10 @@ export function RightColumnChat({
             </div>
           ) : messages.length === 0 ? (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MessageCircle className="w-8 h-8 text-blue-600" />
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-8 h-8 text-purple-600" />
               </div>
-              <h4 className="font-medium text-gray-900 mb-2">Welcome to AI Scripture Guide</h4>
+              <h4 className="font-medium text-gray-900 mb-2">Welcome to Aura Archivist</h4>
               <p className="text-sm text-gray-500 mb-6">
                 {context.religion && context.book 
                   ? `Ask questions about ${context.book}` 
