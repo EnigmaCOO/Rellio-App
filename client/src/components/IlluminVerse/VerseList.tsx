@@ -376,32 +376,7 @@ export function VerseList({
             </p>
           </div>
           
-          {/* Chapter Navigation */}
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="default"
-              onClick={() => onChapterChange(Math.max(1, selectedChapter - 1))}
-              disabled={selectedChapter <= 1}
-              className="text-gray-700 hover:bg-blue-50 border-blue-200 px-4 py-2"
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Previous
-            </Button>
-            <span className="text-lg font-semibold text-gray-700 px-3">
-              {selectedChapter}
-            </span>
-            <Button
-              variant="outline"
-              size="default"
-              onClick={() => onChapterChange(Math.min(maxChapters, selectedChapter + 1))}
-              disabled={selectedChapter >= maxChapters}
-              className="text-gray-700 hover:bg-blue-50 border-blue-200 px-4 py-2"
-            >
-              Next
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
+
         </div>
         
         {/* Auto-Reader Controls */}
@@ -511,17 +486,7 @@ export function VerseList({
         {/* Bottom Navigation Footer */}
         {scriptures && scriptures.length > 0 && (
           <div className="border-t border-gray-200 bg-gray-50 p-4 flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={() => onChapterChange(Math.max(1, selectedChapter - 1))}
-              disabled={selectedChapter <= 1}
-              className="flex items-center gap-2 text-gray-700 hover:bg-blue-50 border-blue-200"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous Chapter
-            </Button>
-            
-            <div className="text-center">
+            <div className="text-center flex-1">
               <p className="text-sm text-gray-600">
                 Chapter {selectedChapter} of {maxChapters}
               </p>
@@ -530,15 +495,27 @@ export function VerseList({
               </p>
             </div>
             
-            <Button
-              variant="outline"
-              onClick={() => onChapterChange(Math.min(maxChapters, selectedChapter + 1))}
-              disabled={selectedChapter >= maxChapters}
-              className="flex items-center gap-2 text-gray-700 hover:bg-blue-50 border-blue-200"
-            >
-              Next Chapter
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                onClick={() => onChapterChange(Math.max(1, selectedChapter - 1))}
+                disabled={selectedChapter <= 1}
+                className="flex items-center gap-2 text-gray-700 hover:bg-blue-50 border-blue-200"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={() => onChapterChange(Math.min(maxChapters, selectedChapter + 1))}
+                disabled={selectedChapter >= maxChapters}
+                className="flex items-center gap-2 text-gray-700 hover:bg-blue-50 border-blue-200"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         )}
       </div>
