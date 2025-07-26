@@ -166,15 +166,15 @@ export default function Dashboard() {
   // Calculate chat panel classes for responsive layout
   const getChatClasses = () => {
     return chatVisible 
-      ? 'w-full lg:w-1/4 order-3 lg:order-none' 
-      : 'w-0 order-3 lg:order-none';
+      ? 'w-full lg:w-1/4 order-3' 
+      : 'w-0 order-3';
   };
 
   // Calculate navigation panel classes for responsive layout
   const getNavigationClasses = () => {
     return navigationVisible 
-      ? 'w-full lg:w-1/4 order-1 lg:order-none' 
-      : 'w-0 order-1 lg:order-none';
+      ? 'w-full lg:w-1/4 order-1' 
+      : 'w-0 order-1';
   };
 
   // Handle copy verse functionality
