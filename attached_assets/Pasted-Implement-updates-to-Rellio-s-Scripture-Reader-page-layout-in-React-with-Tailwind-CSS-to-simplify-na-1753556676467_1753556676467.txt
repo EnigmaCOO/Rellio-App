@@ -1,0 +1,31 @@
+Implement updates to Rellio's Scripture Reader page layout in React with Tailwind CSS to simplify navigation, relocate chapter selection, and enhance the overall reading and chatting experience, based on the attached picture. Maintain the three-column structure: Left (simplified navigation), Center (verse display with top chapter tabs), Right (renamed AI chat pane). Ensure the design is clean, white-themed, with rounded corners, subtle shadows, and seamless integration for effortless verse reading, audio playback, and AI interaction.
+
+Key Changes and Goals:
+
+Left Pane (“Scripture Navigation”):
+Simplify to only show the row of faith icons (e.g., cross, crescent, star, wheel, om) and two dropdowns: one for “Religious Text” (e.g., Holy Quran, Bible) and one for “Book” (e.g., Al-Fatihah, Genesis).
+Remove any Surah/Chapter grid or list from the left pane to reduce clutter and overlap issues.
+Center Pane (Verse Display):
+Add a horizontal tab bar above the verse card for chapters in the selected book, styled as clean pills or tabs (e.g., “1 2 3 …” with dot separators, 14px font, light gray background, rounded-full).
+Highlight the active chapter tab (e.g., blue background, white text).
+On tab click, reload/update the verse card content for that chapter.
+Retain the title “Holy Quran — Al-Fatihah (The Opening)” and subtitle “Chapter X of Y” just above the tabs.
+Verse card: Fixed-height (e.g., 60vh) white card with rounded corners (12px), subtle shadow, internal scrolling; verses in numbered bubbles (circular, blue), text in 18px dark-gray, reference below (14px bold); remove any internal chapter controls.
+Above the tabs/title, retain Play ▶ button (starts auto-reader with highlighting), Pause ⏸, speed dropdown (1x/1.5x/2x), and settings gear icon.
+Right Pane (“AI Scripture Guide”):
+Rename header to include a new chat logo (e.g., glowing AI icon or book with sparkles) + “Aura Archivist” text in 16px bold.
+Keep the welcome message, quick-suggestion buttons as horizontal pills below (e.g., “Tell me about today’s verse”, “Compare religious perspectives”, styled in light blue borders, hover effects).
+Input bar at the bottom: Full-width rounded field with placeholder “Ask about scripture...” and send icon.
+Conversation area: Full-height with internal scrolling, user/AI bubbles as before; sync with center pane (e.g., auto-suggest based on selected verse).
+Overall Optimizations:
+Responsive: On mobile, stack columns vertically; chapter tabs become scrollable horizontal carousel.
+User Experience: Ensure no overlapping/repetition (e.g., clean chapter display without redundancy); add smooth transitions for tab switches and highlights.
+Accessibility: ARIA labels for tabs/buttons, keyboard navigation for chapters.
+Deliverables:
+
+Updated <scripturenavigation> component: Simplified left pane with icons and dropdowns.</scripturenavigation>
+Updated <versecard> component: With top chapter tabs, title/subtitle, controls, and verse display.</versecard>
+Updated <insightchat> component: Renamed header with logo, retained suggestions and input.</insightchat>
+Main layout adjustments: Grid columns for three panes.
+Tailwind/CSS: Styles for tabs (e.g., flex gap-2 overflow-x-auto, bg-gray-100 p-2 rounded-lg), highlights (bg-blue-100).
+State/Hooks: useState for activeChapter, useEffect for loading verses on tab change; shared context for verse-chat sync.
