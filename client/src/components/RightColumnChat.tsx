@@ -149,7 +149,12 @@ export function RightColumnChat({
         book: context.book || null,
         chapter: context.chapter || null,
         multiReligiousPerspective: false
-      } : undefined;
+      } : {
+        religion: null,
+        book: null,
+        chapter: null,
+        multiReligiousPerspective: true
+      };
       
       console.log('Sending chat request:', { message, sessionId, context: requestContext });
       
