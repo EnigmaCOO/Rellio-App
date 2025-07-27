@@ -154,54 +154,26 @@ export function VerseList({
               useElevenLabs = false;
             }
           } else {
-            console.log('⚠️ ElevenLabs API failed, using browser speech fallback');
+            console.log('⚠️ ElevenLabs API failed - response not ok');
             useElevenLabs = false;
           }
         } catch (apiError) {
-          console.log('⚠️ ElevenLabs error, using browser speech fallback:', apiError);
+          console.log('⚠️ ElevenLabs error:', apiError);
           useElevenLabs = false;
         }
       }
     
-    // Fallback to browser speech synthesis
+    // Handle ElevenLabs failure
     if (!useElevenLabs) {
-      console.log('🔊 Using browser speech synthesis for verse', verse.verse);
-      
-      if (window.speechSynthesis) {
-        const utterance = new SpeechSynthesisUtterance(verse.text);
-        utterance.rate = speed;
-        utterance.volume = volume;
-        utterance.pitch = 1;
-        
-        utterance.onend = () => {
-          console.log('🏁 Browser speech ended for verse', verse.verse);
-          const nextVerseIndex = verseIndex + 1;
-          if (isPlayingRef.current && !isPausedRef.current && nextVerseIndex < scriptures.length) {
-            setTimeout(() => playVerse(nextVerseIndex), pauseDuration * 1000);
-          } else {
-            setIsPlaying(false);
-            isPlayingRef.current = false;
-            setCurrentReadingVerse(null);
-          }
-        };
-        
-        utterance.onerror = (error) => {
-          console.error('❌ Browser speech error:', error);
-          const nextVerseIndex = verseIndex + 1;
-          if (isPlayingRef.current && !isPausedRef.current && nextVerseIndex < scriptures.length) {
-            setTimeout(() => playVerse(nextVerseIndex), 500);
-          } else {
-            setIsPlaying(false);
-            isPlayingRef.current = false;
-            setCurrentReadingVerse(null);
-          }
-        };
-        
-        window.speechSynthesis.speak(utterance);
-        console.log('🎵 Browser speech started for verse', verse.verse);
-        return; // Important: exit here when using browser speech
+      console.log('⚠️ ElevenLabs failed for verse', verse.verse, '- continuing to next verse');
+      const nextVerseIndex = verseIndex + 1;
+      if (isPlayingRef.current && !isPausedRef.current && nextVerseIndex < scriptures.length) {
+        setTimeout(() => playVerse(nextVerseIndex), 500);
       } else {
-        console.error('❌ No speech synthesis available');
+        console.log('🏁 Reading sequence complete');
+        setIsPlaying(false);
+        isPlayingRef.current = false;
+        setCurrentReadingVerse(null);
       }
     }
     } catch (error) {
