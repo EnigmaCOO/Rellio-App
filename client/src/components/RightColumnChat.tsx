@@ -49,64 +49,213 @@ interface ClickableMessageProps {
 }
 
 function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) {
-  const [processedContent, setProcessedContent] = useState<string>("");
+  const [processedSections, setProcessedSections] = useState<Array<{
+    type: 'intro' | 'perspective' | 'conclusion';
+    religion?: string;
+    title?: string;
+    text: string;
+    icon?: string;
+    color?: string;
+  }>>([]);
 
   useEffect(() => {
-    // Parse scripture references and make them clickable
-    const parseScriptureReferences = (text: string) => {
-      // Bible references
-      const biblePattern = /\b(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|1 Samuel|2 Samuel|1 Kings|2 Kings|1 Chronicles|2 Chronicles|Ezra|Nehemiah|Esther|Job|Psalms|Proverbs|Ecclesiastes|Song of Songs|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|1 Corinthians|2 Corinthians|Galatians|Ephesians|Philippians|Colossians|1 Thessalonians|2 Thessalonians|1 Timothy|2 Timothy|Titus|Philemon|Hebrews|James|1 Peter|2 Peter|1 John|2 John|3 John|Jude|Revelation)\s+(?:Chapter\s+)?(\d+)(?::(\d+))?/gi;
-      
-      // Quran references
-      const quranPattern = /\b(Quran)\s+(\d+):(\d+)(?:[-–]\d+)?/gi;
-      
-      // Hindu references
-      const hinduPattern = /\b(Bhagavad\s+Gita)\s+(\d+):(\d+)(?:[-–]\d+)?/gi;
-      
-      let processedText = text;
-      
-      // Replace patterns with clickable spans
-      processedText = processedText.replace(biblePattern, (match, book, chapter, verse) => {
-        return `<span class="scripture-link cursor-pointer text-blue-600 hover:text-blue-800 hover:underline font-medium bg-blue-50 px-1 rounded" data-religion="bible" data-book="${book}" data-chapter="${chapter}" data-verse="${verse || ''}">${match}</span>`;
-      });
-      
-      processedText = processedText.replace(quranPattern, (match, source, chapter, verse) => {
-        return `<span class="scripture-link cursor-pointer text-blue-600 hover:text-blue-800 hover:underline font-medium bg-blue-50 px-1 rounded" data-religion="quran" data-book="Quran" data-chapter="${chapter}" data-verse="${verse}">${match}</span>`;
-      });
-      
-      processedText = processedText.replace(hinduPattern, (match, book, chapter, verse) => {
-        return `<span class="scripture-link cursor-pointer text-blue-600 hover:text-blue-800 hover:underline font-medium bg-blue-50 px-1 rounded" data-religion="hindu" data-book="${book}" data-chapter="${chapter}" data-verse="${verse}">${match}</span>`;
-      });
-      
-      return processedText;
-    };
+    // Check if this is a multi-religious response
+    const isMultiReligious = content.includes('From the Bible perspective:') || 
+                            content.includes('From the Quran perspective:') ||
+                            content.includes('From the Torah perspective:');
 
-    setProcessedContent(parseScriptureReferences(content));
+    if (isMultiReligious) {
+      // Parse multi-religious response into structured sections
+      const sections = [];
+      const lines = content.split('\n').filter(line => line.trim());
+      
+      let currentSection = { type: 'intro' as const, text: '' };
+      
+      for (const line of lines) {
+        // Check for religious perspective headers
+        if (line.includes('From the Bible perspective:')) {
+          if (currentSection.text) sections.push(currentSection);
+          currentSection = {
+            type: 'perspective' as const,
+            religion: 'bible',
+            title: 'Biblical Perspective',
+            text: '',
+            icon: '📖',
+            color: 'blue'
+          };
+        } else if (line.includes('From the Quran perspective:')) {
+          if (currentSection.text) sections.push(currentSection);
+          currentSection = {
+            type: 'perspective' as const,
+            religion: 'quran',
+            title: 'Islamic Perspective',
+            text: '',
+            icon: '🌙',
+            color: 'emerald'
+          };
+        } else if (line.includes('From the Torah perspective:')) {
+          if (currentSection.text) sections.push(currentSection);
+          currentSection = {
+            type: 'perspective' as const,
+            religion: 'torah',
+            title: 'Torah Perspective',
+            text: '',
+            icon: '✡️',
+            color: 'amber'
+          };
+        } else if (line.includes('From the Bhagavad Gita perspective:')) {
+          if (currentSection.text) sections.push(currentSection);
+          currentSection = {
+            type: 'perspective' as const,
+            religion: 'hindu',
+            title: 'Hindu Perspective',
+            text: '',
+            icon: '🕉️',
+            color: 'orange'
+          };
+        } else if (line.includes('From the Tripitaka perspective:')) {
+          if (currentSection.text) sections.push(currentSection);
+          currentSection = {
+            type: 'perspective' as const,
+            religion: 'buddhist',
+            title: 'Buddhist Perspective',
+            text: '',
+            icon: '☸️',
+            color: 'purple'
+          };
+        } else if (line.toLowerCase().includes('in conclusion') || line.toLowerCase().includes('these religious traditions')) {
+          if (currentSection.text) sections.push(currentSection);
+          currentSection = {
+            type: 'conclusion' as const,
+            text: line
+          };
+        } else {
+          // Add content to current section, clean up markdown
+          const cleanLine = line.replace(/^\*\*.*?\*\*/g, '').replace(/^-\s+\*\*.*?\*\*/g, '').trim();
+          if (cleanLine) {
+            if (currentSection.text) currentSection.text += ' ';
+            currentSection.text += cleanLine;
+          }
+        }
+      }
+      
+      if (currentSection.text) sections.push(currentSection);
+      setProcessedSections(sections);
+    } else {
+      // Single response - treat as simple content
+      setProcessedSections([{ type: 'intro', text: content }]);
+    }
   }, [content]);
 
-  useEffect(() => {
-    // Add click listeners to scripture links
-    const handleScriptureClick = (event: Event) => {
-      const target = event.target as HTMLElement;
-      if (target.classList.contains('scripture-link')) {
-        const religion = target.dataset.religion as Religion;
-        const book = target.dataset.book || '';
-        const chapter = parseInt(target.dataset.chapter || '1', 10);
-        const verse = target.dataset.verse ? parseInt(target.dataset.verse, 10) : undefined;
-        
-        onScriptureClick(religion, book, chapter, verse);
+  const processScriptureReferences = (text: string) => {
+    // Enhanced scripture reference parsing
+    const patterns = [
+      { 
+        regex: /\b(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|1 Samuel|2 Samuel|1 Kings|2 Kings|1 Chronicles|2 Chronicles|Ezra|Nehemiah|Esther|Job|Psalms|Proverbs|Ecclesiastes|Song of Songs|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|1 Corinthians|2 Corinthians|Galatians|Ephesians|Philippians|Colossians|1 Thessalonians|2 Thessalonians|1 Timothy|2 Timothy|Titus|Philemon|Hebrews|James|1 Peter|2 Peter|1 John|2 John|3 John|Jude|Revelation)\s+(\d+):(\d+)(?:[-–](\d+))?/gi,
+        religion: 'bible',
+        color: 'blue'
+      },
+      { 
+        regex: /\b(?:Quran|Surah)\s+(\d+):(\d+)(?:[-–](\d+))?/gi,
+        religion: 'quran',
+        color: 'emerald',
+        bookName: 'Quran'
+      },
+      { 
+        regex: /\b(Ecclesiastes|Bereshit|Shemot|Vayikra|Bamidbar|Devarim)\s+(\d+):(\d+)/gi,
+        religion: 'torah',
+        color: 'amber'
+      },
+      { 
+        regex: /\b(Bhagavad\s+Gita)\s+(\d+)[\.:]\s*(\d+)/gi,
+        religion: 'hindu',
+        color: 'orange'
+      },
+      { 
+        regex: /\b(Dhammapada|Tripitaka)\s+(\d+)/gi,
+        religion: 'buddhist',
+        color: 'purple'
       }
-    };
+    ];
 
-    document.addEventListener('click', handleScriptureClick);
-    return () => document.removeEventListener('click', handleScriptureClick);
-  }, [onScriptureClick]);
+    let processedText = text;
+
+    patterns.forEach(({ regex, religion, color, bookName }) => {
+      processedText = processedText.replace(regex, (match, ...groups) => {
+        const [book, chapter, verse] = groups.filter(g => g !== undefined);
+        const finalBook = bookName || book;
+        
+        return `<span class="scripture-link cursor-pointer text-${color}-600 hover:text-${color}-800 hover:underline font-semibold bg-${color}-100 px-2 py-1 rounded-md border border-${color}-200 inline-block my-1" data-religion="${religion}" data-book="${finalBook}" data-chapter="${chapter}" data-verse="${verse || ''}">${match}</span>`;
+      });
+    });
+
+    return processedText;
+  };
+
+  const handleScriptureClick = (event: React.MouseEvent) => {
+    const target = event.target as HTMLElement;
+    if (target.classList.contains('scripture-link')) {
+      const religion = target.dataset.religion as Religion;
+      const book = target.dataset.book || '';
+      const chapter = parseInt(target.dataset.chapter || '1', 10);
+      const verse = target.dataset.verse ? parseInt(target.dataset.verse, 10) : undefined;
+      
+      onScriptureClick(religion, book, chapter, verse);
+    }
+  };
+
+  // Check if this is a multi-religious response
+  const isMultiReligious = processedSections.some(section => section.type === 'perspective');
+
+  if (!isMultiReligious) {
+    // Use simple formatting for single-perspective responses
+    return (
+      <div 
+        className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
+        onClick={handleScriptureClick}
+        dangerouslySetInnerHTML={{ __html: processScriptureReferences(processedSections[0]?.text || content) }}
+      />
+    );
+  }
 
   return (
-    <div 
-      className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
-      dangerouslySetInnerHTML={{ __html: processedContent }}
-    />
+    <div className="space-y-4" onClick={handleScriptureClick}>
+      {processedSections.map((section, index) => (
+        <div key={index}>
+          {section.type === 'intro' && (
+            <div className="text-gray-700 leading-relaxed mb-4 p-3 bg-gray-50 rounded-lg border-l-4 border-gray-300">
+              <div dangerouslySetInnerHTML={{ __html: processScriptureReferences(section.text) }} />
+            </div>
+          )}
+          
+          {section.type === 'perspective' && (
+            <div className={`border-l-4 border-${section.color}-400 bg-${section.color}-50 p-4 rounded-lg shadow-sm`}>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-lg">{section.icon}</span>
+                <h4 className={`font-semibold text-${section.color}-800 text-sm`}>{section.title}</h4>
+              </div>
+              <div 
+                className={`text-${section.color}-700 leading-relaxed text-sm`}
+                dangerouslySetInnerHTML={{ __html: processScriptureReferences(section.text) }}
+              />
+            </div>
+          )}
+          
+          {section.type === 'conclusion' && (
+            <div className="text-gray-700 leading-relaxed mt-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border-l-4 border-purple-400 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-lg">💫</span>
+                <h4 className="font-semibold text-purple-800 text-sm">Summary</h4>
+              </div>
+              <div 
+                className="text-purple-700 text-sm"
+                dangerouslySetInnerHTML={{ __html: processScriptureReferences(section.text) }}
+              />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
 
