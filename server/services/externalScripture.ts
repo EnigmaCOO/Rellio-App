@@ -308,12 +308,12 @@ export async function fetchScriptureContent(
         const arabicName = book.split(' (')[0];
         const fallbackIndex = quranBooks.findIndex(name => name.startsWith(arabicName));
         if (fallbackIndex !== -1) {
-          return await fetchQuranContent(fallbackIndex + 1, (chapter - 1) * 10 + 1);
+          return await fetchQuranContent(fallbackIndex + 1);
         }
-        return await fetchQuranContent(1, (chapter - 1) * 10 + 1);
+        return await fetchQuranContent(1);
       }
-      // For Quran, use chapter as verse range (every 10 verses is a "chapter")
-      return await fetchQuranContent(surahNumber, (chapter - 1) * 10 + 1);
+      // For Quran, return all verses for the surah (no pagination by chapters)
+      return await fetchQuranContent(surahNumber);
     
     case 'torah':
       return await fetchTorahContent(book, chapter);

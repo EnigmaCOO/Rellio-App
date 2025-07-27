@@ -88,8 +88,8 @@ export const RELIGION_CONFIGS: Record<Religion, ReligionConfig> = {
     name: "Holy Quran",
     books: [
       { name: "Al-Fatihah (The Opening)", chapters: 1 },
-      { name: "Al-Baqarah (The Cow)", chapters: 29 },
-      { name: "Al-Imran (Family of Imran)", chapters: 20 },
+      { name: "Al-Baqarah (The Cow)", chapters: 1 },
+      { name: "Al-Imran (Family of Imran)", chapters: 1 },
       { name: "An-Nisa (The Women)", chapters: 1 },
       { name: "Al-Maidah (The Table)", chapters: 1 },
       { name: "Al-An'am (The Cattle)", chapters: 1 },

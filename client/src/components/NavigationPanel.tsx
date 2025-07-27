@@ -77,8 +77,8 @@ export function NavigationPanel({
         // Use the API-provided maxChapters for Bible books since we have accurate data
         return maxChapters || 1;
       case 'quran':
-        // For Quran, show all 114 surahs as chapters for comprehensive navigation
-        return 114;
+        // For Quran, each surah is a book with 1 chapter
+        return maxChapters || 1;
       case 'hindu':
         return 18; // Bhagavad Gita chapters
       case 'torah':
@@ -93,25 +93,9 @@ export function NavigationPanel({
 
   const dynamicChapterCount = getDynamicChapterCount();
 
-  // Chapter click handler with special Quran logic
+  // Chapter click handler
   const handleChapterClick = (chapterNum: number) => {
-    if (selectedReligion === 'quran') {
-      // For Quran, chapter number represents surah number
-      // Find the corresponding surah and switch to it
-      const surah = quranSurahs.find(s => s.number === chapterNum);
-      if (surah && books) {
-        // Find the book that matches this surah
-        const matchingBook = books.find(book => 
-          book.includes(surah.name) || book.includes(`Al-${surah.name}`)
-        );
-        if (matchingBook) {
-          onBookChange(matchingBook);
-          onChapterChange(1); // Reset to chapter 1 for the new surah
-        }
-      }
-    } else {
-      onChapterChange(chapterNum);
-    }
+    onChapterChange(chapterNum);
   };
 
   // Use standard chapter display for all religions
