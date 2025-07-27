@@ -87,10 +87,35 @@ export function AudioPlaybackButton({
           });
         };
         
-        await audio.play();
-        setIsPlaying(true);
-        setIsLoading(false);
-        console.log('🎵 ElevenLabs audio started successfully');
+        // Wait for audio to be ready before playing
+        audio.onloadeddata = async () => {
+          try {
+            console.log('🎵 Audio data loaded, starting playback...');
+            await audio.play();
+            setIsPlaying(true);
+            setIsLoading(false);
+            console.log('🎵 ElevenLabs audio started successfully');
+          } catch (playError) {
+            console.error('🎵 Audio play failed:', playError);
+            setIsPlaying(false);
+            setIsLoading(false);
+            
+            // Handle the specific "interrupted by pause" error
+            if (playError.name === 'AbortError') {
+              toast({
+                title: "Audio interrupted",
+                description: "Audio playback was interrupted. Please try again.",
+                variant: "destructive",
+              });
+            } else {
+              toast({
+                title: "Audio playback failed",
+                description: "Could not play AI response audio",
+                variant: "destructive",
+              });
+            }
+          }
+        };
         
       } else {
         const errorText = await response.text();
@@ -112,13 +137,15 @@ export function AudioPlaybackButton({
 
 
   const handlePlayPause = () => {
-    if (isPlaying) {
+    if (isPlaying || isLoading) {
       // Stop current playback
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.currentTime = 0; // Reset to beginning
         audioRef.current = null;
       }
       setIsPlaying(false);
+      setIsLoading(false);
     } else {
       // Start playback using ElevenLabs only
       playWithElevenLabs();
