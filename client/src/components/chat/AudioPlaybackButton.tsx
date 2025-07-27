@@ -12,7 +12,7 @@ interface AudioPlaybackButtonProps {
 
 export function AudioPlaybackButton({ 
   text, 
-  voiceId = "21m00Tcm4TlvDq8ikWAM", // Default ElevenLabs voice
+  voiceId = "onwK4e9ZLuTAKqWW03F9", // Daniel - informative/educational British male voice
   className = "",
   size = "sm"
 }: AudioPlaybackButtonProps) {
@@ -93,71 +93,16 @@ export function AudioPlaybackButton({
     } catch (error) {
       console.error('🎵 ElevenLabs error:', error);
       setIsLoading(false);
-      
-      // Fallback to browser speech synthesis
-      playWithBrowserSpeech();
-    }
-  };
-
-  const playWithBrowserSpeech = () => {
-    try {
-      if ('speechSynthesis' in window) {
-        // Stop any ongoing speech
-        window.speechSynthesis.cancel();
-        
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.9;
-        utterance.pitch = 1;
-        utterance.volume = 1;
-        utterance.lang = 'en-US';
-        
-        // Try to find a good English voice
-        const voices = window.speechSynthesis.getVoices();
-        const englishVoice = voices.find(voice => 
-          voice.lang.startsWith('en') && 
-          (voice.name.includes('Google') || voice.name.includes('Microsoft'))
-        );
-        
-        if (englishVoice) {
-          utterance.voice = englishVoice;
-        }
-        
-        utterance.onstart = () => {
-          setIsPlaying(true);
-          setIsLoading(false);
-          console.log('🎵 Browser speech started');
-        };
-        
-        utterance.onend = () => {
-          setIsPlaying(false);
-          console.log('🎵 Browser speech finished');
-        };
-        
-        utterance.onerror = () => {
-          setIsPlaying(false);
-          setIsLoading(false);
-          console.error('🎵 Browser speech failed');
-          toast({
-            title: "Speech unavailable",
-            description: "Could not play audio response",
-            variant: "destructive",
-          });
-        };
-        
-        window.speechSynthesis.speak(utterance);
-      } else {
-        throw new Error('Speech synthesis not supported');
-      }
-    } catch (error) {
-      console.error('🎵 Browser speech error:', error);
-      setIsLoading(false);
+      setIsPlaying(false);
       toast({
-        title: "Audio unavailable",
-        description: "Speech synthesis not supported in this browser",
+        title: "ElevenLabs audio failed",
+        description: "Could not generate audio with ElevenLabs voice",
         variant: "destructive",
       });
     }
   };
+
+
 
   const handlePlayPause = () => {
     if (isPlaying) {
@@ -166,10 +111,9 @@ export function AudioPlaybackButton({
         audioRef.current.pause();
         audioRef.current = null;
       }
-      window.speechSynthesis.cancel();
       setIsPlaying(false);
     } else {
-      // Start playback (try ElevenLabs first, fallback to browser)
+      // Start playback using ElevenLabs only
       playWithElevenLabs();
     }
   };

@@ -479,9 +479,12 @@ export function RightColumnChat({
               disabled={sendMessageMutation.isPending || isStreaming}
             />
             {/* Voice input button inside input */}
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
               <VoiceInputButton
-                onTranscription={(text) => setNewMessage(text)}
+                onTranscription={(text) => {
+                  console.log('📝 Voice transcription received:', text);
+                  setNewMessage(text);
+                }}
                 disabled={sendMessageMutation.isPending || isStreaming}
               />
             </div>

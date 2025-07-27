@@ -16,7 +16,7 @@ interface SpeechRecognitionErrorEvent extends Event {
 
 interface SpeechRecognition extends EventTarget {
   continuous: boolean;
-  grammars: SpeechGrammarList;
+  grammars: any;
   interimResults: boolean;
   lang: string;
   maxAlternatives: number;
@@ -75,13 +75,13 @@ export function VoiceInputButton({ onTranscription, disabled = false }: VoiceInp
       };
       
       recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
-        const transcript = event.results[0]?.transcript;
+        const transcript = event.results[0]?.[0]?.transcript;
         if (transcript) {
           console.log('🎤 Voice transcription:', transcript);
           onTranscription(transcript.trim());
           toast({
             title: "Voice captured",
-            description: transcript,
+            description: transcript.trim(),
           });
         }
       };
