@@ -415,8 +415,8 @@ export function VerseList({
           </p>
         </div>
 
-        {/* Chapter Tabs */}
-        {maxChapters > 1 && (
+        {/* Chapter Tabs - Always Show When Available */}
+        {maxChapters >= 1 && (
           <div className="flex gap-2 overflow-x-auto bg-gray-100 p-2 rounded-lg">
             {generateChapterTabs().map(chapter => (
               <button
