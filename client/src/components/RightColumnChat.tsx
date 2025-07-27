@@ -17,10 +17,18 @@ import {
   MessageCircle,
   Sparkles,
   Clock,
-  BookOpen
+  BookOpen,
+  Flame,
+  Scale,
+  Brain,
+  Heart,
+  Eye,
+  Zap
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
+import { VoiceInputButton } from "./chat/VoiceInputButton";
+import { AudioPlaybackButton } from "./chat/AudioPlaybackButton";
 
 interface RightColumnChatProps {
   sessionId: string;
@@ -118,6 +126,11 @@ export function RightColumnChat({
   // Component state
   const [newMessage, setNewMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [userStreak, setUserStreak] = useState(3); // Mock streak data
+  const [showHistory, setShowHistory] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+  const [bookmarkCount, setBookmarkCount] = useState(5); // Mock bookmark count
+  const [expandedPerspectives, setExpandedPerspectives] = useState(false);
 
   // Load chat messages
   const { data: messages = [], isLoading: messagesLoading } = useQuery<ChatMessage[]>({
@@ -215,39 +228,81 @@ export function RightColumnChat({
   };
 
   return (
-    <div className="h-full flex flex-col bg-white">
-      {/* Sticky Header */}
-      <div className="sticky top-0 bg-white border-b border-gray-200 p-4 z-10">
-        <div className="flex items-center gap-3">
+    <div className="h-full flex flex-col bg-white relative">
+      {/* Mystical gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-purple-900/10 to-yellow-300/10 pointer-events-none z-0" />
+      <div className="absolute inset-0 opacity-5 pointer-events-none z-0" style={{
+        backgroundImage: `url("data:image/svg+xml,${encodeURIComponent('<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="20" fill="none" stroke="currentColor" stroke-width="0.5"/><circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="0.3"/><circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="0.2"/><path d="M30,50 Q50,30 70,50 Q50,70 30,50" fill="none" stroke="currentColor" stroke-width="0.3"/><path d="M50,30 Q70,50 50,70 Q30,50 50,30" fill="none" stroke="currentColor" stroke-width="0.3"/></svg>')}")`,
+        backgroundSize: '200px 200px',
+        backgroundRepeat: 'repeat'
+      }} />
+      
+      {/* Enhanced Sticky Header */}
+      <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 p-4 z-20">
+        <div className="flex items-center gap-3 mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center shadow-md">
-              <BookOpen className="w-4 h-4 text-white" />
+            {/* Glowing teal logo */}
+            <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center shadow-lg shadow-teal-500/30">
+              <Brain className="w-4 h-4 text-white" />
             </div>
             <div>
               <h3 className="text-base font-bold text-gray-900">Aura Archivist</h3>
-              <p className="text-xs text-gray-500">
-                {context.religion && context.book 
-                  ? `${context.book} ${context.chapter}` 
-                  : 'Your spiritual guide'}
-              </p>
+              <p className="text-xs italic text-gray-500">Your spiritual guide</p>
             </div>
           </div>
-          <div className="flex items-center gap-1 ml-auto">
-            <Badge variant="secondary" className="text-xs">
-              <History className="w-3 h-3 mr-1" />
-              {messages.length}
-            </Badge>
-          </div>
+        </div>
+        
+        {/* Control Pills Row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Streak Badge */}
+          <Badge className="bg-green-100 text-green-800 hover:bg-green-200 hover:shadow-lg hover:shadow-green-500/20 transition-all duration-200 cursor-default">
+            <Flame className="w-3 h-3 mr-1" />
+            Day {userStreak} Streak 🔥
+          </Badge>
+          
+          {/* History Toggle */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 hover:shadow-lg hover:shadow-blue-500/20 hover:border-blue-300 transition-all duration-200"
+            onClick={() => setShowHistory(!showHistory)}
+          >
+            <History className="w-3 h-3 mr-1" />
+            History
+          </Button>
+          
+          {/* Compare Mode Toggle */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 hover:shadow-lg hover:shadow-purple-500/20 hover:border-purple-300 transition-all duration-200"
+            onClick={() => setCompareMode(!compareMode)}
+          >
+            <Scale className="w-3 h-3 mr-1" />
+            Compare
+          </Button>
+          
+          {/* Bookmarks Count */}
+          <Badge variant="outline" className="hover:shadow-lg hover:shadow-amber-500/20 transition-all duration-200 cursor-pointer">
+            <Bookmark className="w-3 h-3 mr-1" />
+            {bookmarkCount}
+          </Badge>
+          
+          {/* Message Count */}
+          <Badge variant="secondary" className="text-xs ml-auto">
+            <MessageCircle className="w-3 h-3 mr-1" />
+            {messages.length}
+          </Badge>
         </div>
       </div>
 
       {/* Messages Area */}
-      <ScrollArea className="flex-1 px-4 py-2" ref={scrollAreaRef}>
+      <ScrollArea className="flex-1 px-4 py-2 relative z-10" ref={scrollAreaRef}>
         <div className="space-y-4">
           {messagesLoading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex gap-3">
+                <div key={i} className="flex gap-3 animate-pulse">
                   <Skeleton className="w-8 h-8 rounded-full" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-3/4" />
@@ -258,8 +313,9 @@ export function RightColumnChat({
             </div>
           ) : messages.length === 0 ? (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="w-8 h-8 text-purple-600" />
+              <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4 relative">
+                <Sparkles className="w-8 h-8 text-teal-600" />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-teal-400/20 to-cyan-400/20 animate-pulse" />
               </div>
               <h4 className="font-medium text-gray-900 mb-2">Welcome to Aura Archivist</h4>
               <p className="text-sm text-gray-500 mb-6">
@@ -268,8 +324,8 @@ export function RightColumnChat({
                   : 'Start by asking a question about scripture'}
               </p>
               
-              {/* Quick suggestions */}
-              <div className="space-y-2">
+              {/* Enhanced Quick suggestions */}
+              <div className="space-y-3">
                 <p className="text-xs text-gray-400 uppercase tracking-wide">Quick suggestions</p>
                 <div className="flex flex-wrap gap-2 justify-center">
                   {getQuickSuggestions().map((suggestion, index) => (
@@ -277,7 +333,7 @@ export function RightColumnChat({
                       key={index}
                       variant="outline"
                       size="sm"
-                      className="text-xs h-8"
+                      className="text-xs h-8 border-teal-200 hover:border-teal-400 hover:bg-teal-50 hover:shadow-md transition-all duration-200"
                       onClick={() => setNewMessage(suggestion)}
                     >
                       {suggestion}
@@ -288,11 +344,11 @@ export function RightColumnChat({
             </div>
           ) : (
             messages.map((message, index) => (
-              <div key={index} className="flex gap-3">
+              <div key={index} className="flex gap-3 animate-fadeIn" style={{ animationDelay: `${index * 50}ms` }}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   message.type === 'user' 
                     ? 'bg-gray-200' 
-                    : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                    : 'bg-gradient-to-br from-teal-500 to-cyan-600 shadow-lg'
                 }`}>
                   {message.type === 'user' ? (
                     <User className="w-4 h-4 text-gray-600" />
@@ -303,26 +359,64 @@ export function RightColumnChat({
                 <div className={`flex-1 ${
                   message.type === 'user' 
                     ? 'bg-gray-50 rounded-lg p-3' 
-                    : 'bg-white'
+                    : 'bg-white border border-gray-100 rounded-lg p-3 shadow-sm'
                 }`}>
                   {message.type === 'user' ? (
                     <p className="text-gray-800 text-sm leading-relaxed">{message.content}</p>
                   ) : (
                     <div className="space-y-3">
-                      <ClickableMessage 
-                        content={message.content} 
-                        onScriptureClick={handleNavigateToVerse}
-                      />
-                      {/* Perspective chips for AI responses */}
-                      <div className="flex flex-wrap gap-1">
-                        <Badge variant="outline" className="text-xs">
-                          <Sparkles className="w-3 h-3 mr-1" />
-                          AI Insight
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <ClickableMessage 
+                            content={message.content} 
+                            onScriptureClick={handleNavigateToVerse}
+                          />
+                        </div>
+                        {/* Audio playback button */}
+                        <AudioPlaybackButton 
+                          text={message.content}
+                          className="flex-shrink-0"
+                        />
+                      </div>
+                      
+                      {/* Enhanced Perspective chips for AI responses */}
+                      <div className="flex flex-wrap gap-1 items-center">
+                        <Badge variant="outline" className="text-xs border-teal-200 text-teal-700 bg-teal-50">
+                          <Eye className="w-3 h-3 mr-1" />
+                          Biblical
                         </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          <Clock className="w-3 h-3 mr-1" />
-                          Just now
+                        <Badge variant="outline" className="text-xs border-emerald-200 text-emerald-700 bg-emerald-50">
+                          <Heart className="w-3 h-3 mr-1" />
+                          Islamic
                         </Badge>
+                        <Badge variant="outline" className="text-xs border-orange-200 text-orange-700 bg-orange-50">
+                          <Brain className="w-3 h-3 mr-1" />
+                          Hindu
+                        </Badge>
+                        <Badge variant="outline" className="text-xs border-purple-200 text-purple-700 bg-purple-50">
+                          <Zap className="w-3 h-3 mr-1" />
+                          Buddhist
+                        </Badge>
+                        {!expandedPerspectives && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700"
+                            onClick={() => setExpandedPerspectives(true)}
+                          >
+                            More...
+                          </Button>
+                        )}
+                        {expandedPerspectives && (
+                          <>
+                            <Badge variant="outline" className="text-xs border-blue-200 text-blue-700 bg-blue-50">
+                              Torah
+                            </Badge>
+                            <Badge variant="outline" className="text-xs border-indigo-200 text-indigo-700 bg-indigo-50">
+                              Mystical
+                            </Badge>
+                          </>
+                        )}
                       </div>
                     </div>
                   )}
@@ -354,42 +448,58 @@ export function RightColumnChat({
         </div>
       </ScrollArea>
 
-      {/* Sticky Input Area */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4">
-        <form onSubmit={handleSendMessage} className="flex gap-2">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Ask about scripture..."
-            className="flex-1 rounded-full border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-            disabled={sendMessageMutation.isPending || isStreaming}
-          />
-          <Button 
-            type="submit" 
-            size="sm" 
-            disabled={!newMessage.trim() || sendMessageMutation.isPending || isStreaming}
-            className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-4"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
-        </form>
-        
-        {/* Quick suggestions below input */}
-        {messages.length === 0 && (
-          <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
-            {getQuickSuggestions().slice(0, 2).map((suggestion, index) => (
+      {/* Enhanced Quick Suggestions Row */}
+      {messages.length > 0 && (
+        <div className="px-4 py-2 border-t border-gray-100 relative z-10">
+          <div className="flex flex-wrap gap-2">
+            {getQuickSuggestions().map((suggestion, index) => (
               <Button
                 key={index}
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="text-xs h-7 text-gray-500 hover:text-gray-700"
+                className="text-xs h-7 border-teal-200 hover:border-teal-400 hover:bg-teal-50 hover:shadow-md transition-all duration-200"
                 onClick={() => setNewMessage(suggestion)}
               >
                 {suggestion}
               </Button>
             ))}
           </div>
-        )}
+        </div>
+      )}
+
+      {/* Enhanced Sticky Input Area */}
+      <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 p-4 relative z-10">
+        <form onSubmit={handleSendMessage} className="flex gap-2 items-end">
+          <div className="flex-1 relative">
+            <Input
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Ask about scripture..."
+              className="rounded-full border-gray-300 focus:border-teal-500 focus:ring-teal-500 pr-12"
+              disabled={sendMessageMutation.isPending || isStreaming}
+            />
+            {/* Voice input button inside input */}
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <VoiceInputButton
+                onTranscription={(text) => setNewMessage(text)}
+                disabled={sendMessageMutation.isPending || isStreaming}
+              />
+            </div>
+          </div>
+          
+          <Button 
+            type="submit" 
+            size="sm" 
+            disabled={!newMessage.trim() || sendMessageMutation.isPending || isStreaming}
+            className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-4 h-10 shadow-lg transition-all duration-200 hover:shadow-xl"
+          >
+            {sendMessageMutation.isPending || isStreaming ? (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+          </Button>
+        </form>
       </div>
     </div>
   );

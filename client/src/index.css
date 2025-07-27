@@ -49,6 +49,17 @@
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes slide-in {
   from {
     opacity: 0;
@@ -60,12 +71,25 @@
   }
 }
 
+@keyframes waveform {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.5); }
+}
+
 .animate-fade-in {
   animation: fade-in 0.5s ease-out;
 }
 
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
 .animate-slide-in {
   animation: slide-in 0.3s ease-out;
+}
+
+.animate-waveform {
+  animation: waveform 0.6s ease-in-out infinite;
 }
 
 /* Smooth scrolling for all scrollable areas */
