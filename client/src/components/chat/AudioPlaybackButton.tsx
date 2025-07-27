@@ -40,6 +40,7 @@ export function AudioPlaybackButton({
     
     try {
       console.log('🎵 Generating ElevenLabs audio for text:', text.substring(0, 50) + '...');
+      console.log('🎵 Using voice ID:', voiceId);
       
       const response = await fetch('/api/elevenlabs/speak', {
         method: 'POST',
@@ -58,8 +59,12 @@ export function AudioPlaybackButton({
         })
       });
 
+      console.log('🎵 ElevenLabs response status:', response.status);
+      console.log('🎵 ElevenLabs response headers:', response.headers.get('content-type'));
+
       if (response.ok) {
         const audioBlob = await response.blob();
+        console.log('🎵 Audio blob size:', audioBlob.size, 'bytes');
         const url = URL.createObjectURL(audioBlob);
         setAudioUrl(url);
         
@@ -71,10 +76,10 @@ export function AudioPlaybackButton({
           console.log('🎵 ElevenLabs audio finished');
         };
         
-        audio.onerror = () => {
+        audio.onerror = (error) => {
           setIsPlaying(false);
           setIsLoading(false);
-          console.error('🎵 ElevenLabs audio playback failed');
+          console.error('🎵 ElevenLabs audio playback failed:', error);
           toast({
             title: "Audio playback failed",
             description: "Could not play AI response audio",
@@ -88,7 +93,9 @@ export function AudioPlaybackButton({
         console.log('🎵 ElevenLabs audio started successfully');
         
       } else {
-        throw new Error(`ElevenLabs API error: ${response.status}`);
+        const errorText = await response.text();
+        console.error('🎵 ElevenLabs API error:', response.status, errorText);
+        throw new Error(`ElevenLabs API error: ${response.status} - ${errorText}`);
       }
     } catch (error) {
       console.error('🎵 ElevenLabs error:', error);
@@ -96,7 +103,7 @@ export function AudioPlaybackButton({
       setIsPlaying(false);
       toast({
         title: "ElevenLabs audio failed",
-        description: "Could not generate audio with ElevenLabs voice",
+        description: error instanceof Error ? error.message : "Could not generate audio with ElevenLabs voice",
         variant: "destructive",
       });
     }
