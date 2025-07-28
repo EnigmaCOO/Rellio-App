@@ -327,9 +327,9 @@ export function RightColumnChat({
       setIsStreaming(true);
       
       // Prepare context to match schema requirements
-      const requestContext = context.religion ? {
+      const requestContext = (context.religion && context.book) ? {
         religion: context.religion,
-        book: context.book || null,
+        book: context.book,
         chapter: context.chapter || null,
         multiReligiousPerspective: false
       } : {
@@ -338,6 +338,13 @@ export function RightColumnChat({
         chapter: null,
         multiReligiousPerspective: true
       };
+      
+      console.log('Context determination:', { 
+        originalContext: context, 
+        hasReligion: !!context.religion, 
+        hasBook: !!context.book, 
+        requestContext 
+      });
       
       console.log('Sending chat request:', { message, sessionId, context: requestContext });
       
