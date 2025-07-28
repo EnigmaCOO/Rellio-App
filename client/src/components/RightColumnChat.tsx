@@ -170,25 +170,56 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
     // Quran references - multiple patterns including ranges like "112:1-4"
     const quranPatterns = [
       /\bQuran\s+(\d+):(\d+)(?:[-–](\d+))?/gi,
-      /\bSurah\s+(\d+):(\d+)(?:[-–](\d+))?/gi
+      /\bSurah\s+(\d+):(\d+)(?:[-–](\d+))?/gi,
+      /\b(?:Quran|Qur'an|Qur'ān)\s+([A-Za-z-]+)\s+(\d+):(\d+)/gi, // Surah name format like "Quran Al-Fatihah 1:1"
+      /\b(?:Surah|Sura)\s+([A-Za-z-]+)\s+(\d+):(\d+)/gi, // "Surah Al-Fatihah 1:1"
+      /\b([A-Za-z-]+)\s+(\d+):(\d+)(?:\s+\(Quran\))?/gi, // Direct surah name like "Al-Fatihah 1:1"
+      /\b(?:Chapter|Ch\.)\s+(\d+),?\s+verse\s+(\d+)(?:\s+of\s+(?:the\s+)?Quran)?/gi // "Chapter 1, verse 1 of the Quran"
     ];
     
     // Map Quran chapter numbers to book names
     const getQuranBookName = (chapterNum: string) => {
       const chapterMap: { [key: string]: string } = {
         '1': 'Al-Fatihah', '2': 'Al-Baqarah', '3': 'Ali Imran', '4': 'An-Nisa',
-        '5': 'Al-Maidah', '112': 'Al-Ikhlas', '114': 'An-Nas'
+        '5': 'Al-Maidah', '6': 'Al-Anam', '7': 'Al-Araf', '8': 'Al-Anfal',
+        '9': 'At-Taubah', '10': 'Yunus', '11': 'Hud', '12': 'Yusuf',
+        '112': 'Al-Ikhlas', '113': 'Al-Falaq', '114': 'An-Nas'
         // Add more mappings as needed
       };
       return chapterMap[chapterNum] || `Surah ${chapterNum}`;
     };
     
-    quranPatterns.forEach(pattern => {
-      processedText = processedText.replace(pattern, (match, chapter, verse, endVerse) => {
-        console.log('Found Quran reference:', match, 'Chapter:', chapter, 'Verse:', verse, 'EndVerse:', endVerse);
+    quranPatterns.forEach((pattern, index) => {
+      processedText = processedText.replace(pattern, (match, ...groups) => {
+        let chapter, verse, bookName;
+        
+        if (index <= 1) {
+          // Patterns 0-1: /\bQuran\s+(\d+):(\d+)/ and /\bSurah\s+(\d+):(\d+)/
+          [chapter, verse] = groups;
+          bookName = getQuranBookName(chapter);
+        } else if (index <= 3) {
+          // Patterns 2-3: /\b(?:Quran|Qur'an)\s+([A-Za-z-]+)\s+(\d+):(\d+)/ - surah name format
+          [bookName, chapter, verse] = groups;
+          bookName = bookName || getQuranBookName(chapter);
+        } else if (index === 4) {
+          // Pattern 4: /\b([A-Za-z-]+)\s+(\d+):(\d+)/ - direct surah name
+          [bookName, chapter, verse] = groups;
+          // Only process if it looks like a Quran surah name
+          if (!bookName.toLowerCase().includes('al-') && !bookName.toLowerCase().includes('an-') && 
+              !['fatihah', 'baqarah', 'imran', 'nisa', 'maidah'].includes(bookName.toLowerCase())) {
+            return match; // Skip non-Quran references
+          }
+        } else {
+          // Pattern 5: Chapter/verse format
+          [chapter, verse] = groups;
+          bookName = getQuranBookName(chapter);
+        }
+        
         const targetVerse = verse || '1';
-        const bookName = getQuranBookName(chapter);
-        return `<span class="scripture-link cursor-pointer text-emerald-600 hover:text-emerald-800 hover:underline font-semibold bg-emerald-100 px-2 py-1 rounded-md border border-emerald-200 inline-block my-1 mr-1" data-religion="quran" data-book="${bookName}" data-chapter="${chapter}" data-verse="${targetVerse}" title="Click to navigate to ${bookName} ${chapter}:${targetVerse}">${match}</span>`;
+        const finalBookName = bookName || getQuranBookName(chapter);
+        
+        console.log('Found Quran reference:', match, 'Chapter:', chapter, 'Verse:', verse, 'Book:', finalBookName);
+        return `<span class="scripture-link cursor-pointer text-emerald-600 hover:text-emerald-800 hover:underline font-semibold bg-emerald-100 px-2 py-1 rounded-md border border-emerald-200 inline-block my-1 mr-1" data-religion="quran" data-book="${finalBookName}" data-chapter="${chapter}" data-verse="${targetVerse}" title="Click to navigate to ${finalBookName} ${chapter}:${targetVerse}">${match}</span>`;
       });
     });
 
@@ -678,7 +709,7 @@ export function RightColumnChat({
                       </div>
                       
                       {/* Enhanced Perspective chips for AI responses - only show for multi-religious responses */}
-                      {message.context?.multiReligiousPerspective && (
+                      {(message.context as any)?.multiReligiousPerspective && (
                         <div className="flex flex-wrap gap-1 items-center mt-2">
                           <Button 
                             variant="outline" 
