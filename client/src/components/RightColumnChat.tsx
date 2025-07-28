@@ -167,29 +167,52 @@ function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) 
       return `<span class="scripture-link cursor-pointer text-blue-600 hover:text-blue-800 hover:underline font-semibold bg-blue-100 px-2 py-1 rounded-md border border-blue-200 inline-block my-1 mr-1" data-religion="bible" data-book="${book}" data-chapter="${chapter}" data-verse="${verse || ''}" title="Click to navigate to ${book} ${chapter}:${verse}">${match}</span>`;
     });
 
-    // Quran references - multiple patterns
+    // Quran references - multiple patterns including ranges like "112:1-4"
     const quranPatterns = [
       /\bQuran\s+(\d+):(\d+)(?:[-–](\d+))?/gi,
       /\bSurah\s+(\d+):(\d+)(?:[-–](\d+))?/gi
     ];
     
+    // Map Quran chapter numbers to book names
+    const getQuranBookName = (chapterNum: string) => {
+      const chapterMap: { [key: string]: string } = {
+        '1': 'Al-Fatihah', '2': 'Al-Baqarah', '3': 'Ali Imran', '4': 'An-Nisa',
+        '5': 'Al-Maidah', '112': 'Al-Ikhlas', '114': 'An-Nas'
+        // Add more mappings as needed
+      };
+      return chapterMap[chapterNum] || `Surah ${chapterNum}`;
+    };
+    
     quranPatterns.forEach(pattern => {
-      processedText = processedText.replace(pattern, (match, chapter, verse) => {
-        console.log('Found Quran reference:', match, 'Chapter:', chapter, 'Verse:', verse);
-        return `<span class="scripture-link cursor-pointer text-emerald-600 hover:text-emerald-800 hover:underline font-semibold bg-emerald-100 px-2 py-1 rounded-md border border-emerald-200 inline-block my-1 mr-1" data-religion="quran" data-book="Quran" data-chapter="${chapter}" data-verse="${verse || ''}" title="Click to navigate to Quran ${chapter}:${verse}">${match}</span>`;
+      processedText = processedText.replace(pattern, (match, chapter, verse, endVerse) => {
+        console.log('Found Quran reference:', match, 'Chapter:', chapter, 'Verse:', verse, 'EndVerse:', endVerse);
+        const targetVerse = verse || '1';
+        const bookName = getQuranBookName(chapter);
+        return `<span class="scripture-link cursor-pointer text-emerald-600 hover:text-emerald-800 hover:underline font-semibold bg-emerald-100 px-2 py-1 rounded-md border border-emerald-200 inline-block my-1 mr-1" data-religion="quran" data-book="${bookName}" data-chapter="${chapter}" data-verse="${targetVerse}" title="Click to navigate to ${bookName} ${chapter}:${targetVerse}">${match}</span>`;
       });
     });
 
-    // Torah references
-    const torahPattern = /\b(Deuteronomy|Bereshit|Shemot|Vayikra|Bamidbar|Devarim)\s+(\d+):(\d+)/gi;
+    // Torah references - map English names to Hebrew names 
+    const torahPattern = /\b(Deuteronomy|Genesis|Exodus|Leviticus|Numbers|Bereshit|Shemot|Vayikra|Bamidbar|Devarim)\s+(\d+):(\d+)/gi;
+    
+    const getTorahBookName = (bookName: string) => {
+      const bookMap: { [key: string]: string } = {
+        'Genesis': 'Bereshit', 'Exodus': 'Shemot', 'Leviticus': 'Vayikra', 
+        'Numbers': 'Bamidbar', 'Deuteronomy': 'Devarim'
+      };
+      return bookMap[bookName] || bookName;
+    };
+    
     processedText = processedText.replace(torahPattern, (match, book, chapter, verse) => {
       console.log('Found Torah reference:', match, 'Book:', book, 'Chapter:', chapter, 'Verse:', verse);
-      return `<span class="scripture-link cursor-pointer text-amber-600 hover:text-amber-800 hover:underline font-semibold bg-amber-100 px-2 py-1 rounded-md border border-amber-200 inline-block my-1 mr-1" data-religion="torah" data-book="${book}" data-chapter="${chapter}" data-verse="${verse}" title="Click to navigate to ${book} ${chapter}:${verse}">${match}</span>`;
+      const hebrewBookName = getTorahBookName(book);
+      return `<span class="scripture-link cursor-pointer text-amber-600 hover:text-amber-800 hover:underline font-semibold bg-amber-100 px-2 py-1 rounded-md border border-amber-200 inline-block my-1 mr-1" data-religion="torah" data-book="${hebrewBookName}" data-chapter="${chapter}" data-verse="${verse}" title="Click to navigate to ${hebrewBookName} ${chapter}:${verse}">${match}</span>`;
     });
 
-    // Hindu references - Bhagavad Gita Chapter X, Verse Y format
+    // Hindu references - Bhagavad Gita Chapter X, Verse Y format (e.g., "Bhagavad Gita 9.22")
     const hinduPatterns = [
-      /\bBhagavad Gita\s+(\d+)[\.:]\s*(\d+)/gi,
+      /\bBhagavad\s+Gita\s+(\d+)[\.:]\s*(\d+)/gi,
+      /\bGita\s+(\d+)[\.:]\s*(\d+)/gi,
       /\bChapter\s+(\d+),?\s+Verse\s+(\d+)/gi
     ];
     
@@ -574,45 +597,77 @@ export function RightColumnChat({
                         />
                       </div>
                       
-                      {/* Enhanced Perspective chips for AI responses */}
-                      <div className="flex flex-wrap gap-1 items-center">
-                        <Badge variant="outline" className="text-xs border-teal-200 text-teal-700 bg-teal-50">
-                          <Eye className="w-3 h-3 mr-1" />
-                          Biblical
-                        </Badge>
-                        <Badge variant="outline" className="text-xs border-emerald-200 text-emerald-700 bg-emerald-50">
-                          <Heart className="w-3 h-3 mr-1" />
-                          Islamic
-                        </Badge>
-                        <Badge variant="outline" className="text-xs border-orange-200 text-orange-700 bg-orange-50">
-                          <Brain className="w-3 h-3 mr-1" />
-                          Hindu
-                        </Badge>
-                        <Badge variant="outline" className="text-xs border-purple-200 text-purple-700 bg-purple-50">
-                          <Zap className="w-3 h-3 mr-1" />
-                          Buddhist
-                        </Badge>
-                        {!expandedPerspectives && (
-                          <Button
-                            variant="ghost"
+                      {/* Enhanced Perspective chips for AI responses - only show for multi-religious responses */}
+                      {message.context?.multiReligiousPerspective && (
+                        <div className="flex flex-wrap gap-1 items-center mt-2">
+                          <Button 
+                            variant="outline" 
                             size="sm"
-                            className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700"
-                            onClick={() => setExpandedPerspectives(true)}
+                            className="text-xs border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 h-7 px-3"
+                            onClick={() => handleNavigateToVerse('bible', 'Genesis', 1, 1)}
                           >
-                            More...
+                            <Eye className="w-3 h-3 mr-1" />
+                            Biblical
                           </Button>
-                        )}
-                        {expandedPerspectives && (
-                          <>
-                            <Badge variant="outline" className="text-xs border-blue-200 text-blue-700 bg-blue-50">
-                              Torah
-                            </Badge>
-                            <Badge variant="outline" className="text-xs border-indigo-200 text-indigo-700 bg-indigo-50">
-                              Mystical
-                            </Badge>
-                          </>
-                        )}
-                      </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-xs border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 h-7 px-3"
+                            onClick={() => handleNavigateToVerse('quran', 'Al-Baqarah', 1, 1)}
+                          >
+                            <Heart className="w-3 h-3 mr-1" />
+                            Islamic
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-xs border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 h-7 px-3"
+                            onClick={() => handleNavigateToVerse('torah', 'Bereshit', 1, 1)}
+                          >
+                            <BookOpen className="w-3 h-3 mr-1" />
+                            Torah
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-xs border-orange-200 text-orange-700 bg-orange-50 hover:bg-orange-100 h-7 px-3"
+                            onClick={() => handleNavigateToVerse('hindu', 'Bhagavad Gita', 1, 1)}
+                          >
+                            <Brain className="w-3 h-3 mr-1" />
+                            Hindu
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-xs border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100 h-7 px-3"
+                            onClick={() => handleNavigateToVerse('buddhist', 'Dhammapada', 1, 1)}
+                          >
+                            <Zap className="w-3 h-3 mr-1" />
+                            Buddhist
+                          </Button>
+                          {!expandedPerspectives && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700"
+                              onClick={() => setExpandedPerspectives(true)}
+                            >
+                              More...
+                            </Button>
+                          )}
+                          {expandedPerspectives && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-xs border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 h-7 px-3"
+                              onClick={() => setExpandedPerspectives(false)}
+                            >
+                              <Sparkles className="w-3 h-3 mr-1" />
+                              Less
+                            </Button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
