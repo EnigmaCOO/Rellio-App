@@ -429,6 +429,86 @@ export function RightColumnChat({
     });
   };
 
+  const handlePerspectiveClick = async (religion: Religion, aiResponseContent: string) => {
+    // Extract the original question from the messages
+    const lastUserMessage = messages.filter(m => m.type === 'user').pop();
+    if (!lastUserMessage) return;
+
+    const originalQuestion = lastUserMessage.content;
+    
+    // Map religion to tradition names
+    const traditionNames = {
+      'bible': 'Biblical/Christian',
+      'quran': 'Islamic',
+      'torah': 'Jewish/Torah',
+      'hindu': 'Hindu/Bhagavad Gita',
+      'buddhist': 'Buddhist/Tripitaka'
+    };
+
+    const traditionName = traditionNames[religion] || religion;
+    
+    // Create a focused question for the specific tradition
+    const focusedQuestion = `From the ${traditionName} perspective only, please provide a detailed answer to this question: "${originalQuestion}". Include specific scripture references and explain the teachings from this tradition's sacred texts.`;
+    
+    console.log('Requesting specific perspective:', { religion, originalQuestion, focusedQuestion });
+    
+    toast({
+      title: `Getting ${traditionName} perspective`,
+      description: "Fetching detailed answer from this tradition...",
+    });
+
+    // Send the focused question with specific religious context
+    try {
+      setIsStreaming(true);
+      
+      const requestContext = {
+        religion: religion,
+        book: getDefaultBookForReligion(religion),
+        chapter: 1,
+        multiReligiousPerspective: false
+      };
+
+      console.log('Sending perspective request:', { focusedQuestion, sessionId, context: requestContext });
+      
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: focusedQuestion, sessionId, context: requestContext })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Perspective API error:', errorData);
+        throw new Error(errorData.error || 'Failed to send perspective request');
+      }
+      
+      await response.json();
+      queryClient.invalidateQueries({ queryKey: [`/api/chat/${sessionId}`] });
+      setIsStreaming(false);
+    } catch (error) {
+      console.error('Error getting perspective:', error);
+      setIsStreaming(false);
+      toast({
+        title: "Error",
+        description: "Failed to get perspective. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getDefaultBookForReligion = (religion: Religion): string => {
+    const defaultBooks = {
+      'bible': 'Genesis',
+      'quran': 'Al-Fatihah',
+      'torah': 'Bereshit',
+      'hindu': 'Bhagavad Gita',
+      'buddhist': 'Dhammapada'
+    };
+    return defaultBooks[religion] || 'Genesis';
+  };
+
   // Quick suggestion chips
   const getQuickSuggestions = () => {
     if (!context.religion || !context.book) {
@@ -604,7 +684,7 @@ export function RightColumnChat({
                             variant="outline" 
                             size="sm"
                             className="text-xs border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 h-7 px-3"
-                            onClick={() => handleNavigateToVerse('bible', 'Genesis', 1, 1)}
+                            onClick={() => handlePerspectiveClick('bible', message.content)}
                           >
                             <Eye className="w-3 h-3 mr-1" />
                             Biblical
@@ -613,7 +693,7 @@ export function RightColumnChat({
                             variant="outline" 
                             size="sm"
                             className="text-xs border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 h-7 px-3"
-                            onClick={() => handleNavigateToVerse('quran', 'Al-Baqarah', 1, 1)}
+                            onClick={() => handlePerspectiveClick('quran', message.content)}
                           >
                             <Heart className="w-3 h-3 mr-1" />
                             Islamic
@@ -622,7 +702,7 @@ export function RightColumnChat({
                             variant="outline" 
                             size="sm"
                             className="text-xs border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 h-7 px-3"
-                            onClick={() => handleNavigateToVerse('torah', 'Bereshit', 1, 1)}
+                            onClick={() => handlePerspectiveClick('torah', message.content)}
                           >
                             <BookOpen className="w-3 h-3 mr-1" />
                             Torah
@@ -631,7 +711,7 @@ export function RightColumnChat({
                             variant="outline" 
                             size="sm"
                             className="text-xs border-orange-200 text-orange-700 bg-orange-50 hover:bg-orange-100 h-7 px-3"
-                            onClick={() => handleNavigateToVerse('hindu', 'Bhagavad Gita', 1, 1)}
+                            onClick={() => handlePerspectiveClick('hindu', message.content)}
                           >
                             <Brain className="w-3 h-3 mr-1" />
                             Hindu
@@ -640,7 +720,7 @@ export function RightColumnChat({
                             variant="outline" 
                             size="sm"
                             className="text-xs border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100 h-7 px-3"
-                            onClick={() => handleNavigateToVerse('buddhist', 'Dhammapada', 1, 1)}
+                            onClick={() => handlePerspectiveClick('buddhist', message.content)}
                           >
                             <Zap className="w-3 h-3 mr-1" />
                             Buddhist
