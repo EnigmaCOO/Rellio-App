@@ -108,91 +108,7 @@ export function RightColumnChat({
   const messageEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Enhanced Response Renderer for Interactive Multi-Religious Content
-  const [expandedPerspective, setExpandedPerspective] = useState<string | null>(null);
-
-  const parseMultiReligiousResponse = (content: string) => {
-    const perspectives: { [key: string]: string } = {};
-    let introduction = '';
-    let conclusion = '';
-    
-    // Split by numbered perspective patterns
-    const lines = content.split('\n');
-    let currentSection = '';
-    let currentContent = '';
-    let isInConclusion = false;
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-      
-      // Check for conclusion section
-      if (line.toLowerCase().includes('in conclusion')) {
-        isInConclusion = true;
-        // Save current perspective if exists
-        if (currentSection && currentContent) {
-          perspectives[currentSection] = currentContent.trim();
-        }
-        conclusion = line;
-        continue;
-      }
-      
-      if (isInConclusion) {
-        conclusion += ' ' + line;
-        continue;
-      }
-      
-      // Check for perspective markers (bullet point format)
-      if (line.match(/^-\s*\*\*Biblical perspective:\*\*/)) {
-        if (currentSection && currentContent) {
-          perspectives[currentSection] = currentContent.trim();
-        }
-        currentSection = 'Biblical';
-        currentContent = line.replace(/^-\s*\*\*Biblical perspective:\*\*/, '').trim();
-      } else if (line.match(/^-\s*\*\*Quranic perspective:\*\*/)) {
-        if (currentSection && currentContent) {
-          perspectives[currentSection] = currentContent.trim();
-        }
-        currentSection = 'Islamic';
-        currentContent = line.replace(/^-\s*\*\*Quranic perspective:\*\*/, '').trim();
-      } else if (line.match(/^-\s*\*\*Torah perspective:\*\*/)) {
-        if (currentSection && currentContent) {
-          perspectives[currentSection] = currentContent.trim();
-        }
-        currentSection = 'Torah';
-        currentContent = line.replace(/^-\s*\*\*Torah perspective:\*\*/, '').trim();
-      } else if (line.match(/^-\s*\*\*Hindu perspective:\*\*/)) {
-        if (currentSection && currentContent) {
-          perspectives[currentSection] = currentContent.trim();
-        }
-        currentSection = 'Hindu';
-        currentContent = line.replace(/^-\s*\*\*Hindu perspective:\*\*/, '').trim();
-      } else if (line.match(/^-\s*\*\*Buddhist perspective:\*\*/)) {
-        if (currentSection && currentContent) {
-          perspectives[currentSection] = currentContent.trim();
-        }
-        currentSection = 'Buddhist';
-        currentContent = line.replace(/^-\s*\*\*Buddhist perspective:\*\*/, '').trim();
-      } else if (currentSection) {
-        // Continue adding to current perspective
-        currentContent += ' ' + line;
-      } else if (!currentSection && line && !line.includes('perspective:')) {
-        // This is introduction content
-        introduction += line + ' ';
-      }
-    }
-    
-    // Save the last perspective
-    if (currentSection && currentContent) {
-      perspectives[currentSection] = currentContent.trim();
-    }
-    
-    return { 
-      introduction: introduction.trim(), 
-      perspectives, 
-      conclusion: conclusion.trim() 
-    };
-  };
-
+  // Simple Response Renderer (Restored Original)
   const renderEnhancedResponse = (content: string) => {
     // Check if this is a multi-religious response
     const hasMultiReligious = content.includes('Biblical perspective') || 
@@ -203,88 +119,60 @@ export function RightColumnChat({
 
     if (!hasMultiReligious) {
       return (
-        <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
-          {content}
+        <div>
+          <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap mb-3">
+            {content}
+          </div>
         </div>
       );
     }
 
-    const { introduction, perspectives, conclusion } = parseMultiReligiousResponse(content);
+    // Parse multi-religious response and extract just the introduction
+    const lines = content.split('\n');
+    let introduction = '';
     
-    // Debug logging
-    console.log('Content parsing result:', { 
-      introduction: introduction.substring(0, 100) + '...', 
-      perspectiveKeys: Object.keys(perspectives), 
-      conclusion: conclusion.substring(0, 50) + '...' 
-    });
-    
-    const perspectiveConfigs = [
-      { key: 'Biblical', icon: Eye, color: 'blue', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', textColor: 'text-blue-700' },
-      { key: 'Islamic', icon: Heart, color: 'green', bgColor: 'bg-green-50', borderColor: 'border-green-200', textColor: 'text-green-700' },
-      { key: 'Hindu', icon: Zap, color: 'orange', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-700' },
-      { key: 'Buddhist', icon: Play, color: 'purple', bgColor: 'bg-purple-50', borderColor: 'border-purple-200', textColor: 'text-purple-700' },
-      { key: 'Torah', icon: Star, color: 'blue', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', textColor: 'text-blue-700' },
-      { key: 'Mystical', icon: Sparkles, color: 'indigo', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200', textColor: 'text-indigo-700' }
-    ];
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.includes('perspective:') && !trimmed.startsWith('-') && !trimmed.toLowerCase().includes('conclusion') && trimmed.length > 0) {
+        introduction += trimmed + ' ';
+      }
+      if (trimmed.includes('perspective:')) break; // Stop at first perspective
+    }
     
     return (
-      <div className="space-y-4">
-        {/* Introduction */}
-        {introduction && (
-          <div className="text-gray-800 text-sm leading-relaxed">
-            {introduction}
-          </div>
-        )}
-
-        {/* Interactive Perspective Badges */}
-        <div className="flex flex-wrap gap-2">
-          {perspectiveConfigs.map(({ key, icon: Icon, bgColor, borderColor, textColor }) => {
-            const hasContent = perspectives[key];
-            if (!hasContent) return null;
-            
-            return (
-              <button
-                key={key}
-                onClick={() => setExpandedPerspective(expandedPerspective === key ? null : key)}
-                className={`flex items-center gap-1 px-3 py-2 ${bgColor} border ${borderColor} rounded-full hover:shadow-md transition-all duration-200 cursor-pointer ${
-                  expandedPerspective === key ? 'ring-2 ring-offset-1 ring-blue-500' : ''
-                }`}
-              >
-                <Icon className={`w-3 h-3 text-${key.toLowerCase()}-600`} />
-                <span className={`text-xs font-medium ${textColor}`}>{key}</span>
-              </button>
-            );
-          })}
+      <div className="space-y-3">
+        {/* Clean introduction text */}
+        <div className="text-gray-800 text-sm leading-relaxed">
+          {introduction.trim()}
         </div>
 
-        {/* Expanded Perspective Content */}
-        {expandedPerspective && perspectives[expandedPerspective] && (
-          <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-            <div className="flex items-center gap-2 mb-3">
-              {(() => {
-                const config = perspectiveConfigs.find(p => p.key === expandedPerspective);
-                if (!config) return null;
-                const Icon = config.icon;
-                return (
-                  <>
-                    <Icon className={`w-4 h-4 text-${expandedPerspective.toLowerCase()}-600`} />
-                    <h4 className={`font-medium ${config.textColor}`}>{expandedPerspective} Perspective</h4>
-                  </>
-                );
-              })()}
-            </div>
-            <div className="text-gray-800 text-sm leading-relaxed">
-              {perspectives[expandedPerspective]}
-            </div>
+        {/* Beautiful colored perspective badges */}
+        <div className="flex flex-wrap gap-2">
+          <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
+            <Eye className="w-3 h-3 text-blue-600" />
+            <span className="text-xs font-medium text-blue-700">Biblical</span>
           </div>
-        )}
-
-        {/* Conclusion */}
-        {conclusion && (
-          <div className="text-gray-800 text-sm leading-relaxed pt-2 border-t border-gray-100">
-            {conclusion}
+          <div className="flex items-center gap-1 px-2 py-1 bg-green-50 border border-green-200 rounded-full">
+            <Heart className="w-3 h-3 text-green-600" />
+            <span className="text-xs font-medium text-green-700">Islamic</span>
           </div>
-        )}
+          <div className="flex items-center gap-1 px-2 py-1 bg-orange-50 border border-orange-200 rounded-full">
+            <Zap className="w-3 h-3 text-orange-600" />
+            <span className="text-xs font-medium text-orange-700">Hindu</span>
+          </div>
+          <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 border border-purple-200 rounded-full">
+            <Play className="w-3 h-3 text-purple-600" />
+            <span className="text-xs font-medium text-purple-700">Buddhist</span>
+          </div>
+          <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
+            <Star className="w-3 h-3 text-blue-600" />
+            <span className="text-xs font-medium text-blue-700">Torah</span>
+          </div>
+          <div className="flex items-center gap-1 px-2 py-1 bg-indigo-50 border border-indigo-200 rounded-full">
+            <Sparkles className="w-3 h-3 text-indigo-600" />
+            <span className="text-xs font-medium text-indigo-700">Mystical</span>
+          </div>
+        </div>
       </div>
     );
   };
@@ -447,13 +335,8 @@ export function RightColumnChat({
               <MessageCircle className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-sm text-gray-900">AI Scripture Guide</h3>
-              <p className="text-xs text-gray-500">
-                {context.religion && context.book 
-                  ? `${context.religion} - ${context.book}` 
-                  : "Multi-religious AI assistant"
-                }
-              </p>
+              <h3 className="font-semibold text-sm text-gray-900">Aura Archivist</h3>
+              <p className="text-xs text-gray-500">Your spiritual guide</p>
             </div>
           </div>
           
@@ -485,12 +368,9 @@ export function RightColumnChat({
               <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <MessageCircle className="w-8 h-8 text-teal-600" />
               </div>
-              <h4 className="font-medium text-gray-900 mb-2">Welcome to AI Scripture Guide</h4>
+              <h4 className="font-medium text-gray-900 mb-2">Welcome to Aura Archivist</h4>
               <p className="text-sm text-gray-600 mb-6 max-w-sm mx-auto">
-                {context.religion && context.book 
-                  ? `Ask questions about ${context.religion} - ${context.book}` 
-                  : "Explore spiritual wisdom from multiple religious traditions"
-                }
+                Your spiritual guide for exploring wisdom from multiple religious traditions
               </p>
               
               <div className="space-y-3">
@@ -643,11 +523,7 @@ export function RightColumnChat({
         }} className="flex gap-2">
           <Input
             name="message"
-            placeholder={
-              context.religion && context.book 
-                ? `Ask questions about ${context.religion} - ${context.book}...` 
-                : "Ask spiritual questions..."
-            }
+            placeholder="Ask about scripture..."
             disabled={sendMessageMutation.isPending || isStreaming}
             className="flex-1 text-sm"
           />
