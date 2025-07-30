@@ -116,36 +116,81 @@ export function RightColumnChat({
     let introduction = '';
     let conclusion = '';
     
-    // Split content by perspective markers
-    const sections = content.split(/(?=\d+\.\s*\*\*[^:]+perspective:\*\*)/);
+    // Split by numbered perspective patterns
+    const lines = content.split('\n');
+    let currentSection = '';
+    let currentContent = '';
+    let isInConclusion = false;
     
-    // Extract introduction (first section)
-    if (sections[0] && !sections[0].includes('perspective:')) {
-      introduction = sections[0].trim();
-    }
-    
-    // Process each perspective section
-    sections.forEach(section => {
-      if (section.includes('Biblical perspective:')) {
-        perspectives.Biblical = section.replace(/^\d+\.\s*\*\*Biblical perspective:\*\*/, '').trim();
-      } else if (section.includes('Quranic perspective:')) {
-        perspectives.Islamic = section.replace(/^\d+\.\s*\*\*Quranic perspective:\*\*/, '').trim();
-      } else if (section.includes('Torah perspective:')) {
-        perspectives.Torah = section.replace(/^\d+\.\s*\*\*Torah perspective:\*\*/, '').trim();
-      } else if (section.includes('Hindu perspective:')) {
-        perspectives.Hindu = section.replace(/^\d+\.\s*\*\*Hindu perspective:\*\*/, '').trim();
-      } else if (section.includes('Buddhist perspective:')) {
-        perspectives.Buddhist = section.replace(/^\d+\.\s*\*\*Buddhist perspective:\*\*/, '').trim();
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Check for conclusion section
+      if (line.toLowerCase().includes('in conclusion')) {
+        isInConclusion = true;
+        // Save current perspective if exists
+        if (currentSection && currentContent) {
+          perspectives[currentSection] = currentContent.trim();
+        }
+        conclusion = line;
+        continue;
       }
-    });
-    
-    // Extract conclusion
-    const conclusionMatch = content.match(/In conclusion[^]*$/i);
-    if (conclusionMatch) {
-      conclusion = conclusionMatch[0].trim();
+      
+      if (isInConclusion) {
+        conclusion += ' ' + line;
+        continue;
+      }
+      
+      // Check for perspective markers (bullet point format)
+      if (line.match(/^-\s*\*\*Biblical perspective:\*\*/)) {
+        if (currentSection && currentContent) {
+          perspectives[currentSection] = currentContent.trim();
+        }
+        currentSection = 'Biblical';
+        currentContent = line.replace(/^-\s*\*\*Biblical perspective:\*\*/, '').trim();
+      } else if (line.match(/^-\s*\*\*Quranic perspective:\*\*/)) {
+        if (currentSection && currentContent) {
+          perspectives[currentSection] = currentContent.trim();
+        }
+        currentSection = 'Islamic';
+        currentContent = line.replace(/^-\s*\*\*Quranic perspective:\*\*/, '').trim();
+      } else if (line.match(/^-\s*\*\*Torah perspective:\*\*/)) {
+        if (currentSection && currentContent) {
+          perspectives[currentSection] = currentContent.trim();
+        }
+        currentSection = 'Torah';
+        currentContent = line.replace(/^-\s*\*\*Torah perspective:\*\*/, '').trim();
+      } else if (line.match(/^-\s*\*\*Hindu perspective:\*\*/)) {
+        if (currentSection && currentContent) {
+          perspectives[currentSection] = currentContent.trim();
+        }
+        currentSection = 'Hindu';
+        currentContent = line.replace(/^-\s*\*\*Hindu perspective:\*\*/, '').trim();
+      } else if (line.match(/^-\s*\*\*Buddhist perspective:\*\*/)) {
+        if (currentSection && currentContent) {
+          perspectives[currentSection] = currentContent.trim();
+        }
+        currentSection = 'Buddhist';
+        currentContent = line.replace(/^-\s*\*\*Buddhist perspective:\*\*/, '').trim();
+      } else if (currentSection) {
+        // Continue adding to current perspective
+        currentContent += ' ' + line;
+      } else if (!currentSection && line && !line.includes('perspective:')) {
+        // This is introduction content
+        introduction += line + ' ';
+      }
     }
     
-    return { introduction, perspectives, conclusion };
+    // Save the last perspective
+    if (currentSection && currentContent) {
+      perspectives[currentSection] = currentContent.trim();
+    }
+    
+    return { 
+      introduction: introduction.trim(), 
+      perspectives, 
+      conclusion: conclusion.trim() 
+    };
   };
 
   const renderEnhancedResponse = (content: string) => {
@@ -165,6 +210,13 @@ export function RightColumnChat({
     }
 
     const { introduction, perspectives, conclusion } = parseMultiReligiousResponse(content);
+    
+    // Debug logging
+    console.log('Content parsing result:', { 
+      introduction: introduction.substring(0, 100) + '...', 
+      perspectiveKeys: Object.keys(perspectives), 
+      conclusion: conclusion.substring(0, 50) + '...' 
+    });
     
     const perspectiveConfigs = [
       { key: 'Biblical', icon: Eye, color: 'blue', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', textColor: 'text-blue-700' },
@@ -195,7 +247,7 @@ export function RightColumnChat({
                 key={key}
                 onClick={() => setExpandedPerspective(expandedPerspective === key ? null : key)}
                 className={`flex items-center gap-1 px-3 py-2 ${bgColor} border ${borderColor} rounded-full hover:shadow-md transition-all duration-200 cursor-pointer ${
-                  expandedPerspective === key ? 'ring-2 ring-offset-1 ring-' + key.toLowerCase() : ''
+                  expandedPerspective === key ? 'ring-2 ring-offset-1 ring-blue-500' : ''
                 }`}
               >
                 <Icon className={`w-3 h-3 text-${key.toLowerCase()}-600`} />
