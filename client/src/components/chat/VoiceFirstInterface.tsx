@@ -382,10 +382,26 @@ export function VoiceFirstInterface({ onSendMessage, onInterruption, disabled = 
   };
 
   const startVoiceInput = () => {
+    console.log('🎤 Attempting to start voice input', { 
+      recognition: !!recognition, 
+      mode, 
+      isSupported,
+      privacyConsent 
+    });
+
+    if (!isSupported) {
+      toast({
+        title: "Voice input not supported",
+        description: "Your browser doesn't support voice recognition. Please use text input.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!privacyConsent) {
       toast({
         title: "Privacy Consent Required",
-        description: "Please confirm you consent to voice processing",
+        description: "Please confirm you consent to voice processing below",
         variant: "destructive",
       });
       return;
@@ -394,17 +410,26 @@ export function VoiceFirstInterface({ onSendMessage, onInterruption, disabled = 
     if (recognition && mode === 'idle') {
       setTranscript("");
       setInterimTranscript("");
+      setMode('processing'); // Set to processing first to prevent double-starts
+      
       try {
         recognition.lang = selectedLanguage;
+        console.log('🎤 Starting recognition with language:', selectedLanguage);
         recognition.start();
       } catch (error) {
         console.error('🎤 Failed to start voice recognition:', error);
+        setMode('idle'); // Reset mode on error
         toast({
           title: "Voice input failed",
-          description: "Please check microphone permissions",
+          description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
           variant: "destructive",
         });
       }
+    } else {
+      console.warn('🎤 Cannot start voice input:', { 
+        hasRecognition: !!recognition, 
+        currentMode: mode 
+      });
     }
   };
 
@@ -507,6 +532,10 @@ export function VoiceFirstInterface({ onSendMessage, onInterruption, disabled = 
   const switchToTextMode = () => {
     setMode('text');
     cancelVoiceInput();
+    toast({
+      title: "Switched to text mode",
+      description: "You can type your questions in the text input below",
+    });
   };
 
   const switchToVoiceMode = () => {
@@ -951,6 +980,28 @@ export function VoiceFirstInterface({ onSendMessage, onInterruption, disabled = 
                 </span>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      
+      {/* Privacy Consent Interface */}
+      {!privacyConsent && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-xs text-amber-800 mb-2">
+                <strong>Voice Privacy:</strong> Voice processing happens locally in your browser. 
+                No audio is stored or sent to external servers.
+              </p>
+              <Button
+                size="sm"
+                onClick={() => setPrivacyConsent(true)}
+                className="bg-amber-600 hover:bg-amber-700 text-white text-xs"
+              >
+                Enable Voice Input
+              </Button>
+            </div>
           </div>
         </div>
       )}
