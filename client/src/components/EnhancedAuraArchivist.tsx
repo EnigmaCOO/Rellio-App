@@ -477,14 +477,14 @@ export function EnhancedAuraArchivist({
       <MandalaOverlay opacity={0.08} />
       
       {/* Enhanced Header with Spiritual Gradient */}
-      <div className="flex-shrink-0 relative bg-gradient-to-r from-purple-50 via-white to-yellow-50 border-b border-gray-100 p-4">
-        <div className="flex items-center justify-between mb-3">
+      <div className="flex-shrink-0 relative bg-gradient-to-r from-purple-50 via-white to-yellow-50 border-b border-gray-100 p-3">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-md">
-              <Brain className="h-5 w-5 text-white" />
+            <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center shadow-md">
+              <Brain className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Aura Archivist</h2>
+              <h2 className="text-base font-bold text-gray-900">Aura Archivist</h2>
               <p className="text-xs text-gray-600">{getHeaderText()}</p>
             </div>
           </div>
@@ -532,7 +532,7 @@ export function EnhancedAuraArchivist({
 
       {/* Messages Area */}
       <div className="flex-1 overflow-hidden">
-        <div className="h-full overflow-y-auto p-4">
+        <div className="h-full overflow-y-auto p-3">
           {isLoading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
@@ -608,7 +608,7 @@ export function EnhancedAuraArchivist({
       </div>
 
       {/* Enhanced Input Area with Voice-First Design */}
-      <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 space-y-3 flex-shrink-0">
+      <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white p-3 space-y-2 flex-shrink-0">
         {/* Voice-First Interface */}
         <VoiceFirstInterface
           onSubmit={handleSendMessage}
