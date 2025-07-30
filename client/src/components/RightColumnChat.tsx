@@ -30,8 +30,6 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
-import { VoiceFirstInterface } from "./chat/VoiceFirstInterface";
-import { AudioPlaybackButton } from "./chat/AudioPlaybackButton";
 
 interface RightColumnChatProps {
   sessionId: string;
@@ -243,25 +241,7 @@ export function RightColumnChat({
     ];
   };
 
-  // Handle voice interruption functionality
-  const handleVoiceInterruption = () => {
-    if (isStreaming) {
-      setIsStreaming(false);
-      
-      // Mark the most recent AI message as interrupted
-      const lastAiMessage = messages.filter(m => m.type === 'ai').pop();
-      if (lastAiMessage) {
-        const messageId = `ai_${messages.indexOf(lastAiMessage)}_${lastAiMessage.timestamp || Date.now()}`;
-        setInterruptedMessages(prev => new Set([...Array.from(prev), messageId]));
-      }
-      
-      toast({
-        title: "Response Interrupted",
-        description: "You can resume the conversation or ask a new question",
-        variant: "default"
-      });
-    }
-  };
+
 
 
 
@@ -453,22 +433,36 @@ export function RightColumnChat({
         </div>
       </ScrollArea>
 
-      {/* Enhanced Input Area with Voice Interface */}
-      <div className="border-t border-gray-100 bg-gray-50/50">
-        <VoiceFirstInterface
-          onSendMessage={(message) => {
-            if (message.trim() && !sendMessageMutation.isPending && !isStreaming) {
-              sendMessageMutation.mutate(message.trim());
+      {/* Simple Text Input - Restored Original */}
+      <div className="p-4 border-t border-gray-100 bg-gray-50/50">
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.currentTarget);
+          const message = formData.get('message') as string;
+          if (message.trim() && !sendMessageMutation.isPending && !isStreaming) {
+            sendMessageMutation.mutate(message.trim());
+            e.currentTarget.reset();
+          }
+        }} className="flex gap-2">
+          <Input
+            name="message"
+            placeholder={
+              context.religion && context.book 
+                ? `Ask questions about ${context.religion} - ${context.book}...` 
+                : "Ask spiritual questions..."
             }
-          }}
-          onInterruption={(message) => handleVoiceInterruption()}
-          isStreaming={isStreaming}
-          context={{
-            religion: context.religion || null,
-            book: context.book
-          }}
-          disabled={sendMessageMutation.isPending || isStreaming}
-        />
+            disabled={sendMessageMutation.isPending || isStreaming}
+            className="flex-1 text-sm"
+          />
+          <Button 
+            type="submit" 
+            size="sm"
+            disabled={sendMessageMutation.isPending || isStreaming}
+            className="bg-teal-600 hover:bg-teal-700 text-white"
+          >
+            <Send className="w-4 h-4" />
+          </Button>
+        </form>
       </div>
     </div>
   );
