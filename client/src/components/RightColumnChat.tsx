@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
-import { VoiceInputButton } from "./chat/VoiceInputButton";
+import { VoiceFirstInterface } from "./chat/VoiceFirstInterface";
 import { AudioPlaybackButton } from "./chat/AudioPlaybackButton";
 
 interface RightColumnChatProps {
@@ -361,7 +361,6 @@ export function RightColumnChat({
   const messageEndRef = useRef<HTMLDivElement>(null);
   
   // Component state
-  const [newMessage, setNewMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [userStreak, setUserStreak] = useState(3); // Mock streak data
   const [showHistory, setShowHistory] = useState(false);
@@ -418,7 +417,6 @@ export function RightColumnChat({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/chat/${sessionId}`] });
-      setNewMessage("");
       setIsStreaming(false);
     },
     onError: (error) => {
@@ -445,12 +443,7 @@ export function RightColumnChat({
     }
   }, [externalMessage]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newMessage.trim() && !sendMessageMutation.isPending && !isStreaming) {
-      sendMessageMutation.mutate(newMessage.trim());
-    }
-  };
+  // Remove handleSendMessage as it's now handled by VoiceFirstInterface
 
   const handleNavigateToVerse = (religion: Religion, book: string, chapter: number, verse?: number) => {
     onNavigateToVerse?.(religion, book, chapter, verse);
@@ -663,7 +656,12 @@ export function RightColumnChat({
                       variant="outline"
                       size="sm"
                       className="text-xs h-8 border-teal-200 hover:border-teal-400 hover:bg-teal-50 hover:shadow-md transition-all duration-200"
-                      onClick={() => setNewMessage(suggestion)}
+                      onClick={() => {
+                        // Trigger voice interface or send message directly
+                        if (suggestion && !sendMessageMutation.isPending && !isStreaming) {
+                          sendMessageMutation.mutate(suggestion.trim());
+                        }
+                      }}
                     >
                       {suggestion}
                     </Button>
@@ -819,7 +817,12 @@ export function RightColumnChat({
                 variant="outline"
                 size="sm"
                 className="text-xs h-7 border-teal-200 hover:border-teal-400 hover:bg-teal-50 hover:shadow-md transition-all duration-200"
-                onClick={() => setNewMessage(suggestion)}
+                onClick={() => {
+                  // Trigger voice interface or send message directly
+                  if (suggestion && !sendMessageMutation.isPending && !isStreaming) {
+                    sendMessageMutation.mutate(suggestion.trim());
+                  }
+                }}
               >
                 {suggestion}
               </Button>
@@ -828,43 +831,19 @@ export function RightColumnChat({
         </div>
       )}
 
-      {/* Enhanced Sticky Input Area */}
-      <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 p-4 relative z-10">
-        <form onSubmit={handleSendMessage} className="flex gap-2 items-end">
-          <div className="flex-1 relative">
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Ask about scripture..."
-              className="rounded-full border-gray-300 focus:border-teal-500 focus:ring-teal-500 pr-12"
-              disabled={sendMessageMutation.isPending || isStreaming}
-            />
-            {/* Voice input button inside input */}
-            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-              <VoiceInputButton
-                onTranscription={(text) => {
-                  console.log('📝 Voice transcription received:', text);
-                  setNewMessage(text);
-                }}
-                disabled={sendMessageMutation.isPending || isStreaming}
-              />
-            </div>
-          </div>
-          
-          <Button 
-            type="submit" 
-            size="sm" 
-            disabled={!newMessage.trim() || sendMessageMutation.isPending || isStreaming}
-            className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-4 h-10 shadow-lg transition-all duration-200 hover:shadow-xl"
-          >
-            {sendMessageMutation.isPending || isStreaming ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Send className="w-4 h-4" />
-            )}
-          </Button>
-        </form>
-      </div>
+      {/* Voice-First Interface */}
+      <VoiceFirstInterface
+        onSendMessage={(message) => {
+          if (message.trim() && !sendMessageMutation.isPending && !isStreaming) {
+            sendMessageMutation.mutate(message.trim());
+          }
+        }}
+        disabled={sendMessageMutation.isPending || isStreaming}
+        context={{
+          religion: context.religion,
+          book: context.book,
+        }}
+      />
     </div>
   );
 }
