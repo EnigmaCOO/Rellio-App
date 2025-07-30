@@ -107,6 +107,138 @@ export function RightColumnChat({
   const messageEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
+  // Enhanced Response Renderer for Multi-Religious Content
+  const renderEnhancedResponse = (content: string) => {
+    // Check if this is a multi-religious response by looking for perspective indicators
+    const hasMultiReligious = content.includes('Biblical perspective') || 
+                              content.includes('Quranic perspective') ||
+                              content.includes('Torah perspective') ||
+                              content.includes('Hindu perspective') ||
+                              content.includes('Buddhist perspective');
+
+    if (!hasMultiReligious) {
+      // Regular response with badges
+      return (
+        <div>
+          <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap mb-3">
+            {content}
+          </div>
+          
+          {/* Multi-Religious Perspective Badges */}
+          <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
+              <Eye className="w-3 h-3 text-blue-600" />
+              <span className="text-xs font-medium text-blue-700">Biblical</span>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 bg-green-50 border border-green-200 rounded-full">
+              <Heart className="w-3 h-3 text-green-600" />
+              <span className="text-xs font-medium text-green-700">Islamic</span>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 bg-orange-50 border border-orange-200 rounded-full">
+              <Zap className="w-3 h-3 text-orange-600" />
+              <span className="text-xs font-medium text-orange-700">Hindu</span>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 border border-purple-200 rounded-full">
+              <Play className="w-3 h-3 text-purple-600" />
+              <span className="text-xs font-medium text-purple-700">Buddhist</span>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
+              <Star className="w-3 h-3 text-blue-600" />
+              <span className="text-xs font-medium text-blue-700">Torah</span>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 bg-indigo-50 border border-indigo-200 rounded-full">
+              <Sparkles className="w-3 h-3 text-indigo-600" />
+              <span className="text-xs font-medium text-indigo-700">Mystical</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Parse multi-religious response
+    const lines = content.split('\n');
+    let currentSection = '';
+    let introduction = '';
+    let conclusion = '';
+    const perspectives: { [key: string]: string } = {};
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      
+      if (trimmed.includes('**Biblical perspective:**')) {
+        currentSection = 'Biblical';
+        perspectives[currentSection] = trimmed.replace('**Biblical perspective:**', '').trim();
+      } else if (trimmed.includes('**Quranic perspective:**')) {
+        currentSection = 'Islamic';
+        perspectives[currentSection] = trimmed.replace('**Quranic perspective:**', '').trim();
+      } else if (trimmed.includes('**Torah perspective:**')) {
+        currentSection = 'Torah';
+        perspectives[currentSection] = trimmed.replace('**Torah perspective:**', '').trim();
+      } else if (trimmed.includes('**Hindu perspective:**')) {
+        currentSection = 'Hindu';
+        perspectives[currentSection] = trimmed.replace('**Hindu perspective:**', '').trim();
+      } else if (trimmed.includes('**Buddhist perspective:**')) {
+        currentSection = 'Buddhist';
+        perspectives[currentSection] = trimmed.replace('**Buddhist perspective:**', '').trim();
+      } else if (currentSection && trimmed) {
+        perspectives[currentSection] += ' ' + trimmed;
+      } else if (!currentSection && trimmed && !trimmed.includes('conclusion') && !trimmed.includes('In conclusion')) {
+        introduction += trimmed + ' ';
+      } else if (trimmed.includes('conclusion') || trimmed.includes('In conclusion')) {
+        conclusion += trimmed + ' ';
+        currentSection = ''; // Stop adding to perspectives
+      } else if (!currentSection && conclusion) {
+        conclusion += trimmed + ' ';
+      }
+    }
+
+    return (
+      <div className="space-y-3">
+        {/* Introduction */}
+        {introduction && (
+          <div className="text-gray-800 text-sm leading-relaxed">
+            {introduction.trim()}
+          </div>
+        )}
+
+        {/* Religious Perspectives with colored badges */}
+        <div className="flex flex-wrap gap-2">
+          <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
+            <Eye className="w-3 h-3 text-blue-600" />
+            <span className="text-xs font-medium text-blue-700">Biblical</span>
+          </div>
+          <div className="flex items-center gap-1 px-2 py-1 bg-green-50 border border-green-200 rounded-full">
+            <Heart className="w-3 h-3 text-green-600" />
+            <span className="text-xs font-medium text-green-700">Islamic</span>
+          </div>
+          <div className="flex items-center gap-1 px-2 py-1 bg-orange-50 border border-orange-200 rounded-full">
+            <Zap className="w-3 h-3 text-orange-600" />
+            <span className="text-xs font-medium text-orange-700">Hindu</span>
+          </div>
+          <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 border border-purple-200 rounded-full">
+            <Play className="w-3 h-3 text-purple-600" />
+            <span className="text-xs font-medium text-purple-700">Buddhist</span>
+          </div>
+          <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
+            <Star className="w-3 h-3 text-blue-600" />
+            <span className="text-xs font-medium text-blue-700">Torah</span>
+          </div>
+          <div className="flex items-center gap-1 px-2 py-1 bg-indigo-50 border border-indigo-200 rounded-full">
+            <Sparkles className="w-3 h-3 text-indigo-600" />
+            <span className="text-xs font-medium text-indigo-700">Mystical</span>
+          </div>
+        </div>
+
+        {/* Conclusion */}
+        {conclusion && (
+          <div className="text-gray-800 text-sm leading-relaxed">
+            {conclusion.trim()}
+          </div>
+        )}
+      </div>
+    );
+  };
+
 
   const queryClient = useQueryClient();
   
@@ -392,39 +524,8 @@ export function RightColumnChat({
                       <p className="text-gray-800 text-sm leading-relaxed">{message.content}</p>
                     ) : (
                       <div className="space-y-3">
-                        <div className="prose prose-sm max-w-none">
-                          <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap mb-3">
-                            {message.content}
-                          </div>
-                          
-                          {/* Multi-Religious Perspective Badges - Always show for AI responses */}
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
-                              <Eye className="w-3 h-3 text-blue-600" />
-                              <span className="text-xs font-medium text-blue-700">Biblical</span>
-                            </div>
-                            <div className="flex items-center gap-1 px-2 py-1 bg-green-50 border border-green-200 rounded-full">
-                              <Heart className="w-3 h-3 text-green-600" />
-                              <span className="text-xs font-medium text-green-700">Islamic</span>
-                            </div>
-                            <div className="flex items-center gap-1 px-2 py-1 bg-orange-50 border border-orange-200 rounded-full">
-                              <Zap className="w-3 h-3 text-orange-600" />
-                              <span className="text-xs font-medium text-orange-700">Hindu</span>
-                            </div>
-                            <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 border border-purple-200 rounded-full">
-                              <Play className="w-3 h-3 text-purple-600" />
-                              <span className="text-xs font-medium text-purple-700">Buddhist</span>
-                            </div>
-                            <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
-                              <Star className="w-3 h-3 text-blue-600" />
-                              <span className="text-xs font-medium text-blue-700">Torah</span>
-                            </div>
-                            <div className="flex items-center gap-1 px-2 py-1 bg-indigo-50 border border-indigo-200 rounded-full">
-                              <Sparkles className="w-3 h-3 text-indigo-600" />
-                              <span className="text-xs font-medium text-indigo-700">Mystical</span>
-                            </div>
-                          </div>
-                        </div>
+                        {/* Enhanced Multi-Religious Response Display */}
+                        {renderEnhancedResponse(message.content)}
                         
                         <div className="flex items-center gap-2 pt-2">
                           <Button
