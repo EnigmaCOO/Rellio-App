@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mic, MicOff, Send, Volume2, VolumeX, Settings, Keyboard, Check, Edit, X, Clock } from "lucide-react";
+import { Mic, MicOff, Send, Volume2, VolumeX, Settings, Keyboard, Check, Edit, X, Clock, AlertCircle } from "lucide-react";
+import { GrokStyleOrb } from './GrokStyleOrb';
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
@@ -44,7 +45,9 @@ declare var webkitSpeechRecognition: {
 
 interface VoiceFirstInterfaceProps {
   onSendMessage: (message: string) => void;
+  onInterruption?: (message: string) => void;
   disabled?: boolean;
+  isStreaming?: boolean;
   context: {
     religion: string | null;
     book: string;
@@ -54,7 +57,7 @@ interface VoiceFirstInterfaceProps {
 type VoiceMode = 'idle' | 'listening' | 'processing' | 'text';
 type Language = 'en-US' | 'ar-SA' | 'he-IL' | 'hi-IN' | 'zh-CN';
 
-export function VoiceFirstInterface({ onSendMessage, disabled = false, context }: VoiceFirstInterfaceProps) {
+export function VoiceFirstInterface({ onSendMessage, onInterruption, disabled = false, isStreaming = false, context }: VoiceFirstInterfaceProps) {
   const { toast } = useToast();
   const [mode, setMode] = useState<VoiceMode>('idle');
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
@@ -436,12 +439,22 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
       setInterimTranscript("");
       setShowConfirmation(false);
       setPendingTranscript("");
-      onSendMessage(message);
       
-      toast({
-        title: "Voice message auto-sent",
-        description: message.substring(0, 50) + (message.length > 50 ? "..." : ""),
-      });
+      // Check if we should interrupt or send normally
+      if (isStreaming && onInterruption) {
+        console.log('🔴 Interrupting with voice message:', message);
+        onInterruption(message);
+        toast({
+          title: "Interrupted AI Response",
+          description: "Processing your new voice question...",
+        });
+      } else {
+        onSendMessage(message);
+        toast({
+          title: "Voice message auto-sent",
+          description: message.substring(0, 50) + (message.length > 50 ? "..." : ""),
+        });
+      }
     }
   };
 
@@ -452,12 +465,22 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
     stopAudioAnalysis();
     setTranscript("");
     setInterimTranscript("");
-    onSendMessage(message);
     
-    toast({
-      title: "Voice message sent",
-      description: message.substring(0, 50) + (message.length > 50 ? "..." : ""),
-    });
+    // Check if we should interrupt or send normally
+    if (isStreaming && onInterruption) {
+      console.log('🔴 Interrupting with voice message:', message);
+      onInterruption(message);
+      toast({
+        title: "Interrupted AI Response",
+        description: "Processing your new voice question...",
+      });
+    } else {
+      onSendMessage(message);
+      toast({
+        title: "Voice message sent",
+        description: message.substring(0, 50) + (message.length > 50 ? "..." : ""),
+      });
+    }
   };
 
   const handleConfirmSend = () => {
@@ -491,12 +514,57 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
     setTextInput("");
   };
 
+  // Helper functions for Grok-style orb
+  const handleOrbClick = () => {
+    if (disabled) return;
+    
+    if (mode === 'listening') {
+      stopVoiceInput();
+    } else if (mode === 'idle') {
+      startVoiceInput();
+    }
+  };
+
+  const getOrbTitle = () => {
+    if (disabled) return "Voice input disabled";
+    if (mode === 'listening') return "Click to stop voice input";
+    if (mode === 'processing') return "Processing your request...";
+    return "Click to start speaking";
+  };
+
+  const getContextualColor = (religionName: string) => {
+    const colorMap: Record<string, string> = {
+      'Holy Bible': 'blue',
+      'Quran': 'emerald',
+      'Torah': 'purple',
+      'Bhagavad Gita': 'orange',
+      'Tripitaka': 'red'
+    };
+    return colorMap[religionName] || 'teal';
+  };
+
   const handleTextSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (textInput.trim()) {
-      onSendMessage(textInput.trim());
+      const message = textInput.trim();
       setTextInput("");
       setMode('idle');
+      
+      // Check if we should interrupt or send normally
+      if (isStreaming && onInterruption) {
+        console.log('🔴 Interrupting with text message:', message);
+        onInterruption(message);
+        toast({
+          title: "Interrupted AI Response",
+          description: "Processing your new question...",
+        });
+      } else {
+        onSendMessage(message);
+        toast({
+          title: "Message sent",
+          description: message.substring(0, 50) + (message.length > 50 ? "..." : ""),
+        });
+      }
     }
   };
 
@@ -625,49 +693,39 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
           </div>
         </div>
       ) : (
-        // Voice-first interface
+        // Voice-first interface with Grok-style orb
         <div className="flex flex-col items-center space-y-4">
-          {/* Main Voice Button */}
-          <div className="relative">
-            <Button
-              type="button"
-              className={`
-                relative rounded-full p-0 border-2 transition-all duration-500 transform
-                ${getMicColorClasses()}
-                ${isExpanded 
-                  ? 'w-16 h-16 scale-110 shadow-2xl' 
-                  : 'w-12 h-12 hover:scale-105 shadow-md'
-                }
-                ${mode === 'listening' 
-                  ? 'shadow-2xl animate-pulse' 
-                  : ''
-                }
-                ${mode === 'processing' ? 'animate-spin' : ''}
-                ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-              `}
-              onClick={mode === 'listening' ? stopVoiceInput : startVoiceInput}
-              disabled={disabled}
-              title={mode === 'listening' ? "Stop voice input" : "Start speaking"}
-            >
-              {mode === 'processing' ? (
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : mode === 'listening' ? (
-                <MicOff className="w-6 h-6 text-white" />
-              ) : (
-                <Mic className="w-5 h-5 text-white" />
-              )}
-            </Button>
+          {/* Main Grok-Style Orb */}
+          <div 
+            className="relative cursor-pointer"
+            onClick={handleOrbClick}
+            title={getOrbTitle()}
+          >
+            <GrokStyleOrb
+              isActive={mode !== 'idle'}
+              isListening={mode === 'listening'}
+              isProcessing={mode === 'processing'}
+              isInterrupted={false}
+              size="lg"
+              pulseColor={context.religion ? getContextualColor(context.religion.name) : 'teal'}
+            />
             
-            {/* Enhanced mystical mandala animation */}
-            {mode === 'listening' && (
-              <>
-                <div className="absolute inset-0 opacity-30 pointer-events-none">
-                  <div className="w-full h-full rounded-full border-2 border-current animate-ping" style={{ animationDuration: '2s' }} />
-                </div>
-                <div className="absolute inset-0 opacity-20 pointer-events-none">
-                  <div className="w-full h-full rounded-full border border-current animate-ping" style={{ animationDuration: '3s', animationDelay: '0.5s' }} />
-                </div>
-              </>
+            {/* Interruption overlay for streaming responses */}
+            {isStreaming && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="rounded-full w-8 h-8 p-0 bg-red-500 hover:bg-red-600 shadow-lg animate-pulse"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onInterruption?.();
+                  }}
+                  title="Interrupt AI response"
+                >
+                  <AlertCircle className="w-4 h-4 text-white" />
+                </Button>
+              </div>
             )}
           </div>
           

@@ -23,7 +23,10 @@ import {
   Brain,
   Heart,
   Eye,
-  Zap
+  Zap,
+  Play,
+  AlertCircle,
+  RefreshCw
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
@@ -40,591 +43,254 @@ interface RightColumnChatProps {
   externalMessage?: string;
   onExternalMessageProcessed?: () => void;
   onCopyOperation?: (isActive: boolean) => void;
-  onNavigateToVerse?: (religion: Religion, book: string, chapter: number, verse?: number) => void;
 }
 
-interface ClickableMessageProps {
-  content: string;
-  onScriptureClick: (religion: Religion, book: string, chapter: number, verse?: number) => void;
-}
+// Component for clickable messages with bookmark functionality
+function ClickableMessage({ 
+  content, 
+  showBookmark = false, 
+  onBookmark 
+}: { 
+  content: string; 
+  showBookmark?: boolean; 
+  onBookmark?: () => void; 
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
 
-function ClickableMessage({ content, onScriptureClick }: ClickableMessageProps) {
-  const [processedSections, setProcessedSections] = useState<Array<{
-    type: 'intro' | 'perspective' | 'conclusion';
-    religion?: string;
-    title?: string;
-    text: string;
-    icon?: string;
-    color?: string;
-  }>>([]);
-
-  useEffect(() => {
-    // Check if this is a multi-religious response
-    const isMultiReligious = content.includes('From the Bible perspective:') || 
-                            content.includes('From the Quran perspective:') ||
-                            content.includes('From the Torah perspective:');
-
-    if (isMultiReligious) {
-      // Parse multi-religious response into structured sections
-      const sections = [];
-      const lines = content.split('\n').filter(line => line.trim());
-      
-      let currentSection: {
-        type: 'intro' | 'perspective' | 'conclusion';
-        religion?: string;
-        title?: string;
-        text: string;
-        icon?: string;
-        color?: string;
-      } = { type: 'intro', text: '' };
-      
-      for (const line of lines) {
-        // Check for religious perspective headers
-        if (line.includes('From the Bible perspective:')) {
-          if (currentSection.text) sections.push(currentSection);
-          currentSection = {
-            type: 'perspective',
-            religion: 'bible',
-            title: 'Biblical Perspective',
-            text: '',
-            icon: '📖',
-            color: 'blue'
-          };
-        } else if (line.includes('From the Quran perspective:')) {
-          if (currentSection.text) sections.push(currentSection);
-          currentSection = {
-            type: 'perspective',
-            religion: 'quran',
-            title: 'Islamic Perspective',
-            text: '',
-            icon: '🌙',
-            color: 'emerald'
-          };
-        } else if (line.includes('From the Torah perspective:')) {
-          if (currentSection.text) sections.push(currentSection);
-          currentSection = {
-            type: 'perspective',
-            religion: 'torah',
-            title: 'Torah Perspective',
-            text: '',
-            icon: '✡️',
-            color: 'amber'
-          };
-        } else if (line.includes('From the Bhagavad Gita perspective:')) {
-          if (currentSection.text) sections.push(currentSection);
-          currentSection = {
-            type: 'perspective',
-            religion: 'hindu',
-            title: 'Hindu Perspective',
-            text: '',
-            icon: '🕉️',
-            color: 'orange'
-          };
-        } else if (line.includes('From the Tripitaka perspective:')) {
-          if (currentSection.text) sections.push(currentSection);
-          currentSection = {
-            type: 'perspective',
-            religion: 'buddhist',
-            title: 'Buddhist Perspective',
-            text: '',
-            icon: '☸️',
-            color: 'purple'
-          };
-        } else if (line.toLowerCase().includes('in conclusion') || line.toLowerCase().includes('these religious traditions')) {
-          if (currentSection.text) sections.push(currentSection);
-          currentSection = {
-            type: 'conclusion',
-            text: line
-          };
-        } else {
-          // Add content to current section, clean up markdown
-          const cleanLine = line.replace(/^\*\*.*?\*\*/g, '').replace(/^-\s+\*\*.*?\*\*/g, '').trim();
-          if (cleanLine) {
-            if (currentSection.text) currentSection.text += ' ';
-            currentSection.text += cleanLine;
-          }
-        }
-      }
-      
-      if (currentSection.text) sections.push(currentSection);
-      setProcessedSections(sections);
-    } else {
-      // Single response - treat as simple content
-      setProcessedSections([{ type: 'intro', text: content }]);
-    }
-  }, [content]);
-
-  const processScriptureReferences = (text: string) => {
-    console.log('Processing scripture references in text:', text.substring(0, 200));
-    
-    let processedText = text;
-
-    // Bible references - comprehensive pattern including chapter:verse format
-    const biblePattern = /\b(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|1 Samuel|2 Samuel|1 Kings|2 Kings|1 Chronicles|2 Chronicles|Ezra|Nehemiah|Esther|Job|Psalms|Proverbs|Ecclesiastes|Song of Songs|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|1 Corinthians|2 Corinthians|Galatians|Ephesians|Philippians|Colossians|1 Thessalonians|2 Thessalonians|1 Timothy|2 Timothy|Titus|Philemon|Hebrews|James|1 Peter|2 Peter|1 John|2 John|3 John|Jude|Revelation)\s+(\d+):(\d+)(?:[-–](\d+))?/gi;
-    
-    processedText = processedText.replace(biblePattern, (match, book, chapter, verse) => {
-      console.log('Found Bible reference:', match, 'Book:', book, 'Chapter:', chapter, 'Verse:', verse);
-      return `<span class="scripture-link cursor-pointer text-blue-600 hover:text-blue-800 hover:underline font-semibold bg-blue-100 px-2 py-1 rounded-md border border-blue-200 inline-block my-1 mr-1" data-religion="bible" data-book="${book}" data-chapter="${chapter}" data-verse="${verse || ''}" title="Click to navigate to ${book} ${chapter}:${verse}">${match}</span>`;
-    });
-
-    // Quran references - multiple patterns including ranges like "112:1-4"
-    const quranPatterns = [
-      /\bQuran\s+(\d+):(\d+)(?:[-–](\d+))?/gi,
-      /\bSurah\s+(\d+):(\d+)(?:[-–](\d+))?/gi,
-      /\b(?:Quran|Qur'an|Qur'ān)\s+([A-Za-z-]+)\s+(\d+):(\d+)/gi, // Surah name format like "Quran Al-Fatihah 1:1"
-      /\b(?:Surah|Sura)\s+([A-Za-z-]+)\s+(\d+):(\d+)/gi, // "Surah Al-Fatihah 1:1"
-      /\b([A-Za-z-]+)\s+(\d+):(\d+)(?:\s+\(Quran\))?/gi, // Direct surah name like "Al-Fatihah 1:1"
-      /\b(?:Chapter|Ch\.)\s+(\d+),?\s+verse\s+(\d+)(?:\s+of\s+(?:the\s+)?Quran)?/gi // "Chapter 1, verse 1 of the Quran"
-    ];
-    
-    // Map Quran chapter numbers to book names
-    const getQuranBookName = (chapterNum: string) => {
-      const chapterMap: { [key: string]: string } = {
-        '1': 'Al-Fatihah', '2': 'Al-Baqarah', '3': 'Ali Imran', '4': 'An-Nisa',
-        '5': 'Al-Maidah', '6': 'Al-Anam', '7': 'Al-Araf', '8': 'Al-Anfal',
-        '9': 'At-Taubah', '10': 'Yunus', '11': 'Hud', '12': 'Yusuf',
-        '112': 'Al-Ikhlas', '113': 'Al-Falaq', '114': 'An-Nas'
-        // Add more mappings as needed
-      };
-      return chapterMap[chapterNum] || `Surah ${chapterNum}`;
-    };
-    
-    quranPatterns.forEach((pattern, index) => {
-      processedText = processedText.replace(pattern, (match, ...groups) => {
-        let chapter, verse, bookName;
-        
-        if (index <= 1) {
-          // Patterns 0-1: /\bQuran\s+(\d+):(\d+)/ and /\bSurah\s+(\d+):(\d+)/
-          [chapter, verse] = groups;
-          bookName = getQuranBookName(chapter);
-        } else if (index <= 3) {
-          // Patterns 2-3: /\b(?:Quran|Qur'an)\s+([A-Za-z-]+)\s+(\d+):(\d+)/ - surah name format
-          [bookName, chapter, verse] = groups;
-          bookName = bookName || getQuranBookName(chapter);
-        } else if (index === 4) {
-          // Pattern 4: /\b([A-Za-z-]+)\s+(\d+):(\d+)/ - direct surah name
-          [bookName, chapter, verse] = groups;
-          // Only process if it looks like a Quran surah name
-          if (!bookName.toLowerCase().includes('al-') && !bookName.toLowerCase().includes('an-') && 
-              !['fatihah', 'baqarah', 'imran', 'nisa', 'maidah'].includes(bookName.toLowerCase())) {
-            return match; // Skip non-Quran references
-          }
-        } else {
-          // Pattern 5: Chapter/verse format
-          [chapter, verse] = groups;
-          bookName = getQuranBookName(chapter);
-        }
-        
-        const targetVerse = verse || '1';
-        const finalBookName = bookName || getQuranBookName(chapter);
-        
-        console.log('Found Quran reference:', match, 'Chapter:', chapter, 'Verse:', verse, 'Book:', finalBookName);
-        return `<span class="scripture-link cursor-pointer text-emerald-600 hover:text-emerald-800 hover:underline font-semibold bg-emerald-100 px-2 py-1 rounded-md border border-emerald-200 inline-block my-1 mr-1" data-religion="quran" data-book="${finalBookName}" data-chapter="${chapter}" data-verse="${targetVerse}" title="Click to navigate to ${finalBookName} ${chapter}:${targetVerse}">${match}</span>`;
-      });
-    });
-
-    // Torah references - map English names to Hebrew names 
-    const torahPattern = /\b(Deuteronomy|Genesis|Exodus|Leviticus|Numbers|Bereshit|Shemot|Vayikra|Bamidbar|Devarim)\s+(\d+):(\d+)/gi;
-    
-    const getTorahBookName = (bookName: string) => {
-      const bookMap: { [key: string]: string } = {
-        'Genesis': 'Bereshit', 'Exodus': 'Shemot', 'Leviticus': 'Vayikra', 
-        'Numbers': 'Bamidbar', 'Deuteronomy': 'Devarim'
-      };
-      return bookMap[bookName] || bookName;
-    };
-    
-    processedText = processedText.replace(torahPattern, (match, book, chapter, verse) => {
-      console.log('Found Torah reference:', match, 'Book:', book, 'Chapter:', chapter, 'Verse:', verse);
-      const hebrewBookName = getTorahBookName(book);
-      return `<span class="scripture-link cursor-pointer text-amber-600 hover:text-amber-800 hover:underline font-semibold bg-amber-100 px-2 py-1 rounded-md border border-amber-200 inline-block my-1 mr-1" data-religion="torah" data-book="${hebrewBookName}" data-chapter="${chapter}" data-verse="${verse}" title="Click to navigate to ${hebrewBookName} ${chapter}:${verse}">${match}</span>`;
-    });
-
-    // Hindu references - Bhagavad Gita Chapter X, Verse Y format (e.g., "Bhagavad Gita 9.22")
-    const hinduPatterns = [
-      /\bBhagavad\s+Gita\s+(\d+)[\.:]\s*(\d+)/gi,
-      /\bGita\s+(\d+)[\.:]\s*(\d+)/gi,
-      /\bChapter\s+(\d+),?\s+Verse\s+(\d+)/gi
-    ];
-    
-    hinduPatterns.forEach(pattern => {
-      processedText = processedText.replace(pattern, (match, chapter, verse) => {
-        console.log('Found Hindu reference:', match, 'Chapter:', chapter, 'Verse:', verse);
-        return `<span class="scripture-link cursor-pointer text-orange-600 hover:text-orange-800 hover:underline font-semibold bg-orange-100 px-2 py-1 rounded-md border border-orange-200 inline-block my-1 mr-1" data-religion="hindu" data-book="Bhagavad Gita" data-chapter="${chapter}" data-verse="${verse}" title="Click to navigate to Bhagavad Gita ${chapter}:${verse}">${match}</span>`;
-      });
-    });
-
-    // Buddhist references
-    const buddhistPatterns = [
-      /\bDhammapada\s+(\d+)[\.:]\s*(\d+)/gi,
-      /\bTripitaka\s+(\d+)[\.:]\s*(\d+)/gi
-    ];
-    
-    buddhistPatterns.forEach(pattern => {
-      processedText = processedText.replace(pattern, (match, chapter, verse) => {
-        console.log('Found Buddhist reference:', match, 'Chapter:', chapter, 'Verse:', verse);
-        return `<span class="scripture-link cursor-pointer text-purple-600 hover:text-purple-800 hover:underline font-semibold bg-purple-100 px-2 py-1 rounded-md border border-purple-200 inline-block my-1 mr-1" data-religion="buddhist" data-book="Dhammapada" data-chapter="${chapter}" data-verse="${verse}" title="Click to navigate to Dhammapada ${chapter}:${verse}">${match}</span>`;
-      });
-    });
-
-    console.log('Processed text:', processedText.substring(0, 300));
-    return processedText;
-  };
-
-  const handleScriptureClick = (event: React.MouseEvent) => {
-    const target = event.target as HTMLElement;
-    console.log('Scripture click event:', target.classList.toString());
-    
-    if (target.classList.contains('scripture-link')) {
-      const religion = target.dataset.religion as Religion;
-      const book = target.dataset.book || '';
-      const chapter = parseInt(target.dataset.chapter || '1', 10);
-      const verse = target.dataset.verse ? parseInt(target.dataset.verse, 10) : undefined;
-      
-      console.log('Scripture click data:', { religion, book, chapter, verse });
-      
-      if (onScriptureClick) {
-        onScriptureClick(religion, book, chapter, verse);
-        console.log('Called onScriptureClick with:', { religion, book, chapter, verse });
-      } else {
-        console.warn('onScriptureClick function not available');
-      }
-    }
-  };
-
-  // Check if this is a multi-religious response
-  const isMultiReligious = processedSections.some(section => section.type === 'perspective');
-
-  if (!isMultiReligious) {
-    // Use simple formatting for single-perspective responses
-    return (
-      <div 
-        className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
-        onClick={handleScriptureClick}
-        dangerouslySetInnerHTML={{ __html: processScriptureReferences(processedSections[0]?.text || content) }}
-      />
-    );
-  }
+  const displayContent = isExpanded ? content : (content.length > 300 ? content.slice(0, 300) + '...' : content);
+  const needsTruncation = content.length > 300;
 
   return (
-    <div className="space-y-4" onClick={handleScriptureClick}>
-      {processedSections.map((section, index) => (
-        <div key={index}>
-          {section.type === 'intro' && (
-            <div className="text-gray-700 leading-relaxed mb-4 p-3 bg-gray-50 rounded-lg border-l-4 border-gray-300">
-              <div dangerouslySetInnerHTML={{ __html: processScriptureReferences(section.text) }} />
-            </div>
-          )}
-          
-          {section.type === 'perspective' && (
-            <div className={`border-l-4 border-${section.color}-400 bg-${section.color}-50 p-4 rounded-lg shadow-sm`}>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg">{section.icon}</span>
-                <h4 className={`font-semibold text-${section.color}-800 text-sm`}>{section.title}</h4>
-              </div>
-              <div 
-                className={`text-${section.color}-700 leading-relaxed text-sm`}
-                dangerouslySetInnerHTML={{ __html: processScriptureReferences(section.text) }}
-              />
-            </div>
-          )}
-          
-          {section.type === 'conclusion' && (
-            <div className="text-gray-700 leading-relaxed mt-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border-l-4 border-purple-400 shadow-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg">💫</span>
-                <h4 className="font-semibold text-purple-800 text-sm">Summary</h4>
-              </div>
-              <div 
-                className="text-purple-700 text-sm"
-                dangerouslySetInnerHTML={{ __html: processScriptureReferences(section.text) }}
-              />
-            </div>
-          )}
-        </div>
-      ))}
+    <div className="space-y-2">
+      <p 
+        className="text-gray-800 text-sm leading-relaxed cursor-default select-text"
+        style={{ lineHeight: '1.6' }}
+      >
+        {displayContent}
+      </p>
+      
+      <div className="flex items-center justify-between">
+        {needsTruncation && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs text-teal-600 hover:text-teal-800 hover:bg-teal-50"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            {isExpanded ? 'Show Less' : 'Read More'}
+          </Button>
+        )}
+        
+        {showBookmark && onBookmark && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs text-gray-500 hover:text-teal-600 hover:bg-teal-50"
+            onClick={onBookmark}
+          >
+            <Bookmark className="w-3 h-3 mr-1" />
+            Bookmark
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
 
-export function RightColumnChat({
-  sessionId,
-  context,
-  externalMessage = "",
+export function RightColumnChat({ 
+  sessionId, 
+  context, 
+  externalMessage, 
   onExternalMessageProcessed,
-  onCopyOperation,
-  onNavigateToVerse
+  onCopyOperation 
 }: RightColumnChatProps) {
+  const [inputMessage, setInputMessage] = useState("");
+  const messageEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const messageEndRef = useRef<HTMLDivElement>(null);
   
-  // Component state
+  // Enhanced UI states
   const [isStreaming, setIsStreaming] = useState(false);
-  const [userStreak, setUserStreak] = useState(3); // Mock streak data
-  const [showHistory, setShowHistory] = useState(false);
-  const [compareMode, setCompareMode] = useState(false);
-  const [bookmarkCount, setBookmarkCount] = useState(5); // Mock bookmark count
   const [expandedPerspectives, setExpandedPerspectives] = useState(false);
+  const [interruptedMessages, setInterruptedMessages] = useState<Set<string>>(new Set());
 
-  // Load chat messages
-  const { data: messages = [], isLoading: messagesLoading } = useQuery<ChatMessage[]>({
-    queryKey: [`/api/chat/${sessionId}`],
-    staleTime: 0,
+  const { data: messages = [], isLoading } = useQuery({
+    queryKey: ['/api/chat', sessionId],
+    enabled: !!sessionId
   });
 
-  // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
       setIsStreaming(true);
-      
-      // Prepare context to match schema requirements
-      const requestContext = (context.religion && context.book) ? {
-        religion: context.religion,
-        book: context.book,
-        chapter: context.chapter || null,
-        multiReligiousPerspective: false
-      } : {
-        religion: null,
-        book: null,
-        chapter: null,
-        multiReligiousPerspective: true
-      };
-      
-      console.log('Context determination:', { 
-        originalContext: context, 
-        hasReligion: !!context.religion, 
-        hasBook: !!context.book, 
-        requestContext 
-      });
-      
-      console.log('Sending chat request:', { message, sessionId, context: requestContext });
-      
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message, sessionId, context: requestContext })
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Chat API error:', errorData);
-        throw new Error(errorData.error || 'Failed to send message');
+      try {
+        const response = await apiRequest(`/api/chat`, {
+          method: 'POST',
+          body: {
+            sessionId,
+            message,
+            context: {
+              religion: context.religion?.name || null,
+              book: context.book || null,
+              chapter: context.chapter || null
+            }
+          }
+        });
+        return response;
+      } finally {
+        setIsStreaming(false);
       }
-      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/chat/${sessionId}`] });
-      setIsStreaming(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
+      setInputMessage("");
     },
-    onError: (error) => {
-      console.error('Chat error:', error);
-      toast({
-        title: "Error sending message",
-        description: "Failed to send message. Please try again.",
-        variant: "destructive",
-      });
-      setIsStreaming(false);
-    }
-  });
-
-  // Auto-scroll to bottom
-  useEffect(() => {
-    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  // Handle external messages
-  useEffect(() => {
-    if (externalMessage) {
-      sendMessageMutation.mutate(externalMessage);
-      onExternalMessageProcessed?.();
-    }
-  }, [externalMessage]);
-
-  // Remove handleSendMessage as it's now handled by VoiceFirstInterface
-
-  const handleNavigateToVerse = (religion: Religion, book: string, chapter: number, verse?: number) => {
-    onNavigateToVerse?.(religion, book, chapter, verse);
-    toast({
-      title: "Navigating to verse",
-      description: `${book} ${chapter}${verse ? `:${verse}` : ''}`,
-    });
-  };
-
-  const handlePerspectiveClick = async (religion: Religion, aiResponseContent: string) => {
-    // Extract the original question from the messages
-    const lastUserMessage = messages.filter(m => m.type === 'user').pop();
-    if (!lastUserMessage) return;
-
-    const originalQuestion = lastUserMessage.content;
-    
-    // Map religion to tradition names
-    const traditionNames = {
-      'bible': 'Biblical/Christian',
-      'quran': 'Islamic',
-      'torah': 'Jewish/Torah',
-      'hindu': 'Hindu/Bhagavad Gita',
-      'buddhist': 'Buddhist/Tripitaka'
-    };
-
-    const traditionName = traditionNames[religion] || religion;
-    
-    // Create a focused question for the specific tradition
-    const focusedQuestion = `From the ${traditionName} perspective only, please provide a detailed answer to this question: "${originalQuestion}". Include specific scripture references and explain the teachings from this tradition's sacred texts.`;
-    
-    console.log('Requesting specific perspective:', { religion, originalQuestion, focusedQuestion });
-    
-    toast({
-      title: `Getting ${traditionName} perspective`,
-      description: "Fetching detailed answer from this tradition...",
-    });
-
-    // Send the focused question with specific religious context
-    try {
-      setIsStreaming(true);
-      
-      const requestContext = {
-        religion: religion,
-        book: getDefaultBookForReligion(religion),
-        chapter: 1,
-        multiReligiousPerspective: false
-      };
-
-      console.log('Sending perspective request:', { focusedQuestion, sessionId, context: requestContext });
-      
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: focusedQuestion, sessionId, context: requestContext })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Perspective API error:', errorData);
-        throw new Error(errorData.error || 'Failed to send perspective request');
-      }
-      
-      await response.json();
-      queryClient.invalidateQueries({ queryKey: [`/api/chat/${sessionId}`] });
-      setIsStreaming(false);
-    } catch (error) {
-      console.error('Error getting perspective:', error);
+    onError: (error: any) => {
       setIsStreaming(false);
       toast({
         title: "Error",
-        description: "Failed to get perspective. Please try again.",
-        variant: "destructive",
+        description: error.message || "Failed to send message",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Handle external message processing
+  useEffect(() => {
+    if (externalMessage && !sendMessageMutation.isPending) {
+      sendMessageMutation.mutate(externalMessage);
+      onExternalMessageProcessed?.();
+    }
+  }, [externalMessage, sendMessageMutation, onExternalMessageProcessed]);
+
+  // Enhanced bookmarking system with localStorage
+  const [bookmarks, setBookmarks] = useState<Array<{
+    id: string;
+    content: string;
+    context: { religion: string; book: string; chapter: number };
+    timestamp: number;
+  }>>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('rellio-bookmarks');
+    if (saved) {
+      setBookmarks(JSON.parse(saved));
+    }
+  }, []);
+
+  const handleBookmark = (content: string, contextInfo: { religion: string; book: string; chapter: number }) => {
+    const newBookmark = {
+      id: Date.now().toString(),
+      content,
+      context: contextInfo,
+      timestamp: Date.now()
+    };
+    
+    const updated = [...bookmarks, newBookmark];
+    setBookmarks(updated);
+    localStorage.setItem('rellio-bookmarks', JSON.stringify(updated));
+    
+    toast({
+      title: "Bookmarked!",
+      description: "AI response saved to your bookmarks",
+      variant: "default"
+    });
+  };
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Get appropriate quick suggestions based on context
+  const getQuickSuggestions = () => {
+    if (!context.religion && !context.book) {
+      return [
+        "What is the meaning of love?",
+        "How can I find inner peace?",
+        "What is the purpose of life?",
+        "How should I handle suffering?"
+      ];
+    }
+    
+    if (context.religion && context.book) {
+      return [
+        `Explain this chapter's main message`,
+        `What does this teach about faith?`,
+        `How does this apply to modern life?`,
+        `Compare with other religious views`
+      ];
+    }
+    
+    return [
+      "Ask a spiritual question",
+      "Explore religious teachings",
+      "Compare different faiths",
+      "Seek wisdom and guidance"
+    ];
+  };
+
+  // Handle voice interruption functionality
+  const handleVoiceInterruption = () => {
+    if (isStreaming) {
+      setIsStreaming(false);
+      
+      // Mark the most recent AI message as interrupted
+      const lastAiMessage = messages.filter(m => m.type === 'ai').pop();
+      if (lastAiMessage) {
+        const messageId = `ai_${messages.indexOf(lastAiMessage)}_${lastAiMessage.timestamp || Date.now()}`;
+        setInterruptedMessages(prev => new Set([...Array.from(prev), messageId]));
+      }
+      
+      toast({
+        title: "Response Interrupted",
+        description: "You can resume the conversation or ask a new question",
+        variant: "default"
       });
     }
   };
 
-  const getDefaultBookForReligion = (religion: Religion): string => {
-    const defaultBooks = {
-      'bible': 'Genesis',
-      'quran': 'Al-Fatihah',
-      'torah': 'Bereshit',
-      'hindu': 'Bhagavad Gita',
-      'buddhist': 'Dhammapada'
-    };
-    return defaultBooks[religion] || 'Genesis';
-  };
-
-  // Quick suggestion chips
-  const getQuickSuggestions = () => {
-    if (!context.religion || !context.book) {
-      return [
-        "Tell me about today's verse",
-        "Compare religious perspectives",
-        "Explain a scripture concept",
-      ];
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputMessage.trim() && !sendMessageMutation.isPending && !isStreaming) {
+      sendMessageMutation.mutate(inputMessage.trim());
     }
-    return [
-      `Explain ${context.book} ${context.chapter}`,
-      "Historical context",
-      "Modern application",
-    ];
   };
 
   return (
-    <div className="h-full flex flex-col bg-white relative">
-      {/* Mystical gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-purple-900/10 to-yellow-300/10 pointer-events-none z-0" />
-      <div className="absolute inset-0 opacity-5 pointer-events-none z-0" style={{
-        backgroundImage: `url("data:image/svg+xml,${encodeURIComponent('<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="20" fill="none" stroke="currentColor" stroke-width="0.5"/><circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="0.3"/><circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="0.2"/><path d="M30,50 Q50,30 70,50 Q50,70 30,50" fill="none" stroke="currentColor" stroke-width="0.3"/><path d="M50,30 Q70,50 50,70 Q30,50 50,30" fill="none" stroke="currentColor" stroke-width="0.3"/></svg>')}")`,
-        backgroundSize: '200px 200px',
-        backgroundRepeat: 'repeat'
-      }} />
-      
-      {/* Enhanced Sticky Header */}
-      <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 p-4 z-20">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="flex items-center gap-2">
-            {/* Glowing teal logo */}
-            <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center shadow-lg shadow-teal-500/30">
-              <Brain className="w-4 h-4 text-white" />
+    <div className="h-full flex flex-col bg-white">
+      {/* Enhanced Header with Gradient Styling */}
+      <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-teal-50 to-cyan-50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="p-1.5 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg shadow-sm">
+              <MessageCircle className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-gray-900">Aura Archivist</h3>
-              <p className="text-xs italic text-gray-500">Your spiritual guide</p>
+              <h3 className="font-semibold text-sm text-gray-900">AI Scripture Guide</h3>
+              <p className="text-xs text-gray-500">
+                {context.religion && context.book 
+                  ? `${context.religion.name} - ${context.book}` 
+                  : "Multi-religious AI assistant"
+                }
+              </p>
             </div>
           </div>
-        </div>
-        
-        {/* Control Pills Row */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Streak Badge */}
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-200 hover:shadow-lg hover:shadow-green-500/20 transition-all duration-200 cursor-default">
-            <Flame className="w-3 h-3 mr-1" />
-            Day {userStreak} Streak 🔥
-          </Badge>
           
-          {/* History Toggle */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 px-2 hover:shadow-lg hover:shadow-blue-500/20 hover:border-blue-300 transition-all duration-200"
-            onClick={() => setShowHistory(!showHistory)}
-          >
-            <History className="w-3 h-3 mr-1" />
-            History
-          </Button>
-          
-          {/* Compare Mode Toggle */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 px-2 hover:shadow-lg hover:shadow-purple-500/20 hover:border-purple-300 transition-all duration-200"
-            onClick={() => setCompareMode(!compareMode)}
-          >
-            <Scale className="w-3 h-3 mr-1" />
-            Compare
-          </Button>
-          
-          {/* Bookmarks Count */}
-          <Badge variant="outline" className="hover:shadow-lg hover:shadow-amber-500/20 transition-all duration-200 cursor-pointer">
-            <Bookmark className="w-3 h-3 mr-1" />
-            {bookmarkCount}
-          </Badge>
-          
-          {/* Message Count */}
-          <Badge variant="secondary" className="text-xs ml-auto">
-            <MessageCircle className="w-3 h-3 mr-1" />
-            {messages.length}
-          </Badge>
+          <div className="flex items-center space-x-2">
+            <Badge variant="secondary" className="text-xs">
+              {messages.length} messages
+            </Badge>
+          </div>
         </div>
       </div>
 
       {/* Messages Area */}
-      <ScrollArea className="flex-1 px-4 py-2 relative z-10" ref={scrollAreaRef}>
-        <div className="space-y-4">
-          {messagesLoading ? (
+      <ScrollArea className="flex-1 px-4">
+        <div className="py-4 space-y-4">
+          {isLoading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex gap-3 animate-pulse">
+                <div key={i} className="flex gap-3">
                   <Skeleton className="w-8 h-8 rounded-full" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-3/4" />
@@ -635,18 +301,17 @@ export function RightColumnChat({
             </div>
           ) : messages.length === 0 ? (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4 relative">
-                <Sparkles className="w-8 h-8 text-teal-600" />
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-teal-400/20 to-cyan-400/20 animate-pulse" />
+              <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MessageCircle className="w-8 h-8 text-teal-600" />
               </div>
-              <h4 className="font-medium text-gray-900 mb-2">Welcome to Aura Archivist</h4>
-              <p className="text-sm text-gray-500 mb-6">
+              <h4 className="font-medium text-gray-900 mb-2">Welcome to AI Scripture Guide</h4>
+              <p className="text-sm text-gray-600 mb-6 max-w-sm mx-auto">
                 {context.religion && context.book 
-                  ? `Ask questions about ${context.book}` 
-                  : 'Start by asking a question about scripture'}
+                  ? `Ask questions about ${context.religion.name} - ${context.book}` 
+                  : "Explore spiritual wisdom from multiple religious traditions"
+                }
               </p>
               
-              {/* Enhanced Quick suggestions */}
               <div className="space-y-3">
                 <p className="text-xs text-gray-400 uppercase tracking-wide">Quick suggestions</p>
                 <div className="flex flex-wrap gap-2 justify-center">
@@ -657,7 +322,6 @@ export function RightColumnChat({
                       size="sm"
                       className="text-xs h-8 border-teal-200 hover:border-teal-400 hover:bg-teal-50 hover:shadow-md transition-all duration-200"
                       onClick={() => {
-                        // Trigger voice interface or send message directly
                         if (suggestion && !sendMessageMutation.isPending && !isStreaming) {
                           sendMessageMutation.mutate(suggestion.trim());
                         }
@@ -670,118 +334,87 @@ export function RightColumnChat({
               </div>
             </div>
           ) : (
-            messages.map((message, index) => (
-              <div key={index} className="flex gap-3 animate-fadeIn" style={{ animationDelay: `${index * 50}ms` }}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  message.type === 'user' 
-                    ? 'bg-gray-200' 
-                    : 'bg-gradient-to-br from-teal-500 to-cyan-600 shadow-lg'
-                }`}>
-                  {message.type === 'user' ? (
-                    <User className="w-4 h-4 text-gray-600" />
-                  ) : (
-                    <Bot className="w-4 h-4 text-white" />
-                  )}
-                </div>
-                <div className={`flex-1 ${
-                  message.type === 'user' 
-                    ? 'bg-gray-50 rounded-lg p-3' 
-                    : 'bg-white border border-gray-100 rounded-lg p-3 shadow-sm'
-                }`}>
-                  {message.type === 'user' ? (
-                    <p className="text-gray-800 text-sm leading-relaxed">{message.content}</p>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <ClickableMessage 
-                            content={message.content} 
-                            onScriptureClick={handleNavigateToVerse}
-                          />
-                        </div>
-                        {/* Audio playback button */}
-                        <AudioPlaybackButton 
-                          text={message.content}
-                          className="flex-shrink-0"
-                        />
+            messages.map((message, index) => {
+              const messageId = `${message.type}_${index}_${message.timestamp || Date.now()}`;
+              const isInterrupted = interruptedMessages.has(messageId);
+              
+              return (
+                <div key={index} className="flex gap-3 animate-fadeIn" style={{ animationDelay: `${index * 50}ms` }}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    message.type === 'user' 
+                      ? 'bg-gray-200' 
+                      : isInterrupted 
+                        ? 'bg-gradient-to-br from-red-400 to-orange-500 shadow-lg animate-pulse' 
+                        : 'bg-gradient-to-br from-teal-500 to-cyan-600 shadow-lg'
+                  }`}>
+                    {message.type === 'user' ? (
+                      <User className="w-4 h-4 text-gray-600" />
+                    ) : isInterrupted ? (
+                      <AlertCircle className="w-4 h-4 text-white" />
+                    ) : (
+                      <Bot className="w-4 h-4 text-white" />
+                    )}
+                  </div>
+                  <div className={`flex-1 relative ${
+                    message.type === 'user' 
+                      ? 'bg-gray-50 rounded-lg p-3' 
+                      : isInterrupted
+                        ? 'bg-red-50 border border-red-200 rounded-lg p-3 shadow-sm opacity-70'
+                        : 'bg-white border border-gray-100 rounded-lg p-3 shadow-sm'
+                  }`}>
+                    {/* Interrupted message overlay */}
+                    {isInterrupted && (
+                      <div className="absolute top-2 right-2 flex items-center gap-2">
+                        <Badge variant="destructive" className="text-xs">Interrupted</Badge>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 px-2 text-xs border-red-300 text-red-700 hover:bg-red-100"
+                          onClick={() => {
+                            // Resume functionality - resend the original question
+                            const lastUserMessage = messages.filter(m => m.type === 'user').pop();
+                            if (lastUserMessage) {
+                              sendMessageMutation.mutate(lastUserMessage.content);
+                              setInterruptedMessages(prev => {
+                                const newSet = new Set(Array.from(prev));
+                                newSet.delete(messageId);
+                                return newSet;
+                              });
+                            }
+                          }}
+                        >
+                          <RefreshCw className="w-3 h-3 mr-1" />
+                          Resume
+                        </Button>
                       </div>
-                      
-                      {/* Enhanced Perspective chips for AI responses - only show for multi-religious responses */}
-                      {(message.context as any)?.multiReligiousPerspective && (
-                        <div className="flex flex-wrap gap-1 items-center mt-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-xs border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 h-7 px-3"
-                            onClick={() => handlePerspectiveClick('bible', message.content)}
-                          >
-                            <Eye className="w-3 h-3 mr-1" />
-                            Biblical
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-xs border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 h-7 px-3"
-                            onClick={() => handlePerspectiveClick('quran', message.content)}
-                          >
-                            <Heart className="w-3 h-3 mr-1" />
-                            Islamic
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-xs border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 h-7 px-3"
-                            onClick={() => handlePerspectiveClick('torah', message.content)}
-                          >
-                            <BookOpen className="w-3 h-3 mr-1" />
-                            Torah
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-xs border-orange-200 text-orange-700 bg-orange-50 hover:bg-orange-100 h-7 px-3"
-                            onClick={() => handlePerspectiveClick('hindu', message.content)}
-                          >
-                            <Brain className="w-3 h-3 mr-1" />
-                            Hindu
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-xs border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100 h-7 px-3"
-                            onClick={() => handlePerspectiveClick('buddhist', message.content)}
-                          >
-                            <Zap className="w-3 h-3 mr-1" />
-                            Buddhist
-                          </Button>
-                          {!expandedPerspectives && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700"
-                              onClick={() => setExpandedPerspectives(true)}
-                            >
-                              More...
-                            </Button>
-                          )}
-                          {expandedPerspectives && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className="text-xs border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 h-7 px-3"
-                              onClick={() => setExpandedPerspectives(false)}
-                            >
-                              <Sparkles className="w-3 h-3 mr-1" />
-                              Less
-                            </Button>
-                          )}
+                    )}
+                    
+                    {message.type === 'user' ? (
+                      <p className="text-gray-800 text-sm leading-relaxed">{message.content}</p>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <ClickableMessage 
+                              content={message.content} 
+                              showBookmark={true} 
+                              onBookmark={() => {
+                                handleBookmark(message.content, {
+                                  religion: context.religion?.name || '',
+                                  book: context.book || '',
+                                  chapter: context.chapter || 0
+                                });
+                              }}
+                            />
+                          </div>
+                          <AudioPlaybackButton text={message.content} />
                         </div>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
           
           {/* Streaming indicator */}
@@ -807,43 +440,41 @@ export function RightColumnChat({
         </div>
       </ScrollArea>
 
-      {/* Enhanced Quick Suggestions Row */}
-      {messages.length > 0 && (
-        <div className="px-4 py-2 border-t border-gray-100 relative z-10">
-          <div className="flex flex-wrap gap-2">
-            {getQuickSuggestions().map((suggestion, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                size="sm"
-                className="text-xs h-7 border-teal-200 hover:border-teal-400 hover:bg-teal-50 hover:shadow-md transition-all duration-200"
-                onClick={() => {
-                  // Trigger voice interface or send message directly
-                  if (suggestion && !sendMessageMutation.isPending && !isStreaming) {
-                    sendMessageMutation.mutate(suggestion.trim());
-                  }
-                }}
-              >
-                {suggestion}
-              </Button>
-            ))}
-          </div>
+      {/* Enhanced Input Area with Voice Interface */}
+      <div className="border-t border-gray-100 bg-gray-50/50">
+        <VoiceFirstInterface
+          onMessage={(message) => {
+            if (message.trim() && !sendMessageMutation.isPending && !isStreaming) {
+              sendMessageMutation.mutate(message.trim());
+            }
+          }}
+          onInterruption={handleVoiceInterruption}
+          isStreaming={isStreaming}
+          context={context}
+          disabled={sendMessageMutation.isPending || isStreaming}
+        />
+        
+        {/* Fallback text input */}
+        <div className="px-4 pb-4">
+          <form onSubmit={handleFormSubmit} className="flex gap-2">
+            <Input
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              placeholder="Type your message..."
+              disabled={sendMessageMutation.isPending || isStreaming}
+              className="flex-1 text-sm"
+            />
+            <Button 
+              type="submit" 
+              size="sm"
+              disabled={!inputMessage.trim() || sendMessageMutation.isPending || isStreaming}
+              className="bg-teal-600 hover:bg-teal-700 text-white"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </form>
         </div>
-      )}
-
-      {/* Voice-First Interface */}
-      <VoiceFirstInterface
-        onSendMessage={(message) => {
-          if (message.trim() && !sendMessageMutation.isPending && !isStreaming) {
-            sendMessageMutation.mutate(message.trim());
-          }
-        }}
-        disabled={sendMessageMutation.isPending || isStreaming}
-        context={{
-          religion: context.religion,
-          book: context.book,
-        }}
-      />
+      </div>
     </div>
   );
 }

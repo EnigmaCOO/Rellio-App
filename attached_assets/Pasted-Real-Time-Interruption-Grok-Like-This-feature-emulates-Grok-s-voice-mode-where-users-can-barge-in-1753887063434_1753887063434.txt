@@ -1,0 +1,22 @@
+Real-Time Interruption (Grok-Like)
+This feature emulates Grok's voice mode, where users can barge in during AI responses for fluid, human-like dialogue—crucial for dynamic scripture discussions, like interrupting to clarify a verse mid-explanation.
+
+Allow Users to Interrupt AI Responses Mid-Speech or Text Output:
+
+Core Concept: Like Grok, detect new user input (voice or text) during AI generation and halt the response, rerouting to the new query. This creates a "live" feel, as if the Archivist is attentive and adaptive.
+Elaboration: For text output, use streaming API (e.g., OpenAI's) to generate responses incrementally; interrupt by clearing the buffer on new input. For voice (ElevenLabs), pause playback instantly and queue the new query. Visual cue: A "Interrupted" fade-out animation on the AI bubble (e.g., text grays out, orb pulses red briefly like Grok's error state).
+Benefits: Enhances immersion—users can refine questions on the fly (e.g., "Wait, compare to Hindu texts instead"), making chats feel collaborative and reducing frustration from irrelevant responses.
+Implementation Tips: Use event listeners for mic activation or typing during response; integrate with ElevenLabs WebSocket for real-time audio streaming/pausing. Add a short buffer (0.5s) to avoid accidental interrupts from noise.
+Challenges and Solutions: Over-interruption could fragment conversations—mitigate with a "Resume" button on interrupted bubbles. Ensure smooth transitions with animations (e.g., ChatGPT-like typing dots halt and restart).
+
+
+
+Grok-Specific Inspirations Expanded:
+
+Grok's voice mode (as of 2025) uses xAI's efficient audio processing for low-latency interruption, which you can replicate with Web Speech + ElevenLabs. Add Grok-like "orb" animations: A teal orb (circular loader) pulses in the header during processing, changing colors (purple for thinking, gold for responding) to visualize states.
+Sync with Verse Card: Voice mode could "listen" to selected verses, auto-generating queries like "Explain in voice".
+
+Potential Extensions:
+
+Voice Output for AI: All responses voiced by default (toggleable), using ElevenLabs for natural intonation matching scripture (e.g., serene voice for spiritual insights).
+Analytics: Track voice usage for app improvements, like popular query patterns.

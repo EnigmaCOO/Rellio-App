@@ -164,3 +164,57 @@
   .border-scripture-800 { border-color: var(--scripture-800); }
   .border-scripture-900 { border-color: var(--scripture-900); }
 }
+
+/* Grok-style Orb Animations */
+@keyframes orbRing {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes interruptAlert {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  50% { 
+    transform: scale(1.05);
+    box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes floatParticle {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+}
+
+.animate-orb-ring {
+  animation: orbRing 2s ease-in-out infinite;
+}
+
+.animate-interrupt-alert {
+  animation: interruptAlert 1.5s ease-in-out infinite;
+}
+
+.animate-float-particle {
+  animation: floatParticle 2s ease-out infinite;
+}
