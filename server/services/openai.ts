@@ -18,6 +18,7 @@ export async function generateScriptureResponse(
   context?: ScriptureContext
 ): Promise<string> {
   try {
+    console.log("generateScriptureResponse called with:", { userMessage, context });
     // Handle multi-religious perspective requests FIRST
     if (context && context.multiReligiousPerspective === true) {
       console.log("Multi-religious perspective triggered:", { question: userMessage, context });
@@ -55,53 +56,87 @@ User's question: "${userMessage}"`;
 
     // Check if no book context is provided AND not a multi-religious request
     if (!context || (!context.book && !context.multiReligiousPerspective) || (!context.religion && !context.multiReligiousPerspective)) {
-      // Handle general questions with meaningful responses
-      const generalKeywords = [
-        'purpose', 'history', 'religion', 'scripture', 'faith', 'spiritual', 'moral', 'meaning',
-        'life', 'guidance', 'wisdom', 'beliefs', 'culture', 'tradition', 'sacred', 'holy',
-        'divine', 'god', 'prayer', 'meditation', 'peace', 'love', 'compassion', 'forgiveness',
-        'truth', 'enlightenment', 'salvation', 'afterlife', 'soul', 'spirit', 'worship',
-        'ethics', 'values', 'philosophy', 'teaching', 'doctrine', 'theology', 'mysticism',
-        'pilgrimage', 'ritual', 'ceremony', 'community', 'fellowship', 'devotion', 'platform',
-        'religions', 'texts', 'bible', 'quran', 'torah', 'buddhist', 'hindu', 'christian',
-        'islam', 'judaism', 'buddhism', 'hinduism', 'wrote', 'written', 'author', 'many'
+      console.log("No specific context provided, analyzing question for spiritual content:", userMessage);
+      
+      // Define spiritual keywords that should trigger multi-religious responses
+      const spiritualKeywords = [
+        'purpose', 'meaning', 'god', 'divine', 'life', 'love', 'truth', 'soul', 'spirit',
+        'prayer', 'faith', 'peace', 'wisdom', 'salvation', 'heaven', 'hell', 'afterlife',
+        'sin', 'forgiveness', 'compassion', 'mercy', 'justice', 'righteousness', 'holy',
+        'sacred', 'worship', 'meditation', 'enlightenment', 'suffering', 'death', 'born',
+        'creation', 'creator', 'universe', 'existence', 'eternal', 'immortal', 'moral',
+        'ethics', 'good', 'evil', 'virtue', 'blessing', 'miracle', 'angel', 'prophet'
       ];
       
       const input = userMessage.toLowerCase();
-      const hasGeneralKeywords = generalKeywords.some(keyword => input.includes(keyword));
+      const matchedSpiritualKeywords = spiritualKeywords.filter(keyword => input.includes(keyword));
+      const hasSpiritualContent = matchedSpiritualKeywords.length > 0;
       
-      let response;
-      if (hasGeneralKeywords) {
-        // Generate contextual response based on detected keywords
-        if (input.includes('platform') || input.includes('many religions') || input.includes('how many')) {
-          response = "This platform provides access to 5 major religious traditions: Christianity (Bible), Islam (Quran), Judaism (Torah), Hinduism (Bhagavad Gita), and Buddhism (Tripitaka). Each offers unique spiritual insights and wisdom. Select any tradition from the navigation panel to explore its sacred texts and teachings.";
-        } else if (input.includes('quran') && (input.includes('wrote') || input.includes('written') || input.includes('author'))) {
-          response = "According to Islamic belief, the Quran was revealed by Allah (God) to the Prophet Muhammad through the angel Gabriel (Jibril) over approximately 23 years. Muslims believe it is the direct word of God, not authored by Muhammad but transmitted through him. Select 'Quran' from the navigation to explore its verses and teachings.";
-        } else if (input.includes('bible') && (input.includes('wrote') || input.includes('written') || input.includes('author'))) {
-          response = "The Bible was written by multiple authors over many centuries. The Old Testament includes prophets, kings, and scribes, while the New Testament was written by apostles and early Christian leaders like Paul, Matthew, Mark, Luke, and John. Select 'Bible' from the navigation to explore its books and verses.";
-        } else if (input.includes('torah') && (input.includes('wrote') || input.includes('written') || input.includes('author'))) {
-          response = "According to Jewish tradition, the Torah (Five Books of Moses) was given by God to Moses on Mount Sinai. It includes Genesis, Exodus, Leviticus, Numbers, and Deuteronomy. Select 'Torah' from the navigation to explore its sacred texts and teachings.";
-        } else if (input.includes('purpose') || input.includes('meaning')) {
-          response = "Scripture serves as a guide for moral and spiritual life across cultures, offering wisdom, ethical principles, and answers to life's fundamental questions. Different religious traditions provide unique perspectives on purpose and meaning. Would you like to explore a specific religious text?";
-        } else if (input.includes('history') || input.includes('tradition')) {
-          response = "Religious scriptures have shaped human civilization for millennia, preserving ancient wisdom and cultural values. Each tradition has its own rich history of interpretation and practice. Select a religious text to learn about its historical development and significance.";
-        } else if (input.includes('faith') || input.includes('belief')) {
-          response = "Faith and belief systems provide frameworks for understanding existence, morality, and our relationship with the divine. Different scriptures offer various approaches to cultivating and expressing faith. Choose a religious tradition to explore its specific teachings on faith.";
-        } else if (input.includes('god') || input.includes('divine')) {
-          response = "Concepts of the divine vary across religious traditions - from monotheistic to polytheistic to non-theistic approaches. Each scripture offers unique insights into the nature of divinity and humanity's relationship with it. Select a text to explore specific theological perspectives.";
-        } else if (input.includes('prayer') || input.includes('worship') || input.includes('meditation')) {
-          response = "Spiritual practices like prayer, worship, and meditation are central to most religious traditions, each offering different methods for connecting with the divine and finding inner peace. Choose a religious text to learn about its specific spiritual practices and guidance.";
-        } else if (input.includes('love') || input.includes('compassion') || input.includes('forgiveness')) {
-          response = "Love, compassion, and forgiveness are universal themes found across religious scriptures, though expressed in different ways. These virtues are often seen as paths to spiritual growth and harmony. Select a religious tradition to explore its specific teachings on these values.";
-        } else {
-          response = "Religious scriptures offer profound insights into spirituality, ethics, and the human condition. Each tradition provides unique wisdom and guidance for life's journey. Select a specific religious text to dive deeper into its teachings and explore context-specific guidance.";
+      console.log("Spiritual analysis:", { 
+        input, 
+        hasSpiritualContent,
+        matchedKeywords: matchedSpiritualKeywords
+      });
+      
+      // For spiritual/religious questions, provide multi-religious perspective using OpenAI
+      if (hasSpiritualContent) {
+        console.log("SPIRITUAL QUESTION DETECTED - Calling OpenAI for multi-religious response");
+        
+        const multiReligiousPrompt = `You are an expert comparative religion scholar. The user has asked a general spiritual/religious question. Provide a comprehensive response that includes perspectives from all 5 major religious traditions available on this platform.
+
+Structure your response as follows:
+1. Start with a brief general statement about the topic
+2. Then provide specific perspectives from each tradition:
+   - **Biblical perspective:** [Answer based on Christian teachings with specific verse reference]
+   - **Quranic perspective:** [Answer based on Islamic teachings with specific verse reference]
+   - **Torah perspective:** [Answer based on Jewish teachings with specific verse reference]
+   - **Hindu perspective:** [Answer based on Bhagavad Gita teachings with specific verse reference]
+   - **Buddhist perspective:** [Answer based on Buddhist teachings with specific text reference]
+3. End with a brief conclusion highlighting common themes or key differences
+
+Keep each perspective concise (1-2 sentences) but meaningful. Always include specific verse references for authenticity. Focus on providing genuine religious wisdom rather than generic responses.
+
+User's question: "${userMessage}"`;
+
+        try {
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+              { role: "system", content: multiReligiousPrompt },
+              { role: "user", content: userMessage }
+            ],
+            max_tokens: 800,
+            temperature: 0.7,
+          });
+
+          const multiResponse = response.choices[0].message.content || "I apologize, but I couldn't generate a response at this time.";
+          console.log("SUCCESS: Multi-religious OpenAI response generated");
+          return multiResponse;
+        } catch (error) {
+          console.error("Error calling OpenAI for spiritual question:", error);
+          return "I apologize, but I'm having trouble accessing detailed religious perspectives right now. Please try selecting a specific religious text from the navigation panel for more targeted guidance.";
         }
-      } else {
-        response = "I'm designed to help with questions about religious scriptures and spiritual topics. For the most relevant answers, please select a religious text from the navigation panel, or ask about general spiritual, religious, or ethical topics.";
       }
       
-      console.log("Chat input and response:", { input: userMessage, response });
-      return response;
+      // Handle platform-specific questions
+      if (input.includes('platform') || input.includes('many religions') || input.includes('how many')) {
+        return "This platform provides access to 5 major religious traditions: Christianity (Bible), Islam (Quran), Judaism (Torah), Hinduism (Bhagavad Gita), and Buddhism (Tripitaka). Each offers unique spiritual insights and wisdom. Select any tradition from the navigation panel to explore its sacred texts and teachings.";
+      }
+      
+      if (input.includes('quran') && (input.includes('wrote') || input.includes('written') || input.includes('author'))) {
+        return "According to Islamic belief, the Quran was revealed by Allah (God) to the Prophet Muhammad through the angel Gabriel (Jibril) over approximately 23 years. Muslims believe it is the direct word of God, not authored by Muhammad but transmitted through him. Select 'Quran' from the navigation to explore its verses and teachings.";
+      }
+      
+      if (input.includes('bible') && (input.includes('wrote') || input.includes('written') || input.includes('author'))) {
+        return "The Bible was written by multiple authors over many centuries. The Old Testament includes prophets, kings, and scribes, while the New Testament was written by apostles and early Christian leaders like Paul, Matthew, Mark, Luke, and John. Select 'Bible' from the navigation to explore its books and verses.";
+      }
+      
+      if (input.includes('torah') && (input.includes('wrote') || input.includes('written') || input.includes('author'))) {
+        return "According to Jewish tradition, the Torah (Five Books of Moses) was given by God to Moses on Mount Sinai. It includes Genesis, Exodus, Leviticus, Numbers, and Deuteronomy. Select 'Torah' from the navigation to explore its sacred texts and teachings.";
+      }
+      
+      // Default response for non-spiritual general questions
+      return "I'm designed to help with questions about religious scriptures and spiritual topics. For the most relevant answers, please select a religious text from the navigation panel, or ask about spiritual, religious, or ethical topics.";
     }
 
     let systemPrompt = `You are an expert scripture guide with deep knowledge of religious texts. Your role is to:
