@@ -108,7 +108,45 @@ export function RightColumnChat({
   const messageEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Simple Response Renderer (Restored Original)
+  // Enhanced Response Renderer with Clickable Perspectives
+  const [expandedPerspective, setExpandedPerspective] = useState<string | null>(null);
+
+  const parsePerspectiveContent = (content: string, perspectiveName: string) => {
+    const lines = content.split('\n');
+    let perspectiveContent = '';
+    let foundPerspective = false;
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      
+      if (trimmed.includes(`${perspectiveName} perspective:`)) {
+        foundPerspective = true;
+        // Extract content after the perspective header
+        perspectiveContent = trimmed.replace(new RegExp(`^-\\s*\\*\\*${perspectiveName} perspective:\\*\\*`), '').trim();
+        continue;
+      }
+      
+      if (foundPerspective) {
+        // Stop if we hit another perspective or conclusion
+        if (trimmed.includes('perspective:') || trimmed.toLowerCase().includes('in conclusion')) {
+          break;
+        }
+        if (trimmed.length > 0) {
+          perspectiveContent += ' ' + trimmed;
+        }
+      }
+    }
+    
+    return perspectiveContent.trim();
+  };
+
+  const extractReferences = (text: string) => {
+    // Extract biblical/scripture references like "Philippians 4:6-7", "Surah Ar-Ra'd (13:28)", etc.
+    const referencePattern = /(\w+\s+\d+:\d+(?:-\d+)?|\w+\s+\d+,\s+Verse\s+\d+|Surah\s+[\w-]+\s+\(\d+:\d+\)|Chapter\s+\d+,\s+Verse\s+\d+)/g;
+    const references = text.match(referencePattern) || [];
+    return references;
+  };
+
   const renderEnhancedResponse = (content: string) => {
     // Check if this is a multi-religious response
     const hasMultiReligious = content.includes('Biblical perspective') || 
@@ -127,7 +165,7 @@ export function RightColumnChat({
       );
     }
 
-    // Parse multi-religious response and extract just the introduction
+    // Parse multi-religious response and extract introduction
     const lines = content.split('\n');
     let introduction = '';
     
@@ -136,8 +174,16 @@ export function RightColumnChat({
       if (!trimmed.includes('perspective:') && !trimmed.startsWith('-') && !trimmed.toLowerCase().includes('conclusion') && trimmed.length > 0) {
         introduction += trimmed + ' ';
       }
-      if (trimmed.includes('perspective:')) break; // Stop at first perspective
+      if (trimmed.includes('perspective:')) break;
     }
+
+    const perspectives = [
+      { key: 'Biblical', name: 'Biblical', icon: Eye, bgColor: 'bg-blue-50', borderColor: 'border-blue-200', textColor: 'text-blue-700', iconColor: 'text-blue-600' },
+      { key: 'Quranic', name: 'Islamic', icon: Heart, bgColor: 'bg-green-50', borderColor: 'border-green-200', textColor: 'text-green-700', iconColor: 'text-green-600' },
+      { key: 'Hindu', name: 'Hindu', icon: Zap, bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-700', iconColor: 'text-orange-600' },
+      { key: 'Buddhist', name: 'Buddhist', icon: Play, bgColor: 'bg-purple-50', borderColor: 'border-purple-200', textColor: 'text-purple-700', iconColor: 'text-purple-600' },
+      { key: 'Torah', name: 'Torah', icon: Star, bgColor: 'bg-blue-50', borderColor: 'border-blue-200', textColor: 'text-blue-700', iconColor: 'text-blue-600' },
+    ];
     
     return (
       <div className="space-y-3">
@@ -146,33 +192,74 @@ export function RightColumnChat({
           {introduction.trim()}
         </div>
 
-        {/* Beautiful colored perspective badges */}
+        {/* Clickable colored perspective badges */}
         <div className="flex flex-wrap gap-2">
-          <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
-            <Eye className="w-3 h-3 text-blue-600" />
-            <span className="text-xs font-medium text-blue-700">Biblical</span>
-          </div>
-          <div className="flex items-center gap-1 px-2 py-1 bg-green-50 border border-green-200 rounded-full">
-            <Heart className="w-3 h-3 text-green-600" />
-            <span className="text-xs font-medium text-green-700">Islamic</span>
-          </div>
-          <div className="flex items-center gap-1 px-2 py-1 bg-orange-50 border border-orange-200 rounded-full">
-            <Zap className="w-3 h-3 text-orange-600" />
-            <span className="text-xs font-medium text-orange-700">Hindu</span>
-          </div>
-          <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 border border-purple-200 rounded-full">
-            <Play className="w-3 h-3 text-purple-600" />
-            <span className="text-xs font-medium text-purple-700">Buddhist</span>
-          </div>
-          <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
-            <Star className="w-3 h-3 text-blue-600" />
-            <span className="text-xs font-medium text-blue-700">Torah</span>
-          </div>
-          <div className="flex items-center gap-1 px-2 py-1 bg-indigo-50 border border-indigo-200 rounded-full">
-            <Sparkles className="w-3 h-3 text-indigo-600" />
-            <span className="text-xs font-medium text-indigo-700">Mystical</span>
-          </div>
+          {perspectives.map(({ key, name, icon: Icon, bgColor, borderColor, textColor, iconColor }) => {
+            const perspectiveContent = parsePerspectiveContent(content, key);
+            if (!perspectiveContent) return null;
+            
+            return (
+              <button
+                key={key}
+                onClick={() => setExpandedPerspective(expandedPerspective === key ? null : key)}
+                className={`flex items-center gap-1 px-2 py-1 ${bgColor} border ${borderColor} rounded-full hover:shadow-md transition-all duration-200 cursor-pointer ${
+                  expandedPerspective === key ? 'ring-2 ring-offset-1 ring-blue-500' : ''
+                }`}
+              >
+                <Icon className={`w-3 h-3 ${iconColor}`} />
+                <span className={`text-xs font-medium ${textColor}`}>{name}</span>
+              </button>
+            );
+          })}
         </div>
+
+        {/* Expanded perspective content */}
+        {expandedPerspective && (
+          <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              {(() => {
+                const perspective = perspectives.find(p => p.key === expandedPerspective);
+                if (!perspective) return null;
+                const Icon = perspective.icon;
+                return (
+                  <>
+                    <Icon className={`w-4 h-4 ${perspective.iconColor}`} />
+                    <h4 className={`font-medium ${perspective.textColor}`}>{perspective.name} Perspective</h4>
+                  </>
+                );
+              })()}
+            </div>
+            
+            {(() => {
+              const perspectiveContent = parsePerspectiveContent(content, expandedPerspective);
+              const references = extractReferences(perspectiveContent);
+              
+              return (
+                <div className="space-y-3">
+                  <div className="text-gray-800 text-sm leading-relaxed">
+                    {perspectiveContent}
+                  </div>
+                  
+                  {references.length > 0 && (
+                    <div className="border-t border-gray-200 pt-3">
+                      <h5 className="text-xs font-medium text-gray-600 mb-2">References:</h5>
+                      <div className="flex flex-wrap gap-2">
+                        {references.map((ref, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-2 py-1 bg-white border border-gray-300 rounded-md text-xs text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          >
+                            {ref}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        )}
       </div>
     );
   };
