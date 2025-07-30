@@ -47,6 +47,88 @@ import { VoiceFirstInterface } from "@/components/chat/VoiceFirstInterface";
 import { GrokStyleOrb } from "@/components/chat/GrokStyleOrb";
 import { MandalaOverlay } from "@/components/chat/MandalaOverlay";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+
+// Scripture Content Component with Clickable References
+function ScriptureContent({ 
+  content, 
+  onNavigateToVerse 
+}: { 
+  content: string;
+  onNavigateToVerse?: (religion: Religion, book: string, chapter: number, verse?: number) => void;
+}) {
+  const parseScriptureReferences = (text: string) => {
+    const patterns = [
+      // Bible references
+      { 
+        regex: /\b(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|1 Samuel|2 Samuel|1 Kings|2 Kings|1 Chronicles|2 Chronicles|Ezra|Nehemiah|Esther|Job|Psalms|Proverbs|Ecclesiastes|Song of Songs|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|1 Corinthians|2 Corinthians|Galatians|Ephesians|Philippians|Colossians|1 Thessalonians|2 Thessalonians|1 Timothy|2 Timothy|Titus|Philemon|Hebrews|James|1 Peter|2 Peter|1 John|2 John|3 John|Jude|Revelation)\s+(\d+):(\d+)(?:-\d+)?/gi, 
+        religion: 'bible' as Religion 
+      },
+      // Quran references - comprehensive patterns
+      { 
+        regex: /\b(?:Quran|Qur'an|Qur'ān|Surah)\s+(?:Al-)?([A-Za-z-\s]+)\s*(?:\([\w\s]+\))?\s*(\d+):(\d+)(?:-\d+)?/gi, 
+        religion: 'quran' as Religion 
+      },
+      { 
+        regex: /\b(Quran|Qur'an)\s+(\d+):(\d+)(?:-\d+)?/gi, 
+        religion: 'quran' as Religion 
+      },
+      // Hindu references
+      { 
+        regex: /\b(Bhagavad\s+Gita)\s+(\d+):(\d+)(?:-\d+)?/gi, 
+        religion: 'hindu' as Religion 
+      },
+      // Torah references
+      { 
+        regex: /\b(Bereshit|Shemot|Vayikra|Bamidbar|Devarim)\s+(\d+):(\d+)(?:-\d+)?/gi, 
+        religion: 'torah' as Religion 
+      }
+    ];
+
+    let processedText = text;
+    
+    patterns.forEach(({ regex, religion }) => {
+      processedText = processedText.replace(regex, (match, bookOrSurah, chapter, verse) => {
+        const referenceId = `ref-${Math.random().toString(36).substr(2, 9)}`;
+        return `<span 
+          id="${referenceId}"
+          class="scripture-ref cursor-pointer text-teal-600 hover:text-teal-800 hover:underline font-medium transition-colors bg-teal-50 px-1 py-0.5 rounded border border-teal-200" 
+          data-religion="${religion}" 
+          data-book="${bookOrSurah}" 
+          data-chapter="${chapter}" 
+          data-verse="${verse}"
+          title="Click to navigate to ${match}"
+        >${match}</span>`;
+      });
+    });
+
+    return processedText;
+  };
+
+  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.classList.contains('scripture-ref')) {
+      event.preventDefault();
+      const religion = target.dataset.religion as Religion;
+      const book = target.dataset.book || '';
+      const chapter = parseInt(target.dataset.chapter || '1', 10);
+      const verse = target.dataset.verse ? parseInt(target.dataset.verse, 10) : undefined;
+      
+      if (onNavigateToVerse && religion && book && chapter) {
+        console.log('🔗 Navigating to scripture:', { religion, book, chapter, verse });
+        onNavigateToVerse(religion, book, chapter, verse);
+      }
+    }
+  };
+
+  return (
+    <div 
+      className="prose prose-sm max-w-none leading-relaxed text-gray-900"
+      onClick={handleClick}
+      dangerouslySetInnerHTML={{ __html: parseScriptureReferences(content) }}
+    />
+  );
+}
 
 interface EnhancedAuraArchivistProps {
   sessionId: string;
@@ -74,37 +156,6 @@ function ArchivistMessage({
   onBookmark?: (content: string) => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  
-  const parseScriptureReferences = (content: string) => {
-    // Enhanced pattern matching for clickable scripture references
-    const patterns = [
-      { regex: /\b(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|1 Samuel|2 Samuel|1 Kings|2 Kings|1 Chronicles|2 Chronicles|Ezra|Nehemiah|Esther|Job|Psalms|Proverbs|Ecclesiastes|Song of Songs|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|1 Corinthians|2 Corinthians|Galatians|Ephesians|Philippians|Colossians|1 Thessalonians|2 Thessalonians|1 Timothy|2 Timothy|Titus|Philemon|Hebrews|James|1 Peter|2 Peter|1 John|2 John|3 John|Jude|Revelation)\s+(\d+):(\d+)(?:-\d+)?/gi, religion: 'bible' as Religion },
-      { regex: /\b(Quran|Qur'an)\s+(\d+):(\d+)(?:-\d+)?/gi, religion: 'quran' as Religion },
-      { regex: /\b(Bhagavad\s+Gita)\s+(\d+):(\d+)(?:-\d+)?/gi, religion: 'hindu' as Religion }
-    ];
-
-    let processedContent = content;
-    
-    patterns.forEach(({ regex, religion }) => {
-      processedContent = processedContent.replace(regex, (match, book, chapter, verse) => {
-        return `<span class="scripture-ref cursor-pointer text-teal-600 hover:text-teal-800 hover:underline font-medium transition-colors" data-religion="${religion}" data-book="${book}" data-chapter="${chapter}" data-verse="${verse}">${match}</span>`;
-      });
-    });
-
-    return processedContent;
-  };
-
-  const handleScriptureClick = (event: React.MouseEvent) => {
-    const target = event.target as HTMLElement;
-    if (target.classList.contains('scripture-ref')) {
-      const religion = target.dataset.religion as Religion;
-      const book = target.dataset.book || '';
-      const chapter = parseInt(target.dataset.chapter || '1', 10);
-      const verse = target.dataset.verse ? parseInt(target.dataset.verse, 10) : undefined;
-      
-      onNavigateToVerse?.(religion, book, chapter, verse);
-    }
-  };
 
   const displayContent = isExpanded ? message.content : (message.content.length > 300 ? message.content.slice(0, 300) + '...' : message.content);
   const needsTruncation = message.content.length > 300;
@@ -146,10 +197,9 @@ function ArchivistMessage({
           {message.type === 'user' ? (
             <p className="text-sm leading-relaxed">{message.content}</p>
           ) : (
-            <div 
-              className="prose prose-sm max-w-none text-sm leading-relaxed cursor-pointer"
-              dangerouslySetInnerHTML={{ __html: parseScriptureReferences(displayContent) }}
-              onClick={handleScriptureClick}
+            <ScriptureContent 
+              content={displayContent}
+              onNavigateToVerse={onNavigateToVerse}
             />
           )}
           
