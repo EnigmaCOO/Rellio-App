@@ -114,6 +114,13 @@ export function RightColumnChat({
 
   const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
     queryKey: ['/api/chat', sessionId],
+    queryFn: async () => {
+      const response = await fetch(`/api/chat/${sessionId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch messages');
+      }
+      return response.json();
+    },
     enabled: !!sessionId
   });
 
