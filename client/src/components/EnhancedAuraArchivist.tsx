@@ -472,14 +472,12 @@ export function EnhancedAuraArchivist({
   };
 
   return (
-    <Card className={cn(
-      "bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 relative flex flex-col h-full"
-    )}>
+    <div className="h-full flex flex-col bg-white">
       {/* Mandala Spiritual Overlay */}
       <MandalaOverlay opacity={0.08} />
       
       {/* Enhanced Header with Spiritual Gradient */}
-      <div className="relative bg-gradient-to-r from-purple-50 via-white to-yellow-50 border-b border-gray-100 p-4">
+      <div className="flex-shrink-0 relative bg-gradient-to-r from-purple-50 via-white to-yellow-50 border-b border-gray-100 p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-md">
@@ -533,8 +531,8 @@ export function EnhancedAuraArchivist({
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 relative min-h-0">
-        <ScrollArea className="h-full p-4">
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full overflow-y-auto p-4">
           {isLoading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
@@ -606,7 +604,7 @@ export function EnhancedAuraArchivist({
               <div ref={messageEndRef} />
             </div>
           )}
-        </ScrollArea>
+        </div>
       </div>
 
       {/* Enhanced Input Area with Voice-First Design */}
@@ -665,8 +663,8 @@ export function EnhancedAuraArchivist({
             variant: "default"
           });
         }}
-        onHighlightVerse={onNavigateToVerse}
+        onHighlightVerse={onNavigateToVerse as any}
       />
-    </Card>
+    </div>
   );
 }
