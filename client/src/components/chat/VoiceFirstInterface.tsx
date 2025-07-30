@@ -71,7 +71,7 @@ export function VoiceFirstInterface({
   // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const SpeechRecognitionAPI = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       
       if (SpeechRecognitionAPI) {
         const recognition = new SpeechRecognitionAPI();
@@ -175,10 +175,17 @@ export function VoiceFirstInterface({
 
   const handleSendMessage = () => {
     const message = textInput.trim();
+    console.log('Attempting to send message:', message);
+    console.log('Disabled:', disabled, 'IsStreaming:', isStreaming);
+    
     if (message && !disabled && !isStreaming) {
+      console.log('Sending message via onSendMessage callback');
       onSendMessage(message);
       setTextInput('');
       setTranscript('');
+      console.log('Text input cleared');
+    } else {
+      console.log('Message not sent - validation failed');
     }
   };
 
