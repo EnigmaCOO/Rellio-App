@@ -114,7 +114,7 @@ export function RightColumnChat({
   const [expandedPerspectives, setExpandedPerspectives] = useState(false);
   const [interruptedMessages, setInterruptedMessages] = useState<Set<string>>(new Set());
 
-  const { data: messages = [], isLoading } = useQuery({
+  const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
     queryKey: ['/api/chat', sessionId],
     enabled: !!sessionId
   });
@@ -129,7 +129,7 @@ export function RightColumnChat({
             sessionId,
             message,
             context: {
-              religion: context.religion?.name || null,
+              religion: context.religion?.id || null,
               book: context.book || null,
               chapter: context.chapter || null
             }
@@ -269,7 +269,7 @@ export function RightColumnChat({
               <h3 className="font-semibold text-sm text-gray-900">AI Scripture Guide</h3>
               <p className="text-xs text-gray-500">
                 {context.religion && context.book 
-                  ? `${context.religion.name} - ${context.book}` 
+                  ? `${context.religion.name || context.religion.id} - ${context.book}` 
                   : "Multi-religious AI assistant"
                 }
               </p>
@@ -307,7 +307,7 @@ export function RightColumnChat({
               <h4 className="font-medium text-gray-900 mb-2">Welcome to AI Scripture Guide</h4>
               <p className="text-sm text-gray-600 mb-6 max-w-sm mx-auto">
                 {context.religion && context.book 
-                  ? `Ask questions about ${context.religion.name} - ${context.book}` 
+                  ? `Ask questions about ${context.religion.name || context.religion.id} - ${context.book}` 
                   : "Explore spiritual wisdom from multiple religious traditions"
                 }
               </p>
@@ -443,14 +443,17 @@ export function RightColumnChat({
       {/* Enhanced Input Area with Voice Interface */}
       <div className="border-t border-gray-100 bg-gray-50/50">
         <VoiceFirstInterface
-          onMessage={(message) => {
+          onSendMessage={(message) => {
             if (message.trim() && !sendMessageMutation.isPending && !isStreaming) {
               sendMessageMutation.mutate(message.trim());
             }
           }}
-          onInterruption={handleVoiceInterruption}
+          onInterruption={(message) => handleVoiceInterruption()}
           isStreaming={isStreaming}
-          context={context}
+          context={{
+            religion: context.religion?.id || null,
+            book: context.book
+          }}
           disabled={sendMessageMutation.isPending || isStreaming}
         />
         
