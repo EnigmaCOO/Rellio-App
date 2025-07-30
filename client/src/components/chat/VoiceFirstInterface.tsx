@@ -66,10 +66,16 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
   const [micColor, setMicColor] = useState('teal');
   const [sensitivityLevel, setSensitivityLevel] = useState(0.5);
   const [privacyConsent, setPrivacyConsent] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [isExpanded, setIsExpanded] = useState(false);
   
   const animationRef = useRef<number | null>(null);
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const waveformRef = useRef<HTMLDivElement>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const microphoneRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   // Language detection based on scripture context
   useEffect(() => {
@@ -115,14 +121,18 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
       
       recognitionInstance.onstart = () => {
         setMode('listening');
+        setIsExpanded(true);
         console.log('🎤 Voice-first mode activated');
+        startAudioAnalysis();
         startWaveformAnimation();
       };
       
       recognitionInstance.onend = () => {
         if (mode === 'listening') {
           setMode('idle');
+          setIsExpanded(false);
           stopWaveformAnimation();
+          stopAudioAnalysis();
         }
       };
       
@@ -192,8 +202,77 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
       if (silenceTimeoutRef.current) {
         clearTimeout(silenceTimeoutRef.current);
       }
+      stopAudioAnalysis();
     };
   }, [selectedLanguage, mode, transcript]);
+
+  const startAudioAnalysis = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 44100
+        } 
+      });
+      
+      streamRef.current = stream;
+      
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = audioContext;
+      
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+      analyserRef.current = analyser;
+      
+      const microphone = audioContext.createMediaStreamSource(stream);
+      microphoneRef.current = microphone;
+      microphone.connect(analyser);
+      
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      
+      const updateAudioLevel = () => {
+        if (analyser && mode === 'listening') {
+          analyser.getByteFrequencyData(dataArray);
+          const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
+          const normalizedLevel = Math.min(average / 128, 1);
+          setAudioLevel(normalizedLevel);
+          requestAnimationFrame(updateAudioLevel);
+        }
+      };
+      
+      updateAudioLevel();
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      toast({
+        title: "Microphone access failed",
+        description: "Please allow microphone permissions for voice input",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopAudioAnalysis = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    
+    if (microphoneRef.current) {
+      microphoneRef.current.disconnect();
+      microphoneRef.current = null;
+    }
+    
+    analyserRef.current = null;
+    setAudioLevel(0);
+  };
 
   const startWaveformAnimation = () => {
     const animate = () => {
@@ -201,8 +280,18 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
         const waves = waveformRef.current.children;
         for (let i = 0; i < waves.length; i++) {
           const wave = waves[i] as HTMLElement;
-          const height = Math.random() * 20 + 8;
-          wave.style.height = `${height}px`;
+          // Use actual audio level for more dynamic animation
+          const baseHeight = 8;
+          const amplitude = audioLevel * 30;
+          const variation = Math.sin(Date.now() * 0.01 + i * 0.5) * 5;
+          const height = baseHeight + amplitude + variation;
+          wave.style.height = `${Math.max(height, 4)}px`;
+          
+          // Add lotus-like formation during pauses (low audio)
+          if (audioLevel < 0.1) {
+            const lotusHeight = 8 + Math.sin(Date.now() * 0.003 + i * 1.2) * 3;
+            wave.style.height = `${lotusHeight}px`;
+          }
         }
       }
       animationRef.current = requestAnimationFrame(animate);
@@ -415,17 +504,21 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
         </form>
       ) : (
         // Voice-first interface
-        <div className="flex flex-col items-center space-y-3">
+        <div className="flex flex-col items-center space-y-4">
           {/* Main Voice Button */}
           <div className="relative">
             <Button
               type="button"
               className={`
-                relative w-12 h-12 rounded-full p-0 border-2 transition-all duration-300 transform
+                relative rounded-full p-0 border-2 transition-all duration-500 transform
                 ${getMicColorClasses()}
+                ${isExpanded 
+                  ? 'w-16 h-16 scale-110 shadow-2xl' 
+                  : 'w-12 h-12 hover:scale-105 shadow-md'
+                }
                 ${mode === 'listening' 
-                  ? 'scale-110 shadow-lg animate-pulse' 
-                  : 'hover:scale-105 shadow-md'
+                  ? 'shadow-2xl animate-pulse' 
+                  : ''
                 }
                 ${mode === 'processing' ? 'animate-spin' : ''}
                 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
@@ -435,46 +528,105 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
               title={mode === 'listening' ? "Stop voice input" : "Start speaking"}
             >
               {mode === 'processing' ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : mode === 'listening' ? (
-                <MicOff className="w-5 h-5 text-white" />
+                <MicOff className="w-6 h-6 text-white" />
               ) : (
                 <Mic className="w-5 h-5 text-white" />
               )}
             </Button>
             
-            {/* Mystical mandala animation on hover */}
-            <div className="absolute inset-0 opacity-20 pointer-events-none">
-              <div className="w-full h-full rounded-full border border-current animate-ping" style={{ animationDuration: '2s' }} />
-            </div>
+            {/* Enhanced mystical mandala animation */}
+            {mode === 'listening' && (
+              <>
+                <div className="absolute inset-0 opacity-30 pointer-events-none">
+                  <div className="w-full h-full rounded-full border-2 border-current animate-ping" style={{ animationDuration: '2s' }} />
+                </div>
+                <div className="absolute inset-0 opacity-20 pointer-events-none">
+                  <div className="w-full h-full rounded-full border border-current animate-ping" style={{ animationDuration: '3s', animationDelay: '0.5s' }} />
+                </div>
+              </>
+            )}
           </div>
           
-          {/* Waveform visualization */}
+          {/* Enhanced Dynamic Waveform Visualization */}
           {mode === 'listening' && (
-            <div 
-              ref={waveformRef}
-              className="flex items-center space-x-1"
-            >
-              {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  className="w-1 rounded-full transition-all duration-75"
+            <div className="space-y-2">
+              <div 
+                ref={waveformRef}
+                className={`flex items-center justify-center space-x-1 transition-all duration-500 ${
+                  isExpanded ? 'scale-110' : ''
+                }`}
+              >
+                {[...Array(9)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="rounded-full transition-all duration-100"
+                    style={{ 
+                      backgroundColor: `var(--${micColor}-500, #14b8a6)`,
+                      width: i === 4 ? '3px' : '2px', // Center bar slightly wider
+                      height: '8px',
+                      opacity: audioLevel > 0.05 ? 0.9 : 0.6,
+                      boxShadow: audioLevel > 0.3 ? `0 0 8px var(--${micColor}-400, #14b8a6)` : 'none'
+                    }}
+                  />
+                ))}
+              </div>
+              
+              {/* "Listening..." text */}
+              <p className="text-sm text-gray-600 font-medium animate-pulse">
+                Listening...
+              </p>
+              
+              {/* Audio level indicator */}
+              <div className="w-24 h-1 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-teal-500 transition-all duration-100 rounded-full"
                   style={{ 
-                    backgroundColor: `var(--${micColor}-500, #14b8a6)`,
-                    height: '8px'
+                    width: `${audioLevel * 100}%`,
+                    backgroundColor: `var(--${micColor}-500, #14b8a6)`
                   }}
                 />
-              ))}
+              </div>
             </div>
           )}
           
-          {/* Transcript display */}
+          {/* Real-time Transcript Display */}
           {(transcript || interimTranscript) && (
-            <div className="bg-gray-100 rounded-lg p-3 max-w-full">
-              <p className="text-sm">
-                <span className="text-gray-900">{transcript}</span>
-                <span className="text-gray-500 italic">{interimTranscript}</span>
+            <div className="bg-white border border-gray-200 rounded-xl p-4 max-w-full shadow-lg animate-fadeIn">
+              <div className="flex items-start gap-2 mb-2">
+                <Volume2 className="w-4 h-4 text-teal-500 mt-0.5 flex-shrink-0" />
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  Live Transcription
+                </p>
+              </div>
+              <p className="text-sm leading-relaxed">
+                {transcript && (
+                  <span className="text-gray-900 font-medium">{transcript}</span>
+                )}
+                {interimTranscript && (
+                  <span className="text-gray-500 italic ml-1 animate-pulse">
+                    {interimTranscript}
+                    <span className="inline-block w-0.5 h-4 bg-teal-500 ml-1 animate-pulse" />
+                  </span>
+                )}
               </p>
+              
+              {/* Confidence indicator for interim results */}
+              {interimTranscript && (
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="flex space-x-1">
+                    {[...Array(3)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce"
+                        style={{ animationDelay: `${i * 150}ms` }}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs text-gray-400">Processing speech...</span>
+                </div>
+              )}
             </div>
           )}
           
@@ -507,15 +659,31 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
             </Badge>
           </div>
           
-          {/* Status text */}
-          <p className="text-xs text-gray-500 text-center">
-            {mode === 'listening' 
-              ? "Listening... Speak naturally about scripture"
-              : mode === 'processing'
-              ? "Processing your voice input..."
-              : "Tap microphone to speak or type your question"
-            }
-          </p>
+          {/* Dynamic Status Text */}
+          <div className="text-center space-y-1">
+            <p className="text-sm text-gray-600 font-medium">
+              {mode === 'listening' 
+                ? "🎙️ Voice Active - Speak naturally about scripture"
+                : mode === 'processing'
+                ? "⚡ Processing your voice input..."
+                : "🎤 Tap microphone to speak or use text input"
+              }
+            </p>
+            
+            {/* Advanced features indicator */}
+            {mode === 'listening' && (
+              <div className="flex items-center justify-center gap-4 text-xs text-gray-400">
+                <span className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                  Noise Cancellation
+                </span>
+                <span className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+                  {selectedLanguage.split('-')[0].toUpperCase()} Detection
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
