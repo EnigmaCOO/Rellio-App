@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 interface AudioPlaybackButtonProps {
   text: string;
   voiceId?: string;
+  voiceTone?: string;
   className?: string;
   size?: "sm" | "default" | "lg";
 }
@@ -13,6 +14,7 @@ interface AudioPlaybackButtonProps {
 export function AudioPlaybackButton({ 
   text, 
   voiceId = "onwK4e9ZLuTAKqWW03F9", // Daniel - informative/educational British male voice
+  voiceTone = "scholarly",
   className = "",
   size = "sm"
 }: AudioPlaybackButtonProps) {
@@ -40,7 +42,7 @@ export function AudioPlaybackButton({
     
     try {
       console.log('🎵 Generating ElevenLabs audio for text:', text.substring(0, 50) + '...');
-      console.log('🎵 Using voice ID:', voiceId);
+      console.log('🎵 Using voice ID:', voiceId, 'with tone:', voiceTone);
       
       const response = await fetch('/api/elevenlabs/speak', {
         method: 'POST',

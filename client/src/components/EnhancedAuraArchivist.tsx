@@ -40,7 +40,8 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
 import { AudioPlaybackButton } from "@/components/chat/AudioPlaybackButton";
 import { VoiceInputControls } from "@/components/chat/VoiceInputControls";
-import { ScholarPersonaSelector, type ScholarPersona, scholarPersonas } from "@/components/chat/ScholarPersonas";
+import { ScholarPersonaSelector, type ScholarPersona, scholarPersonas, PersonaBadge } from "@/components/chat/ScholarPersonas";
+import { PersonaCustomizer } from "@/components/chat/PersonaCustomizer";
 import { ChatHistoryManager } from "@/components/chat/ChatHistoryManager";
 import { MandalaOverlay } from "@/components/chat/MandalaOverlay";
 import { cn } from "@/lib/utils";
@@ -130,12 +131,7 @@ function ArchivistMessage({
       <div className="flex-1 space-y-2">
         {/* Persona Header for AI messages */}
         {message.type === 'ai' && persona && (
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className={cn("text-xs", persona.textColor, persona.bgColor)}>
-              {persona.name}
-            </Badge>
-            <span className="text-xs text-gray-500">{persona.title}</span>
-          </div>
+          <PersonaBadge persona={persona} />
         )}
         
         {/* Message Bubble */}
@@ -173,6 +169,8 @@ function ArchivistMessage({
           <div className="flex items-center gap-2">
             <AudioPlaybackButton 
               text={message.content}
+              voiceId={persona?.elevenLabsVoice}
+              voiceTone={persona?.voiceTone}
             />
             <Button
               variant="ghost"
@@ -211,16 +209,78 @@ export function EnhancedAuraArchivist({
   const [currentSessionId, setCurrentSessionId] = useState(sessionId);
   const [isStreaming, setIsStreaming] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState("");
+  const [showCustomizer, setShowCustomizer] = useState(false);
+  const [customPersona, setCustomPersona] = useState<Partial<ScholarPersona> | null>(null);
 
-  // Auto-select persona based on context
+  // Load saved persona and custom settings from localStorage
   useEffect(() => {
-    if (context.religion && !selectedPersona) {
-      const contextPersona = scholarPersonas.find(p => p.primaryReligion === context.religion);
-      if (contextPersona) {
-        setSelectedPersona(contextPersona);
+    const savedPersonaId = localStorage.getItem('rellio-selected-persona');
+    const savedCustomPersona = localStorage.getItem('rellio-custom-persona');
+    
+    if (savedCustomPersona) {
+      try {
+        const customData = JSON.parse(savedCustomPersona);
+        setCustomPersona(customData);
+      } catch (error) {
+        console.error('Failed to load custom persona:', error);
       }
     }
-  }, [context.religion, selectedPersona]);
+    
+    if (savedPersonaId && !selectedPersona) {
+      if (savedPersonaId === 'user-custom' && customPersona) {
+        // Load custom persona
+        const customScholarPersona: ScholarPersona = {
+          ...scholarPersonas.find(p => p.id === 'user-custom')!,
+          ...customPersona
+        };
+        setSelectedPersona(customScholarPersona);
+      } else {
+        // Load predefined persona
+        const savedPersona = scholarPersonas.find(p => p.id === savedPersonaId);
+        if (savedPersona) {
+          setSelectedPersona(savedPersona);
+        }
+      }
+    }
+  }, [customPersona, selectedPersona]);
+
+  // Auto-suggest persona based on context (only if no persona is selected)
+  useEffect(() => {
+    if (context.religion && !selectedPersona && !localStorage.getItem('rellio-selected-persona')) {
+      // Auto-suggest based on religion
+      let suggestedPersona: ScholarPersona | null = null;
+      
+      switch (context.religion) {
+        case 'bible':
+          suggestedPersona = scholarPersonas.find(p => p.id === 'historian-sage') || null;
+          break;
+        case 'quran':
+          suggestedPersona = scholarPersonas.find(p => p.id === 'comparative-seeker') || null;
+          break;
+        case 'torah':
+          suggestedPersona = scholarPersonas.find(p => p.id === 'philosopher-oracle') || null;
+          break;
+        case 'hindu':
+          suggestedPersona = scholarPersonas.find(p => p.id === 'mystic-scholar') || null;
+          break;
+        case 'buddhist':
+          suggestedPersona = scholarPersonas.find(p => p.id === 'mystic-scholar') || null;
+          break;
+        default:
+          suggestedPersona = scholarPersonas.find(p => p.id === 'comparative-seeker') || null;
+      }
+      
+      if (suggestedPersona) {
+        setSelectedPersona(suggestedPersona);
+        // Show toast suggestion
+        toast({
+          title: "Scholar Guide Suggested",
+          description: `${suggestedPersona.name} is recommended for ${context.religion} studies`,
+          variant: "default"
+        });
+      }
+    }
+  }, [context.religion, selectedPersona, toast]);
 
   // Load messages
   const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
@@ -331,6 +391,48 @@ export function EnhancedAuraArchivist({
     queryClient.invalidateQueries({ queryKey: ['/api/chat'] });
   };
 
+  const handlePersonaSelect = (persona: ScholarPersona | null) => {
+    setSelectedPersona(persona);
+    
+    // Save selection to localStorage
+    if (persona) {
+      localStorage.setItem('rellio-selected-persona', persona.id);
+      
+      // If custom persona, also save its data
+      if (persona.id === 'user-custom' && customPersona) {
+        localStorage.setItem('rellio-custom-persona', JSON.stringify(customPersona));
+      }
+      
+      toast({
+        title: "Scholar Guide Selected",
+        description: `${persona.name} is now your spiritual companion`,
+        variant: "default"
+      });
+    } else {
+      localStorage.removeItem('rellio-selected-persona');
+    }
+  };
+
+  const handleCustomPersonaSave = (customData: Partial<ScholarPersona>) => {
+    setCustomPersona(customData);
+    
+    // Create full custom persona
+    const fullCustomPersona: ScholarPersona = {
+      ...scholarPersonas.find(p => p.id === 'user-custom')!,
+      ...customData
+    };
+    
+    setSelectedPersona(fullCustomPersona);
+    localStorage.setItem('rellio-custom-persona', JSON.stringify(customData));
+    localStorage.setItem('rellio-selected-persona', 'user-custom');
+    
+    toast({
+      title: "Personal Guide Customized",
+      description: `${customData.name || 'Your guide'} has been personalized`,
+      variant: "default"
+    });
+  };
+
   const handleBookmark = (content: string) => {
     const bookmark = {
       id: Date.now().toString(),
@@ -408,9 +510,22 @@ export function EnhancedAuraArchivist({
         {/* Scholar Persona Selector */}
         <ScholarPersonaSelector
           selectedPersona={selectedPersona}
-          onPersonaSelect={setSelectedPersona}
+          onPersonaSelect={handlePersonaSelect}
           context={context}
         />
+        
+        {/* Customization Button for User-Custom Persona */}
+        {selectedPersona?.id === 'user-custom' && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full mt-2 text-xs"
+            onClick={() => setShowCustomizer(true)}
+          >
+            <Settings className="h-3 w-3 mr-1" />
+            Customize Your Guide
+          </Button>
+        )}
       </div>
 
       {/* Messages Area */}
@@ -536,6 +651,14 @@ export function EnhancedAuraArchivist({
           </p>
         </div>
       </div>
+
+      {/* Persona Customizer Modal */}
+      <PersonaCustomizer
+        isOpen={showCustomizer}
+        onClose={() => setShowCustomizer(false)}
+        onSave={handleCustomPersonaSave}
+        currentCustomization={customPersona || undefined}
+      />
     </Card>
   );
 }
