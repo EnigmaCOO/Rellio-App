@@ -27,11 +27,24 @@ import {
   Play,
   Star,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Mic,
+  MicOff,
+  Square,
+  Pause,
+  Settings,
+  ChevronUp,
+  ChevronDown,
+  Volume2
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
 import { AudioPlaybackButton } from "@/components/chat/AudioPlaybackButton";
+import { VoiceInputControls } from "@/components/chat/VoiceInputControls";
+import { ScholarPersonaSelector, type ScholarPersona, scholarPersonas } from "@/components/chat/ScholarPersonas";
+import { ChatHistoryManager } from "@/components/chat/ChatHistoryManager";
+import { MandalaOverlay } from "@/components/chat/MandalaOverlay";
+import { cn } from "@/lib/utils";
 
 interface RightColumnChatProps {
   sessionId: string;
@@ -43,6 +56,7 @@ interface RightColumnChatProps {
   externalMessage?: string;
   onExternalMessageProcessed?: () => void;
   onCopyOperation?: (isActive: boolean) => void;
+  onNavigateToVerse?: (religion: Religion, book: string, chapter: number, verse?: number) => void;
 }
 
 // Component for clickable messages with bookmark functionality
@@ -102,11 +116,21 @@ export function RightColumnChat({
   context, 
   externalMessage, 
   onExternalMessageProcessed,
-  onCopyOperation 
+  onCopyOperation,
+  onNavigateToVerse 
 }: RightColumnChatProps) {
 
   const messageEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  
+  // Enhanced State Management
+  const [currentMessage, setCurrentMessage] = useState("");
+  const [selectedPersona, setSelectedPersona] = useState<ScholarPersona | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice');
+  const [isInterrupted, setIsInterrupted] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState(sessionId);
+  const [isStreaming, setIsStreaming] = useState(false);
 
   // Enhanced Response Renderer with Clickable Perspectives
   const [expandedPerspective, setExpandedPerspective] = useState<string | null>(null);
@@ -267,8 +291,7 @@ export function RightColumnChat({
 
   const queryClient = useQueryClient();
   
-  // Enhanced UI states
-  const [isStreaming, setIsStreaming] = useState(false);
+  // Enhanced UI states  
   const [expandedPerspectives, setExpandedPerspectives] = useState(false);
   const [interruptedMessages, setInterruptedMessages] = useState<Set<string>>(new Set());
 

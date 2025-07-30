@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { NavigationPanel } from "@/components/NavigationPanel";
 import { VerseSpotlight } from "@/components/VerseSpotlight";
 import { VerseList } from "@/components/IlluminVerse/VerseList";
-import { RightColumnChat } from "@/components/RightColumnChat";
+import { EnhancedAuraArchivist } from "@/components/EnhancedAuraArchivist";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Settings, BookOpen, Menu, X, ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
 import rellioLogo from "@assets/image_1751817332000.png";
@@ -429,7 +429,7 @@ export default function Dashboard() {
               
               {/* Chat Content - Full Height */}
               <div className="h-[calc(100%-80px)]">
-                <RightColumnChat
+                <EnhancedAuraArchivist
                   sessionId={chatSessionId}
                   context={currentContext}
                   externalMessage={externalMessage}

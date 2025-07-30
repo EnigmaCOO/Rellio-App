@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateScriptureResponse } from "./services/openai";
+import { generatePersonaResponse, generateMultiReligiousPerspective, explainVerse } from "./services/xai";
 import { getReligionConfig, getAvailableReligions } from "./services/scripture";
 import { fetchScriptureContent } from "./services/externalScripture";
 import { ElevenLabsService } from "./services/elevenlabs";
@@ -143,29 +144,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
         context: context || null
       });
 
-      // Generate AI response
-      let scriptureContext;
-      if (context && context.religion && context.book && context.chapter) {
-        const verses = await storage.getScriptures(context.religion, context.book, context.chapter);
-        scriptureContext = {
-          religion: context.religion,
-          book: context.book,
-          chapter: context.chapter,
-          verses: verses.map(v => ({ number: v.verse, text: v.text }))
+      // Enhanced AI response generation with XAI and persona support
+      let aiResponse: string;
+      
+      // Check if persona-specific response is requested
+      if (context?.persona) {
+        console.log("Generating persona response with XAI for:", context.persona);
+        
+        // Define scholar persona context (this should match the frontend personas)
+        const personaContexts: Record<string, any> = {
+          "Dr. Sophia Cross": {
+            name: "Dr. Sophia Cross",
+            systemPrompt: "You are Dr. Sophia Cross, a distinguished Biblical scholar and theologian with expertise in Biblical Greek, Hebrew, and historical Christianity. Your responses are scholarly yet warm, drawing from deep textual analysis and historical context. You speak with gentle authority and often reference original languages and manuscript traditions.",
+            expertise: ["Biblical Studies", "Systematic Theology", "Church History", "Biblical Languages"],
+            voiceTone: "scholarly yet warm"
+          },
+          "Sheikh Ahmad Al-Tabari": {
+            name: "Sheikh Ahmad Al-Tabari",
+            systemPrompt: "You are Sheikh Ahmad Al-Tabari, a respected Islamic scholar specializing in Quranic exegesis (tafsir) and Islamic jurisprudence. Your responses reflect deep knowledge of Arabic, Islamic history, and the Prophet's teachings. You speak with wisdom and respect for the sacred traditions.",
+            expertise: ["Quranic Studies", "Islamic Jurisprudence", "Hadith Sciences", "Arabic Language"],
+            voiceTone: "wise and respectful"
+          },
+          "Rabbi David Goldstein": {
+            name: "Rabbi David Goldstein",
+            systemPrompt: "You are Rabbi David Goldstein, a learned Torah scholar with expertise in Talmudic interpretation and Jewish philosophy. Your responses demonstrate deep knowledge of Hebrew texts, rabbinic commentary, and Jewish spiritual traditions. You speak with thoughtful precision and often include insights from various commentators.",
+            expertise: ["Torah Studies", "Talmudic Interpretation", "Jewish Philosophy", "Hebrew Language"],
+            voiceTone: "thoughtful and precise"
+          }
         };
-      } else if (context && context.multiReligiousPerspective) {
-        // Handle multi-religious perspective requests
-        console.log("Multi-religious perspective context being set:", context);
-        scriptureContext = {
-          religion: context.religion || "",
-          book: context.book || "",
-          chapter: context.chapter || 1,
-          multiReligiousPerspective: true
-        };
-        console.log("Scripture context for multi-religious:", scriptureContext);
+        
+        const personaContext = personaContexts[context.persona];
+        
+        try {
+          aiResponse = await generatePersonaResponse(
+            message,
+            {
+              religion: context.religion,
+              book: context.book || "",
+              chapter: context.chapter || 1,
+              persona: context.persona || null
+            },
+            personaContext
+          );
+        } catch (error) {
+          console.error("XAI persona response failed, falling back to OpenAI:", error);
+          // Fallback to OpenAI if XAI fails
+          let scriptureContext;
+          if (context.religion && context.book && context.chapter) {
+            const verses = await storage.getScriptures(context.religion, context.book, context.chapter);
+            scriptureContext = {
+              religion: context.religion,
+              book: context.book,
+              chapter: context.chapter,
+              verses: verses.map(v => ({ number: v.verse, text: v.text }))
+            };
+          }
+          aiResponse = await generateScriptureResponse(message, scriptureContext);
+        }
+      } else if (context?.multiReligiousPerspective) {
+        // Multi-religious perspective using XAI
+        console.log("Generating multi-religious perspective with XAI");
+        try {
+          aiResponse = await generateMultiReligiousPerspective(message);
+        } catch (error) {
+          console.error("XAI multi-religious response failed, falling back to OpenAI:", error);
+          const scriptureContext = {
+            religion: context.religion || "",
+            book: context.book || "",
+            chapter: context.chapter || 1,
+            multiReligiousPerspective: true
+          };
+          aiResponse = await generateScriptureResponse(message, scriptureContext);
+        }
+      } else {
+        // Standard response generation
+        let scriptureContext;
+        if (context && context.religion && context.book && context.chapter) {
+          const verses = await storage.getScriptures(context.religion, context.book, context.chapter);
+          scriptureContext = {
+            religion: context.religion,
+            book: context.book,
+            chapter: context.chapter,
+            verses: verses.map(v => ({ number: v.verse, text: v.text }))
+          };
+        }
+        
+        // Try XAI first for general responses, fallback to OpenAI
+        try {
+          aiResponse = await generatePersonaResponse(
+            message,
+            {
+              religion: context?.religion || null,
+              book: context?.book || "",
+              chapter: context?.chapter || 1,
+              persona: null
+            }
+          );
+        } catch (error) {
+          console.error("XAI general response failed, falling back to OpenAI:", error);
+          aiResponse = await generateScriptureResponse(message, scriptureContext);
+        }
       }
-
-      const aiResponse = await generateScriptureResponse(message, scriptureContext);
       
       // Save AI response
       const aiMessage = await storage.createChatMessage({
