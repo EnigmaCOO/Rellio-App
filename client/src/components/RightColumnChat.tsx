@@ -108,7 +108,46 @@ export function RightColumnChat({
   const messageEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Enhanced Response Renderer for Multi-Religious Content
+  // Enhanced Response Renderer for Interactive Multi-Religious Content
+  const [expandedPerspective, setExpandedPerspective] = useState<string | null>(null);
+
+  const parseMultiReligiousResponse = (content: string) => {
+    const perspectives: { [key: string]: string } = {};
+    let introduction = '';
+    let conclusion = '';
+    
+    // Split content by perspective markers
+    const sections = content.split(/(?=\d+\.\s*\*\*[^:]+perspective:\*\*)/);
+    
+    // Extract introduction (first section)
+    if (sections[0] && !sections[0].includes('perspective:')) {
+      introduction = sections[0].trim();
+    }
+    
+    // Process each perspective section
+    sections.forEach(section => {
+      if (section.includes('Biblical perspective:')) {
+        perspectives.Biblical = section.replace(/^\d+\.\s*\*\*Biblical perspective:\*\*/, '').trim();
+      } else if (section.includes('Quranic perspective:')) {
+        perspectives.Islamic = section.replace(/^\d+\.\s*\*\*Quranic perspective:\*\*/, '').trim();
+      } else if (section.includes('Torah perspective:')) {
+        perspectives.Torah = section.replace(/^\d+\.\s*\*\*Torah perspective:\*\*/, '').trim();
+      } else if (section.includes('Hindu perspective:')) {
+        perspectives.Hindu = section.replace(/^\d+\.\s*\*\*Hindu perspective:\*\*/, '').trim();
+      } else if (section.includes('Buddhist perspective:')) {
+        perspectives.Buddhist = section.replace(/^\d+\.\s*\*\*Buddhist perspective:\*\*/, '').trim();
+      }
+    });
+    
+    // Extract conclusion
+    const conclusionMatch = content.match(/In conclusion[^]*$/i);
+    if (conclusionMatch) {
+      conclusion = conclusionMatch[0].trim();
+    }
+    
+    return { introduction, perspectives, conclusion };
+  };
+
   const renderEnhancedResponse = (content: string) => {
     // Check if this is a multi-religious response
     const hasMultiReligious = content.includes('Biblical perspective') || 
@@ -119,94 +158,81 @@ export function RightColumnChat({
 
     if (!hasMultiReligious) {
       return (
-        <div>
-          <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap mb-3">
-            {content}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
-              <Eye className="w-3 h-3 text-blue-600" />
-              <span className="text-xs font-medium text-blue-700">Biblical</span>
-            </div>
-            <div className="flex items-center gap-1 px-2 py-1 bg-green-50 border border-green-200 rounded-full">
-              <Heart className="w-3 h-3 text-green-600" />
-              <span className="text-xs font-medium text-green-700">Islamic</span>
-            </div>
-            <div className="flex items-center gap-1 px-2 py-1 bg-orange-50 border border-orange-200 rounded-full">
-              <Zap className="w-3 h-3 text-orange-600" />
-              <span className="text-xs font-medium text-orange-700">Hindu</span>
-            </div>
-            <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 border border-purple-200 rounded-full">
-              <Play className="w-3 h-3 text-purple-600" />
-              <span className="text-xs font-medium text-purple-700">Buddhist</span>
-            </div>
-            <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
-              <Star className="w-3 h-3 text-blue-600" />
-              <span className="text-xs font-medium text-blue-700">Torah</span>
-            </div>
-            <div className="flex items-center gap-1 px-2 py-1 bg-indigo-50 border border-indigo-200 rounded-full">
-              <Sparkles className="w-3 h-3 text-indigo-600" />
-              <span className="text-xs font-medium text-indigo-700">Mystical</span>
-            </div>
-          </div>
+        <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
+          {content}
         </div>
       );
     }
 
-    // Parse the multi-religious response to extract clean text and show badges
-    let cleanContent = content;
+    const { introduction, perspectives, conclusion } = parseMultiReligiousResponse(content);
     
-    // Remove the markdown formatting and extract just the readable text
-    cleanContent = cleanContent
-      .replace(/- \*\*Biblical perspective:\*\*/g, '')
-      .replace(/- \*\*Quranic perspective:\*\*/g, '')
-      .replace(/- \*\*Torah perspective:\*\*/g, '')
-      .replace(/- \*\*Hindu perspective:\*\*/g, '')
-      .replace(/- \*\*Buddhist perspective:\*\*/g, '')
-      .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove any other bold markdown
-      .trim();
-
-    // Split into paragraphs and clean up
-    const paragraphs = cleanContent.split('\n\n').filter(p => p.trim().length > 0);
+    const perspectiveConfigs = [
+      { key: 'Biblical', icon: Eye, color: 'blue', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', textColor: 'text-blue-700' },
+      { key: 'Islamic', icon: Heart, color: 'green', bgColor: 'bg-green-50', borderColor: 'border-green-200', textColor: 'text-green-700' },
+      { key: 'Hindu', icon: Zap, color: 'orange', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-700' },
+      { key: 'Buddhist', icon: Play, color: 'purple', bgColor: 'bg-purple-50', borderColor: 'border-purple-200', textColor: 'text-purple-700' },
+      { key: 'Torah', icon: Star, color: 'blue', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', textColor: 'text-blue-700' },
+      { key: 'Mystical', icon: Sparkles, color: 'indigo', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200', textColor: 'text-indigo-700' }
+    ];
     
     return (
-      <div className="space-y-3">
-        {/* Main content without formatting */}
-        <div className="text-gray-800 text-sm leading-relaxed">
-          {paragraphs.map((paragraph, index) => (
-            <p key={index} className="mb-3">
-              {paragraph.trim()}
-            </p>
-          ))}
+      <div className="space-y-4">
+        {/* Introduction */}
+        {introduction && (
+          <div className="text-gray-800 text-sm leading-relaxed">
+            {introduction}
+          </div>
+        )}
+
+        {/* Interactive Perspective Badges */}
+        <div className="flex flex-wrap gap-2">
+          {perspectiveConfigs.map(({ key, icon: Icon, bgColor, borderColor, textColor }) => {
+            const hasContent = perspectives[key];
+            if (!hasContent) return null;
+            
+            return (
+              <button
+                key={key}
+                onClick={() => setExpandedPerspective(expandedPerspective === key ? null : key)}
+                className={`flex items-center gap-1 px-3 py-2 ${bgColor} border ${borderColor} rounded-full hover:shadow-md transition-all duration-200 cursor-pointer ${
+                  expandedPerspective === key ? 'ring-2 ring-offset-1 ring-' + key.toLowerCase() : ''
+                }`}
+              >
+                <Icon className={`w-3 h-3 text-${key.toLowerCase()}-600`} />
+                <span className={`text-xs font-medium ${textColor}`}>{key}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Beautiful colored perspective badges */}
-        <div className="flex flex-wrap gap-2">
-          <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
-            <Eye className="w-3 h-3 text-blue-600" />
-            <span className="text-xs font-medium text-blue-700">Biblical</span>
+        {/* Expanded Perspective Content */}
+        {expandedPerspective && perspectives[expandedPerspective] && (
+          <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              {(() => {
+                const config = perspectiveConfigs.find(p => p.key === expandedPerspective);
+                if (!config) return null;
+                const Icon = config.icon;
+                return (
+                  <>
+                    <Icon className={`w-4 h-4 text-${expandedPerspective.toLowerCase()}-600`} />
+                    <h4 className={`font-medium ${config.textColor}`}>{expandedPerspective} Perspective</h4>
+                  </>
+                );
+              })()}
+            </div>
+            <div className="text-gray-800 text-sm leading-relaxed">
+              {perspectives[expandedPerspective]}
+            </div>
           </div>
-          <div className="flex items-center gap-1 px-2 py-1 bg-green-50 border border-green-200 rounded-full">
-            <Heart className="w-3 h-3 text-green-600" />
-            <span className="text-xs font-medium text-green-700">Islamic</span>
+        )}
+
+        {/* Conclusion */}
+        {conclusion && (
+          <div className="text-gray-800 text-sm leading-relaxed pt-2 border-t border-gray-100">
+            {conclusion}
           </div>
-          <div className="flex items-center gap-1 px-2 py-1 bg-orange-50 border border-orange-200 rounded-full">
-            <Zap className="w-3 h-3 text-orange-600" />
-            <span className="text-xs font-medium text-orange-700">Hindu</span>
-          </div>
-          <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 border border-purple-200 rounded-full">
-            <Play className="w-3 h-3 text-purple-600" />
-            <span className="text-xs font-medium text-purple-700">Buddhist</span>
-          </div>
-          <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
-            <Star className="w-3 h-3 text-blue-600" />
-            <span className="text-xs font-medium text-blue-700">Torah</span>
-          </div>
-          <div className="flex items-center gap-1 px-2 py-1 bg-indigo-50 border border-indigo-200 rounded-full">
-            <Sparkles className="w-3 h-3 text-indigo-600" />
-            <span className="text-xs font-medium text-indigo-700">Mystical</span>
-          </div>
-        </div>
+        )}
       </div>
     );
   };
