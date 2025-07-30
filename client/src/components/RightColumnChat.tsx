@@ -119,6 +119,13 @@ export function RightColumnChat({
     enabled: !!sessionId
   });
 
+  // Debug logging
+  useEffect(() => {
+    console.log('Messages data:', messages);
+    console.log('Session ID:', sessionId);
+    console.log('Is loading:', isLoading);
+  }, [messages, sessionId, isLoading]);
+
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
       setIsStreaming(true);
@@ -395,21 +402,25 @@ export function RightColumnChat({
                       <p className="text-gray-800 text-sm leading-relaxed">{message.content}</p>
                     ) : (
                       <div className="space-y-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <ClickableMessage 
-                              content={message.content} 
-                              showBookmark={true} 
-                              onBookmark={() => {
-                                handleBookmark(message.content, {
-                                  religion: context.religion || '',
-                                  book: context.book || '',
-                                  chapter: context.chapter || 0
-                                });
-                              }}
-                            />
-                          </div>
-                          <AudioPlaybackButton text={message.content} />
+                        <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
+                          {message.content}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs text-gray-500 hover:text-teal-600 hover:bg-teal-50"
+                            onClick={() => {
+                              handleBookmark(message.content, {
+                                religion: context.religion || '',
+                                book: context.book || '',
+                                chapter: context.chapter || 0
+                              });
+                            }}
+                          >
+                            <Bookmark className="w-3 h-3 mr-1" />
+                            Bookmark
+                          </Button>
                         </div>
                       </div>
                     )}
