@@ -106,6 +106,131 @@ export function RightColumnChat({
 
   const messageEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Enhanced Multi-Religious Response Renderer
+  const renderMultiReligiousResponse = (content: string) => {
+    // Parse content for different religious perspectives
+    const sections = content.split(/(?=\*\*(?:Biblical|Quranic|Torah|Hindu|Buddhist|From the))/);
+    
+    if (sections.length === 1) {
+      // Not a multi-religious response, render normally
+      return <div className="whitespace-pre-wrap">{content}</div>;
+    }
+
+    return (
+      <div className="space-y-4">
+        {/* Introduction */}
+        {sections[0] && (
+          <div className="text-gray-800 whitespace-pre-wrap mb-4">
+            {sections[0].trim()}
+          </div>
+        )}
+        
+        {/* Religious Perspectives */}
+        {sections.slice(1).map((section, index) => {
+          const perspectiveType = extractPerspectiveType(section);
+          const { bgColor, borderColor, textColor, icon } = getPerspectiveStyles(perspectiveType);
+          const processedContent = processVerseReferences(section);
+          
+          return (
+            <div key={index} className={`p-3 ${bgColor} border ${borderColor} rounded-lg`}>
+              <div className={`flex items-center gap-2 mb-2`}>
+                {icon}
+                <span className={`text-sm font-medium ${textColor}`}>
+                  {perspectiveType}
+                </span>
+              </div>
+              <div className="text-gray-800 text-sm whitespace-pre-wrap">
+                {processedContent}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Extract perspective type from section
+  const extractPerspectiveType = (section: string): string => {
+    if (section.includes('Biblical') || section.includes('Bible perspective')) return 'Biblical';
+    if (section.includes('Quranic') || section.includes('Quran perspective')) return 'Islamic';
+    if (section.includes('Torah') || section.includes('Torah perspective')) return 'Torah';
+    if (section.includes('Hindu') || section.includes('Bhagavad Gita')) return 'Hindu';
+    if (section.includes('Buddhist') || section.includes('Tripitaka')) return 'Buddhist';
+    return 'Mystical';
+  };
+
+  // Get styling for each perspective
+  const getPerspectiveStyles = (type: string) => {
+    const styles = {
+      'Biblical': {
+        bgColor: 'bg-blue-50',
+        borderColor: 'border-blue-200',
+        textColor: 'text-blue-700',
+        icon: <Eye className="w-4 h-4 text-blue-600" />
+      },
+      'Islamic': {
+        bgColor: 'bg-green-50',
+        borderColor: 'border-green-200',
+        textColor: 'text-green-700',
+        icon: <Heart className="w-4 h-4 text-green-600" />
+      },
+      'Hindu': {
+        bgColor: 'bg-orange-50',
+        borderColor: 'border-orange-200',
+        textColor: 'text-orange-700',
+        icon: <Zap className="w-4 h-4 text-orange-600" />
+      },
+      'Buddhist': {
+        bgColor: 'bg-purple-50',
+        borderColor: 'border-purple-200',
+        textColor: 'text-purple-700',
+        icon: <Play className="w-4 h-4 text-purple-600" />
+      },
+      'Torah': {
+        bgColor: 'bg-indigo-50',
+        borderColor: 'border-indigo-200',
+        textColor: 'text-indigo-700',
+        icon: <Star className="w-4 h-4 text-indigo-600" />
+      },
+      'Mystical': {
+        bgColor: 'bg-gray-50',
+        borderColor: 'border-gray-200',
+        textColor: 'text-gray-700',
+        icon: <Sparkles className="w-4 h-4 text-gray-600" />
+      }
+    };
+    return styles[type] || styles['Mystical'];
+  };
+
+  // Process verse references to make them clickable
+  const processVerseReferences = (text: string) => {
+    // Pattern to match verse references like (John 3:16), (Quran 2:255), etc.
+    const versePattern = /\(([^)]+\s+\d+:\d+)\)/g;
+    const parts = text.split(versePattern);
+    
+    return parts.map((part, index) => {
+      if (index % 2 === 1) {
+        // This is a verse reference
+        return (
+          <button
+            key={index}
+            className="text-blue-600 hover:text-blue-800 underline cursor-pointer mx-1"
+            onClick={() => {
+              toast({
+                title: "Scripture Reference",
+                description: `Click to explore: ${part}`,
+                duration: 2000,
+              });
+            }}
+          >
+            ({part})
+          </button>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
   const queryClient = useQueryClient();
   
   // Enhanced UI states
@@ -391,36 +516,9 @@ export function RightColumnChat({
                     ) : (
                       <div className="space-y-3">
                         <div className="prose prose-sm max-w-none">
-                          <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
-                            {message.content}
-                          </div>
-                        </div>
-                        
-                        {/* Multi-Religious Perspective Badges */}
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
-                            <Eye className="w-3 h-3 text-blue-600" />
-                            <span className="text-xs font-medium text-blue-700">Biblical</span>
-                          </div>
-                          <div className="flex items-center gap-1 px-2 py-1 bg-green-50 border border-green-200 rounded-full">
-                            <Heart className="w-3 h-3 text-green-600" />
-                            <span className="text-xs font-medium text-green-700">Islamic</span>
-                          </div>
-                          <div className="flex items-center gap-1 px-2 py-1 bg-orange-50 border border-orange-200 rounded-full">
-                            <Zap className="w-3 h-3 text-orange-600" />
-                            <span className="text-xs font-medium text-orange-700">Hindu</span>
-                          </div>
-                          <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 border border-purple-200 rounded-full">
-                            <Play className="w-3 h-3 text-purple-600" />
-                            <span className="text-xs font-medium text-purple-700">Buddhist</span>
-                          </div>
-                          <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
-                            <Star className="w-3 h-3 text-blue-600" />
-                            <span className="text-xs font-medium text-blue-700">Torah</span>
-                          </div>
-                          <div className="flex items-center gap-1 px-2 py-1 bg-indigo-50 border border-indigo-200 rounded-full">
-                            <Sparkles className="w-3 h-3 text-indigo-600" />
-                            <span className="text-xs font-medium text-indigo-700">Mystical</span>
+                          <div className="text-gray-800 text-sm leading-relaxed">
+                            {/* Enhanced Multi-Religious Response Display */}
+                            {renderMultiReligiousResponse(message.content)}
                           </div>
                         </div>
                         
