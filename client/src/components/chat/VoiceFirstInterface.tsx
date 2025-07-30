@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mic, MicOff, Send, Volume2, VolumeX, Settings } from "lucide-react";
+import { Mic, MicOff, Send, Volume2, VolumeX, Settings, Keyboard, Check, Edit, X, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
@@ -68,9 +68,16 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [autoSendDelay, setAutoSendDelay] = useState(1.5); // Default 1.5 seconds
+  const [lastSpeechTime, setLastSpeechTime] = useState<number>(0);
+  const [confidenceScore, setConfidenceScore] = useState(0);
+  const [pendingTranscript, setPendingTranscript] = useState("");
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
   
   const animationRef = useRef<number | null>(null);
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const waveformRef = useRef<HTMLDivElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -139,53 +146,115 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
       recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
         let finalTranscript = '';
         let interimText = '';
+        let maxConfidence = 0;
         
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
+          const result = event.results[i];
+          const transcript = result[0].transcript;
+          const confidence = result[0].confidence || 0.5;
+          
+          if (result.isFinal) {
             finalTranscript += transcript;
+            maxConfidence = Math.max(maxConfidence, confidence);
           } else {
             interimText += transcript;
           }
         }
         
         if (finalTranscript) {
-          setTranscript(prev => prev + finalTranscript);
-          setMode('processing');
+          const newTranscript = transcript + finalTranscript;
+          setTranscript(newTranscript);
+          setConfidenceScore(maxConfidence);
+          setLastSpeechTime(Date.now());
           
-          // Smart endpoint detection - pause for silence
+          // Clear any existing timeouts
           if (silenceTimeoutRef.current) {
             clearTimeout(silenceTimeoutRef.current);
           }
+          if (autoSendTimeoutRef.current) {
+            clearTimeout(autoSendTimeoutRef.current);
+          }
           
-          silenceTimeoutRef.current = setTimeout(() => {
-            const fullMessage = transcript + finalTranscript;
-            if (fullMessage.trim()) {
-              handleVoiceComplete(fullMessage.trim());
-            }
-          }, 1500); // 1.5 second pause detection
+          // Auto-send logic based on confidence and manual mode
+          if (!manualMode && maxConfidence > 0.8) {
+            // High confidence - auto-send after delay
+            autoSendTimeoutRef.current = setTimeout(() => {
+              handleAutoSend(newTranscript.trim());
+            }, autoSendDelay * 1000);
+          } else if (!manualMode && maxConfidence > 0.5) {
+            // Medium confidence - show confirmation
+            setPendingTranscript(newTranscript.trim());
+            setShowConfirmation(true);
+            
+            // Auto-send after longer delay if no interaction
+            autoSendTimeoutRef.current = setTimeout(() => {
+              handleAutoSend(newTranscript.trim());
+            }, (autoSendDelay + 1) * 1000);
+          } else {
+            // Low confidence or manual mode - wait for user action
+            setMode('processing');
+          }
         }
         
         setInterimTranscript(interimText);
+        
+        // Update speech detection for silence timeout
+        if (interimText || finalTranscript) {
+          setLastSpeechTime(Date.now());
+        }
       };
       
       recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('🎤 Voice recognition error:', event.error);
         setMode('idle');
+        setIsExpanded(false);
         stopWaveformAnimation();
+        stopAudioAnalysis();
         
+        // Enhanced error handling with automatic fallback
         if (event.error === 'not-allowed') {
           toast({
-            title: "Microphone Permission Required",
-            description: "Please allow microphone access to use voice input",
+            title: "Microphone Access Denied",
+            description: "Switching to text input mode. You can grant microphone permission in browser settings.",
             variant: "destructive",
           });
+          // Auto-switch to text mode for accessibility compliance
+          setTimeout(() => {
+            setMode('text');
+          }, 1000);
+        } else if (event.error === 'network') {
+          toast({
+            title: "Network Error",
+            description: "Voice recognition unavailable. Using text input instead.",
+            variant: "destructive",
+          });
+          setMode('text');
         } else if (event.error === 'no-speech') {
           toast({
-            title: "No speech detected",
-            description: "Please speak clearly and try again",
+            title: "No Speech Detected",
+            description: "Try speaking closer to the microphone or switch to text input.",
+          });
+        } else if (event.error === 'audio-capture') {
+          toast({
+            title: "Audio Input Error",
+            description: "Unable to access microphone. Switching to text input mode.",
             variant: "destructive",
           });
+          setMode('text');
+        } else {
+          toast({
+            title: "Voice Input Error",
+            description: "Voice recognition failed. Text input is available as fallback.",
+            variant: "destructive",
+          });
+          setMode('text');
+        }
+        
+        // Clear pending transcripts and timeouts
+        setShowConfirmation(false);
+        setPendingTranscript("");
+        if (autoSendTimeoutRef.current) {
+          clearTimeout(autoSendTimeoutRef.current);
         }
       };
       
@@ -201,6 +270,9 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
       }
       if (silenceTimeoutRef.current) {
         clearTimeout(silenceTimeoutRef.current);
+      }
+      if (autoSendTimeoutRef.current) {
+        clearTimeout(autoSendTimeoutRef.current);
       }
       stopAudioAnalysis();
     };
@@ -354,9 +426,30 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
     }
   };
 
+  const handleAutoSend = (message: string) => {
+    if (message.trim()) {
+      setMode('idle');
+      setIsExpanded(false);
+      stopWaveformAnimation();
+      stopAudioAnalysis();
+      setTranscript("");
+      setInterimTranscript("");
+      setShowConfirmation(false);
+      setPendingTranscript("");
+      onSendMessage(message);
+      
+      toast({
+        title: "Voice message auto-sent",
+        description: message.substring(0, 50) + (message.length > 50 ? "..." : ""),
+      });
+    }
+  };
+
   const handleVoiceComplete = (message: string) => {
     setMode('idle');
+    setIsExpanded(false);
     stopWaveformAnimation();
+    stopAudioAnalysis();
     setTranscript("");
     setInterimTranscript("");
     onSendMessage(message);
@@ -365,6 +458,27 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
       title: "Voice message sent",
       description: message.substring(0, 50) + (message.length > 50 ? "..." : ""),
     });
+  };
+
+  const handleConfirmSend = () => {
+    if (pendingTranscript) {
+      handleAutoSend(pendingTranscript);
+    }
+  };
+
+  const handleEditTranscript = () => {
+    setMode('text');
+    setTextInput(pendingTranscript);
+    setShowConfirmation(false);
+    setPendingTranscript("");
+  };
+
+  const cancelAutoSend = () => {
+    if (autoSendTimeoutRef.current) {
+      clearTimeout(autoSendTimeoutRef.current);
+    }
+    setShowConfirmation(false);
+    setPendingTranscript("");
   };
 
   const switchToTextMode = () => {
@@ -472,36 +586,44 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
       {mode === 'listening' && <VoiceModeIndicator />}
       
       {mode === 'text' ? (
-        // Text input mode
-        <form onSubmit={handleTextSubmit} className="flex gap-2 items-end">
-          <div className="flex-1 relative">
-            <Input
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
-              placeholder="Type your question..."
-              className="rounded-full pr-12"
-              disabled={disabled}
-              autoFocus
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
-              onClick={switchToVoiceMode}
-              title="Switch to voice mode"
+        // Enhanced text input mode
+        <div className="space-y-3">
+          <form onSubmit={handleTextSubmit} className="flex gap-2 items-end">
+            <div className="flex-1 relative">
+              <Input
+                value={textInput}
+                onChange={(e) => setTextInput(e.target.value)}
+                placeholder="Type your scripture question..."
+                className={`rounded-full pr-12 ${getMicColorClasses().includes('teal') ? 'focus:border-teal-500 focus:ring-teal-500' : 'focus:border-blue-500 focus:ring-blue-500'}`}
+                disabled={disabled}
+                autoFocus
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+                onClick={switchToVoiceMode}
+                title="Switch to voice mode"
+              >
+                <Mic className="w-4 h-4 text-teal-500" />
+              </Button>
+            </div>
+            <Button 
+              type="submit" 
+              disabled={!textInput.trim() || disabled}
+              className="rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg"
             >
-              <Mic className="w-4 h-4 text-teal-500" />
+              <Send className="w-4 h-4" />
             </Button>
+          </form>
+          
+          {/* Text mode indicator */}
+          <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+            <Keyboard className="w-3 h-3" />
+            <span>Text input mode - Voice available via microphone button</span>
           </div>
-          <Button 
-            type="submit" 
-            disabled={!textInput.trim() || disabled}
-            className="rounded-full bg-blue-600 hover:bg-blue-700"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
-        </form>
+        </div>
       ) : (
         // Voice-first interface
         <div className="flex flex-col items-center space-y-4">
@@ -573,10 +695,20 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
                 ))}
               </div>
               
-              {/* "Listening..." text */}
-              <p className="text-sm text-gray-600 font-medium animate-pulse">
-                Listening...
-              </p>
+              {/* Enhanced "Listening..." text with auto-send info */}
+              <div className="text-center">
+                <p className="text-sm text-gray-600 font-medium animate-pulse">
+                  Listening...
+                </p>
+                {!manualMode && confidenceScore > 0.5 && (transcript || interimTranscript) && (
+                  <p className="text-xs text-teal-600 mt-1">
+                    Auto-send in {autoSendDelay}s (confidence: {Math.round(confidenceScore * 100)}%)
+                  </p>
+                )}
+                {manualMode && (
+                  <p className="text-xs text-gray-400 mt-1">Manual mode - you control when to send</p>
+                )}
+              </div>
               
               {/* Audio level indicator */}
               <div className="w-24 h-1 bg-gray-200 rounded-full overflow-hidden">
@@ -630,33 +762,111 @@ export function VoiceFirstInterface({ onSendMessage, disabled = false, context }
             </div>
           )}
           
-          {/* Controls row */}
-          <div className="flex items-center gap-2">
-            {mode === 'listening' && (
+          {/* Auto-Send Confirmation Dialog */}
+          {showConfirmation && (
+            <div className="bg-white border border-amber-200 rounded-xl p-4 shadow-lg animate-fadeIn">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-4 h-4 text-amber-600" />
+                </div>
+                <div className="flex-1 space-y-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 mb-1">Did you mean?</p>
+                    <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-2">
+                      "{pendingTranscript}"
+                    </p>
+                    <p className="text-xs text-amber-600 mt-1">
+                      Confidence: {Math.round(confidenceScore * 100)}% • Auto-sending in {autoSendDelay + 1}s
+                    </p>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={handleConfirmSend}
+                      className="bg-green-600 hover:bg-green-700 text-white text-xs"
+                    >
+                      <Check className="w-3 h-3 mr-1" />
+                      Send Now
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleEditTranscript}
+                      className="text-xs"
+                    >
+                      <Edit className="w-3 h-3 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={cancelAutoSend}
+                      className="text-xs"
+                    >
+                      <X className="w-3 h-3 mr-1" />
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Enhanced Controls row */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              {mode === 'listening' && (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={cancelVoiceInput}
+                  className="text-xs"
+                >
+                  <X className="w-3 h-3 mr-1" />
+                  Stop
+                </Button>
+              )}
+              
               <Button
                 size="sm"
-                variant="destructive"
-                onClick={cancelVoiceInput}
+                variant="outline"
+                onClick={switchToTextMode}
                 className="text-xs"
+                title="Switch to text input"
               >
-                Cancel
+                <Keyboard className="w-3 h-3 mr-1" />
+                Type
               </Button>
-            )}
+              
+              {/* Manual/Auto mode toggle */}
+              <Button
+                size="sm"
+                variant={manualMode ? "default" : "outline"}
+                onClick={() => setManualMode(!manualMode)}
+                className="text-xs"
+                title={manualMode ? "Manual mode (hold to talk)" : "Auto mode (smart sending)"}
+              >
+                {manualMode ? "Manual" : "Auto"}
+              </Button>
+            </div>
             
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={switchToTextMode}
-              className="text-xs"
-              title="Switch to text input"
-            >
-              Type instead
-            </Button>
-            
-            {/* Language indicator */}
-            <Badge variant="outline" className="text-xs">
-              {selectedLanguage.split('-')[0].toUpperCase()}
-            </Badge>
+            <div className="flex items-center gap-2">
+              {/* Language indicator */}
+              <Badge variant="outline" className="text-xs">
+                {selectedLanguage.split('-')[0].toUpperCase()}
+              </Badge>
+              
+              {/* Settings button */}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="w-6 h-6 p-0"
+                title="Voice settings"
+              >
+                <Settings className="w-3 h-3" />
+              </Button>
+            </div>
           </div>
           
           {/* Dynamic Status Text */}
