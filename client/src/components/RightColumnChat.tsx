@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
+import { AudioPlaybackButton } from "@/components/chat/AudioPlaybackButton";
 
 interface RightColumnChatProps {
   sessionId: string;
@@ -499,6 +500,11 @@ export function RightColumnChat({
                         {renderEnhancedResponse(message.content)}
                         
                         <div className="flex items-center gap-2 pt-2">
+                          <AudioPlaybackButton 
+                            text={message.content}
+                            className="h-6 px-2 text-xs text-gray-500 hover:text-teal-600 hover:bg-teal-50"
+                            size="sm"
+                          />
                           <Button
                             variant="ghost"
                             size="sm"
