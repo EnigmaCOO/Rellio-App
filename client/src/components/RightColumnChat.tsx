@@ -109,7 +109,7 @@ export function RightColumnChat({
 
   // Enhanced Response Renderer for Multi-Religious Content
   const renderEnhancedResponse = (content: string) => {
-    // Check if this is a multi-religious response by looking for perspective indicators
+    // Check if this is a multi-religious response
     const hasMultiReligious = content.includes('Biblical perspective') || 
                               content.includes('Quranic perspective') ||
                               content.includes('Torah perspective') ||
@@ -117,14 +117,11 @@ export function RightColumnChat({
                               content.includes('Buddhist perspective');
 
     if (!hasMultiReligious) {
-      // Regular response with badges
       return (
         <div>
           <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap mb-3">
             {content}
           </div>
-          
-          {/* Multi-Religious Perspective Badges */}
           <div className="flex flex-wrap gap-2">
             <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
               <Eye className="w-3 h-3 text-blue-600" />
@@ -155,53 +152,34 @@ export function RightColumnChat({
       );
     }
 
-    // Parse multi-religious response
-    const lines = content.split('\n');
-    let currentSection = '';
-    let introduction = '';
-    let conclusion = '';
-    const perspectives: { [key: string]: string } = {};
+    // Parse the multi-religious response to extract clean text and show badges
+    let cleanContent = content;
     
-    for (const line of lines) {
-      const trimmed = line.trim();
-      
-      if (trimmed.includes('**Biblical perspective:**')) {
-        currentSection = 'Biblical';
-        perspectives[currentSection] = trimmed.replace('**Biblical perspective:**', '').trim();
-      } else if (trimmed.includes('**Quranic perspective:**')) {
-        currentSection = 'Islamic';
-        perspectives[currentSection] = trimmed.replace('**Quranic perspective:**', '').trim();
-      } else if (trimmed.includes('**Torah perspective:**')) {
-        currentSection = 'Torah';
-        perspectives[currentSection] = trimmed.replace('**Torah perspective:**', '').trim();
-      } else if (trimmed.includes('**Hindu perspective:**')) {
-        currentSection = 'Hindu';
-        perspectives[currentSection] = trimmed.replace('**Hindu perspective:**', '').trim();
-      } else if (trimmed.includes('**Buddhist perspective:**')) {
-        currentSection = 'Buddhist';
-        perspectives[currentSection] = trimmed.replace('**Buddhist perspective:**', '').trim();
-      } else if (currentSection && trimmed) {
-        perspectives[currentSection] += ' ' + trimmed;
-      } else if (!currentSection && trimmed && !trimmed.includes('conclusion') && !trimmed.includes('In conclusion')) {
-        introduction += trimmed + ' ';
-      } else if (trimmed.includes('conclusion') || trimmed.includes('In conclusion')) {
-        conclusion += trimmed + ' ';
-        currentSection = ''; // Stop adding to perspectives
-      } else if (!currentSection && conclusion) {
-        conclusion += trimmed + ' ';
-      }
-    }
+    // Remove the markdown formatting and extract just the readable text
+    cleanContent = cleanContent
+      .replace(/- \*\*Biblical perspective:\*\*/g, '')
+      .replace(/- \*\*Quranic perspective:\*\*/g, '')
+      .replace(/- \*\*Torah perspective:\*\*/g, '')
+      .replace(/- \*\*Hindu perspective:\*\*/g, '')
+      .replace(/- \*\*Buddhist perspective:\*\*/g, '')
+      .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove any other bold markdown
+      .trim();
 
+    // Split into paragraphs and clean up
+    const paragraphs = cleanContent.split('\n\n').filter(p => p.trim().length > 0);
+    
     return (
       <div className="space-y-3">
-        {/* Introduction */}
-        {introduction && (
-          <div className="text-gray-800 text-sm leading-relaxed">
-            {introduction.trim()}
-          </div>
-        )}
+        {/* Main content without formatting */}
+        <div className="text-gray-800 text-sm leading-relaxed">
+          {paragraphs.map((paragraph, index) => (
+            <p key={index} className="mb-3">
+              {paragraph.trim()}
+            </p>
+          ))}
+        </div>
 
-        {/* Religious Perspectives with colored badges */}
+        {/* Beautiful colored perspective badges */}
         <div className="flex flex-wrap gap-2">
           <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
             <Eye className="w-3 h-3 text-blue-600" />
@@ -228,13 +206,6 @@ export function RightColumnChat({
             <span className="text-xs font-medium text-indigo-700">Mystical</span>
           </div>
         </div>
-
-        {/* Conclusion */}
-        {conclusion && (
-          <div className="text-gray-800 text-sm leading-relaxed">
-            {conclusion.trim()}
-          </div>
-        )}
       </div>
     );
   };
