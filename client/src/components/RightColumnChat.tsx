@@ -144,7 +144,6 @@ export function RightColumnChat({
         }
         
         return await response.json();
-        return response;
       } finally {
         setIsStreaming(false);
       }
