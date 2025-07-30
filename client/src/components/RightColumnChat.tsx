@@ -123,18 +123,27 @@ export function RightColumnChat({
     mutationFn: async (message: string) => {
       setIsStreaming(true);
       try {
-        const response = await apiRequest(`/api/chat`, {
+        const response = await fetch(`/api/chat`, {
           method: 'POST',
-          body: {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
             sessionId,
             message,
             context: {
-              religion: context.religion?.id || null,
+              religion: context.religion || null,
               book: context.book || null,
               chapter: context.chapter || null
             }
-          }
+          })
         });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
         return response;
       } finally {
         setIsStreaming(false);
@@ -269,7 +278,7 @@ export function RightColumnChat({
               <h3 className="font-semibold text-sm text-gray-900">AI Scripture Guide</h3>
               <p className="text-xs text-gray-500">
                 {context.religion && context.book 
-                  ? `${context.religion.name || context.religion.id} - ${context.book}` 
+                  ? `${context.religion} - ${context.book}` 
                   : "Multi-religious AI assistant"
                 }
               </p>
@@ -307,7 +316,7 @@ export function RightColumnChat({
               <h4 className="font-medium text-gray-900 mb-2">Welcome to AI Scripture Guide</h4>
               <p className="text-sm text-gray-600 mb-6 max-w-sm mx-auto">
                 {context.religion && context.book 
-                  ? `Ask questions about ${context.religion.name || context.religion.id} - ${context.book}` 
+                  ? `Ask questions about ${context.religion} - ${context.book}` 
                   : "Explore spiritual wisdom from multiple religious traditions"
                 }
               </p>
@@ -400,7 +409,7 @@ export function RightColumnChat({
                               showBookmark={true} 
                               onBookmark={() => {
                                 handleBookmark(message.content, {
-                                  religion: context.religion?.name || '',
+                                  religion: context.religion || '',
                                   book: context.book || '',
                                   chapter: context.chapter || 0
                                 });
@@ -451,7 +460,7 @@ export function RightColumnChat({
           onInterruption={(message) => handleVoiceInterruption()}
           isStreaming={isStreaming}
           context={{
-            religion: context.religion?.id || null,
+            religion: context.religion || null,
             book: context.book
           }}
           disabled={sendMessageMutation.isPending || isStreaming}

@@ -73,10 +73,10 @@ export function VoiceFirstInterface({ onSendMessage, onInterruption, disabled = 
   const [isExpanded, setIsExpanded] = useState(false);
   const [autoSendDelay, setAutoSendDelay] = useState(1.5); // Default 1.5 seconds
   const [lastSpeechTime, setLastSpeechTime] = useState<number>(0);
-  const [confidenceScore, setConfidenceScore] = useState(0);
-  const [pendingTranscript, setPendingTranscript] = useState("");
-  const [showConfirmation, setShowConfirmation] = useState(false);
   const [manualMode, setManualMode] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [pendingTranscript, setPendingTranscript] = useState("");
+  const [confidenceScore, setConfidenceScore] = useState(0);
   
   const animationRef = useRef<number | null>(null);
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -707,7 +707,7 @@ export function VoiceFirstInterface({ onSendMessage, onInterruption, disabled = 
               isProcessing={mode === 'processing'}
               isInterrupted={false}
               size="lg"
-              pulseColor={context.religion ? getContextualColor(context.religion.name) : 'teal'}
+              pulseColor={context.religion ? getContextualColor(context.religion) : 'teal'}
             />
             
             {/* Interruption overlay for streaming responses */}
@@ -719,7 +719,7 @@ export function VoiceFirstInterface({ onSendMessage, onInterruption, disabled = 
                   className="rounded-full w-8 h-8 p-0 bg-red-500 hover:bg-red-600 shadow-lg animate-pulse"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onInterruption?.();
+                    onInterruption?.('interrupt');
                   }}
                   title="Interrupt AI response"
                 >
