@@ -407,12 +407,12 @@ export default function Dashboard() {
 
         {/* Right Column - Chat Panel */}
         <div
-          className={`${getChatClasses()} transition-all duration-300 ease-in-out overflow-hidden relative border-l border-gray-200`}
+          className={`${getChatClasses()} transition-all duration-300 ease-in-out overflow-hidden relative border-l border-gray-200 h-full`}
         >
           {chatVisible && (
-            <div className="h-full bg-white rounded-l-lg lg:rounded-none shadow-lg lg:shadow-none">
+            <div className="h-full bg-white rounded-l-lg lg:rounded-none shadow-lg lg:shadow-none flex flex-col">
               {/* Chat Header with Controls */}
-              <div className="sticky top-0 bg-white border-b border-gray-200 p-4 rounded-t-lg lg:rounded-none">
+              <div className="flex-shrink-0 bg-white border-b border-gray-200 p-4 rounded-t-lg lg:rounded-none">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-900">AI Scripture Guide</h3>
                   <Button
@@ -428,7 +428,7 @@ export default function Dashboard() {
               </div>
               
               {/* Chat Content - Full Height */}
-              <div className="h-[calc(100%-80px)]">
+              <div className="flex-1 min-h-0">
                 <EnhancedAuraArchivist
                   sessionId={chatSessionId}
                   context={currentContext}

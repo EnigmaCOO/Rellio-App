@@ -473,8 +473,7 @@ export function EnhancedAuraArchivist({
 
   return (
     <Card className={cn(
-      "bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 relative",
-      isExpanded ? 'h-[70vh]' : 'h-[45vh]'
+      "bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 relative flex flex-col h-full"
     )}>
       {/* Mandala Spiritual Overlay */}
       <MandalaOverlay opacity={0.08} />
@@ -534,7 +533,7 @@ export function EnhancedAuraArchivist({
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative min-h-0">
         <ScrollArea className="h-full p-4">
           {isLoading ? (
             <div className="space-y-4">
@@ -611,7 +610,7 @@ export function EnhancedAuraArchivist({
       </div>
 
       {/* Enhanced Input Area with Voice-First Design */}
-      <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 space-y-3">
+      <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 space-y-3 flex-shrink-0">
         {/* Voice-First Interface */}
         <VoiceFirstInterface
           onSubmit={handleSendMessage}
