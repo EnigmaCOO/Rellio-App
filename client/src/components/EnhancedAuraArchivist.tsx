@@ -43,6 +43,8 @@ import { VoiceInputControls } from "@/components/chat/VoiceInputControls";
 import { ScholarPersonaSelector, type ScholarPersona, scholarPersonas, PersonaBadge } from "@/components/chat/ScholarPersonas";
 import { PersonaCustomizer } from "@/components/chat/PersonaCustomizer";
 import { ChatHistoryManager } from "@/components/chat/ChatHistoryManager";
+import { VoiceFirstInterface } from "@/components/chat/VoiceFirstInterface";
+import { GrokStyleOrb } from "@/components/chat/GrokStyleOrb";
 import { MandalaOverlay } from "@/components/chat/MandalaOverlay";
 import { cn } from "@/lib/utils";
 
@@ -211,6 +213,7 @@ export function EnhancedAuraArchivist({
   const [voiceTranscript, setVoiceTranscript] = useState("");
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [customPersona, setCustomPersona] = useState<Partial<ScholarPersona> | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   // Load saved persona and custom settings from localStorage
   useEffect(() => {
@@ -490,12 +493,14 @@ export function EnhancedAuraArchivist({
           </div>
           
           <div className="flex items-center gap-2">
-            <ChatHistoryManager
-              currentSessionId={currentSessionId}
-              onSessionSelect={setCurrentSessionId}
-              onNewSession={handleNewSession}
-              context={context}
-            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowHistory(!showHistory)}
+              className="text-gray-500 hover:text-teal-600"
+            >
+              <History className="h-4 w-4" />
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -607,41 +612,19 @@ export function EnhancedAuraArchivist({
 
       {/* Enhanced Input Area with Voice-First Design */}
       <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 space-y-3">
-        {/* Voice Input Controls */}
-        <VoiceInputControls
-          onTranscript={handleVoiceTranscript}
-          onSend={handleVoiceSend}
-          disabled={sendMessageMutation.isPending}
+        {/* Voice-First Interface */}
+        <VoiceFirstInterface
+          onSubmit={handleSendMessage}
           isStreaming={isStreaming}
+          isInterrupted={isInterrupted}
           onInterrupt={handleInterrupt}
+          placeholder={
+            selectedPersona 
+              ? `Ask ${selectedPersona.name} about spiritual wisdom...`
+              : "Ask about spiritual wisdom..."
+          }
+          disabled={sendMessageMutation.isPending}
         />
-        
-        {/* Text Input Fallback */}
-        <div className="flex gap-2">
-          <Input
-            value={currentMessage}
-            onChange={(e) => setCurrentMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-            placeholder={
-              selectedPersona 
-                ? `Ask ${selectedPersona.name} about spiritual wisdom...`
-                : "Ask about spiritual wisdom..."
-            }
-            className="flex-1 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-xl"
-            disabled={sendMessageMutation.isPending}
-          />
-          <Button
-            onClick={() => handleSendMessage()}
-            disabled={!currentMessage.trim() || sendMessageMutation.isPending}
-            className="bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white rounded-xl px-4 shadow-md hover:shadow-lg transition-all"
-          >
-            {sendMessageMutation.isPending ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
         
         {/* Status Footer */}
         <div className="text-center">
@@ -658,6 +641,32 @@ export function EnhancedAuraArchivist({
         onClose={() => setShowCustomizer(false)}
         onSave={handleCustomPersonaSave}
         currentCustomization={customPersona || undefined}
+      />
+
+      {/* Chat History Sidebar */}
+      <ChatHistoryManager
+        isOpen={showHistory}
+        onClose={() => setShowHistory(false)}
+        currentSessionId={currentSessionId}
+        currentMessages={messages}
+        currentPersona={selectedPersona}
+        currentContext={context}
+        onLoadSession={(entry) => {
+          // Load historical session
+          setCurrentSessionId(entry.sessionId);
+          setSelectedPersona(entry.persona || null);
+          setShowHistory(false);
+          
+          // Update query cache with historical messages
+          queryClient.setQueryData(['/api/chat', entry.sessionId], entry.messages);
+          
+          toast({
+            title: "Session Loaded",
+            description: `Restored conversation with ${entry.persona?.name || 'Aura Archivist'}`,
+            variant: "default"
+          });
+        }}
+        onHighlightVerse={onNavigateToVerse}
       />
     </Card>
   );
