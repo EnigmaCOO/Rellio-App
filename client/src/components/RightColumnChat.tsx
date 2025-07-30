@@ -25,6 +25,7 @@ import {
   Eye,
   Zap,
   Play,
+  Star,
   AlertCircle,
   RefreshCw
 } from "lucide-react";
@@ -389,10 +390,41 @@ export function RightColumnChat({
                       <p className="text-gray-800 text-sm leading-relaxed">{message.content}</p>
                     ) : (
                       <div className="space-y-3">
-                        <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
-                          {message.content}
-                        </p>
-                        <div className="flex items-center gap-2">
+                        <div className="prose prose-sm max-w-none">
+                          <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
+                            {message.content}
+                          </div>
+                        </div>
+                        
+                        {/* Multi-Religious Perspective Badges */}
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
+                            <Eye className="w-3 h-3 text-blue-600" />
+                            <span className="text-xs font-medium text-blue-700">Biblical</span>
+                          </div>
+                          <div className="flex items-center gap-1 px-2 py-1 bg-green-50 border border-green-200 rounded-full">
+                            <Heart className="w-3 h-3 text-green-600" />
+                            <span className="text-xs font-medium text-green-700">Islamic</span>
+                          </div>
+                          <div className="flex items-center gap-1 px-2 py-1 bg-orange-50 border border-orange-200 rounded-full">
+                            <Zap className="w-3 h-3 text-orange-600" />
+                            <span className="text-xs font-medium text-orange-700">Hindu</span>
+                          </div>
+                          <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 border border-purple-200 rounded-full">
+                            <Play className="w-3 h-3 text-purple-600" />
+                            <span className="text-xs font-medium text-purple-700">Buddhist</span>
+                          </div>
+                          <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full">
+                            <Star className="w-3 h-3 text-blue-600" />
+                            <span className="text-xs font-medium text-blue-700">Torah</span>
+                          </div>
+                          <div className="flex items-center gap-1 px-2 py-1 bg-indigo-50 border border-indigo-200 rounded-full">
+                            <Sparkles className="w-3 h-3 text-indigo-600" />
+                            <span className="text-xs font-medium text-indigo-700">Mystical</span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 pt-2">
                           <Button
                             variant="ghost"
                             size="sm"
