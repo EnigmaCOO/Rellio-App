@@ -104,7 +104,7 @@ export function RightColumnChat({
   onExternalMessageProcessed,
   onCopyOperation 
 }: RightColumnChatProps) {
-  const [inputMessage, setInputMessage] = useState("");
+
   const messageEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -151,7 +151,6 @@ export function RightColumnChat({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
-      setInputMessage("");
     },
     onError: (error: any) => {
       setIsStreaming(false);
@@ -258,12 +257,7 @@ export function RightColumnChat({
     }
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputMessage.trim() && !sendMessageMutation.isPending && !isStreaming) {
-      sendMessageMutation.mutate(inputMessage.trim());
-    }
-  };
+
 
   return (
     <div className="h-full flex flex-col bg-white">
@@ -465,27 +459,6 @@ export function RightColumnChat({
           }}
           disabled={sendMessageMutation.isPending || isStreaming}
         />
-        
-        {/* Fallback text input */}
-        <div className="px-4 pb-4">
-          <form onSubmit={handleFormSubmit} className="flex gap-2">
-            <Input
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="Type your message..."
-              disabled={sendMessageMutation.isPending || isStreaming}
-              className="flex-1 text-sm"
-            />
-            <Button 
-              type="submit" 
-              size="sm"
-              disabled={!inputMessage.trim() || sendMessageMutation.isPending || isStreaming}
-              className="bg-teal-600 hover:bg-teal-700 text-white"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
-          </form>
-        </div>
       </div>
     </div>
   );
