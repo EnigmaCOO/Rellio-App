@@ -179,93 +179,91 @@ export function VoiceFirstInterface({
   };
 
   return (
-    <div className={cn("space-y-4", className)}>
-      {/* Mode Toggle & Orb Header */}
+    <div className={cn("space-y-2", className)}>
+      {/* Compact Mode Toggle & Orb Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <GrokStyleOrb state={orbState} size="md" />
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          <GrokStyleOrb state={orbState} size="sm" />
+          <Button
+            variant={inputMode === 'voice' ? 'default' : 'outline'}
+            size="sm"
+            onClick={toggleInputMode}
+            className="flex items-center gap-1 h-8 px-3 text-xs"
+          >
+            {inputMode === 'voice' ? <Mic className="h-3 w-3" /> : <Keyboard className="h-3 w-3" />}
+            {inputMode === 'voice' ? 'Voice' : 'Text'}
+          </Button>
+          
+          {orbState === 'responding' && (
             <Button
-              variant={inputMode === 'voice' ? 'default' : 'outline'}
+              variant="outline"
               size="sm"
-              onClick={toggleInputMode}
-              className="flex items-center gap-2"
+              onClick={onInterrupt}
+              className="text-red-600 hover:text-red-700 border-red-300 h-8 px-3 text-xs"
             >
-              {inputMode === 'voice' ? <Mic className="h-4 w-4" /> : <Keyboard className="h-4 w-4" />}
-              {inputMode === 'voice' ? 'Voice' : 'Text'}
+              <Square className="h-3 w-3 mr-1" />
+              Stop
             </Button>
-            
-            {orbState === 'responding' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onInterrupt}
-                className="text-red-600 hover:text-red-700 border-red-300"
-              >
-                <Square className="h-3 w-3 mr-1" />
-                Stop
-              </Button>
-            )}
-          </div>
+          )}
         </div>
         
         <div className="text-xs text-gray-500">
-          {orbState === 'idle' && 'Ready to help'}
+          {orbState === 'idle' && 'Ready'}
           {orbState === 'listening' && 'Listening...'}
           {orbState === 'processing' && 'Processing...'}
-          {orbState === 'responding' && 'AI is responding...'}
+          {orbState === 'responding' && 'Responding...'}
           {orbState === 'interrupted' && 'Stopped'}
         </div>
       </div>
 
-      {/* Voice Input Mode */}
+      {/* Compact Voice Input Mode */}
       {inputMode === 'voice' && (
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div className={cn(
-            "relative p-4 rounded-lg border-2 transition-all duration-300",
+            "relative p-3 rounded-lg border transition-all duration-300",
             isListening 
               ? "border-teal-300 bg-gradient-to-br from-teal-50 to-cyan-50" 
               : "border-gray-200 bg-gray-50"
           )}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-xs font-medium text-gray-700">
                 {isListening ? 'Listening...' : 'Voice Input'}
               </span>
               {isListening && (
                 <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                  <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
                   <span className="text-xs text-red-600">Recording</span>
                 </div>
               )}
             </div>
             
-            <div className="min-h-[60px] flex items-center">
+            <div className="min-h-[40px] flex items-center">
               {voiceTranscript ? (
-                <p className="text-gray-900">{voiceTranscript}</p>
+                <p className="text-sm text-gray-900">{voiceTranscript}</p>
               ) : (
-                <p className="text-gray-500 italic">
-                  {isListening ? 'Speak now...' : 'Click the microphone to start speaking'}
+                <p className="text-xs text-gray-500 italic">
+                  {isListening ? 'Speak now...' : 'Click microphone to start'}
                 </p>
               )}
             </div>
             
-            <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center justify-between mt-2">
               <Button
                 variant={isListening ? "destructive" : "default"}
                 size="sm"
                 onClick={isListening ? stopVoiceInput : startVoiceInput}
                 disabled={disabled || isProcessing}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1 h-8 px-3 text-xs"
               >
                 {isListening ? (
                   <>
-                    <MicOff className="h-4 w-4" />
+                    <MicOff className="h-3 w-3" />
                     Stop
                   </>
                 ) : (
                   <>
-                    <Mic className="h-4 w-4" />
-                    Start Speaking
+                    <Mic className="h-3 w-3" />
+                    Speak
                   </>
                 )}
               </Button>
@@ -276,29 +274,25 @@ export function VoiceFirstInterface({
                   size="sm"
                   onClick={() => handleVoiceSubmit(voiceTranscript)}
                   disabled={disabled || isProcessing}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-1 h-8 px-3 text-xs"
                 >
-                  <Send className="h-4 w-4" />
+                  <Send className="h-3 w-3" />
                   Send
                 </Button>
               )}
             </div>
           </div>
           
-          {/* Voice Waveform Visualization */}
+          {/* Compact Voice Waveform */}
           {isListening && (
-            <div className="flex items-center justify-center gap-1 py-2">
-              {[...Array(5)].map((_, i) => (
+            <div className="flex items-center justify-center gap-1 py-1">
+              {[...Array(3)].map((_, i) => (
                 <div
                   key={i}
-                  className={cn(
-                    "w-1 bg-teal-500 rounded-full animate-pulse",
-                    `h-${2 + (i % 3) * 2}`,
-                    `animation-delay-${i * 100}`
-                  )}
+                  className="w-0.5 bg-teal-500 rounded-full animate-pulse"
                   style={{
-                    animationDelay: `${i * 100}ms`,
-                    height: `${8 + (Math.sin(Date.now() * 0.001 + i) * 4)}px`
+                    animationDelay: `${i * 150}ms`,
+                    height: `${6 + (Math.sin(Date.now() * 0.001 + i) * 3)}px`
                   }}
                 />
               ))}
@@ -307,9 +301,9 @@ export function VoiceFirstInterface({
         </div>
       )}
 
-      {/* Text Input Mode */}
+      {/* Compact Text Input Mode */}
       {inputMode === 'text' && (
-        <div className="space-y-3">
+        <div className="space-y-1">
           <div className="relative">
             <Textarea
               value={textInput}
@@ -317,34 +311,20 @@ export function VoiceFirstInterface({
               onKeyDown={handleKeyPress}
               placeholder={placeholder}
               disabled={disabled || isProcessing}
-              className="min-h-[100px] pr-12 resize-none"
+              className="min-h-[60px] pr-12 resize-none text-sm"
             />
             <Button
               variant="ghost"
               size="sm"
               onClick={handleTextSubmit}
               disabled={!textInput.trim() || disabled || isProcessing}
-              className="absolute bottom-2 right-2 h-8 w-8 p-0"
+              className="absolute bottom-2 right-2 h-7 w-7 p-0"
             >
-              <Send className="h-4 w-4" />
+              <Send className="h-3 w-3" />
             </Button>
           </div>
         </div>
       )}
-
-      {/* Status Footer */}
-      <div className="flex items-center justify-between text-xs text-gray-500">
-        <span>
-          {inputMode === 'voice' 
-            ? 'Voice recognition powered by browser API' 
-            : 'Press Enter to send, Shift+Enter for new line'
-          }
-        </span>
-        <span className="flex items-center gap-1">
-          <Volume2 className="h-3 w-3" />
-          ElevenLabs audio ready
-        </span>
-      </div>
     </div>
   );
 }

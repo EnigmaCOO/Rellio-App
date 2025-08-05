@@ -526,15 +526,15 @@ export function EnhancedAuraArchivist({
       {/* Mandala Spiritual Overlay */}
       <MandalaOverlay opacity={0.08} />
       
-      {/* Enhanced Header with Spiritual Gradient */}
-      <div className="flex-shrink-0 relative bg-gradient-to-r from-purple-50 via-white to-yellow-50 border-b border-gray-100 p-3">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center shadow-md">
-              <Brain className="h-4 w-4 text-white" />
+      {/* Compact Header with Spiritual Gradient */}
+      <div className="flex-shrink-0 relative bg-gradient-to-r from-purple-50 via-white to-yellow-50 border-b border-gray-100 p-2">
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center shadow-md">
+              <Brain className="h-3 w-3 text-white" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-gray-900">Aura Archivist</h2>
+              <h2 className="text-sm font-bold text-gray-900">Aura Archivist</h2>
               <p className="text-xs text-gray-600">{getHeaderText()}</p>
             </div>
           </div>
@@ -580,9 +580,9 @@ export function EnhancedAuraArchivist({
         )}
       </div>
 
-      {/* Messages Area */}
+      {/* Maximized Messages Area */}
       <div className="flex-1 overflow-hidden">
-        <div className="h-full overflow-y-auto p-3">
+        <div className="h-full overflow-y-auto p-2">
           {isLoading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
@@ -658,7 +658,7 @@ export function EnhancedAuraArchivist({
       </div>
 
       {/* Enhanced Input Area with Voice-First Design */}
-      <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white p-3 space-y-2 flex-shrink-0">
+      <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white p-2 flex-shrink-0">
         {/* Voice-First Interface */}
         <VoiceFirstInterface
           onSubmit={handleSendMessage}
@@ -672,14 +672,6 @@ export function EnhancedAuraArchivist({
           }
           disabled={sendMessageMutation.isPending}
         />
-        
-        {/* Status Footer */}
-        <div className="text-center">
-          <p className="text-xs text-gray-500">
-            Powered by ancient wisdom • {messages.length} messages • 
-            {selectedPersona ? ` Guided by ${selectedPersona.name}` : ' Universal perspective'}
-          </p>
-        </div>
       </div>
 
       {/* Persona Customizer Modal */}
