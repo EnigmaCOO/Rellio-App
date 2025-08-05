@@ -34,7 +34,8 @@ import {
   Crown,
   Scroll,
   Flame,
-  Compass
+  Compass,
+  X
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
@@ -264,6 +265,8 @@ export function EnhancedAuraArchivist({
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [customPersona, setCustomPersona] = useState<Partial<ScholarPersona> | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showPersonaBanner, setShowPersonaBanner] = useState(false);
+  const [bannerTimeout, setBannerTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Load saved persona and custom settings from localStorage
   useEffect(() => {
@@ -299,6 +302,21 @@ export function EnhancedAuraArchivist({
       const religionPersona = getPersonaForReligion(context.religion);
       if (religionPersona && (!selectedPersona || selectedPersona.primaryReligion !== context.religion)) {
         setSelectedPersona(religionPersona);
+        
+        // Show banner for 3 seconds, then transform to button
+        setShowPersonaBanner(true);
+        
+        // Clear existing timeout
+        if (bannerTimeout) {
+          clearTimeout(bannerTimeout);
+        }
+        
+        // Set new timeout to collapse banner
+        const timeout = setTimeout(() => {
+          setShowPersonaBanner(false);
+        }, 3000);
+        setBannerTimeout(timeout);
+        
         toast({
           title: "Spiritual Guide Available",
           description: `${religionPersona.name} is ready to guide you through ${context.religion === 'bible' ? 'the Bible' : context.religion === 'quran' ? 'the Quran' : context.religion === 'torah' ? 'the Torah' : context.religion === 'hindu' ? 'Hindu scriptures' : 'Buddhist texts'}`,
@@ -308,8 +326,22 @@ export function EnhancedAuraArchivist({
     } else {
       // Clear persona when not in any religious text
       setSelectedPersona(null);
+      setShowPersonaBanner(false);
+      if (bannerTimeout) {
+        clearTimeout(bannerTimeout);
+        setBannerTimeout(null);
+      }
     }
   }, [context.religion, toast]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (bannerTimeout) {
+        clearTimeout(bannerTimeout);
+      }
+    };
+  }, [bannerTimeout]);
 
   // Load messages
   const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
@@ -445,19 +477,13 @@ export function EnhancedAuraArchivist({
   const handleCustomPersonaSave = (customData: Partial<ScholarPersona>) => {
     setCustomPersona(customData);
     
-    // Create full custom persona
-    const fullCustomPersona: ScholarPersona = {
-      ...scholarPersonas.find(p => p.id === 'user-custom')!,
-      ...customData
-    };
+    // Custom personas are not supported in religion-specific mode
+    console.log('Custom persona creation not available in religion-specific mode');
     
-    setSelectedPersona(fullCustomPersona);
-    localStorage.setItem('rellio-custom-persona', JSON.stringify(customData));
-    localStorage.setItem('rellio-selected-persona', 'user-custom');
-    
+    // Religion-specific personas cannot be customized
     toast({
-      title: "Personal Guide Customized",
-      description: `${customData.name || 'Your guide'} has been personalized`,
+      title: "Custom Personas Unavailable",
+      description: "Use the dedicated spiritual guides for each religious tradition",
       variant: "default"
     });
   };
@@ -535,14 +561,48 @@ export function EnhancedAuraArchivist({
           </div>
         </div>
 
-        {/* Scholar Persona Selector */}
-        <ScholarPersonaSelector
-          selectedPersona={selectedPersona}
-          onPersonaSelect={handlePersonaSelect}
-          context={context}
-        />
-        
-        {/* Religion-specific guides don't need customization */}
+        {/* Persona Information Banner or Compact Button */}
+        {selectedPersona && showPersonaBanner ? (
+          // Full banner that appears when persona first activates
+          <div className="mb-2 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 animate-in fade-in duration-500">
+            <div className="flex items-center gap-3">
+              <selectedPersona.icon className={cn("h-6 w-6", selectedPersona.iconColor)} />
+              <div className="flex-1">
+                <h3 className="font-semibold text-sm text-gray-900">{selectedPersona.name}</h3>
+                <p className="text-xs text-gray-600">{selectedPersona.description}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowPersonaBanner(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ) : selectedPersona ? (
+          // Compact button that shows after banner disappears
+          <div className="mb-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPersonaBanner(true)}
+              className="w-full justify-start text-xs h-8 border-purple-200 bg-purple-50/50 hover:bg-purple-100 text-purple-800"
+            >
+              <selectedPersona.icon className={cn("h-3 w-3 mr-2", selectedPersona.iconColor)} />
+              {selectedPersona.name} Active
+              <ChevronDown className="h-3 w-3 ml-auto" />
+            </Button>
+          </div>
+        ) : (
+          // Message when no persona is active
+          <div className="mb-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
+            <p className="text-xs text-gray-600 text-center">
+              Select a religious text to access your dedicated spiritual guide
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Maximized Messages Area */}
