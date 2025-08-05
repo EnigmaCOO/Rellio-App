@@ -40,7 +40,7 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
 import { AudioPlaybackButton } from "@/components/chat/AudioPlaybackButton";
 import { VoiceInputControls } from "@/components/chat/VoiceInputControls";
-import { ScholarPersonaSelector, type ScholarPersona, scholarPersonas, PersonaBadge } from "@/components/chat/ScholarPersonas";
+import { ScholarPersonaSelector, type ScholarPersona, getPersonaForReligion, PersonaBadge } from "@/components/chat/ScholarPersonas";
 import { PersonaCustomizer } from "@/components/chat/PersonaCustomizer";
 import { ChatHistoryManager } from "@/components/chat/ChatHistoryManager";
 import { VoiceFirstInterface } from "@/components/chat/VoiceFirstInterface";
@@ -281,59 +281,35 @@ export function EnhancedAuraArchivist({
     
     if (savedPersonaId && !selectedPersona) {
       if (savedPersonaId === 'user-custom' && customPersona) {
-        // Load custom persona
-        const customScholarPersona: ScholarPersona = {
-          ...scholarPersonas.find(p => p.id === 'user-custom')!,
-          ...customPersona
-        };
-        setSelectedPersona(customScholarPersona);
+        // Custom personas are not supported in religion-specific mode
+        console.log('Custom personas not available in religion-specific mode');
       } else {
-        // Load predefined persona
-        const savedPersona = scholarPersonas.find(p => p.id === savedPersonaId);
-        if (savedPersona) {
-          setSelectedPersona(savedPersona);
+        // Load religion-specific persona if appropriate
+        const religionPersona = getPersonaForReligion(context.religion);
+        if (religionPersona && religionPersona.id === savedPersonaId) {
+          setSelectedPersona(religionPersona);
         }
       }
     }
   }, [customPersona, selectedPersona]);
 
-  // Auto-suggest persona based on context (only if no persona is selected)
+  // Auto-select religion-specific persona when entering a religious text
   useEffect(() => {
-    if (context.religion && !selectedPersona && !localStorage.getItem('rellio-selected-persona')) {
-      // Auto-suggest based on religion
-      let suggestedPersona: ScholarPersona | null = null;
-      
-      switch (context.religion) {
-        case 'bible':
-          suggestedPersona = scholarPersonas.find(p => p.id === 'historian-sage') || null;
-          break;
-        case 'quran':
-          suggestedPersona = scholarPersonas.find(p => p.id === 'comparative-seeker') || null;
-          break;
-        case 'torah':
-          suggestedPersona = scholarPersonas.find(p => p.id === 'philosopher-oracle') || null;
-          break;
-        case 'hindu':
-          suggestedPersona = scholarPersonas.find(p => p.id === 'mystic-scholar') || null;
-          break;
-        case 'buddhist':
-          suggestedPersona = scholarPersonas.find(p => p.id === 'mystic-scholar') || null;
-          break;
-        default:
-          suggestedPersona = scholarPersonas.find(p => p.id === 'comparative-seeker') || null;
-      }
-      
-      if (suggestedPersona) {
-        setSelectedPersona(suggestedPersona);
-        // Show toast suggestion
+    if (context.religion) {
+      const religionPersona = getPersonaForReligion(context.religion);
+      if (religionPersona && (!selectedPersona || selectedPersona.primaryReligion !== context.religion)) {
+        setSelectedPersona(religionPersona);
         toast({
-          title: "Scholar Guide Suggested",
-          description: `${suggestedPersona.name} is recommended for ${context.religion} studies`,
+          title: "Spiritual Guide Available",
+          description: `${religionPersona.name} is ready to guide you through ${context.religion === 'bible' ? 'the Bible' : context.religion === 'quran' ? 'the Quran' : context.religion === 'torah' ? 'the Torah' : context.religion === 'hindu' ? 'Hindu scriptures' : 'Buddhist texts'}`,
           variant: "default"
         });
       }
+    } else {
+      // Clear persona when not in any religious text
+      setSelectedPersona(null);
     }
-  }, [context.religion, selectedPersona, toast]);
+  }, [context.religion, toast]);
 
   // Load messages
   const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
@@ -566,18 +542,7 @@ export function EnhancedAuraArchivist({
           context={context}
         />
         
-        {/* Customization Button for User-Custom Persona */}
-        {selectedPersona?.id === 'user-custom' && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full mt-2 text-xs"
-            onClick={() => setShowCustomizer(true)}
-          >
-            <Settings className="h-3 w-3 mr-1" />
-            Customize Your Guide
-          </Button>
-        )}
+        {/* Religion-specific guides don't need customization */}
       </div>
 
       {/* Maximized Messages Area */}

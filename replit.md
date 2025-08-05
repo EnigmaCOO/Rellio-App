@@ -14,7 +14,7 @@ Preferred communication style: Simple, everyday language.
 - **Component Library**: Radix UI components via shadcn/ui.
 - **Design Principles**: Emphasis on clear navigation, content readability, and an intuitive AI interaction experience. Minimalist interface with focus on content. Responsive design for various screen sizes.
 - **Interactive Elements**: Clickable verse explanations with AI-generated content, dynamic chapter/page navigation, and visual cues for AI context switching.
-- **AI Companion**: Grok-inspired scholar persona system with customizable AI companions and a voice-first interface (GrokStyleOrb).
+- **AI Companion**: Religion-specific spiritual guide system with dedicated personas that activate only within their respective religious texts (Islamic Mufti for Quran, Christian Priest for Bible, Jewish Rabbi for Torah, Hindu Guru for Hindu texts, Buddhist Monk for Buddhist texts) and a voice-first interface (GrokStyleOrb).
 
 ### Technical Implementations
 - **Frontend**:
@@ -37,7 +37,7 @@ Preferred communication style: Simple, everyday language.
 - **Voice-First Interface**: Browser speech recognition and ElevenLabs voice synthesis for AI interactions.
 - **User Management**: Basic user authentication and session persistence.
 - **Reading Progress**: Tracking of user reading progress.
-- **Customization**: Customizable AI personas.
+- **Contextual Activation**: Religion-specific spiritual guides that automatically activate when studying their respective religious texts.
 
 ### System Design Choices
 - **Data Flow**:
