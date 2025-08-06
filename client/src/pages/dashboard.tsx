@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { NavigationPanel } from "@/components/NavigationPanel";
 import { VerseSpotlight } from "@/components/VerseSpotlight";
 import { VerseList } from "@/components/IlluminVerse/VerseList";
-import { EnhancedAuraArchivist } from "@/components/EnhancedAuraArchivist";
+import { EnhancedAuraArchivistCard } from "@/components/EnhancedAuraArchivistCard";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Settings, BookOpen, Menu, X, ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
 import rellioLogo from "@assets/image_1751817332000.png";
@@ -428,13 +428,12 @@ export default function Dashboard() {
               </div>
               
               {/* Chat Content - Full Height */}
-              <div className="flex-1 min-h-0">
-                <EnhancedAuraArchivist
+              <div className="flex-1 min-h-0 p-4">
+                <EnhancedAuraArchivistCard
                   sessionId={chatSessionId}
                   context={currentContext}
                   externalMessage={externalMessage}
                   onExternalMessageProcessed={handleExternalMessageProcessed}
-                  onCopyOperation={handleCopyOperation}
                   onNavigateToVerse={handleNavigateToVerse}
                 />
               </div>

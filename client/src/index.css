@@ -24,6 +24,18 @@
   --ring: hsl(20, 14.3%, 4.1%);
   --radius: 0.5rem;
   
+  /* Aura Archivist teal accent colors */
+  --teal-50: hsl(166, 76%, 97%);
+  --teal-100: hsl(167, 85%, 89%);
+  --teal-200: hsl(168, 84%, 78%);
+  --teal-300: hsl(171, 77%, 64%);
+  --teal-400: hsl(172, 66%, 50%);
+  --teal-500: hsl(173, 80%, 40%);
+  --teal-600: hsl(175, 84%, 32%);
+  --teal-700: hsl(175, 77%, 26%);
+  --teal-800: hsl(176, 69%, 22%);
+  --teal-900: hsl(176, 61%, 19%);
+  
   /* Custom scripture colors */
   --scripture-50: hsl(210, 40%, 98%);
   --scripture-100: hsl(210, 40%, 96%);
@@ -218,3 +230,89 @@
 .animate-float-particle {
   animation: floatParticle 2s ease-out infinite;
 }
+
+/* Enhanced Voice Orb Animations */
+@keyframes orbPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.7);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 20px rgba(20, 184, 166, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0);
+  }
+}
+
+@keyframes orbGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(20, 184, 166, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(20, 184, 166, 0.8), 0 0 40px rgba(20, 184, 166, 0.4);
+  }
+}
+
+@keyframes recordingPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.animate-orb-pulse {
+  animation: orbPulse 2s infinite;
+}
+
+.animate-orb-glow {
+  animation: orbGlow 3s ease-in-out infinite;
+}
+
+.animate-recording-pulse {
+  animation: recordingPulse 1.5s infinite;
+}
+
+/* Teal Utility Classes */
+.text-teal-50 { color: var(--teal-50); }
+.text-teal-100 { color: var(--teal-100); }
+.text-teal-200 { color: var(--teal-200); }
+.text-teal-300 { color: var(--teal-300); }
+.text-teal-400 { color: var(--teal-400); }
+.text-teal-500 { color: var(--teal-500); }
+.text-teal-600 { color: var(--teal-600); }
+.text-teal-700 { color: var(--teal-700); }
+.text-teal-800 { color: var(--teal-800); }
+.text-teal-900 { color: var(--teal-900); }
+
+.bg-teal-50 { background-color: var(--teal-50); }
+.bg-teal-100 { background-color: var(--teal-100); }
+.bg-teal-200 { background-color: var(--teal-200); }
+.bg-teal-300 { background-color: var(--teal-300); }
+.bg-teal-400 { background-color: var(--teal-400); }
+.bg-teal-500 { background-color: var(--teal-500); }
+.bg-teal-600 { background-color: var(--teal-600); }
+.bg-teal-700 { background-color: var(--teal-700); }
+.bg-teal-800 { background-color: var(--teal-800); }
+.bg-teal-900 { background-color: var(--teal-900); }
+
+.border-teal-50 { border-color: var(--teal-50); }
+.border-teal-100 { border-color: var(--teal-100); }
+.border-teal-200 { border-color: var(--teal-200); }
+.border-teal-300 { border-color: var(--teal-300); }
+.border-teal-400 { border-color: var(--teal-400); }
+.border-teal-500 { border-color: var(--teal-500); }
+.border-teal-600 { border-color: var(--teal-600); }
+.border-teal-700 { border-color: var(--teal-700); }
+.border-teal-800 { border-color: var(--teal-800); }
+.border-teal-900 { border-color: var(--teal-900); }
