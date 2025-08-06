@@ -282,7 +282,7 @@ function VoiceOrb({
 
   const getOrbClasses = () => {
     const baseClasses = cn(
-      "w-16 h-16 rounded-full transition-all duration-300 relative overflow-hidden",
+      "w-12 h-12 rounded-full transition-all duration-300 relative overflow-hidden",
       "flex items-center justify-center cursor-pointer",
       "border-2 shadow-lg",
       disabled && "opacity-50 cursor-not-allowed"
@@ -330,11 +330,11 @@ function VoiceOrb({
         aria-label={isListening ? "Stop recording" : "Start voice input"}
       >
         {isProcessing ? (
-          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
         ) : isListening ? (
-          <Square className="w-6 h-6" />
+          <Square className="w-5 h-5" />
         ) : (
-          <Mic className="w-6 h-6" />
+          <Mic className="w-5 h-5" />
         )}
       </button>
       
@@ -736,57 +736,57 @@ export function EnhancedAuraArchivistCard({
   return (
     <Card className="w-full bg-white shadow-lg rounded-xl overflow-hidden">
       {/* Title Bar */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center shadow-sm">
-            <Sparkles className="w-5 h-5 text-white" />
+      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center shadow-sm">
+            <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Aura Archivist</h2>
-            <p className="text-sm text-gray-600">Universal Wisdom Explorer</p>
+            <h2 className="text-base font-bold text-gray-900">Aura Archivist</h2>
+            <p className="text-xs text-gray-600">Universal Wisdom Explorer</p>
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setShowHistory(!showHistory)}
-            className="text-gray-500 hover:text-teal-600"
+            className="text-gray-500 hover:text-teal-600 h-7 w-7 p-0"
             title="Chat History"
           >
-            <History className="w-4 h-4" />
+            <History className="w-3.5 h-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={handleClearChat}
-            className="text-gray-500 hover:text-red-600"
+            className="text-gray-500 hover:text-red-600 h-7 w-7 p-0"
             title="Clear Chat"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-3.5 h-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="text-gray-500 hover:text-teal-600"
+            className="text-gray-500 hover:text-teal-600 h-7 w-7 p-0"
             title="Compare Perspectives"
           >
-            <GitCompare className="w-4 h-4" />
+            <GitCompare className="w-3.5 h-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="text-gray-500 hover:text-teal-600"
+            className="text-gray-500 hover:text-teal-600 h-7 w-7 p-0"
             title="Bookmarks"
           >
-            <Bookmark className="w-4 h-4" />
+            <Bookmark className="w-3.5 h-3.5" />
           </Button>
         </div>
       </div>
 
       {/* Voice Orb */}
-      <div className="flex justify-center py-6 bg-gradient-to-b from-gray-50 to-white">
+      <div className="flex justify-center py-3 bg-gradient-to-b from-gray-50 to-white">
         <VoiceOrb
           isListening={isListening}
           isProcessing={isProcessing}
@@ -869,22 +869,22 @@ export function EnhancedAuraArchivistCard({
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-gray-200 p-4">
+      <div className="border-t border-gray-200 px-4 py-2">
         <div className="flex items-center gap-2">
           <Input
             value={currentMessage}
             onChange={(e) => setCurrentMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Ask your question..."
-            className="flex-1 rounded-full border-gray-300 focus:border-teal-500 focus:ring-teal-500"
+            className="flex-1 rounded-full border-gray-300 focus:border-teal-500 focus:ring-teal-500 h-9"
             disabled={isStreaming}
           />
           <Button
             onClick={() => handleSendMessage()}
             disabled={!currentMessage.trim() || isStreaming}
-            className="rounded-full w-10 h-10 p-0 bg-teal-500 hover:bg-teal-600 text-white"
+            className="rounded-full w-9 h-9 p-0 bg-teal-500 hover:bg-teal-600 text-white"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-3.5 h-3.5" />
           </Button>
         </div>
       </div>
