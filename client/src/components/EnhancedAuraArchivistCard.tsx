@@ -560,9 +560,21 @@ export function EnhancedAuraArchivistCard({
       const religionPersona = getPersonaForReligion(context.religion);
       if (religionPersona && (!selectedPersona || selectedPersona.primaryReligion !== context.religion)) {
         setSelectedPersona(religionPersona);
+        console.log(`🎭 Persona activated: ${religionPersona.name} for ${context.religion}`);
+        toast({
+          title: `${religionPersona.name} Activated`,
+          description: `Your ${religionPersona.title} is now guiding your spiritual journey`,
+          variant: "default"
+        });
+      }
+    } else {
+      // Reset to universal persona when no specific religion
+      if (selectedPersona && selectedPersona.primaryReligion) {
+        setSelectedPersona(null);
+        console.log('🎭 Persona reset to universal');
       }
     }
-  }, [context.religion, selectedPersona]);
+  }, [context.religion, selectedPersona, toast]);
 
   // Load messages
   const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
@@ -591,12 +603,12 @@ export function EnhancedAuraArchivistCard({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             sessionId: currentSessionId,
-            message: enhancedMessage,
+            message: messageData.message, // Use original message, not enhanced
             context: {
               religion: context.religion,
               book: context.book,
               chapter: context.chapter,
-              persona: messageData.personaContext?.name || null
+              persona: messageData.personaContext?.name || selectedPersona?.name || null
             }
           })
         });
@@ -674,6 +686,9 @@ export function EnhancedAuraArchivistCard({
     const messageToSend = messageOverride || currentMessage;
     if (!messageToSend.trim()) return;
     
+    console.log('🎭 Sending message with persona:', selectedPersona?.name);
+    console.log('📍 Context:', { religion: context.religion, book: context.book, chapter: context.chapter });
+    
     sendMessageMutation.mutate({
       message: messageToSend,
       personaContext: selectedPersona || undefined
@@ -739,12 +754,25 @@ export function EnhancedAuraArchivistCard({
       {/* Title Bar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center shadow-sm">
-            <Sparkles className="w-4 h-4 text-white" />
+          <div className={cn(
+            "w-8 h-8 rounded-lg flex items-center justify-center shadow-sm",
+            selectedPersona 
+              ? "bg-gradient-to-br from-blue-500 to-blue-600" // Will use persona-specific colors later
+              : "bg-gradient-to-br from-teal-500 to-teal-600"
+          )}>
+            {selectedPersona ? (
+              <selectedPersona.icon className="w-4 h-4 text-white" />
+            ) : (
+              <Sparkles className="w-4 h-4 text-white" />
+            )}
           </div>
           <div>
-            <h2 className="text-base font-bold text-gray-900">Aura Archivist</h2>
-            <p className="text-xs text-gray-600">Universal Wisdom Explorer</p>
+            <h2 className="text-base font-bold text-gray-900">
+              {selectedPersona ? selectedPersona.name : "Aura Archivist"}
+            </h2>
+            <p className="text-xs text-gray-600">
+              {selectedPersona ? selectedPersona.title : "Universal Wisdom Explorer"}
+            </p>
           </div>
         </div>
         
