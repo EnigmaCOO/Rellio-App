@@ -20,7 +20,8 @@ import {
   Square,
   Volume2,
   Save,
-  Settings
+  Settings,
+  Trash2
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
@@ -714,6 +715,24 @@ export function EnhancedAuraArchivistCard({
     }
   };
 
+  // Clear chat handler
+  const handleClearChat = () => {
+    // Generate a new session ID to effectively clear the chat
+    const newSessionId = `session_${Date.now()}`;
+    setCurrentSessionId(newSessionId);
+    setCurrentMessage("");
+    setVoiceTranscript("");
+    
+    // Invalidate current session queries to force refresh
+    queryClient.invalidateQueries({ queryKey: ['/api/chat', currentSessionId] });
+    
+    toast({
+      title: "Chat Cleared",
+      description: "Started a fresh conversation",
+      variant: "default"
+    });
+  };
+
   return (
     <Card className="w-full bg-white shadow-lg rounded-xl overflow-hidden">
       {/* Title Bar */}
@@ -734,13 +753,24 @@ export function EnhancedAuraArchivistCard({
             size="sm"
             onClick={() => setShowHistory(!showHistory)}
             className="text-gray-500 hover:text-teal-600"
+            title="Chat History"
           >
             <History className="w-4 h-4" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
+            onClick={handleClearChat}
+            className="text-gray-500 hover:text-red-600"
+            title="Clear Chat"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             className="text-gray-500 hover:text-teal-600"
+            title="Compare Perspectives"
           >
             <GitCompare className="w-4 h-4" />
           </Button>
@@ -748,6 +778,7 @@ export function EnhancedAuraArchivistCard({
             variant="ghost"
             size="sm"
             className="text-gray-500 hover:text-teal-600"
+            title="Bookmarks"
           >
             <Bookmark className="w-4 h-4" />
           </Button>
