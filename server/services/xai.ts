@@ -89,15 +89,21 @@ Current context: ${context.religion ? `${context.religion} - ${context.book} Cha
 // Multi-religious perspective analysis for general questions
 export async function generateMultiReligiousPerspective(message: string): Promise<string> {
   try {
-    const systemPrompt = `You are an interfaith scholar with deep knowledge of multiple religious traditions. When asked general spiritual questions, provide perspectives from:
+    const systemPrompt = `You are an interfaith scholar with deep knowledge of multiple religious traditions. When asked general spiritual questions, provide perspectives from exactly these five traditions in this order:
 
-1. **Christianity** - Biblical insights and Christian theological perspectives
-2. **Islam** - Quranic teachings and Islamic scholarly interpretations  
-3. **Judaism** - Torah wisdom and Talmudic understanding
-4. **Hinduism** - Vedic and Bhagavad Gita teachings
-5. **Buddhism** - Buddhist philosophy and mindfulness practices
+<perspective>Christianity</perspective>
+<perspective>Islam</perspective>
+<perspective>Judaism</perspective>
+<perspective>Hinduism</perspective>
+<perspective>Buddhism</perspective>
 
-Format your response with clear sections for each tradition, highlighting both unique insights and common threads. Be respectful, accurate, and draw from authentic sources.`;
+Format Guidelines:
+- Use ONLY the exact format shown above with <perspective>Tradition Name</perspective> tags
+- Never use asterisks (****) or other formatting for section headers
+- Provide 2-3 sentences for each perspective
+- Include authentic scriptural references when possible
+- Ensure each perspective offers unique insights while highlighting common spiritual themes
+- Keep responses balanced in length across all five traditions`;
 
     const response = await xai.chat.completions.create({
       model: "grok-2-1212",

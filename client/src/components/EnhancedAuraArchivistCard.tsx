@@ -66,7 +66,46 @@ declare var SpeechRecognition: {
   new(): SpeechRecognition;
 };
 
-// Scripture Content Component with Clickable References
+// Perspective colors for multi-religious responses
+const PERSPECTIVE_COLORS = {
+  'Christianity': {
+    border: 'border-blue-200',
+    bg: 'bg-blue-50',
+    glow: 'shadow-blue-200/50',
+    text: 'text-blue-800',
+    glowClass: 'perspective-glow-blue'
+  },
+  'Islam': {
+    border: 'border-emerald-200',
+    bg: 'bg-emerald-50',
+    glow: 'shadow-emerald-200/50',
+    text: 'text-emerald-800',
+    glowClass: 'perspective-glow-emerald'
+  },
+  'Judaism': {
+    border: 'border-purple-200',
+    bg: 'bg-purple-50',
+    glow: 'shadow-purple-200/50',
+    text: 'text-purple-800',
+    glowClass: 'perspective-glow-purple'
+  },
+  'Hinduism': {
+    border: 'border-orange-200',
+    bg: 'bg-orange-50',
+    glow: 'shadow-orange-200/50',
+    text: 'text-orange-800',
+    glowClass: 'perspective-glow-orange'
+  },
+  'Buddhism': {
+    border: 'border-amber-200',
+    bg: 'bg-amber-50',
+    glow: 'shadow-amber-200/50',
+    text: 'text-amber-800',
+    glowClass: 'perspective-glow-amber'
+  }
+};
+
+// Scripture Content Component with Clickable References and Multi-Perspective Support
 function ScriptureContent({ 
   content, 
   onNavigateToVerse 
@@ -152,6 +191,63 @@ function ScriptureContent({
     }
   };
 
+  // Check if content contains multi-perspective tags
+  const hasMultiPerspectives = content.includes('<perspective>');
+
+  if (hasMultiPerspectives) {
+    // Parse multi-perspective content
+    const perspectiveRegex = /<perspective>(.*?)<\/perspective>([\s\S]*?)(?=<perspective>|$)/gi;
+    const perspectives: Array<{ name: string; content: string }> = [];
+    let match;
+
+    while ((match = perspectiveRegex.exec(content)) !== null) {
+      const name = match[1].trim();
+      const perspectiveContent = match[2].trim();
+      perspectives.push({ name, content: perspectiveContent });
+    }
+
+    return (
+      <div className="space-y-6">
+        {perspectives.map((perspective, index) => {
+          const colors = PERSPECTIVE_COLORS[perspective.name as keyof typeof PERSPECTIVE_COLORS];
+          if (!colors) return null;
+
+          const processedContent = parseScriptureReferences(perspective.content);
+
+          return (
+            <div
+              key={index}
+              className={cn(
+                "rounded-lg border-2 p-4 transition-all duration-300 shadow-lg",
+                colors.border,
+                colors.bg,
+                colors.glow,
+                colors.glowClass
+              )}
+              onClick={handleClick}
+            >
+              <h4 className={cn(
+                "font-semibold text-lg mb-3 flex items-center gap-2",
+                colors.text
+              )}>
+                <Sparkles className="w-4 h-4" />
+                {perspective.name}
+              </h4>
+              <div 
+                className={cn(
+                  "prose prose-sm max-w-none leading-relaxed",
+                  colors.text
+                )}
+                dangerouslySetInnerHTML={{ __html: processedContent }}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Regular single-perspective content
   return (
     <div 
       className="prose prose-sm max-w-none leading-relaxed text-gray-900"
