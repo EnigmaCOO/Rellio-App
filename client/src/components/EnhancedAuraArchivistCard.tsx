@@ -357,12 +357,13 @@ function SuggestionChip({ text, onClick }: SuggestionChipProps) {
   return (
     <button
       className={cn(
-        "px-4 py-2 rounded-full text-sm",
-        "border-2 border-teal-200 text-teal-700",
-        "bg-white hover:bg-teal-50",
-        "transition-all duration-200",
-        "hover:border-teal-300 hover:shadow-sm",
-        "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+        "px-5 py-2.5 rounded-full text-sm font-medium",
+        "border border-teal-200 text-teal-700",
+        "bg-gradient-to-r from-white to-teal-50 hover:from-teal-50 hover:to-teal-100",
+        "transition-all duration-300 transform hover:scale-105",
+        "hover:border-teal-300 hover:shadow-lg shadow-sm",
+        "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2",
+        "backdrop-blur-sm"
       )}
       onClick={() => onClick(text)}
     >
@@ -734,9 +735,9 @@ export function EnhancedAuraArchivistCard({
   };
 
   return (
-    <Card className="w-full bg-white shadow-lg rounded-xl overflow-hidden">
+    <Card className="w-full h-full bg-white shadow-lg rounded-xl overflow-hidden flex flex-col">
       {/* Title Bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center shadow-sm">
             <Sparkles className="w-4 h-4 text-white" />
@@ -786,7 +787,7 @@ export function EnhancedAuraArchivistCard({
       </div>
 
       {/* Voice Orb */}
-      <div className="flex justify-center py-3 bg-gradient-to-b from-gray-50 to-white">
+      <div className="flex justify-center py-2 bg-gradient-to-b from-gray-50 to-white flex-shrink-0">
         <VoiceOrb
           isListening={isListening}
           isProcessing={isProcessing}
@@ -796,8 +797,8 @@ export function EnhancedAuraArchivistCard({
         />
       </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 h-96 overflow-hidden">
+      {/* Messages Area - Expands to fill available space */}
+      <div className="flex-1 overflow-hidden bg-gradient-to-b from-gray-50/30 to-white">
         <ScrollArea className="h-full px-4">
           {isLoading ? (
             <div className="space-y-4 py-4">
@@ -812,20 +813,23 @@ export function EnhancedAuraArchivistCard({
               ))}
             </div>
           ) : messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              {/* Welcome Section */}
-              <div className="mb-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <div className="flex flex-col items-center justify-center h-full text-center py-8">
+              {/* Enhanced Welcome Section */}
+              <div className="mb-8 animate-fade-in">
+                <div className="w-20 h-20 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center mb-6 mx-auto shadow-xl animate-pulse">
+                  <Sparkles className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3 bg-gradient-to-r from-teal-600 to-purple-600 bg-clip-text text-transparent">
                   Welcome to Enlightened Discourse
                 </h3>
-                <p className="text-sm text-gray-600 max-w-md">
+                <p className="text-gray-600 max-w-sm leading-relaxed">
                   Ask questions about spirituality, wisdom traditions, and sacred texts. 
-                  I'm here to provide insights from various religious and philosophical perspectives.
+                  Discover insights from multiple religious and philosophical perspectives.
                 </p>
               </div>
               
-              {/* Suggestion Chips */}
-              <div className="flex flex-wrap gap-2 justify-center max-w-md">
+              {/* Enhanced Suggestion Chips */}
+              <div className="flex flex-wrap gap-3 justify-center max-w-lg">
                 {suggestionChips.slice(0, 3).map((suggestion) => (
                   <SuggestionChip
                     key={suggestion}
@@ -836,7 +840,7 @@ export function EnhancedAuraArchivistCard({
               </div>
             </div>
           ) : (
-            <div className="py-4 space-y-1">
+            <div className="py-4 space-y-4 min-h-full">
               {messages.map((message) => (
                 <MessageBubble
                   key={message.id}
@@ -868,23 +872,23 @@ export function EnhancedAuraArchivistCard({
         </ScrollArea>
       </div>
 
-      {/* Input Area */}
-      <div className="border-t border-gray-200 px-4 py-2">
+      {/* Input Area - Fixed at bottom with enhanced styling */}
+      <div className="border-t border-gray-200 px-4 py-3 bg-white flex-shrink-0 shadow-lg">
         <div className="flex items-center gap-2">
           <Input
             value={currentMessage}
             onChange={(e) => setCurrentMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Ask your question..."
-            className="flex-1 rounded-full border-gray-300 focus:border-teal-500 focus:ring-teal-500 h-9"
+            className="flex-1 rounded-full border-gray-300 focus:border-teal-500 focus:ring-teal-500 h-10 shadow-sm"
             disabled={isStreaming}
           />
           <Button
             onClick={() => handleSendMessage()}
             disabled={!currentMessage.trim() || isStreaming}
-            className="rounded-full w-9 h-9 p-0 bg-teal-500 hover:bg-teal-600 text-white"
+            className="rounded-full w-10 h-10 p-0 bg-teal-500 hover:bg-teal-600 text-white shadow-md transition-all duration-200 hover:scale-105"
           >
-            <Send className="w-3.5 h-3.5" />
+            <Send className="w-4 h-4" />
           </Button>
         </div>
       </div>
