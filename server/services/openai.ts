@@ -23,19 +23,21 @@ export async function generateScriptureResponse(
     if (context && context.multiReligiousPerspective === true) {
       console.log("Multi-religious perspective triggered:", { question: userMessage, context });
       
-      const multiReligiousPrompt = `You are an expert comparative religion scholar. The user has asked a general question about spirituality/religion without selecting a specific religious text. Provide a comprehensive response that includes perspectives from all 5 major religious traditions available on this platform.
+      const multiReligiousPrompt = `You are an interfaith scholar with deep knowledge of multiple religious traditions. When asked general spiritual questions, provide perspectives from exactly these five traditions in this order:
 
-Structure your response as follows:
-1. Start with a brief general statement about the topic
-2. Then provide specific perspectives from each tradition:
-   - **From the Bible perspective:** [Answer based on Christian/Biblical teachings with specific verse reference (e.g., John 3:16)]
-   - **From the Quran perspective:** [Answer based on Islamic teachings with specific verse reference (e.g., Quran 2:255)]
-   - **From the Torah perspective:** [Answer based on Jewish teachings with specific verse reference (e.g., Leviticus 19:18)]
-   - **From the Bhagavad Gita perspective:** [Answer based on Hindu teachings with specific verse reference (e.g., Bhagavad Gita 2.47)]
-   - **From the Tripitaka perspective:** [Answer based on Buddhist teachings with specific text reference (e.g., Dhammapada 1.1)]
-3. End with a brief conclusion highlighting common themes or key differences
+<perspective>Christianity</perspective>
+<perspective>Islam</perspective>
+<perspective>Judaism</perspective>
+<perspective>Hinduism</perspective>
+<perspective>Buddhism</perspective>
 
-Keep each perspective concise (1-2 sentences) but meaningful. Always include specific verse or text references for each religious tradition to provide authentic sourcing. Focus on authentic religious teachings and avoid generalizations.
+Format Guidelines:
+- Use ONLY the exact format shown above with <perspective>Tradition Name</perspective> tags
+- Never use asterisks (****) or other formatting for section headers
+- Provide 2-3 sentences for each perspective
+- Include authentic scriptural references when possible
+- Ensure each perspective offers unique insights while highlighting common spiritual themes
+- Keep responses balanced in length across all five traditions
 
 User's question: "${userMessage}"`;
 
@@ -45,12 +47,12 @@ User's question: "${userMessage}"`;
           { role: "system", content: multiReligiousPrompt },
           { role: "user", content: userMessage }
         ],
-        max_tokens: 600,
-        temperature: 0.7,
+        max_tokens: 1200,
+        temperature: 0.8,
       });
 
       const multiResponse = response.choices[0].message.content || "I apologize, but I couldn't generate a multi-religious response at this time.";
-      console.log("Multi-religious response generated:", { question: userMessage, response: multiResponse });
+      console.log("Multi-religious OpenAI response generated:", { question: userMessage, response: multiResponse });
       return multiResponse;
     }
 
@@ -82,19 +84,21 @@ User's question: "${userMessage}"`;
       if (hasSpiritualContent) {
         console.log("SPIRITUAL QUESTION DETECTED - Calling OpenAI for multi-religious response");
         
-        const multiReligiousPrompt = `You are an expert comparative religion scholar. The user has asked a general spiritual/religious question. Provide a comprehensive response that includes perspectives from all 5 major religious traditions available on this platform.
+        const multiReligiousPrompt = `You are an interfaith scholar with deep knowledge of multiple religious traditions. When asked general spiritual questions, provide perspectives from exactly these five traditions in this order:
 
-Structure your response as follows:
-1. Start with a brief general statement about the topic
-2. Then provide specific perspectives from each tradition:
-   - **Biblical perspective:** [Answer based on Christian teachings with specific verse reference]
-   - **Quranic perspective:** [Answer based on Islamic teachings with specific verse reference]
-   - **Torah perspective:** [Answer based on Jewish teachings with specific verse reference]
-   - **Hindu perspective:** [Answer based on Bhagavad Gita teachings with specific verse reference]
-   - **Buddhist perspective:** [Answer based on Buddhist teachings with specific text reference]
-3. End with a brief conclusion highlighting common themes or key differences
+<perspective>Christianity</perspective>
+<perspective>Islam</perspective>
+<perspective>Judaism</perspective>
+<perspective>Hinduism</perspective>
+<perspective>Buddhism</perspective>
 
-Keep each perspective concise (1-2 sentences) but meaningful. Always include specific verse references for authenticity. Focus on providing genuine religious wisdom rather than generic responses.
+Format Guidelines:
+- Use ONLY the exact format shown above with <perspective>Tradition Name</perspective> tags
+- Never use asterisks (****) or other formatting for section headers
+- Provide 2-3 sentences for each perspective
+- Include authentic scriptural references when possible
+- Ensure each perspective offers unique insights while highlighting common spiritual themes
+- Keep responses balanced in length across all five traditions
 
 User's question: "${userMessage}"`;
 
@@ -105,8 +109,8 @@ User's question: "${userMessage}"`;
               { role: "system", content: multiReligiousPrompt },
               { role: "user", content: userMessage }
             ],
-            max_tokens: 800,
-            temperature: 0.7,
+            max_tokens: 1200,
+            temperature: 0.8,
           });
 
           const multiResponse = response.choices[0].message.content || "I apologize, but I couldn't generate a response at this time.";
