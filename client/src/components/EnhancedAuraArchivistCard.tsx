@@ -66,6 +66,101 @@ declare var SpeechRecognition: {
   new(): SpeechRecognition;
 };
 
+// Scripture Content Component with Clickable References
+function ScriptureContent({ 
+  content, 
+  onNavigateToVerse 
+}: { 
+  content: string;
+  onNavigateToVerse?: (religion: Religion, book: string, chapter: number, verse?: number) => void;
+}) {
+  const parseScriptureReferences = (text: string) => {
+    const patterns = [
+      // Bible references
+      { 
+        regex: /\b(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|1 Samuel|2 Samuel|1 Kings|2 Kings|1 Chronicles|2 Chronicles|Ezra|Nehemiah|Esther|Job|Psalms|Proverbs|Ecclesiastes|Song of Songs|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|1 Corinthians|2 Corinthians|Galatians|Ephesians|Philippians|Colossians|1 Thessalonians|2 Thessalonians|1 Timothy|2 Timothy|Titus|Philemon|Hebrews|James|1 Peter|2 Peter|1 John|2 John|3 John|Jude|Revelation)\s+(\d+):(\d+)(?:-\d+)?/gi, 
+        religion: 'bible' as Religion 
+      },
+      // Quran references - comprehensive patterns
+      { 
+        regex: /\b(?:Quran|Qur'an|Qur'ān|Surah)\s+(?:Al-)?([A-Za-z-\s'()]+)\s*(?:\([\w\s]+\))?\s*(\d+):(\d+)(?:-\d+)?/gi, 
+        religion: 'quran' as Religion 
+      },
+      { 
+        regex: /\b(Quran|Qur'an)\s+(\d+):(\d+)(?:-\d+)?/gi, 
+        religion: 'quran' as Religion 
+      },
+      // Quran Surah names with parenthetical descriptions (e.g., "Al-Anbiya (The Prophets) 1:2")
+      {
+        regex: /\b(Al-[A-Za-z-]+(?:\s+\([^)]+\))?)\s+(\d+):(\d+)(?:-\d+)?/gi,
+        religion: 'quran' as Religion
+      },
+      // Additional Quran Surah patterns
+      {
+        regex: /\b(An-[A-Za-z-]+(?:\s+\([^)]+\))?)\s+(\d+):(\d+)(?:-\d+)?/gi,
+        religion: 'quran' as Religion
+      },
+      {
+        regex: /\b(As-[A-Za-z-]+(?:\s+\([^)]+\))?)\s+(\d+):(\d+)(?:-\d+)?/gi,
+        religion: 'quran' as Religion
+      },
+      // Hindu references
+      { 
+        regex: /\b(Bhagavad\s+Gita)\s+(\d+):(\d+)(?:-\d+)?/gi, 
+        religion: 'hindu' as Religion 
+      },
+      // Torah references
+      { 
+        regex: /\b(Bereshit|Shemot|Vayikra|Bamidbar|Devarim)\s+(\d+):(\d+)(?:-\d+)?/gi, 
+        religion: 'torah' as Religion 
+      }
+    ];
+
+    let processedText = text;
+    
+    patterns.forEach(({ regex, religion }) => {
+      processedText = processedText.replace(regex, (match, bookOrSurah, chapter, verse) => {
+        const referenceId = `ref-${Math.random().toString(36).substr(2, 9)}`;
+        return `<span 
+          id="${referenceId}"
+          class="scripture-ref cursor-pointer text-teal-600 hover:text-teal-800 hover:underline font-medium transition-colors bg-teal-50 px-1 py-0.5 rounded border border-teal-200" 
+          data-religion="${religion}" 
+          data-book="${bookOrSurah}" 
+          data-chapter="${chapter}" 
+          data-verse="${verse}"
+          title="Click to navigate to ${match}"
+        >${match}</span>`;
+      });
+    });
+
+    return processedText;
+  };
+
+  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.classList.contains('scripture-ref')) {
+      event.preventDefault();
+      const religion = target.dataset.religion as Religion;
+      const book = target.dataset.book || '';
+      const chapter = parseInt(target.dataset.chapter || '1', 10);
+      const verse = target.dataset.verse ? parseInt(target.dataset.verse, 10) : undefined;
+      
+      if (onNavigateToVerse && religion && book && chapter) {
+        console.log('🔗 Navigating to scripture:', { religion, book, chapter, verse });
+        onNavigateToVerse(religion, book, chapter, verse);
+      }
+    }
+  };
+
+  return (
+    <div 
+      className="prose prose-sm max-w-none leading-relaxed text-gray-900"
+      onClick={handleClick}
+      dangerouslySetInnerHTML={{ __html: parseScriptureReferences(content) }}
+    />
+  );
+}
+
 // Enhanced Voice Orb Component
 interface VoiceOrbProps {
   isListening: boolean;
@@ -184,9 +279,10 @@ interface MessageBubbleProps {
   message: ChatMessage;
   persona?: ScholarPersona | null;
   onSave?: () => void;
+  onNavigateToVerse?: (religion: Religion, book: string, chapter: number, verse?: number) => void;
 }
 
-function MessageBubble({ message, persona, onSave }: MessageBubbleProps) {
+function MessageBubble({ message, persona, onSave, onNavigateToVerse }: MessageBubbleProps) {
   const isUser = message.type === 'user';
   
   return (
@@ -221,9 +317,16 @@ function MessageBubble({ message, persona, onSave }: MessageBubbleProps) {
             ? "bg-gray-100 text-gray-800 rounded-br-md"
             : "bg-white text-gray-800 border-gray-200 rounded-bl-md"
         )}>
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">
-            {message.content}
-          </p>
+          {isUser ? (
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              {message.content}
+            </p>
+          ) : (
+            <ScriptureContent 
+              content={message.content}
+              onNavigateToVerse={onNavigateToVerse}
+            />
+          )}
         </div>
         
         {/* Action Buttons for AI messages */}
@@ -613,6 +716,7 @@ export function EnhancedAuraArchivistCard({
                   message={message}
                   persona={selectedPersona}
                   onSave={() => handleBookmark(message.content)}
+                  onNavigateToVerse={onNavigateToVerse}
                 />
               ))}
               {isStreaming && (
