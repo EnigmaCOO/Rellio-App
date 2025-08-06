@@ -816,9 +816,6 @@ export function EnhancedAuraArchivistCard({
             <div className="flex flex-col items-center justify-center h-full text-center py-8">
               {/* Enhanced Welcome Section */}
               <div className="mb-8 animate-fade-in">
-                <div className="w-20 h-20 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center mb-6 mx-auto shadow-xl animate-pulse">
-                  <Sparkles className="w-10 h-10 text-white" />
-                </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3 bg-gradient-to-r from-teal-600 to-purple-600 bg-clip-text text-transparent">
                   Welcome to Enlightened Discourse
                 </h3>
