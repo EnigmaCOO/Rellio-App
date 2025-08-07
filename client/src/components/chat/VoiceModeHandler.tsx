@@ -89,15 +89,37 @@ export function useVoiceModeHandler({
     onStateChange(newState);
   }, [onStateChange]);
 
-  // Simplified audio setup - just get permission, no complex audio processing
+  // Audio setup with permission check
   const setupAudioContext = useCallback(async () => {
+    console.log('🎧 Setting up audio context and permissions...');
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Clean up immediately - we just needed permission
-      stream.getTracks().forEach(track => track.stop());
+      // Check if we already have permission
+      if (navigator.permissions) {
+        const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        console.log('🎧 Microphone permission status:', permissionStatus.state);
+      }
+      
+      // Request microphone access
+      console.log('🎧 Requesting microphone access...');
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: echoCancellationRef.current,
+          noiseSuppression: noiseSuppression.current,
+          autoGainControl: true
+        } 
+      });
+      
+      console.log('🎧 ✅ Microphone access granted');
+      
+      // Store stream reference for cleanup
+      streamRef.current = stream;
+      setHasPermission(true);
+      
+      // Don't stop immediately - keep for monitoring
       return true;
     } catch (error) {
-      console.error('Failed to get microphone permission:', error);
+      console.error('🎧 ❌ Failed to get microphone permission:', error);
+      setHasPermission(false);
       return false;
     }
   }, []);
@@ -123,10 +145,21 @@ export function useVoiceModeHandler({
 
   // Start listening function
   const startListening = useCallback(async (): Promise<boolean> => {
-    if (!isSupported || disabled) return false;
+    console.log('🎤 START LISTENING CALLED - Initial state:', { isSupported, disabled, hasPermission });
+    
+    if (!isSupported) {
+      console.error('❌ Speech recognition not supported');
+      return false;
+    }
+    
+    if (disabled) {
+      console.error('❌ Voice input is disabled');
+      return false;
+    }
 
     // Stop any existing recognition first
     if (recognitionRef.current) {
+      console.log('🛑 Stopping existing recognition');
       try {
         recognitionRef.current.stop();
       } catch (error) {
@@ -137,42 +170,61 @@ export function useVoiceModeHandler({
 
     try {
       // Setup audio context first
+      console.log('🔧 Setting up audio context...');
       const audioSetup = await setupAudioContext();
-      if (!audioSetup) return false;
+      if (!audioSetup) {
+        console.error('❌ Failed to setup audio context');
+        return false;
+      }
+      console.log('✅ Audio context setup successful');
 
       // Create simple recognition
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        console.error('❌ SpeechRecognition not available');
+        return false;
+      }
+      
+      console.log('🔧 Creating SpeechRecognition instance...');
       recognitionRef.current = new SpeechRecognition();
       
-      recognitionRef.current.continuous = true; // Keep listening for longer
+      // Configure recognition settings
+      recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = 'en-US';
       recognitionRef.current.maxAlternatives = 1;
+      
+      console.log('⚙️ Speech recognition configured:', {
+        continuous: recognitionRef.current.continuous,
+        interimResults: recognitionRef.current.interimResults,
+        lang: recognitionRef.current.lang
+      });
 
+      // Set up event handlers
       recognitionRef.current.onstart = () => {
-        console.log('✅ Speech recognition ACTUALLY started');
-        console.log('Setting listening state to TRUE');
+        console.log('🎤 ✅ SPEECH RECOGNITION STARTED!');
         setIsListening(true);
         updateVoiceState('listening');
         startAudioMonitoring();
-        console.log('✅ State after start:', { isListening: true, voiceState: 'listening' });
+        console.log('🎤 ✅ Listening state set to TRUE');
       };
 
       recognitionRef.current.onresult = (event: any) => {
+        console.log('🎤 🗣️ SPEECH RESULT RECEIVED!');
+        console.log('Event results length:', event.results.length);
+        
         let interimTranscript = '';
         let finalTranscript = '';
         
-        console.log('🎤 SPEECH DETECTED! Event results:', event.results.length);
-        
-        // FORCE listening state to be active when speech is detected
-        console.log('✨ ACTIVATING visual feedback for speech detection');
-        setIsListening(true);
-        updateVoiceState('listening');
-        
+        // Process all results
         for (let i = 0; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          console.log(`Result ${i}: "${transcript}" (final: ${event.results[i].isFinal})`);
-          if (event.results[i].isFinal) {
+          const result = event.results[i];
+          const transcript = result[0].transcript;
+          const confidence = result[0].confidence;
+          
+          console.log(`Result ${i}: "${transcript}" (final: ${result.isFinal}, confidence: ${confidence})`);
+          
+          if (result.isFinal) {
             finalTranscript += transcript;
           } else {
             interimTranscript += transcript;
@@ -180,48 +232,61 @@ export function useVoiceModeHandler({
         }
         
         const fullTranscript = finalTranscript + interimTranscript;
-        console.log('📝 UPDATING TRANSCRIPT:', { fullTranscript, interim: interimTranscript, final: finalTranscript });
+        console.log('📝 FULL TRANSCRIPT:', { fullTranscript, final: finalTranscript, interim: interimTranscript });
         
-        // Update transcript immediately for real-time display (like Grok)
-        console.log('📝 REAL-TIME UPDATE:', fullTranscript);
+        // IMMEDIATE UPDATE - This is key for real-time display
+        console.log('🔄 UPDATING CURRENT TRANSCRIPT:', fullTranscript);
         setCurrentTranscript(fullTranscript);
         setConfidence(event.results[event.results.length - 1][0].confidence || 0.8);
+        
+        // Notify parent component
         onTranscript(fullTranscript, interimTranscript.length > 0);
         
-        // Keep visual state active while we have transcript
+        // Ensure visual feedback is active
         if (fullTranscript.trim()) {
+          console.log('💫 Keeping visual state active for transcript:', fullTranscript.trim());
           setIsListening(true);
           updateVoiceState('listening');
         }
         
-        // If this is a final result, send after short delay
+        // Auto-send final results
         if (finalTranscript.trim()) {
-          console.log('🚀 Final transcript detected - WILL SEND:', finalTranscript);
+          console.log('🚀 FINAL RESULT DETECTED - Setting up auto-send for:', finalTranscript);
           
-          // Clear existing timeout to prevent multiple sends
+          // Clear existing timeout
           if (autoSendTimeoutRef.current) {
             clearTimeout(autoSendTimeoutRef.current);
+            console.log('⏰ Cleared existing timeout');
           }
           
-          // Send after pause to allow for additional speech
+          // Set new timeout for auto-send
           autoSendTimeoutRef.current = setTimeout(() => {
-            console.log('🚀 Sending final transcript:', finalTranscript.trim());
+            console.log('🚀 AUTO-SENDING MESSAGE:', finalTranscript.trim());
             onAutoSend(finalTranscript.trim());
             setCurrentTranscript('');
             setIsListening(false);
             updateVoiceState('idle');
-          }, 800); // Slightly longer delay for better UX
+          }, autoSendDelay);
+          console.log(`⏰ Auto-send scheduled in ${autoSendDelay}ms`);
         }
       };
 
       recognitionRef.current.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
+        console.error('🎤 ❌ SPEECH RECOGNITION ERROR:', event.error, event.message);
         
-        // Don't stop on 'no-speech' error - just keep listening
-        if (event.error === 'no-speech') {
-          console.log('⏳ No speech detected, continuing to listen...');
-          // Don't change state, keep listening
-          return;
+        // Handle different error types
+        switch (event.error) {
+          case 'no-speech':
+            console.log('⏳ No speech detected - continuing to listen');
+            return; // Don't stop listening
+          case 'audio-capture':
+            console.error('❌ Audio capture failed - microphone access issue');
+            break;
+          case 'not-allowed':
+            console.error('❌ Microphone permission denied');
+            break;
+          default:
+            console.error('❌ Other recognition error:', event.error);
         }
         
         setIsListening(false);
@@ -229,15 +294,18 @@ export function useVoiceModeHandler({
       };
 
       recognitionRef.current.onend = () => {
-        console.log('🛑 Speech recognition ended');
-        console.log('Current transcript before end:', currentTranscript);
+        console.log('🛑 SPEECH RECOGNITION ENDED');
         
-        // Don't clear transcript immediately if we have text
-        if (!currentTranscript.trim()) {
+        // Only reset if we don't have active transcript
+        if (!currentTranscript || !currentTranscript.trim()) {
+          console.log('🔄 Resetting state - no active transcript');
           setIsListening(false);
           updateVoiceState('idle');
+        } else {
+          console.log('📝 Keeping state active - transcript present:', currentTranscript);
         }
         
+        // Clean up audio monitoring
         setAudioLevel(0);
         if (audioProcessingIntervalRef.current) {
           clearInterval(audioProcessingIntervalRef.current);
@@ -245,46 +313,69 @@ export function useVoiceModeHandler({
       };
 
       // Start recognition
-      console.log('🚀 STARTING SPEECH RECOGNITION...');
+      console.log('🚀 STARTING SPEECH RECOGNITION NOW...');
       recognitionRef.current.start();
-      console.log('🚀 Speech recognition start() called');
+      console.log('🚀 Speech recognition.start() executed');
       
+      // Set initial state
       updateVoiceState('listening');
+      setIsListening(true); // Optimistically set to true
+      
       return true;
     } catch (error) {
-      console.error('Failed to start listening:', error);
+      console.error('❌ CRITICAL ERROR starting speech recognition:', error);
       updateVoiceState('idle');
+      setIsListening(false);
       return false;
     }
-  }, [isSupported, disabled, setupAudioContext, startAudioMonitoring, updateVoiceState, onTranscript, onAutoSend, autoSendDelay]);
+  }, [isSupported, disabled, setupAudioContext, startAudioMonitoring, updateVoiceState, onTranscript, onAutoSend, autoSendDelay, currentTranscript]);
 
   // Stop listening function
   const stopListening = useCallback(() => {
+    console.log('🛑 STOP LISTENING CALLED');
+    
     // Clear timeouts
     if (autoSendTimeoutRef.current) {
+      console.log('⏰ Clearing auto-send timeout');
       clearTimeout(autoSendTimeoutRef.current);
       autoSendTimeoutRef.current = null;
     }
 
     if (audioProcessingIntervalRef.current) {
+      console.log('🔊 Clearing audio processing interval');
       clearInterval(audioProcessingIntervalRef.current);
       audioProcessingIntervalRef.current = null;
     }
 
     // Stop recognition
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
+      console.log('🛑 Stopping speech recognition');
+      try {
+        recognitionRef.current.stop();
+      } catch (error) {
+        console.warn('Error stopping recognition:', error);
+      }
       recognitionRef.current = null;
     }
 
-    // Background recognition removed
+    // Clean up media stream
+    if (streamRef.current) {
+      console.log('📹 Cleaning up media stream');
+      streamRef.current.getTracks().forEach(track => {
+        track.stop();
+      });
+      streamRef.current = null;
+    }
 
-    // Simplified cleanup - no complex audio context to clean up
-
+    // Reset all states
+    console.log('🔄 Resetting all voice states');
     setIsListening(false);
     setCurrentTranscript('');
     setAudioLevel(0);
     updateVoiceState('idle');
+    setConfidence(0);
+    
+    console.log('🚀 Stop listening completed');
   }, [updateVoiceState]);
 
   // Toggle listening

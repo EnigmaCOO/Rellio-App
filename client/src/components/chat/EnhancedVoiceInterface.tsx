@@ -139,30 +139,40 @@ export function EnhancedVoiceInterface({
     event.stopPropagation();
     
     console.log('🎤 MICROPHONE BUTTON CLICKED!');
-    console.log('Current state:', { 
+    console.log('🎤 Current state:', { 
       inputMode, 
       isListening, 
       isSupported, 
       hasPermission,
       voiceState,
       disabled,
-      currentTranscript 
+      currentTranscript: currentTranscript || '(empty)'
     });
     
     // Force switch to voice mode if needed
     if (inputMode === 'text') {
-      console.log('Switching to voice mode...');
+      console.log('🔄 Switching to voice mode...');
       setInputMode('voice');
       setTextMessage('');
     }
 
-    // Simple toggle - let the VoiceModeHandler handle all the complexity
+    // Handle toggle
     try {
-      const result = await toggleListening();
-      console.log('🎤 Toggle result:', result);
-      console.log('🎤 State after toggle:', { isListening, voiceState, currentTranscript });
+      if (isListening) {
+        console.log('🛑 Currently listening - stopping...');
+        stopListening();
+      } else {
+        console.log('🚀 Not listening - starting...');
+        const result = await startListening();
+        console.log('🎤 Start listening result:', result);
+        if (!result) {
+          console.error('❌ Failed to start listening');
+        }
+      }
+      
+      console.log('🎤 Final state after toggle:', { isListening, voiceState, currentTranscript: currentTranscript || '(empty)' });
     } catch (error) {
-      console.error('❌ Error toggling voice recognition:', error);
+      console.error('❌ Error in microphone click handler:', error);
     }
   };
 
@@ -295,8 +305,9 @@ export function EnhancedVoiceInterface({
                     disabled={disabled}
                     type="button"
                     className={cn(
-                      "w-10 h-10 rounded-full border-2 transition-all duration-300",
+                      "w-10 h-10 rounded-full border-2 transition-all duration-300 relative",
                       "hover:scale-105 active:scale-95 cursor-pointer flex-shrink-0",
+                      "flex items-center justify-center",
                       (isListening || currentTranscript || voiceState === 'listening')
                         ? "bg-teal-500 hover:bg-teal-600 border-teal-400 text-white shadow-lg shadow-teal-300/50 animate-pulse ring-2 ring-teal-300"
                         : "bg-white hover:bg-teal-50 border-teal-200 text-teal-600 hover:border-teal-300",
@@ -305,10 +316,10 @@ export function EnhancedVoiceInterface({
                   >
                     <Mic className={cn("w-4 h-4", (isListening || currentTranscript || voiceState === 'listening') ? "text-white" : "text-teal-600")} />
                     
-                    {/* Orb overlay */}
-                    <div className="absolute -top-0.5 -right-0.5">
-                      <GrokStyleOrb state={getOrbState()} size="sm" />
-                    </div>
+                    {/* Status indicator dot when active */}
+                    {(isListening || currentTranscript || voiceState === 'listening') && (
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border-2 border-white" />
+                    )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -320,12 +331,17 @@ export function EnhancedVoiceInterface({
               <div className="flex-1 relative">
                 <Input
                   value={currentTranscript || ''}
-                  placeholder={isListening || currentTranscript ? "🎤 Listening... speak now" : "Click microphone to speak"}
+                  placeholder={
+                    isListening ? "🎤 Listening... speak now" : 
+                    currentTranscript ? "Voice input detected" :
+                    "Click microphone to speak"
+                  }
                   readOnly
                   className={cn(
                     "border-0 focus-visible:ring-0 text-gray-800 font-medium transition-all duration-300",
+                    "min-h-[40px] resize-none",
                     (isListening || currentTranscript)
-                      ? "bg-teal-50 placeholder-teal-600 ring-2 ring-teal-200" 
+                      ? "bg-teal-50 placeholder-teal-600 ring-2 ring-teal-200 shadow-sm" 
                       : "bg-gray-50 placeholder-gray-500"
                   )}
                 />
