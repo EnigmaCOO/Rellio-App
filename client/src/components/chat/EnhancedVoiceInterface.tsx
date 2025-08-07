@@ -30,13 +30,16 @@ export function EnhancedVoiceInterface({
   placeholder = "Ask about this scripture...",
   className
 }: EnhancedVoiceInterfaceProps) {
-  console.log('🔄 EnhancedVoiceInterface rendered', { disabled, isStreaming });
+  console.log('🔄 EnhancedVoiceInterface rendered', { disabled, isStreaming, inputMode, isListening, currentTranscript });
   
   // State management
   const [inputMode, setInputMode] = useState<InputMode>('voice');
   const [textMessage, setTextMessage] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [showEchoWarning, setShowEchoWarning] = useState(false);
+  
+  // Debug current states
+  console.log('🐛 DEBUG - Component state:', { inputMode, isListening, voiceState, disabled, isSupported, hasPermission });
   const [settings, setSettings] = useState({
     autoSendDelay: 1.5,
     confidenceThreshold: 0.8,
@@ -277,7 +280,7 @@ export function EnhancedVoiceInterface({
       {/* Main Interface Container */}
       <div className="relative bg-white rounded-xl border-2 border-gray-100 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
         
-        {/* Voice Mode Interface */}
+        {/* Voice Mode Interface - DEBUG: inputMode is', inputMode */}
         {inputMode === 'voice' && (
           <div className="p-3">
             {/* Voice Input Field - looks like search bar */}
@@ -286,7 +289,10 @@ export function EnhancedVoiceInterface({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    onClick={handleMicClick}
+                    onClick={(e) => {
+                      console.log('🔥 BUTTON CLICKED - TEST LOG!');
+                      handleMicClick(e);
+                    }}
                     disabled={disabled}
                     type="button"
                     className={cn(
