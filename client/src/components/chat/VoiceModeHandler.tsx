@@ -155,6 +155,7 @@ export function useVoiceModeHandler({
         setIsListening(true);
         updateVoiceState('listening');
         startAudioMonitoring();
+        console.log('✅ State after start:', { isListening: true, voiceState: 'listening' });
       };
 
       recognitionRef.current.onresult = (event: any) => {
@@ -162,6 +163,13 @@ export function useVoiceModeHandler({
         let finalTranscript = '';
         
         console.log('🎤 SPEECH DETECTED! Event results:', event.results.length);
+        
+        // Keep listening state active while processing speech
+        if (!isListening) {
+          console.log('🔄 Re-activating listening state during speech');
+          setIsListening(true);
+          updateVoiceState('listening');
+        }
         
         for (let i = 0; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
@@ -181,35 +189,18 @@ export function useVoiceModeHandler({
         setConfidence(event.results[event.results.length - 1][0].confidence || 0.8);
         onTranscript(fullTranscript, interimTranscript.length > 0);
         
-        // If this is a final result, start auto-send timer
+        // If this is a final result, send immediately
         if (finalTranscript.trim()) {
-          console.log('🚀 Final transcript detected:', finalTranscript);
+          console.log('🚀 Final transcript detected - SENDING NOW:', finalTranscript);
           
-          // Clear any existing timeout
-          if (autoSendTimeoutRef.current) {
-            clearTimeout(autoSendTimeoutRef.current);
-          }
-          
-          // Set auto-send after pause
-          autoSendTimeoutRef.current = setTimeout(() => {
-            console.log('🚀 Auto-sending after pause:', fullTranscript.trim());
-            onAutoSend(fullTranscript.trim());
+          // Send immediately for final results
+          setTimeout(() => {
+            console.log('🚀 Sending final transcript:', finalTranscript.trim());
+            onAutoSend(finalTranscript.trim());
             setCurrentTranscript('');
-          }, autoSendDelay);
-        }
-        // For interim results, also set a timeout
-        else if (interimTranscript.trim() && fullTranscript.length > 3) {
-          // Clear any existing timeout
-          if (autoSendTimeoutRef.current) {
-            clearTimeout(autoSendTimeoutRef.current);
-          }
-          
-          // Set longer timeout for interim results
-          autoSendTimeoutRef.current = setTimeout(() => {
-            console.log('🚀 Auto-sending interim result:', fullTranscript.trim());
-            onAutoSend(fullTranscript.trim());
-            setCurrentTranscript('');
-          }, autoSendDelay + 1000); // Longer delay for interim
+            setIsListening(false);
+            updateVoiceState('idle');
+          }, 500);
         }
       };
 
@@ -230,8 +221,13 @@ export function useVoiceModeHandler({
       recognitionRef.current.onend = () => {
         console.log('🛑 Speech recognition ended');
         console.log('Current transcript before end:', currentTranscript);
-        setIsListening(false);
-        updateVoiceState('idle');
+        
+        // Don't clear transcript immediately if we have text
+        if (!currentTranscript.trim()) {
+          setIsListening(false);
+          updateVoiceState('idle');
+        }
+        
         setAudioLevel(0);
         if (audioProcessingIntervalRef.current) {
           clearInterval(audioProcessingIntervalRef.current);
