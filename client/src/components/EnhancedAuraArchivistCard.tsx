@@ -28,7 +28,7 @@ import type { Religion, ChatMessage } from "@shared/schema";
 import { AudioPlaybackButton } from "@/components/chat/AudioPlaybackButton";
 import { type ScholarPersona, getPersonaForReligion } from "@/components/chat/ScholarPersonas";
 import { ChatHistoryManager } from "@/components/chat/ChatHistoryManager";
-import { EnhancedVoiceInterface } from "@/components/chat/EnhancedVoiceInterface";
+import { SimpleVoiceInterface } from "@/components/chat/SimpleVoiceInterface";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -834,11 +834,9 @@ export function EnhancedAuraArchivistCard({
       {/* Enhanced Voice Interface - Replaces traditional input */}
       <div className="border-t border-gray-200 px-4 py-3 bg-gradient-to-r from-white via-gray-50 to-white flex-shrink-0">
         <TooltipProvider>
-          <EnhancedVoiceInterface
+          <SimpleVoiceInterface
             onSendMessage={handleVoiceMessage}
             disabled={false}
-            isStreaming={isStreaming}
-            onInterrupt={handleVoiceInterruption}
             placeholder="Ask about this scripture or any spiritual question..."
             className="w-full"
           />
