@@ -197,23 +197,36 @@ export function useVoiceModeHandler({
       setConfidence(maxConfidence);
       onTranscript(fullTranscript, !finalTranscript);
 
-      // Handle auto-send logic
-      if (finalTranscript && maxConfidence > confidenceThreshold) {
+      // Handle auto-send logic - more lenient for better reliability
+      if (fullTranscript.length > 2) { // Any meaningful text
         // Clear existing timeout
         if (autoSendTimeoutRef.current) {
           clearTimeout(autoSendTimeoutRef.current);
         }
 
-        updateVoiceState('processing');
-        
-        // Auto-send after configured pause
-        autoSendTimeoutRef.current = setTimeout(() => {
-          console.log('🚀 Auto-sending message:', finalTranscript);
-          onAutoSend(finalTranscript.trim());
-          setCurrentTranscript('');
-          updateVoiceState('idle');
-          stopListening();
-        }, autoSendDelay);
+        // For final transcripts, send immediately after a short delay
+        if (finalTranscript) {
+          console.log('🎤 Final transcript received:', finalTranscript);
+          updateVoiceState('processing');
+          
+          autoSendTimeoutRef.current = setTimeout(() => {
+            console.log('🚀 Auto-sending final transcript:', finalTranscript.trim());
+            onAutoSend(finalTranscript.trim());
+            setCurrentTranscript('');
+            updateVoiceState('idle');
+          }, 500); // Shorter delay for final transcripts
+        }
+        // For interim transcripts, wait for the full pause
+        else if (interimTranscript && (maxConfidence > 0.3 || maxConfidence === 0)) {
+          console.log('🎤 Interim transcript:', interimTranscript);
+          
+          autoSendTimeoutRef.current = setTimeout(() => {
+            console.log('🚀 Auto-sending after pause:', fullTranscript.trim());
+            onAutoSend(fullTranscript.trim());
+            setCurrentTranscript('');
+            updateVoiceState('idle');
+          }, autoSendDelay);
+        }
       }
     };
 
@@ -234,9 +247,25 @@ export function useVoiceModeHandler({
       console.log('🎤 Primary recognition ended');
       setIsListening(false);
       
-      // Continue listening if we should be
+      // If we have a transcript that hasn't been sent yet, send it now
+      if (currentTranscript.trim().length > 2 && !autoSendTimeoutRef.current) {
+        console.log('🚀 Sending transcript on recognition end:', currentTranscript.trim());
+        onAutoSend(currentTranscript.trim());
+        setCurrentTranscript('');
+        updateVoiceState('idle');
+        return;
+      }
+      
+      // Continue listening if we should be (for follow-up questions)
       if (voiceState === 'listening' && !disabled) {
-        setTimeout(() => recognition.start(), 100);
+        setTimeout(() => {
+          try {
+            recognition.start();
+          } catch (error) {
+            console.warn('Could not restart recognition:', error);
+            updateVoiceState('idle');
+          }
+        }, 1000);
       } else {
         updateVoiceState('idle');
       }
