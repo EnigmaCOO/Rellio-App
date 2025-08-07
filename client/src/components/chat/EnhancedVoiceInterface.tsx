@@ -99,10 +99,10 @@ export function EnhancedVoiceInterface({
 
   // Sync transcript to text input for voice mode
   useEffect(() => {
-    if (inputMode === 'voice' && currentTranscript !== textMessage) {
+    if (inputMode === 'voice' && currentTranscript) {
       setTextMessage(currentTranscript);
     }
-  }, [currentTranscript, inputMode, textMessage]);
+  }, [currentTranscript, inputMode]);
 
   // Handle Enter key in text mode
   const handleTextKeyPress = (e: React.KeyboardEvent) => {
@@ -280,11 +280,11 @@ export function EnhancedVoiceInterface({
                         "relative w-12 h-12 rounded-full border-2 transition-all duration-300",
                         "hover:scale-105 active:scale-95",
                         isListening
-                          ? "bg-teal-500 border-teal-300 text-white shadow-lg shadow-teal-200"
+                          ? "bg-teal-500 border-teal-300 text-white shadow-lg shadow-teal-200 animate-pulse"
                           : "bg-gray-100 border-gray-300 text-gray-600 hover:bg-teal-50 hover:border-teal-200"
                       )}
                     >
-                      {isListening ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+                      <Mic className={cn("w-5 h-5", isListening ? "text-white" : "text-gray-600")} />
                       
                       {/* Orb overlay */}
                       <div className="absolute -top-1 -right-1">
@@ -293,22 +293,38 @@ export function EnhancedVoiceInterface({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    {isListening ? "Stop listening" : "Start voice input"}
+                    {isListening ? "Listening - speak now" : "Click to start voice input"}
                   </TooltipContent>
                 </Tooltip>
 
-                {/* Status Text */}
-                <div className="flex flex-col">
-                  <span className={cn(
-                    "text-sm font-medium transition-colors",
-                    isListening ? "text-teal-700" : "text-gray-600"
-                  )}>
-                    {isListening ? "Listening..." : "Tap to speak"}
-                  </span>
-                  {confidence > 0 && (
-                    <span className="text-xs text-gray-500">
-                      Confidence: {Math.round(confidence * 100)}%
-                    </span>
+                {/* Live Transcript Display - replaces status text */}
+                <div className="flex-1 min-w-0">
+                  {isListening ? (
+                    <div className="bg-teal-50 border border-teal-200 rounded-lg px-3 py-2">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" />
+                        <span className="text-xs font-medium text-teal-700">Listening...</span>
+                      </div>
+                      <p className="text-sm text-gray-800 min-h-[20px]">
+                        {currentTranscript || textMessage || "Speak now..."}
+                      </p>
+                      {confidence > 0 && (
+                        <div className="flex justify-between items-center mt-1">
+                          <span className="text-xs text-gray-500">
+                            Confidence: {Math.round(confidence * 100)}%
+                          </span>
+                          {confidence > settings.confidenceThreshold && currentTranscript && (
+                            <span className="text-xs text-green-600 font-medium">
+                              Ready to send
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-2">
+                      <span className="text-sm text-gray-600">Tap microphone to speak</span>
+                    </div>
                   )}
                 </div>
               </div>
@@ -348,7 +364,7 @@ export function EnhancedVoiceInterface({
 
             {/* Waveform Visualization */}
             {isListening && (
-              <div className="mb-4">
+              <div className="mt-3">
                 <AudioWaveform
                   isActive={isListening}
                   audioLevel={audioLevel}
@@ -356,30 +372,6 @@ export function EnhancedVoiceInterface({
                   color="teal"
                   className="justify-center"
                 />
-              </div>
-            )}
-
-            {/* Transcript Display - Show both live transcript and text input */}
-            {(currentTranscript || textMessage) && inputMode === 'voice' && (
-              <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  {currentTranscript || textMessage}
-                </p>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs text-gray-500">
-                    {isListening ? 'Listening...' : `Auto-send in ${settings.autoSendDelay}s after pause`}
-                  </span>
-                  {confidence > 0 && (
-                    <span className="text-xs text-blue-600 font-medium">
-                      Confidence: {Math.round(confidence * 100)}%
-                    </span>
-                  )}
-                  {confidence > settings.confidenceThreshold && currentTranscript && (
-                    <span className="text-xs text-green-600 font-medium">
-                      Ready to send
-                    </span>
-                  )}
-                </div>
               </div>
             )}
           </div>
