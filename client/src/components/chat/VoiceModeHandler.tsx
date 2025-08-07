@@ -144,9 +144,10 @@ export function useVoiceModeHandler({
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
       
-      recognitionRef.current.continuous = false; // Simplified - one utterance at a time
+      recognitionRef.current.continuous = true; // Keep listening for longer
       recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = 'en-US';
+      recognitionRef.current.maxAlternatives = 1;
 
       recognitionRef.current.onstart = () => {
         console.log('🎤 Speech recognition started');
@@ -171,21 +172,53 @@ export function useVoiceModeHandler({
         const fullTranscript = finalTranscript + interimTranscript;
         console.log('📝 Real-time transcript:', { fullTranscript, interim: interimTranscript, final: finalTranscript });
         
+        // Update transcript immediately for real-time display
         setCurrentTranscript(fullTranscript);
+        setConfidence(event.results[event.results.length - 1][0].confidence || 0.8);
         onTranscript(fullTranscript, interimTranscript.length > 0);
         
-        // If this is a final result, send it
+        // If this is a final result, start auto-send timer
         if (finalTranscript.trim()) {
-          console.log('🚀 Final transcript:', finalTranscript);
-          setTimeout(() => {
-            onAutoSend(finalTranscript.trim());
+          console.log('🚀 Final transcript detected:', finalTranscript);
+          
+          // Clear any existing timeout
+          if (autoSendTimeoutRef.current) {
+            clearTimeout(autoSendTimeoutRef.current);
+          }
+          
+          // Set auto-send after pause
+          autoSendTimeoutRef.current = setTimeout(() => {
+            console.log('🚀 Auto-sending after pause:', fullTranscript.trim());
+            onAutoSend(fullTranscript.trim());
             setCurrentTranscript('');
-          }, 500);
+          }, autoSendDelay);
+        }
+        // For interim results, also set a timeout
+        else if (interimTranscript.trim() && fullTranscript.length > 3) {
+          // Clear any existing timeout
+          if (autoSendTimeoutRef.current) {
+            clearTimeout(autoSendTimeoutRef.current);
+          }
+          
+          // Set longer timeout for interim results
+          autoSendTimeoutRef.current = setTimeout(() => {
+            console.log('🚀 Auto-sending interim result:', fullTranscript.trim());
+            onAutoSend(fullTranscript.trim());
+            setCurrentTranscript('');
+          }, autoSendDelay + 1000); // Longer delay for interim
         }
       };
 
       recognitionRef.current.onerror = (event: any) => {
         console.error('Speech recognition error:', event.error);
+        
+        // Don't stop on 'no-speech' error - just keep listening
+        if (event.error === 'no-speech') {
+          console.log('⏳ No speech detected, continuing to listen...');
+          // Don't change state, keep listening
+          return;
+        }
+        
         setIsListening(false);
         updateVoiceState('idle');
       };
