@@ -277,81 +277,68 @@ export function EnhancedVoiceInterface({
         
         {/* Voice Mode Interface */}
         {inputMode === 'voice' && (
-          <div className="p-4">
-            {/* Voice Controls Header */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                {/* Main Microphone Button with Grok-style Orb */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={handleMicClick}
-                      disabled={disabled}
-                      type="button"
-                      className={cn(
-                        "relative w-12 h-12 rounded-full border-2 transition-all duration-300",
-                        "hover:scale-105 active:scale-95 cursor-pointer",
-                        isListening
-                          ? "bg-teal-500 hover:bg-teal-600 border-teal-400 text-white shadow-lg shadow-teal-300/50 animate-pulse ring-2 ring-teal-300"
-                          : "bg-white hover:bg-teal-50 border-teal-200 text-teal-600 hover:border-teal-300",
-                        disabled && "opacity-50 cursor-not-allowed"
-                      )}
-                    >
-                      <Mic className={cn("w-5 h-5", isListening ? "text-white" : "text-teal-600")} />
-                      
-                      {/* Orb overlay */}
-                      <div className="absolute -top-1 -right-1">
-                        <GrokStyleOrb state={getOrbState()} size="sm" />
-                      </div>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {isListening ? "🔴 Listening - Click to stop" : "🎤 Click to start voice input"}
-                  </TooltipContent>
-                </Tooltip>
-
-                {/* Live Transcript Display - replaces status text */}
-                <div className="flex-1 min-w-0">
-                  {isListening ? (
-                    <div className="bg-teal-50 border border-teal-200 rounded-lg px-3 py-2">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" />
-                        <span className="text-xs font-medium text-teal-700">Listening...</span>
-                      </div>
-                      <div className="text-sm text-gray-800 min-h-[20px] leading-relaxed">
-                        {currentTranscript ? (
-                          <span className="font-medium text-teal-800">{currentTranscript}</span>
-                        ) : (
-                          <span className="text-gray-500 italic">Speak now...</span>
-                        )}
-                      </div>
-                      {confidence > 0 && (
-                        <div className="flex justify-between items-center mt-1">
-                          <span className="text-xs text-gray-500">
-                            Confidence: {Math.round(confidence * 100)}%
-                          </span>
-                          {confidence > settings.confidenceThreshold && currentTranscript && (
-                            <span className="text-xs text-teal-600 font-medium">
-                              Ready to send
-                            </span>
-                          )}
-                        </div>
-                      )}
+          <div className="p-3">
+            {/* Voice Input Field - looks like search bar */}
+            <div className="flex items-center gap-2 mb-3">
+              {/* Microphone Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleMicClick}
+                    disabled={disabled}
+                    type="button"
+                    className={cn(
+                      "w-10 h-10 rounded-full border-2 transition-all duration-300",
+                      "hover:scale-105 active:scale-95 cursor-pointer flex-shrink-0",
+                      isListening
+                        ? "bg-teal-500 hover:bg-teal-600 border-teal-400 text-white shadow-lg shadow-teal-300/50 animate-pulse ring-2 ring-teal-300"
+                        : "bg-white hover:bg-teal-50 border-teal-200 text-teal-600 hover:border-teal-300",
+                      disabled && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <Mic className={cn("w-4 h-4", isListening ? "text-white" : "text-teal-600")} />
+                    
+                    {/* Orb overlay */}
+                    <div className="absolute -top-0.5 -right-0.5">
+                      <GrokStyleOrb state={getOrbState()} size="sm" />
                     </div>
-                  ) : (
-                    <div className="text-center py-2">
-                      <span className="text-sm text-gray-600">Tap microphone to speak</span>
-                      {currentTranscript && (
-                        <p className="text-sm text-teal-700 mt-1 font-medium">
-                          "{currentTranscript}"
-                        </p>
-                      )}
-                    </div>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isListening ? "🔴 Listening - Click to stop" : "🎤 Click to start voice input"}
+                </TooltipContent>
+              </Tooltip>
+              
+              {/* Voice Input Display - looks like search bar */}
+              <div className="flex-1 relative">
+                <Input
+                  value={currentTranscript || ''}
+                  placeholder={isListening ? "Listening... speak now" : "Click microphone to speak"}
+                  disabled
+                  className={cn(
+                    "border-0 focus-visible:ring-0 text-gray-800 font-medium",
+                    isListening 
+                      ? "bg-teal-50 placeholder-teal-600" 
+                      : "bg-gray-50 placeholder-gray-500"
                   )}
-                </div>
+                />
+                
+                {/* Status indicator */}
+                {isListening && (
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                    <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" />
+                    {confidence > 0 && (
+                      <span className="text-xs text-teal-600 font-medium">
+                        {Math.round(confidence * 100)}%
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
+            </div>
 
-              {/* Control Buttons */}
+            {/* Control Buttons */}
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -382,6 +369,13 @@ export function EnhancedVoiceInterface({
                   </PopoverContent>
                 </Popover>
               </div>
+              
+              {/* Status Text */}
+              {isListening && (
+                <span className="text-xs text-teal-600 font-medium">
+                  Listening for your voice...
+                </span>
+              )}
             </div>
 
             {/* Waveform Visualization */}
