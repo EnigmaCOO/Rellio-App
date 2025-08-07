@@ -252,23 +252,9 @@ export function useVoiceModeHandler({
         console.log('🚀 Sending transcript on recognition end:', currentTranscript.trim());
         onAutoSend(currentTranscript.trim());
         setCurrentTranscript('');
-        updateVoiceState('idle');
-        return;
       }
       
-      // Continue listening if we should be (for follow-up questions)
-      if (voiceState === 'listening' && !disabled) {
-        setTimeout(() => {
-          try {
-            recognition.start();
-          } catch (error) {
-            console.warn('Could not restart recognition:', error);
-            updateVoiceState('idle');
-          }
-        }, 1000);
-      } else {
-        updateVoiceState('idle');
-      }
+      updateVoiceState('idle');
     };
 
     return recognition;

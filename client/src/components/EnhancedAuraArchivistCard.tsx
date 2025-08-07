@@ -592,7 +592,6 @@ export function EnhancedAuraArchivistCard({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/chat', currentSessionId] });
       setCurrentMessage("");
-      setVoiceTranscript("");
     },
     onError: (error: any) => {
       setIsStreaming(false);
@@ -621,34 +620,7 @@ export function EnhancedAuraArchivistCard({
     }
   }, [externalMessage, sendMessageMutation, onExternalMessageProcessed, selectedPersona]);
 
-  // Voice input handlers
-  const handleVoiceStart = () => {
-    if (!isVoiceSupported || !recognitionRef.current) {
-      toast({
-        title: "Voice Not Supported",
-        description: "Please use text input instead",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      recognitionRef.current.start();
-    } catch (error) {
-      console.error('Failed to start voice recognition:', error);
-      toast({
-        title: "Voice Input Error",
-        description: "Failed to start voice recognition",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleVoiceStop = () => {
-    if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
-    }
-  };
+  // Voice input is now handled by the EnhancedVoiceInterface component
 
   // Message handlers
   const handleSendMessage = (messageOverride?: string) => {
@@ -706,7 +678,7 @@ export function EnhancedAuraArchivistCard({
     const newSessionId = `session_${Date.now()}`;
     setCurrentSessionId(newSessionId);
     setCurrentMessage("");
-    setVoiceTranscript("");
+    // Voice transcript is now handled by EnhancedVoiceInterface
     
     // Invalidate current session queries to force refresh
     queryClient.invalidateQueries({ queryKey: ['/api/chat', currentSessionId] });

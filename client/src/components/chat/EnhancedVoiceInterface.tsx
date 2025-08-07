@@ -153,44 +153,12 @@ export function EnhancedVoiceInterface({
       setTextMessage('');
     }
 
-    if (isListening) {
-      console.log('🛑 Stopping listening');
-      stopListening();
-    } else {
-      console.log('▶️ Attempting to start listening...');
-      
-      // Check Web Speech API support
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        console.error('❌ Web Speech API not supported in this browser');
-        alert('Voice input is not supported in this browser. Please use Chrome, Edge, or Safari.');
-        return;
-      }
-      
-      // Request microphone permission explicitly
-      try {
-        console.log('Requesting microphone permission...');
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        console.log('✅ Microphone permission granted');
-        stream.getTracks().forEach(track => track.stop()); // Clean up
-      } catch (error) {
-        console.error('❌ Microphone permission denied:', error);
-        alert('Microphone access is required for voice input. Please grant permission and try again.');
-        return;
-      }
-      
-      // Start listening
-      try {
-        const started = await startListening();
-        console.log('🎤 Start listening result:', started);
-        if (!started) {
-          console.error('❌ Failed to start listening');
-          alert('Failed to start voice recognition. Please try again.');
-        }
-      } catch (error) {
-        console.error('❌ Error starting voice recognition:', error);
-        alert('Error starting voice recognition: ' + error.message);
-      }
+    // Simple toggle - let the VoiceModeHandler handle all the complexity
+    try {
+      const result = await toggleListening();
+      console.log('🎤 Toggle result:', result);
+    } catch (error) {
+      console.error('❌ Error toggling voice recognition:', error);
     }
   };
 
