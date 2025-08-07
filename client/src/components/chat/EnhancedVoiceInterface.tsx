@@ -60,9 +60,9 @@ export function EnhancedVoiceInterface({
     interruptAI
   } = useVoiceModeHandler({
     onTranscript: (text, isInterim) => {
-      // Show interim results in real-time - DON'T set textMessage, let it display in currentTranscript
-      console.log('📝 Transcript update:', { text, isInterim, inputMode });
-      // Don't interfere with textMessage when in voice mode
+      // Show interim results in real-time
+      console.log('📝 Transcript update:', { text, isInterim, inputMode, length: text.length });
+      // Force re-render to show transcript updates
     },
     onAutoSend: (text) => {
       console.log('🚀 Auto-sending message:', text);
@@ -131,7 +131,7 @@ export function EnhancedVoiceInterface({
 
   // Handle microphone button click
   const handleMicClick = async () => {
-    console.log('🎤 Mic button clicked', { inputMode, isListening });
+    console.log('🎤 Mic button clicked', { inputMode, isListening, isSupported, hasPermission });
     
     if (inputMode === 'text') {
       await switchToVoiceMode();
@@ -143,7 +143,27 @@ export function EnhancedVoiceInterface({
       stopListening();
     } else {
       console.log('▶️ Starting listening');
+      
+      // Check permissions first
+      if (!isSupported) {
+        console.error('Speech recognition not supported');
+        return;
+      }
+      
+      if (!hasPermission) {
+        console.error('Microphone permission required');
+        // Try to request permission
+        try {
+          await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (error) {
+          console.error('Failed to get microphone permission:', error);
+          setShowEchoWarning(true);
+          return;
+        }
+      }
+      
       const started = await startListening();
+      console.log('🎤 Listening started:', started);
       if (!started && !settings.echoWarningDismissed) {
         setShowEchoWarning(true);
       }
@@ -279,8 +299,8 @@ export function EnhancedVoiceInterface({
                         "relative w-12 h-12 rounded-full border-2 transition-all duration-300",
                         "hover:scale-105 active:scale-95",
                         isListening
-                          ? "bg-teal-500 border-teal-300 text-white shadow-lg shadow-teal-200 animate-pulse"
-                          : "bg-gray-100 border-gray-300 text-gray-600 hover:bg-teal-50 hover:border-teal-200"
+                          ? "bg-teal-500 hover:bg-teal-600 border-teal-300 text-white shadow-lg shadow-teal-200 animate-pulse"
+                          : "bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-600 hover:border-gray-400"
                       )}
                     >
                       <Mic className={cn("w-5 h-5", isListening ? "text-white" : "text-gray-600")} />
@@ -304,9 +324,13 @@ export function EnhancedVoiceInterface({
                         <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" />
                         <span className="text-xs font-medium text-teal-700">Listening...</span>
                       </div>
-                      <p className="text-sm text-gray-800 min-h-[20px] leading-relaxed">
-                        {currentTranscript || "Speak now..."}
-                      </p>
+                      <div className="text-sm text-gray-800 min-h-[20px] leading-relaxed">
+                        {currentTranscript ? (
+                          <span className="font-medium">{currentTranscript}</span>
+                        ) : (
+                          <span className="text-gray-500 italic">Speak now...</span>
+                        )}
+                      </div>
                       {confidence > 0 && (
                         <div className="flex justify-between items-center mt-1">
                           <span className="text-xs text-gray-500">
