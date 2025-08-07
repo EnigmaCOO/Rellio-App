@@ -67,12 +67,43 @@ User's question: "${userMessage}"`;
         'sin', 'forgiveness', 'compassion', 'mercy', 'justice', 'righteousness', 'holy',
         'sacred', 'worship', 'meditation', 'enlightenment', 'suffering', 'death', 'born',
         'creation', 'creator', 'universe', 'existence', 'eternal', 'immortal', 'moral',
-        'ethics', 'good', 'evil', 'virtue', 'blessing', 'miracle', 'angel', 'prophet'
+        'ethics', 'good', 'evil', 'virtue', 'blessing', 'miracle', 'angel', 'prophet',
+        // Additional spiritual/religious terms
+        'judgment', 'judgement', 'day', 'resurrection', 'apocalypse', 'end times', 'rapture',
+        'messiah', 'christ', 'allah', 'buddha', 'krishna', 'brahman', 'karma', 'dharma',
+        'nirvana', 'moksha', 'temple', 'church', 'mosque', 'synagogue', 'bible', 'quran',
+        'torah', 'scripture', 'revelation', 'commandment', 'covenant', 'trinity', 'incarnation',
+        'transfiguration', 'ascension', 'resurrection', 'reincarnation', 'rebirth', 'awakening',
+        'consciousness', 'transcendence', 'mystical', 'spiritual', 'religious', 'belief',
+        'doctrine', 'theology', 'philosophy', 'metaphysics', 'supernatural', 'miracle',
+        'pilgrimage', 'ritual', 'ceremony', 'sacrament', 'baptism', 'communion', 'confession',
+        'penance', 'repentance', 'sanctification', 'purification', 'deliverance', 'healing',
+        'blessing', 'cursing', 'prophecy', 'vision', 'dream', 'sign', 'wonder', 'mystery',
+        'parable', 'allegory', 'symbol', 'metaphor', 'what', 'why', 'how', 'when', 'where',
+        'who', 'which', 'explain', 'tell me', 'help me understand'
       ];
       
       const input = userMessage.toLowerCase();
       const matchedSpiritualKeywords = spiritualKeywords.filter(keyword => input.includes(keyword));
-      const hasSpiritualContent = matchedSpiritualKeywords.length > 0;
+      
+      // Enhanced spiritual content detection - also check for question patterns
+      const questionPatterns = [
+        /what is|what does|what are|what was|what will/i,
+        /why is|why does|why are|why do|why did/i,
+        /how is|how does|how can|how do|how did/i,
+        /when is|when does|when did|when will/i,
+        /where is|where does|where did|where will/i,
+        /who is|who was|who are|who were/i,
+        /tell me about|explain|help me understand/i,
+        /meaning of|purpose of|significance of/i
+      ];
+      
+      const hasQuestionPattern = questionPatterns.some(pattern => pattern.test(input));
+      
+      // More lenient spiritual content detection - religious questions should be handled by the AI scholar
+      const hasSpiritualContent = matchedSpiritualKeywords.length > 0 || 
+                                  hasQuestionPattern || 
+                                  input.length > 5; // Handle most questions unless very short
       
       console.log("Spiritual analysis:", { 
         input, 
@@ -139,8 +170,33 @@ User's question: "${userMessage}"`;
         return "According to Jewish tradition, the Torah (Five Books of Moses) was given by God to Moses on Mount Sinai. It includes Genesis, Exodus, Leviticus, Numbers, and Deuteronomy. Select 'Torah' from the navigation to explore its sacred texts and teachings.";
       }
       
-      // Default response for non-spiritual general questions
-      return "I'm designed to help with questions about religious scriptures and spiritual topics. For the most relevant answers, please select a religious text from the navigation panel, or ask about spiritual, religious, or ethical topics.";
+      // Default: Act as expert AI religious scholar for all questions
+      console.log("Acting as expert AI religious scholar for general question");
+      
+      const expertScholarPrompt = `You are an expert AI religious scholar with deep knowledge across multiple religious traditions including Christianity, Islam, Judaism, Hinduism, Buddhism, and other spiritual paths. You approach all questions with wisdom, compassion, and scholarly expertise.
+
+For any question, provide thoughtful, informative responses drawing from your extensive knowledge of religious texts, spiritual practices, theological concepts, and interfaith understanding. Always be respectful of different beliefs while sharing authentic religious insights.
+
+User's question: "${userMessage}"`;
+
+      try {
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            { role: "system", content: expertScholarPrompt },
+            { role: "user", content: userMessage }
+          ],
+          max_tokens: 800,
+          temperature: 0.7,
+        });
+
+        const scholarResponse = response.choices[0].message.content || "I apologize, but I couldn't generate a response at this time.";
+        console.log("Expert AI religious scholar response generated");
+        return scholarResponse;
+      } catch (error) {
+        console.error("Error calling OpenAI for expert scholar response:", error);
+        return "I'm an expert AI religious scholar here to help with spiritual, religious, and philosophical questions. While I'm having some technical difficulties right now, I'm designed to provide thoughtful insights across multiple religious traditions. Please feel free to ask about any spiritual or religious topic.";
+      }
     }
 
     let systemPrompt = `You are an expert scripture guide with deep knowledge of religious texts. Your role is to:

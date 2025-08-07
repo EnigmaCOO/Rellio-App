@@ -164,12 +164,10 @@ export function useVoiceModeHandler({
         
         console.log('🎤 SPEECH DETECTED! Event results:', event.results.length);
         
-        // Keep listening state active while processing speech
-        if (!isListening) {
-          console.log('🔄 Re-activating listening state during speech');
-          setIsListening(true);
-          updateVoiceState('listening');
-        }
+        // FORCE listening state to be active when speech is detected
+        console.log('✨ ACTIVATING visual feedback for speech detection');
+        setIsListening(true);
+        updateVoiceState('listening');
         
         for (let i = 0; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
@@ -184,23 +182,35 @@ export function useVoiceModeHandler({
         const fullTranscript = finalTranscript + interimTranscript;
         console.log('📝 UPDATING TRANSCRIPT:', { fullTranscript, interim: interimTranscript, final: finalTranscript });
         
-        // Update transcript immediately for real-time display
+        // Update transcript immediately for real-time display (like Grok)
+        console.log('📝 REAL-TIME UPDATE:', fullTranscript);
         setCurrentTranscript(fullTranscript);
         setConfidence(event.results[event.results.length - 1][0].confidence || 0.8);
         onTranscript(fullTranscript, interimTranscript.length > 0);
         
-        // If this is a final result, send immediately
+        // Keep visual state active while we have transcript
+        if (fullTranscript.trim()) {
+          setIsListening(true);
+          updateVoiceState('listening');
+        }
+        
+        // If this is a final result, send after short delay
         if (finalTranscript.trim()) {
-          console.log('🚀 Final transcript detected - SENDING NOW:', finalTranscript);
+          console.log('🚀 Final transcript detected - WILL SEND:', finalTranscript);
           
-          // Send immediately for final results
-          setTimeout(() => {
+          // Clear existing timeout to prevent multiple sends
+          if (autoSendTimeoutRef.current) {
+            clearTimeout(autoSendTimeoutRef.current);
+          }
+          
+          // Send after pause to allow for additional speech
+          autoSendTimeoutRef.current = setTimeout(() => {
             console.log('🚀 Sending final transcript:', finalTranscript.trim());
             onAutoSend(finalTranscript.trim());
             setCurrentTranscript('');
             setIsListening(false);
             updateVoiceState('idle');
-          }, 500);
+          }, 800); // Slightly longer delay for better UX
         }
       };
 
