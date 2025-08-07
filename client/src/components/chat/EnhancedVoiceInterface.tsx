@@ -65,10 +65,16 @@ export function EnhancedVoiceInterface({
       // Transcript updates will trigger re-render automatically via currentTranscript state
     },
     onAutoSend: (text) => {
-      console.log('🚀 Auto-sending message:', text);
-      onSendMessage(text);
-      // Clear the text message after sending
+      console.log('🚀 VOICE AUTO-SEND RECEIVED:', text);
+      console.log('🚀 Calling onSendMessage with:', text);
+      
+      // Clear text message immediately
       setTextMessage('');
+      
+      // Send the message to chat
+      onSendMessage(text);
+      
+      console.log('✅ Voice message sent to chat successfully');
     },
     onStateChange: (state: VoiceState) => {
       // Handle state changes for UI updates

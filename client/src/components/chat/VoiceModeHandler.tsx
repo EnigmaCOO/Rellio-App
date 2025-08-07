@@ -261,11 +261,19 @@ export function useVoiceModeHandler({
           
           // Set new timeout for auto-send
           autoSendTimeoutRef.current = setTimeout(() => {
-            console.log('🚀 AUTO-SENDING MESSAGE:', finalTranscript.trim());
-            onAutoSend(finalTranscript.trim());
+            const messageToSend = finalTranscript.trim();
+            console.log('🚀 AUTO-SENDING MESSAGE NOW:', messageToSend);
+            console.log('🚀 Calling onAutoSend with:', messageToSend);
+            
+            // Clear transcript and reset state BEFORE sending to avoid conflicts
             setCurrentTranscript('');
             setIsListening(false);
             updateVoiceState('idle');
+            
+            // Send the message
+            onAutoSend(messageToSend);
+            
+            console.log('✅ Auto-send completed');
           }, autoSendDelay);
           console.log(`⏰ Auto-send scheduled in ${autoSendDelay}ms`);
         }
@@ -279,6 +287,14 @@ export function useVoiceModeHandler({
           case 'no-speech':
             console.log('⏳ No speech detected - continuing to listen');
             return; // Don't stop listening
+          case 'aborted':
+            console.log('🛑 Speech recognition aborted - this is normal when stopping');
+            // Don't change state if we have a transcript - let auto-send complete
+            if (!currentTranscript || !currentTranscript.trim()) {
+              setIsListening(false);
+              updateVoiceState('idle');
+            }
+            return;
           case 'audio-capture':
             console.error('❌ Audio capture failed - microphone access issue');
             break;
@@ -289,6 +305,7 @@ export function useVoiceModeHandler({
             console.error('❌ Other recognition error:', event.error);
         }
         
+        // Only reset state for serious errors
         setIsListening(false);
         updateVoiceState('idle');
       };
