@@ -30,6 +30,8 @@ export function EnhancedVoiceInterface({
   placeholder = "Ask about this scripture...",
   className
 }: EnhancedVoiceInterfaceProps) {
+  console.log('🔄 EnhancedVoiceInterface rendered', { disabled, isStreaming });
+  
   // State management
   const [inputMode, setInputMode] = useState<InputMode>('voice');
   const [textMessage, setTextMessage] = useState('');
@@ -130,42 +132,64 @@ export function EnhancedVoiceInterface({
   };
 
   // Handle microphone button click
-  const handleMicClick = async () => {
-    console.log('🎤 Mic button clicked', { inputMode, isListening, isSupported, hasPermission });
+  const handleMicClick = async (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
     
+    console.log('🎤 MICROPHONE BUTTON CLICKED!');
+    console.log('Current state:', { 
+      inputMode, 
+      isListening, 
+      isSupported, 
+      hasPermission,
+      voiceState,
+      disabled 
+    });
+    
+    // Force switch to voice mode if needed
     if (inputMode === 'text') {
-      await switchToVoiceMode();
-      return;
+      console.log('Switching to voice mode...');
+      setInputMode('voice');
+      setTextMessage('');
     }
 
     if (isListening) {
       console.log('🛑 Stopping listening');
       stopListening();
     } else {
-      console.log('▶️ Starting listening');
+      console.log('▶️ Attempting to start listening...');
       
-      // Check permissions first
-      if (!isSupported) {
-        console.error('Speech recognition not supported');
+      // Check Web Speech API support
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        console.error('❌ Web Speech API not supported in this browser');
+        alert('Voice input is not supported in this browser. Please use Chrome, Edge, or Safari.');
         return;
       }
       
-      if (!hasPermission) {
-        console.error('Microphone permission required');
-        // Try to request permission
-        try {
-          await navigator.mediaDevices.getUserMedia({ audio: true });
-        } catch (error) {
-          console.error('Failed to get microphone permission:', error);
-          setShowEchoWarning(true);
-          return;
-        }
+      // Request microphone permission explicitly
+      try {
+        console.log('Requesting microphone permission...');
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('✅ Microphone permission granted');
+        stream.getTracks().forEach(track => track.stop()); // Clean up
+      } catch (error) {
+        console.error('❌ Microphone permission denied:', error);
+        alert('Microphone access is required for voice input. Please grant permission and try again.');
+        return;
       }
       
-      const started = await startListening();
-      console.log('🎤 Listening started:', started);
-      if (!started && !settings.echoWarningDismissed) {
-        setShowEchoWarning(true);
+      // Start listening
+      try {
+        const started = await startListening();
+        console.log('🎤 Start listening result:', started);
+        if (!started) {
+          console.error('❌ Failed to start listening');
+          alert('Failed to start voice recognition. Please try again.');
+        }
+      } catch (error) {
+        console.error('❌ Error starting voice recognition:', error);
+        alert('Error starting voice recognition: ' + error.message);
       }
     }
   };
@@ -294,13 +318,15 @@ export function EnhancedVoiceInterface({
                   <TooltipTrigger asChild>
                     <Button
                       onClick={handleMicClick}
-                      disabled={disabled || (!isSupported || !hasPermission)}
+                      disabled={disabled}
+                      type="button"
                       className={cn(
                         "relative w-12 h-12 rounded-full border-2 transition-all duration-300",
-                        "hover:scale-105 active:scale-95",
+                        "hover:scale-105 active:scale-95 cursor-pointer",
                         isListening
                           ? "bg-teal-500 hover:bg-teal-600 border-teal-300 text-white shadow-lg shadow-teal-200 animate-pulse"
-                          : "bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-600 hover:border-gray-400"
+                          : "bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-600 hover:border-gray-400",
+                        disabled && "opacity-50 cursor-not-allowed"
                       )}
                     >
                       <Mic className={cn("w-5 h-5", isListening ? "text-white" : "text-gray-600")} />
@@ -312,7 +338,7 @@ export function EnhancedVoiceInterface({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    {isListening ? "Listening - speak now" : "Click to start voice input"}
+                    {isListening ? "🔴 Listening - Click to stop" : "🎤 Click to start voice input"}
                   </TooltipContent>
                 </Tooltip>
 
