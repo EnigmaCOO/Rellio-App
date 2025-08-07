@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Mic, MicOff, Keyboard, Send, Settings, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,8 +59,9 @@ export function EnhancedVoiceInterface({
     hasPermission,
     interruptAI
   } = useVoiceModeHandler({
-    onTranscript: (text) => {
-      // Show interim results
+    onTranscript: (text, isInterim) => {
+      // Show interim results in real-time
+      console.log('📝 Transcript update:', { text, isInterim, inputMode });
       if (inputMode === 'voice') {
         setTextMessage(text);
       }
@@ -95,6 +96,13 @@ export function EnhancedVoiceInterface({
       setTextMessage('');
     }
   };
+
+  // Sync transcript to text input for voice mode
+  useEffect(() => {
+    if (inputMode === 'voice' && currentTranscript !== textMessage) {
+      setTextMessage(currentTranscript);
+    }
+  }, [currentTranscript, inputMode, textMessage]);
 
   // Handle Enter key in text mode
   const handleTextKeyPress = (e: React.KeyboardEvent) => {
@@ -351,17 +359,22 @@ export function EnhancedVoiceInterface({
               </div>
             )}
 
-            {/* Transcript Display */}
-            {currentTranscript && (
+            {/* Transcript Display - Show both live transcript and text input */}
+            {(currentTranscript || textMessage) && inputMode === 'voice' && (
               <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                 <p className="text-sm text-gray-700 leading-relaxed">
-                  {currentTranscript}
+                  {currentTranscript || textMessage}
                 </p>
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-xs text-gray-500">
-                    Auto-send in {settings.autoSendDelay}s after pause
+                    {isListening ? 'Listening...' : `Auto-send in ${settings.autoSendDelay}s after pause`}
                   </span>
-                  {confidence > settings.confidenceThreshold && (
+                  {confidence > 0 && (
+                    <span className="text-xs text-blue-600 font-medium">
+                      Confidence: {Math.round(confidence * 100)}%
+                    </span>
+                  )}
+                  {confidence > settings.confidenceThreshold && currentTranscript && (
                     <span className="text-xs text-green-600 font-medium">
                       Ready to send
                     </span>
