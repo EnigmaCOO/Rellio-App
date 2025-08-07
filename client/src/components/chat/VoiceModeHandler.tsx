@@ -80,13 +80,7 @@ export function useVoiceModeHandler({
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     setIsSupported(!!SpeechRecognition);
-    
-    // Check for microphone permission
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(() => setHasPermission(true))
-        .catch(() => setHasPermission(false));
-    }
+    setHasPermission(true); // Assume permission for now, will be checked when needed
   }, []);
 
   // Update voice state and notify parent
@@ -95,214 +89,108 @@ export function useVoiceModeHandler({
     onStateChange(newState);
   }, [onStateChange]);
 
-  // Setup audio context for real-time audio analysis and echo cancellation
+  // Simplified audio setup - just get permission, no complex audio processing
   const setupAudioContext = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: echoCancellationRef.current,
-          noiseSuppression: noiseSuppression.current,
-          autoGainControl: true,
-          sampleRate: 44100
-        }
-      });
-
-      streamRef.current = stream;
-      audioContextRef.current = new AudioContext();
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      
-      analyserRef.current.fftSize = 2048;
-      analyserRef.current.smoothingTimeConstant = 0.3;
-
-      microphoneRef.current = audioContextRef.current.createMediaStreamSource(stream);
-      microphoneRef.current.connect(analyserRef.current);
-
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Clean up immediately - we just needed permission
+      stream.getTracks().forEach(track => track.stop());
       return true;
     } catch (error) {
-      console.error('Failed to setup audio context:', error);
+      console.error('Failed to get microphone permission:', error);
       return false;
     }
   }, []);
 
-  // Real-time audio level monitoring for interruption detection
+  // Simplified audio monitoring - just show basic activity
   const startAudioMonitoring = useCallback(() => {
-    if (!analyserRef.current) return;
-
-    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+    // Simple animation for audio level without complex processing
+    const animateAudioLevel = () => {
+      if (isListening) {
+        setAudioLevel(0.3 + Math.random() * 0.4); // Simple animation
+      } else {
+        setAudioLevel(0);
+      }
+    };
     
-    const processAudio = () => {
-      if (!analyserRef.current) return;
-      
-      analyserRef.current.getByteFrequencyData(dataArray);
-      
-      // Calculate RMS audio level
-      let sum = 0;
-      for (let i = 0; i < dataArray.length; i++) {
-        sum += dataArray[i] * dataArray[i];
-      }
-      const rmsLevel = Math.sqrt(sum / dataArray.length) / 255;
-      setAudioLevel(rmsLevel);
+    audioProcessingIntervalRef.current = setInterval(animateAudioLevel, 100);
+  }, [isListening]);
 
-      // Detect interruption during AI response
-      if (isAIResponding && rmsLevel > interruptionSensitivity) {
-        const now = Date.now();
-        if (now - lastSpeechTimeRef.current > 500) { // Debounce interruptions
-          console.log('🚨 Voice interruption detected:', rmsLevel);
-          interruptAI();
-          lastSpeechTimeRef.current = now;
-        }
-      }
-    };
+  // Removed complex recognition setup - now handled inline in startListening
 
-    audioProcessingIntervalRef.current = setInterval(processAudio, 50);
-  }, [isAIResponding, interruptionSensitivity]);
-
-  // Initialize primary speech recognition
-  const setupPrimaryRecognition = useCallback(() => {
-    if (!isSupported) return null;
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-    // Note: maxAlternatives not supported in all browsers
-
-    recognition.onstart = () => {
-      console.log('🎤 Primary recognition started');
-      setIsListening(true);
-      updateVoiceState('listening');
-    };
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let finalTranscript = '';
-      let interimTranscript = '';
-      let maxConfidence = 0;
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        const resultConfidence = event.results[i][0].confidence || 0;
-
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
-          maxConfidence = Math.max(maxConfidence, resultConfidence);
-        } else {
-          interimTranscript += transcript;
-        }
-      }
-
-      const fullTranscript = (finalTranscript + interimTranscript).trim();
-      setCurrentTranscript(fullTranscript);
-      setConfidence(maxConfidence);
-      onTranscript(fullTranscript, !finalTranscript);
-
-      // Handle auto-send logic - more lenient for better reliability
-      if (fullTranscript.length > 2) { // Any meaningful text
-        // Clear existing timeout
-        if (autoSendTimeoutRef.current) {
-          clearTimeout(autoSendTimeoutRef.current);
-        }
-
-        // For final transcripts, send immediately after a short delay
-        if (finalTranscript) {
-          console.log('🎤 Final transcript received:', finalTranscript);
-          updateVoiceState('processing');
-          
-          autoSendTimeoutRef.current = setTimeout(() => {
-            console.log('🚀 Auto-sending final transcript:', finalTranscript.trim());
-            onAutoSend(finalTranscript.trim());
-            setCurrentTranscript('');
-            updateVoiceState('idle');
-          }, 500); // Shorter delay for final transcripts
-        }
-        // For interim transcripts, wait for the full pause
-        else if (interimTranscript && (maxConfidence > 0.3 || maxConfidence === 0)) {
-          console.log('🎤 Interim transcript:', interimTranscript);
-          
-          autoSendTimeoutRef.current = setTimeout(() => {
-            console.log('🚀 Auto-sending after pause:', fullTranscript.trim());
-            onAutoSend(fullTranscript.trim());
-            setCurrentTranscript('');
-            updateVoiceState('idle');
-          }, autoSendDelay);
-        }
-      }
-    };
-
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error('Primary recognition error:', event.error);
-      setIsListening(false);
-      updateVoiceState('idle');
-      
-      // Auto-retry on network errors
-      if (event.error === 'network' || event.error === 'audio-capture') {
-        setTimeout(() => {
-          if (!disabled) startListening();
-        }, 2000);
-      }
-    };
-
-    recognition.onend = () => {
-      console.log('🎤 Primary recognition ended');
-      setIsListening(false);
-      
-      // If we have a transcript that hasn't been sent yet, send it now
-      if (currentTranscript.trim().length > 2 && !autoSendTimeoutRef.current) {
-        console.log('🚀 Sending transcript on recognition end:', currentTranscript.trim());
-        onAutoSend(currentTranscript.trim());
-        setCurrentTranscript('');
-      }
-      
-      updateVoiceState('idle');
-    };
-
-    return recognition;
-  }, [isSupported, confidenceThreshold, autoSendDelay, disabled, onTranscript, onAutoSend, updateVoiceState, voiceState]);
-
-  // Background speech recognition for interruption detection
-  const setupBackgroundRecognition = useCallback(() => {
-    if (!isSupported || !isAIResponding) return null;
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const bgRecognition = new SpeechRecognition();
-
-    bgRecognition.continuous = true;
-    bgRecognition.interimResults = true;
-    bgRecognition.lang = 'en-US';
-
-    bgRecognition.onresult = (event: SpeechRecognitionEvent) => {
-      // Any speech detected during AI response triggers interruption
-      if (event.results.length > 0) {
-        console.log('🚨 Background speech detected - interrupting AI');
-        interruptAI();
-      }
-    };
-
-    bgRecognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.warn('Background recognition error:', event.error);
-    };
-
-    return bgRecognition;
-  }, [isSupported, isAIResponding]);
+  // Simplified interruption - no background recognition for now
+  // This was causing conflicts with the main recognition
 
   // Start listening function
   const startListening = useCallback(async (): Promise<boolean> => {
     if (!isSupported || disabled) return false;
+
+    // Stop any existing recognition first
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (error) {
+        console.warn('Error stopping existing recognition:', error);
+      }
+      recognitionRef.current = null;
+    }
 
     try {
       // Setup audio context first
       const audioSetup = await setupAudioContext();
       if (!audioSetup) return false;
 
-      // Setup primary recognition
-      recognitionRef.current = setupPrimaryRecognition();
-      if (!recognitionRef.current) return false;
+      // Create simple recognition
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      
+      recognitionRef.current.continuous = false; // Simplified - one utterance at a time
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'en-US';
 
-      // Start audio monitoring
-      startAudioMonitoring();
+      recognitionRef.current.onstart = () => {
+        console.log('🎤 Speech recognition started');
+        setIsListening(true);
+        updateVoiceState('listening');
+        startAudioMonitoring();
+      };
 
-      // Start primary recognition
+      recognitionRef.current.onresult = (event) => {
+        let transcript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        
+        setCurrentTranscript(transcript);
+        onTranscript(transcript, true);
+        
+        // If this is a final result, send it
+        if (event.results[event.results.length - 1].isFinal) {
+          console.log('🚀 Final transcript:', transcript);
+          setTimeout(() => {
+            onAutoSend(transcript.trim());
+            setCurrentTranscript('');
+          }, 500);
+        }
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+        updateVoiceState('idle');
+      };
+
+      recognitionRef.current.onend = () => {
+        console.log('🎤 Speech recognition ended');
+        setIsListening(false);
+        updateVoiceState('idle');
+        setAudioLevel(0);
+        if (audioProcessingIntervalRef.current) {
+          clearInterval(audioProcessingIntervalRef.current);
+        }
+      };
+
+      // Start recognition
       recognitionRef.current.start();
       
       updateVoiceState('listening');
@@ -312,7 +200,7 @@ export function useVoiceModeHandler({
       updateVoiceState('idle');
       return false;
     }
-  }, [isSupported, disabled, setupAudioContext, setupPrimaryRecognition, startAudioMonitoring, updateVoiceState]);
+  }, [isSupported, disabled, setupAudioContext, startAudioMonitoring, updateVoiceState, onTranscript, onAutoSend, autoSendDelay]);
 
   // Stop listening function
   const stopListening = useCallback(() => {
@@ -333,21 +221,9 @@ export function useVoiceModeHandler({
       recognitionRef.current = null;
     }
 
-    if (backgroundRecognitionRef.current) {
-      backgroundRecognitionRef.current.stop();
-      backgroundRecognitionRef.current = null;
-    }
+    // Background recognition removed
 
-    // Cleanup audio context
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
+    // Simplified cleanup - no complex audio context to clean up
 
     setIsListening(false);
     setCurrentTranscript('');
@@ -365,43 +241,14 @@ export function useVoiceModeHandler({
     }
   }, [isListening, startListening, stopListening]);
 
-  // Interrupt AI function
+  // Simple interrupt AI function
   const interruptAI = useCallback(() => {
     console.log('🛑 Interrupting AI response');
     updateVoiceState('interrupted');
     onInterrupt();
-    
-    // Start listening immediately after interruption
-    setTimeout(() => {
-      if (!disabled) startListening();
-    }, 500);
-  }, [updateVoiceState, onInterrupt, disabled, startListening]);
+  }, [updateVoiceState, onInterrupt]);
 
-  // Setup background recognition when AI is responding
-  useEffect(() => {
-    if (isAIResponding && !disabled) {
-      backgroundRecognitionRef.current = setupBackgroundRecognition();
-      if (backgroundRecognitionRef.current) {
-        try {
-          backgroundRecognitionRef.current.start();
-        } catch (error) {
-          console.warn('Could not start background recognition:', error);
-        }
-      }
-    } else {
-      if (backgroundRecognitionRef.current) {
-        backgroundRecognitionRef.current.stop();
-        backgroundRecognitionRef.current = null;
-      }
-    }
-
-    return () => {
-      if (backgroundRecognitionRef.current) {
-        backgroundRecognitionRef.current.stop();
-        backgroundRecognitionRef.current = null;
-      }
-    };
-  }, [isAIResponding, disabled, setupBackgroundRecognition]);
+  // Removed background recognition for now - was causing conflicts
 
   // Cleanup on unmount
   useEffect(() => {
