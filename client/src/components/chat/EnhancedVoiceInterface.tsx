@@ -60,15 +60,14 @@ export function EnhancedVoiceInterface({
     interruptAI
   } = useVoiceModeHandler({
     onTranscript: (text, isInterim) => {
-      // Show interim results in real-time
+      // Show interim results in real-time - DON'T set textMessage, let it display in currentTranscript
       console.log('📝 Transcript update:', { text, isInterim, inputMode });
-      if (inputMode === 'voice') {
-        setTextMessage(text);
-      }
+      // Don't interfere with textMessage when in voice mode
     },
     onAutoSend: (text) => {
       console.log('🚀 Auto-sending message:', text);
       onSendMessage(text);
+      // Clear the text message after sending
       setTextMessage('');
     },
     onStateChange: (state: VoiceState) => {
@@ -97,12 +96,8 @@ export function EnhancedVoiceInterface({
     }
   };
 
-  // Sync transcript to text input for voice mode
-  useEffect(() => {
-    if (inputMode === 'voice' && currentTranscript) {
-      setTextMessage(currentTranscript);
-    }
-  }, [currentTranscript, inputMode]);
+  // Don't sync transcript to textMessage in voice mode - let it display via currentTranscript
+  // This prevents interference between voice display and text input mode
 
   // Handle Enter key in text mode
   const handleTextKeyPress = (e: React.KeyboardEvent) => {
@@ -136,15 +131,19 @@ export function EnhancedVoiceInterface({
 
   // Handle microphone button click
   const handleMicClick = async () => {
+    console.log('🎤 Mic button clicked', { inputMode, isListening });
+    
     if (inputMode === 'text') {
       await switchToVoiceMode();
       return;
     }
 
     if (isListening) {
+      console.log('🛑 Stopping listening');
       stopListening();
     } else {
-      const started = await toggleListening();
+      console.log('▶️ Starting listening');
+      const started = await startListening();
       if (!started && !settings.echoWarningDismissed) {
         setShowEchoWarning(true);
       }
@@ -305,8 +304,8 @@ export function EnhancedVoiceInterface({
                         <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" />
                         <span className="text-xs font-medium text-teal-700">Listening...</span>
                       </div>
-                      <p className="text-sm text-gray-800 min-h-[20px]">
-                        {currentTranscript || textMessage || "Speak now..."}
+                      <p className="text-sm text-gray-800 min-h-[20px] leading-relaxed">
+                        {currentTranscript || "Speak now..."}
                       </p>
                       {confidence > 0 && (
                         <div className="flex justify-between items-center mt-1">
@@ -324,6 +323,11 @@ export function EnhancedVoiceInterface({
                   ) : (
                     <div className="text-center py-2">
                       <span className="text-sm text-gray-600">Tap microphone to speak</span>
+                      {currentTranscript && (
+                        <p className="text-sm text-gray-800 mt-1 italic">
+                          Last: "{currentTranscript}"
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
