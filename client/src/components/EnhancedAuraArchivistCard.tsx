@@ -28,6 +28,8 @@ import type { Religion, ChatMessage } from "@shared/schema";
 import { AudioPlaybackButton } from "@/components/chat/AudioPlaybackButton";
 import { type ScholarPersona, getPersonaForReligion } from "@/components/chat/ScholarPersonas";
 import { ChatHistoryManager } from "@/components/chat/ChatHistoryManager";
+import { EnhancedVoiceInterface } from "@/components/chat/EnhancedVoiceInterface";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -476,7 +478,6 @@ export function EnhancedAuraArchivistCard({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
   
   // State management
   const [currentMessage, setCurrentMessage] = useState("");
@@ -485,11 +486,9 @@ export function EnhancedAuraArchivistCard({
   const [isStreaming, setIsStreaming] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   
-  // Voice input state
-  const [isListening, setIsListening] = useState(false);
+  // Voice input state - Enhanced voice mode
   const [isProcessing, setIsProcessing] = useState(false);
-  const [voiceTranscript, setVoiceTranscript] = useState("");
-  const [isVoiceSupported, setIsVoiceSupported] = useState(false);
+  const [voiceInterrupted, setVoiceInterrupted] = useState(false);
 
   // Suggestion chips
   const suggestionChips = [
@@ -500,59 +499,29 @@ export function EnhancedAuraArchivistCard({
     "How can I practice forgiveness?"
   ];
 
-  // Initialize speech recognition
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
-      if (SpeechRecognition) {
-        setIsVoiceSupported(true);
-        const recognition = new SpeechRecognition();
-        
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
-        
-        recognition.onstart = () => {
-          setIsListening(true);
-          console.log('🎤 Voice recognition started');
-        };
-        
-        recognition.onresult = (event) => {
-          let finalTranscript = '';
-          
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
-            if (event.results[i].isFinal) {
-              finalTranscript += transcript;
-            }
-          }
-          
-          if (finalTranscript) {
-            setVoiceTranscript(finalTranscript.trim());
-            setCurrentMessage(finalTranscript.trim());
-            console.log('🎤 Final transcript:', finalTranscript);
-          }
-        };
-        
-        recognition.onerror = (event) => {
-          console.error('🎤 Speech recognition error:', event.error);
-          setIsListening(false);
-          toast({
-            title: "Voice Input Error",
-            description: "Please try again or use text input",
-            variant: "destructive"
-          });
-        };
-        
-        recognition.onend = () => {
-          setIsListening(false);
-          console.log('🎤 Voice recognition ended');
-        };
-        
-        recognitionRef.current = recognition;
-      }
-    }
-  }, [toast]);
+  // Enhanced voice interruption handler
+  const handleVoiceInterruption = () => {
+    console.log('🚨 Voice interruption triggered - stopping AI response');
+    setVoiceInterrupted(true);
+    setIsStreaming(false);
+    setIsProcessing(false);
+    
+    // Show user feedback
+    toast({
+      title: "Response Interrupted",
+      description: "You can continue the conversation or ask a new question",
+      variant: "default"
+    });
+    
+    // Reset interruption state after a moment
+    setTimeout(() => setVoiceInterrupted(false), 2000);
+  };
+
+  // Enhanced voice message handler
+  const handleVoiceMessage = (message: string) => {
+    console.log('🎤 Voice message received:', message);
+    handleSendMessage(message);
+  };
 
   // Auto-select religion-specific persona
   useEffect(() => {
@@ -816,13 +785,6 @@ export function EnhancedAuraArchivistCard({
 
       {/* Voice Orb */}
       <div className="flex justify-center py-2 bg-gradient-to-b from-gray-50 to-white flex-shrink-0">
-        <VoiceOrb
-          isListening={isListening}
-          isProcessing={isProcessing}
-          onClick={handleVoiceStart}
-          onStop={handleVoiceStop}
-          disabled={isStreaming}
-        />
       </div>
 
       {/* Messages Area - Expands to fill available space */}
@@ -897,25 +859,18 @@ export function EnhancedAuraArchivistCard({
         </ScrollArea>
       </div>
 
-      {/* Input Area - Fixed at bottom with enhanced styling */}
-      <div className="border-t border-gray-200 px-4 py-3 bg-white flex-shrink-0 shadow-lg">
-        <div className="flex items-center gap-2">
-          <Input
-            value={currentMessage}
-            onChange={(e) => setCurrentMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Ask your question..."
-            className="flex-1 rounded-full border-gray-300 focus:border-teal-500 focus:ring-teal-500 h-10 shadow-sm"
-            disabled={isStreaming}
+      {/* Enhanced Voice Interface - Replaces traditional input */}
+      <div className="border-t border-gray-200 px-4 py-3 bg-gradient-to-r from-white via-gray-50 to-white flex-shrink-0">
+        <TooltipProvider>
+          <EnhancedVoiceInterface
+            onSendMessage={handleVoiceMessage}
+            disabled={false}
+            isStreaming={isStreaming}
+            onInterrupt={handleVoiceInterruption}
+            placeholder="Ask about this scripture or any spiritual question..."
+            className="w-full"
           />
-          <Button
-            onClick={() => handleSendMessage()}
-            disabled={!currentMessage.trim() || isStreaming}
-            className="rounded-full w-10 h-10 p-0 bg-teal-500 hover:bg-teal-600 text-white shadow-md transition-all duration-200 hover:scale-105"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
-        </div>
+        </TooltipProvider>
       </div>
 
       {/* Chat History Manager */}
