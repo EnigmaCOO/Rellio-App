@@ -144,8 +144,8 @@ export function EnhancedVoiceInterface({
     event.preventDefault();
     event.stopPropagation();
     
-    console.log('🎤 MICROPHONE BUTTON CLICKED!');
-    console.log('🎤 Current state:', { 
+    console.log('🔥 ===== MICROPHONE BUTTON CLICKED ===== ');
+    console.log('🎤 Current state BEFORE:', { 
       inputMode, 
       isListening, 
       isSupported, 
@@ -155,30 +155,46 @@ export function EnhancedVoiceInterface({
       currentTranscript: currentTranscript || '(empty)'
     });
     
+    // Check if voice is supported first
+    if (!isSupported) {
+      console.error('❌ Speech recognition not supported in this browser');
+      return;
+    }
+    
     // Force switch to voice mode if needed
     if (inputMode === 'text') {
-      console.log('🔄 Switching to voice mode...');
+      console.log('🔄 Switching from text to voice mode...');
       setInputMode('voice');
       setTextMessage('');
+      // Give a moment for the mode switch
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
     // Handle toggle
     try {
       if (isListening) {
-        console.log('🛑 Currently listening - stopping...');
+        console.log('🛑 Currently listening - STOPPING...');
         stopListening();
       } else {
-        console.log('🚀 Not listening - starting...');
+        console.log('🚀 NOT listening - STARTING now...');
+        console.log('🚀 About to call startListening()...');
+        
         const result = await startListening();
-        console.log('🎤 Start listening result:', result);
+        
+        console.log('🎤 Start listening RESULT:', result);
+        console.log('🎤 State AFTER startListening:', { isListening, voiceState, currentTranscript: currentTranscript || '(empty)' });
+        
         if (!result) {
-          console.error('❌ Failed to start listening');
+          console.error('❌ ❌ FAILED to start listening - check permissions');
+        } else {
+          console.log('✅ ✅ SUCCESS - Speech recognition started!');
         }
       }
       
-      console.log('🎤 Final state after toggle:', { isListening, voiceState, currentTranscript: currentTranscript || '(empty)' });
+      console.log('🔥 ===== FINAL STATE AFTER TOGGLE ===== ');
+      console.log({ isListening, voiceState, currentTranscript: currentTranscript || '(empty)' });
     } catch (error) {
-      console.error('❌ Error in microphone click handler:', error);
+      console.error('❌ ❌ CRITICAL ERROR in microphone click handler:', error);
     }
   };
 
@@ -333,9 +349,10 @@ export function EnhancedVoiceInterface({
                 </TooltipContent>
               </Tooltip>
               
-              {/* Voice Input Display - looks like search bar */}
+              {/* Voice Input Display - REAL-TIME TRANSCRIPT */}
               <div className="flex-1 relative">
                 <Input
+                  key={`voice-input-${currentTranscript || 'empty'}`}
                   value={currentTranscript || ''}
                   placeholder={
                     isListening ? "🎤 Listening... speak now" : 
@@ -344,13 +361,20 @@ export function EnhancedVoiceInterface({
                   }
                   readOnly
                   className={cn(
-                    "border-0 focus-visible:ring-0 text-gray-800 font-medium transition-all duration-300",
-                    "min-h-[40px] resize-none",
+                    "border-0 focus-visible:ring-0 text-gray-800 font-medium transition-all duration-200",
+                    "min-h-[40px] resize-none select-none",
                     (isListening || currentTranscript)
-                      ? "bg-teal-50 placeholder-teal-600 ring-2 ring-teal-200 shadow-sm" 
+                      ? "bg-teal-50 placeholder-teal-600 ring-2 ring-teal-200 shadow-sm animate-pulse" 
                       : "bg-gray-50 placeholder-gray-500"
                   )}
                 />
+                
+                {/* Debug overlay to show transcript value */}
+                {currentTranscript && (
+                  <div className="absolute -bottom-6 left-0 text-xs text-teal-600 font-mono">
+                    "{currentTranscript}" ({currentTranscript.length} chars)
+                  </div>
+                )}
                 
                 {/* Status indicator */}
                 {(isListening || currentTranscript || voiceState === 'listening') && (
