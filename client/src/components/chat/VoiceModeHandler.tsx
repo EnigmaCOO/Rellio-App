@@ -150,7 +150,8 @@ export function useVoiceModeHandler({
       recognitionRef.current.maxAlternatives = 1;
 
       recognitionRef.current.onstart = () => {
-        console.log('🎤 Speech recognition started');
+        console.log('✅ Speech recognition ACTUALLY started');
+        console.log('Setting listening state to TRUE');
         setIsListening(true);
         updateVoiceState('listening');
         startAudioMonitoring();
@@ -160,8 +161,11 @@ export function useVoiceModeHandler({
         let interimTranscript = '';
         let finalTranscript = '';
         
+        console.log('🎤 SPEECH DETECTED! Event results:', event.results.length);
+        
         for (let i = 0; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
+          console.log(`Result ${i}: "${transcript}" (final: ${event.results[i].isFinal})`);
           if (event.results[i].isFinal) {
             finalTranscript += transcript;
           } else {
@@ -170,7 +174,7 @@ export function useVoiceModeHandler({
         }
         
         const fullTranscript = finalTranscript + interimTranscript;
-        console.log('📝 Real-time transcript:', { fullTranscript, interim: interimTranscript, final: finalTranscript });
+        console.log('📝 UPDATING TRANSCRIPT:', { fullTranscript, interim: interimTranscript, final: finalTranscript });
         
         // Update transcript immediately for real-time display
         setCurrentTranscript(fullTranscript);
@@ -224,7 +228,8 @@ export function useVoiceModeHandler({
       };
 
       recognitionRef.current.onend = () => {
-        console.log('🎤 Speech recognition ended');
+        console.log('🛑 Speech recognition ended');
+        console.log('Current transcript before end:', currentTranscript);
         setIsListening(false);
         updateVoiceState('idle');
         setAudioLevel(0);
@@ -234,7 +239,9 @@ export function useVoiceModeHandler({
       };
 
       // Start recognition
+      console.log('🚀 STARTING SPEECH RECOGNITION...');
       recognitionRef.current.start();
+      console.log('🚀 Speech recognition start() called');
       
       updateVoiceState('listening');
       return true;

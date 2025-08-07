@@ -64,7 +64,7 @@ export function EnhancedVoiceInterface({
     onTranscript: (text, isInterim) => {
       // Show interim results in real-time
       console.log('📝 Transcript update:', { text, isInterim, inputMode, length: text.length });
-      // Force re-render to show transcript updates
+      // Transcript updates will trigger re-render automatically via currentTranscript state
     },
     onAutoSend: (text) => {
       console.log('🚀 Auto-sending message:', text);
@@ -143,7 +143,8 @@ export function EnhancedVoiceInterface({
       isSupported, 
       hasPermission,
       voiceState,
-      disabled 
+      disabled,
+      currentTranscript 
     });
     
     // Force switch to voice mode if needed
@@ -157,6 +158,7 @@ export function EnhancedVoiceInterface({
     try {
       const result = await toggleListening();
       console.log('🎤 Toggle result:', result);
+      console.log('🎤 State after toggle:', { isListening, voiceState, currentTranscript });
     } catch (error) {
       console.error('❌ Error toggling voice recognition:', error);
     }
@@ -313,12 +315,12 @@ export function EnhancedVoiceInterface({
               <div className="flex-1 relative">
                 <Input
                   value={currentTranscript || ''}
-                  placeholder={isListening ? "Listening... speak now" : "Click microphone to speak"}
-                  disabled
+                  placeholder={isListening ? "🎤 Listening... speak now" : "Click microphone to speak"}
+                  readOnly
                   className={cn(
-                    "border-0 focus-visible:ring-0 text-gray-800 font-medium",
+                    "border-0 focus-visible:ring-0 text-gray-800 font-medium transition-all duration-300",
                     isListening 
-                      ? "bg-teal-50 placeholder-teal-600" 
+                      ? "bg-teal-50 placeholder-teal-600 ring-2 ring-teal-200" 
                       : "bg-gray-50 placeholder-gray-500"
                   )}
                 />
