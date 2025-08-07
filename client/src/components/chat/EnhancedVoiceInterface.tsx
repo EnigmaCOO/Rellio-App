@@ -297,13 +297,13 @@ export function EnhancedVoiceInterface({
                     className={cn(
                       "w-10 h-10 rounded-full border-2 transition-all duration-300",
                       "hover:scale-105 active:scale-95 cursor-pointer flex-shrink-0",
-                      isListening
+                      (isListening || currentTranscript || voiceState === 'listening')
                         ? "bg-teal-500 hover:bg-teal-600 border-teal-400 text-white shadow-lg shadow-teal-300/50 animate-pulse ring-2 ring-teal-300"
                         : "bg-white hover:bg-teal-50 border-teal-200 text-teal-600 hover:border-teal-300",
                       disabled && "opacity-50 cursor-not-allowed"
                     )}
                   >
-                    <Mic className={cn("w-4 h-4", isListening ? "text-white" : "text-teal-600")} />
+                    <Mic className={cn("w-4 h-4", (isListening || currentTranscript || voiceState === 'listening') ? "text-white" : "text-teal-600")} />
                     
                     {/* Orb overlay */}
                     <div className="absolute -top-0.5 -right-0.5">
@@ -320,18 +320,18 @@ export function EnhancedVoiceInterface({
               <div className="flex-1 relative">
                 <Input
                   value={currentTranscript || ''}
-                  placeholder={isListening ? "🎤 Listening... speak now" : "Click microphone to speak"}
+                  placeholder={isListening || currentTranscript ? "🎤 Listening... speak now" : "Click microphone to speak"}
                   readOnly
                   className={cn(
                     "border-0 focus-visible:ring-0 text-gray-800 font-medium transition-all duration-300",
-                    isListening 
+                    (isListening || currentTranscript)
                       ? "bg-teal-50 placeholder-teal-600 ring-2 ring-teal-200" 
                       : "bg-gray-50 placeholder-gray-500"
                   )}
                 />
                 
                 {/* Status indicator */}
-                {isListening && (
+                {(isListening || currentTranscript || voiceState === 'listening') && (
                   <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
                     <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" />
                     {confidence > 0 && (
@@ -378,9 +378,9 @@ export function EnhancedVoiceInterface({
               </div>
               
               {/* Status Text */}
-              {isListening && (
+              {(isListening || currentTranscript || voiceState === 'listening') && (
                 <span className="text-xs text-teal-600 font-medium">
-                  Listening for your voice...
+                  {currentTranscript ? 'Speech detected!' : 'Listening for your voice...'}
                 </span>
               )}
             </div>
