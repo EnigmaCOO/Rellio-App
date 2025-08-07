@@ -30,16 +30,11 @@ export function EnhancedVoiceInterface({
   placeholder = "Ask about this scripture...",
   className
 }: EnhancedVoiceInterfaceProps) {
-  console.log('🔄 EnhancedVoiceInterface rendered', { disabled, isStreaming, inputMode, isListening, currentTranscript });
-  
   // State management
   const [inputMode, setInputMode] = useState<InputMode>('voice');
   const [textMessage, setTextMessage] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [showEchoWarning, setShowEchoWarning] = useState(false);
-  
-  // Debug current states
-  console.log('🐛 DEBUG - Component state:', { inputMode, isListening, voiceState, disabled, isSupported, hasPermission });
   const [settings, setSettings] = useState({
     autoSendDelay: 1.5,
     confidenceThreshold: 0.8,
@@ -92,6 +87,10 @@ export function EnhancedVoiceInterface({
     confidenceThreshold: settings.confidenceThreshold,
     interruptionSensitivity: settings.interruptionSensitivity
   });
+  
+  // Debug logs after state is initialized
+  console.log('🔄 EnhancedVoiceInterface rendered', { disabled, isStreaming, inputMode, isListening, currentTranscript });
+  console.log('🐛 DEBUG - Component state:', { inputMode, isListening, voiceState, disabled, isSupported, hasPermission });
 
   // Handle text mode send
   const handleTextSend = () => {
