@@ -155,26 +155,36 @@ export function useVoiceModeHandler({
         startAudioMonitoring();
       };
 
-      recognitionRef.current.onresult = (event) => {
-        let transcript = '';
+      recognitionRef.current.onresult = (event: any) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        
         for (let i = 0; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
         }
         
-        setCurrentTranscript(transcript);
-        onTranscript(transcript, true);
+        const fullTranscript = finalTranscript + interimTranscript;
+        console.log('📝 Real-time transcript:', { fullTranscript, interim: interimTranscript, final: finalTranscript });
+        
+        setCurrentTranscript(fullTranscript);
+        onTranscript(fullTranscript, interimTranscript.length > 0);
         
         // If this is a final result, send it
-        if (event.results[event.results.length - 1].isFinal) {
-          console.log('🚀 Final transcript:', transcript);
+        if (finalTranscript.trim()) {
+          console.log('🚀 Final transcript:', finalTranscript);
           setTimeout(() => {
-            onAutoSend(transcript.trim());
+            onAutoSend(finalTranscript.trim());
             setCurrentTranscript('');
           }, 500);
         }
       };
 
-      recognitionRef.current.onerror = (event) => {
+      recognitionRef.current.onerror = (event: any) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
         updateVoiceState('idle');

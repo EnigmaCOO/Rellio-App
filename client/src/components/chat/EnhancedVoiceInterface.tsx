@@ -292,12 +292,12 @@ export function EnhancedVoiceInterface({
                         "relative w-12 h-12 rounded-full border-2 transition-all duration-300",
                         "hover:scale-105 active:scale-95 cursor-pointer",
                         isListening
-                          ? "bg-teal-500 hover:bg-teal-600 border-teal-300 text-white shadow-lg shadow-teal-200 animate-pulse"
-                          : "bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-600 hover:border-gray-400",
+                          ? "bg-teal-500 hover:bg-teal-600 border-teal-400 text-white shadow-lg shadow-teal-300/50 animate-pulse ring-2 ring-teal-300"
+                          : "bg-white hover:bg-teal-50 border-teal-200 text-teal-600 hover:border-teal-300",
                         disabled && "opacity-50 cursor-not-allowed"
                       )}
                     >
-                      <Mic className={cn("w-5 h-5", isListening ? "text-white" : "text-gray-600")} />
+                      <Mic className={cn("w-5 h-5", isListening ? "text-white" : "text-teal-600")} />
                       
                       {/* Orb overlay */}
                       <div className="absolute -top-1 -right-1">
@@ -320,7 +320,7 @@ export function EnhancedVoiceInterface({
                       </div>
                       <div className="text-sm text-gray-800 min-h-[20px] leading-relaxed">
                         {currentTranscript ? (
-                          <span className="font-medium">{currentTranscript}</span>
+                          <span className="font-medium text-teal-800">{currentTranscript}</span>
                         ) : (
                           <span className="text-gray-500 italic">Speak now...</span>
                         )}
@@ -331,7 +331,7 @@ export function EnhancedVoiceInterface({
                             Confidence: {Math.round(confidence * 100)}%
                           </span>
                           {confidence > settings.confidenceThreshold && currentTranscript && (
-                            <span className="text-xs text-green-600 font-medium">
+                            <span className="text-xs text-teal-600 font-medium">
                               Ready to send
                             </span>
                           )}
@@ -342,8 +342,8 @@ export function EnhancedVoiceInterface({
                     <div className="text-center py-2">
                       <span className="text-sm text-gray-600">Tap microphone to speak</span>
                       {currentTranscript && (
-                        <p className="text-sm text-gray-800 mt-1 italic">
-                          Last: "{currentTranscript}"
+                        <p className="text-sm text-teal-700 mt-1 font-medium">
+                          "{currentTranscript}"
                         </p>
                       )}
                     </div>
