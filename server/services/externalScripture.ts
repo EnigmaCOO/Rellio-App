@@ -1,6 +1,7 @@
 import { Religion } from "@shared/schema";
 import * as fs from 'fs';
 import * as path from 'path';
+import { fetchHadithSection, getHadithCollectionByName, HADITH_COLLECTIONS, HadithResponse } from './hadith';
 
 export interface ExternalScripture {
   religion: Religion;
@@ -243,6 +244,80 @@ export function getTripitakaContent(book: string, chapter: number): ExternalScri
   }));
 }
 
+// Hadith API Integration
+export async function fetchHadithContent(book: string, chapter: number): Promise<ExternalScripture[]> {
+  try {
+    console.log(`Fetching hadith content for book: ${book}, section: ${chapter}`);
+    
+    const collection = getHadithCollectionByName(book);
+    if (!collection) {
+      console.log(`Hadith collection '${book}' not found`);
+      return [];
+    }
+    
+    console.log(`Found collection: ${collection.name} (ID: ${collection.id})`);
+    
+    const hadithResponse = await fetchHadithSection(collection.id, chapter);
+    if (!hadithResponse || !hadithResponse.hadiths) {
+      console.log(`No hadiths found for section ${chapter} in ${collection.name}`);
+      return [];
+    }
+    
+    console.log(`Fetched ${hadithResponse.hadiths.length} hadiths from section ${chapter}`);
+    
+    return hadithResponse.hadiths.map((hadith, index) => ({
+      religion: 'hadith' as Religion,
+      book: book,
+      chapter: chapter,
+      verse: hadith.hadithnumber || index + 1,
+      text: hadith.text || '',
+      translation: `${hadithResponse.metadata.name} - Section: ${hadithResponse.metadata.section[chapter] || 'Unknown'}`
+    }));
+  } catch (error) {
+    console.error(`Error fetching hadith content for ${book}, chapter ${chapter}:`, error);
+    return [];
+  }
+}
+
+// Function to get a random hadith from any collection
+export async function getRandomHadith(): Promise<ExternalScripture | null> {
+  try {
+    const randomCollection = HADITH_COLLECTIONS[Math.floor(Math.random() * HADITH_COLLECTIONS.length)];
+    const randomHadithNumber = Math.floor(Math.random() * randomCollection.totalHadiths) + 1;
+    
+    const response = await fetch(`https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/${randomCollection.id}/${randomHadithNumber}.min.json`);
+    if (!response.ok) {
+      // Try fallback URL
+      const fallbackResponse = await fetch(`https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/${randomCollection.id}/${randomHadithNumber}.json`);
+      if (!fallbackResponse.ok) {
+        throw new Error(`Failed to fetch random hadith: ${response.status}`);
+      }
+      const data = await fallbackResponse.json();
+      return {
+        religion: 'hadith' as Religion,
+        book: randomCollection.name,
+        chapter: 1,
+        verse: data.hadithnumber || randomHadithNumber,
+        text: data.text || '',
+        translation: `${randomCollection.name} - Hadith ${data.hadithnumber || randomHadithNumber}`
+      };
+    }
+    
+    const data = await response.json();
+    return {
+      religion: 'hadith' as Religion,
+      book: randomCollection.name,
+      chapter: 1,
+      verse: data.hadithnumber || randomHadithNumber,
+      text: data.text || '',
+      translation: `${randomCollection.name} - Hadith ${data.hadithnumber || randomHadithNumber}`
+    };
+  } catch (error) {
+    console.error('Error fetching random hadith:', error);
+    return null;
+  }
+}
+
 // Main function to fetch scripture content based on religion
 export async function fetchScriptureContent(
   religion: Religion,
@@ -320,6 +395,9 @@ export async function fetchScriptureContent(
     
     case 'buddhist':
       return getTripitakaContent(book, chapter);
+    
+    case 'hadith':
+      return await fetchHadithContent(book, chapter);
     
     default:
       return [];

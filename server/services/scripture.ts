@@ -228,6 +228,17 @@ export const RELIGION_CONFIGS: Record<Religion, ReligionConfig> = {
       { name: "Bhagavad Gita", chapters: 18 },
       { name: "Upanishads", chapters: 10 },
     ]
+  },
+  hadith: {
+    name: "Hadith Collections",
+    books: [
+      { name: "Sahih al-Bukhari", chapters: 97 },
+      { name: "Sahih Muslim", chapters: 56 },
+      { name: "Sunan Abu Dawud", chapters: 43 },
+      { name: "Jami' at-Tirmidhi", chapters: 51 },
+      { name: "Sunan an-Nasa'i", chapters: 51 },
+      { name: "Sunan Ibn Majah", chapters: 37 }
+    ]
   }
 };
 

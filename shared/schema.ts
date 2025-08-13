@@ -55,7 +55,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
-export const religionSchema = z.enum(['bible', 'quran', 'torah', 'buddhist', 'hindu']);
+export const religionSchema = z.enum(['bible', 'quran', 'torah', 'buddhist', 'hindu', 'hadith']);
 export type Religion = z.infer<typeof religionSchema>;
 
 export const scriptureRequestSchema = z.object({

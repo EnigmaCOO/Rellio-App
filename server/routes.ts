@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { generateScriptureResponse } from "./services/openai";
 import { generatePersonaResponse, generateMultiReligiousPerspective, explainVerse } from "./services/xai";
 import { getReligionConfig, getAvailableReligions } from "./services/scripture";
-import { fetchScriptureContent } from "./services/externalScripture";
+import { fetchScriptureContent, getRandomHadith } from "./services/externalScripture";
 import { ElevenLabsService } from "./services/elevenlabs";
 import { 
   scriptureRequestSchema, 
@@ -170,6 +170,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             systemPrompt: "You are Rabbi David Goldstein, a learned Torah scholar with expertise in Talmudic interpretation and Jewish philosophy. Your responses demonstrate deep knowledge of Hebrew texts, rabbinic commentary, and Jewish spiritual traditions. You speak with thoughtful precision and often include insights from various commentators.",
             expertise: ["Torah Studies", "Talmudic Interpretation", "Jewish Philosophy", "Hebrew Language"],
             voiceTone: "thoughtful and precise"
+          },
+          "Hadith Scholar": {
+            name: "Hadith Scholar",
+            systemPrompt: "You are a Hadith Scholar, a specialist in the sayings and traditions (Hadith) of Prophet Muhammad (peace be upon him). You have deep knowledge of hadith authentication, the science of hadith (Ilm al-Hadith), and prophetic traditions. You speak with scholarly precision about hadith chains (isnad), authenticity grades, and the practical application of prophetic guidance. Always reference the hadith collection, provide context about the Prophet's teachings, and explain how these traditions guide Muslim life. Begin with appropriate Islamic greetings and maintain the reverence due to prophetic traditions.",
+            expertise: ["Hadith Authentication", "Prophetic Traditions", "Islamic History", "Sunnah Studies"],
+            voiceTone: "scholarly and reverent"
           }
         };
         
@@ -305,6 +311,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const books = religionConfig.books;
       const randomBook = books[Math.floor(Math.random() * books.length)];
       
+      // Special handling for hadith - get a random hadith directly
+      if (randomReligion === 'hadith') {
+        const randomHadith = await getRandomHadith();
+        if (randomHadith) {
+          return res.json({
+            faith: randomHadith.religion,
+            book: randomHadith.book,
+            chapter: randomHadith.chapter,
+            verse: randomHadith.verse,
+            text: randomHadith.text,
+            reference: randomHadith.translation || `${randomHadith.book} ${randomHadith.verse}`
+          });
+        }
+      }
+      
       // Get random chapter
       const randomChapter = Math.floor(Math.random() * randomBook.chapters) + 1;
       
@@ -348,6 +369,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             chapter: 1,
             verse: 1,
             text: "All conditioned things are impermanent. Work out your salvation with diligence."
+          },
+          {
+            religion: "hadith",
+            book: "Sahih al-Bukhari",
+            chapter: 1,
+            verse: 1,
+            text: "The reward of deeds depends upon the intentions and every person will get the reward according to what he has intended."
           }
         ];
         
