@@ -377,6 +377,12 @@ export async function fetchScriptureContent(
         "An-Nas (The Mankind)"
       ];
       
+      // Check if this is a hadith book within the Islamic collection
+      const hadithCollectionNames = ['Sahih al-Bukhari', 'Sahih Muslim', 'Sunan Abu Dawud', 'Jami\' at-Tirmidhi', 'Sunan an-Nasa\'i', 'Sunan Ibn Majah'];
+      if (hadithCollectionNames.includes(book)) {
+        return await fetchHadithContent(book, chapter);
+      }
+      
       const surahNumber = quranBooks.indexOf(book) + 1;
       if (surahNumber === 0) {
         // Fallback: try to match just the Arabic name part

@@ -85,8 +85,9 @@ export const RELIGION_CONFIGS: Record<Religion, ReligionConfig> = {
     ]
   },
   quran: {
-    name: "Holy Quran",
+    name: "Islamic Texts",
     books: [
+      // Quran (Primary Islamic Text)
       { name: "Al-Fatihah (The Opening)", chapters: 1 },
       { name: "Al-Baqarah (The Cow)", chapters: 1 },
       { name: "Al-Imran (Family of Imran)", chapters: 1 },
@@ -200,7 +201,15 @@ export const RELIGION_CONFIGS: Record<Religion, ReligionConfig> = {
       { name: "Al-Masad (The Palm Fiber)", chapters: 1 },
       { name: "Al-Ikhlas (The Sincerity)", chapters: 1 },
       { name: "Al-Falaq (The Daybreak)", chapters: 1 },
-      { name: "An-Nas (The Mankind)", chapters: 1 }
+      { name: "An-Nas (The Mankind)", chapters: 1 },
+      
+      // Hadith Collections (Prophetic Traditions)
+      { name: "Sahih al-Bukhari", chapters: 97 },
+      { name: "Sahih Muslim", chapters: 56 },
+      { name: "Sunan Abu Dawud", chapters: 43 },
+      { name: "Jami' at-Tirmidhi", chapters: 51 },
+      { name: "Sunan an-Nasa'i", chapters: 51 },
+      { name: "Sunan Ibn Majah", chapters: 37 }
     ]
   },
   torah: {

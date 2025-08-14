@@ -326,6 +326,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Check if the random book selected from quran religion is actually a hadith book
+      const hadithCollectionNames = ['Sahih al-Bukhari', 'Sahih Muslim', 'Sunan Abu Dawud', 'Jami\' at-Tirmidhi', 'Sunan an-Nasa\'i', 'Sunan Ibn Majah'];
+      if (randomReligion === 'quran' && hadithCollectionNames.includes(randomBook.name)) {
+        const randomHadith = await getRandomHadith();
+        if (randomHadith) {
+          return res.json({
+            faith: 'hadith',
+            book: randomHadith.book,
+            chapter: randomHadith.chapter,
+            verse: randomHadith.verse,
+            text: randomHadith.text,
+            reference: randomHadith.translation || `${randomHadith.book} ${randomHadith.verse}`
+          });
+        }
+      }
+      
       // Get random chapter
       const randomChapter = Math.floor(Math.random() * randomBook.chapters) + 1;
       

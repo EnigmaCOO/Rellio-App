@@ -156,8 +156,17 @@ export const religionSpecificPersonas: ScholarPersona[] = [
 ];
 
 // Get persona for specific religion
-export function getPersonaForReligion(religion: Religion | null): ScholarPersona | null {
+export function getPersonaForReligion(religion: Religion | null, book?: string): ScholarPersona | null {
   if (!religion) return null;
+  
+  // Check if this is a hadith book under the quran religion
+  if (religion === 'quran' && book) {
+    const hadithCollectionNames = ['Sahih al-Bukhari', 'Sahih Muslim', 'Sunan Abu Dawud', 'Jami\' at-Tirmidhi', 'Sunan an-Nasa\'i', 'Sunan Ibn Majah'];
+    if (hadithCollectionNames.includes(book)) {
+      return religionSpecificPersonas.find(persona => persona.primaryReligion === 'hadith') || null;
+    }
+  }
+  
   return religionSpecificPersonas.find(persona => persona.primaryReligion === religion) || null;
 }
 
