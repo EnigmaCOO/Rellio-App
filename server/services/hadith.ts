@@ -142,7 +142,22 @@ export async function fetchHadithSection(collectionId: string, sectionNumber: nu
     const hadithResults = await Promise.allSettled(hadithPromises);
     const hadiths = hadithResults
       .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled' && result.value !== null)
-      .map(result => result.value);
+      .map(result => {
+        const data = result.value;
+        // Extract the first hadith from the response since individual hadith API returns array
+        const hadith = data.hadiths?.[0];
+        if (hadith) {
+          return {
+            hadithnumber: hadith.hadithnumber,
+            arabicnumber: hadith.arabicnumber,
+            text: hadith.text || '',
+            grades: hadith.grades || [],
+            reference: hadith.reference || {}
+          };
+        }
+        return null;
+      })
+      .filter(hadith => hadith !== null);
     
     return {
       metadata: {
@@ -159,17 +174,23 @@ export async function fetchHadithSection(collectionId: string, sectionNumber: nu
 }
 
 export async function fetchSpecificHadith(collectionId: string, hadithNumber: number): Promise<any> {
+  const url = `${HADITH_API_BASE}/editions/${collectionId}/${hadithNumber}.min.json`;
+  
   try {
-    const response = await fetch(`${HADITH_API_BASE}/editions/${collectionId}/${hadithNumber}.min.json`);
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch hadith: ${response.status}`);
     }
-    return await response.json();
+    
+    const data = await response.json();
+    return data;
+    
   } catch (error) {
     console.error(`Error fetching hadith ${hadithNumber} from ${collectionId}:`, error);
     // Fallback to the main URL
     try {
-      const fallbackResponse = await fetch(`${HADITH_API_BASE}/editions/${collectionId}/${hadithNumber}.json`);
+      const fallbackUrl = `${HADITH_API_BASE}/editions/${collectionId}/${hadithNumber}.json`;
+      const fallbackResponse = await fetch(fallbackUrl);
       if (fallbackResponse.ok) {
         return await fallbackResponse.json();
       }
