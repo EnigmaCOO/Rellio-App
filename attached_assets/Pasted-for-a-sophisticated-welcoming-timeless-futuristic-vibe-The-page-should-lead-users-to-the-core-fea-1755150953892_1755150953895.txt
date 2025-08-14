@@ -1,0 +1,18 @@
+for a sophisticated, welcoming, timeless-futuristic vibe. The page should lead users to the core features upon sign-up or login, without disrupting current code or performance.
+Implement the following:
+
+Frontend Structure: Build the landing page using React (assuming the existing stack), with a hero section featuring the "Explore Sacred Scriptures" headline, subtext ("Discover insights from multiple religious texts. Ask questions and receive guidance on spiritual topics."), religious symbols in neon blue, and a prominent "Get Started" button that triggers authentication flow. Include a sample interactive query section like "What is the meaning of life?" with a dynamic AI-generated response preview (pulled from the existing AI Scripture Guide logic) and a "Sign Up" button below it.
+Navigation and Sections: Add a top navbar with the Rellio logo (Insight Flame icon with halo), links to "About" (describing the platform's mission), "Contact" (simple form), and a hamburger menu for mobile. Below the hero, include scrollable sections:
+
+How It Works: Step-by-step guide with icons: Select a religious text, navigate chapters, ask AI for insights, discuss with community.
+Features: Highlight existing functionalities like multi-religion texts (Quran, Bible, Hadith), AI guidance, search, playback, with screenshots or mockups linking to demos.
+Sign Up/Login: Integrate authentication (e.g., using Firebase or similar if not already set up) with email/password, Google OAuth, and guest access option. Upon successful auth, redirect to the main dashboard with Scripture Navigation and AI Guide.
+FAQ: Accordion-style questions like "How does the AI interpret scriptures?" or "Which texts are supported?"
+Socials and Footer: Links to Twitter, Facebook, Instagram, with privacy policy and terms.
+
+
+Backend Integration: If needed, add auth endpoints (e.g., user registration, login, session management) to connect with existing database for user profiles, saved discussions, and personalized AI recommendations. Ensure the AI Scripture Guide can be previewed on the landing page via API calls without full access until logged in.
+Responsiveness and Scalability: Make the page fully responsive for desktop, tablet, and mobile, with smooth transitions and animations (e.g., glowing symbols on hover). Optimize for performance, ensuring quick load times and compatibility with existing app routes.
+Testing: Verify seamless flow from landing page to app features (e.g., clicking "Get Started" leads to auth, then to text selection like Sahih al-Bukhari). Test for no regressions in current functionality, cross-browser support, and accessibility.
+
+Deliver the updated codebase with the new landing page as the root route, documentation on auth setup, and a sample config for adding more sections in the future
