@@ -325,13 +325,13 @@ export async function fetchScriptureContent(
   chapter: number
 ): Promise<ExternalScripture[]> {
   switch (religion) {
-    case 'bible':
+    case 'christianity':
       return await fetchBibleContent(book, chapter);
     
-    case 'hindu':
+    case 'hinduism':
       return await getBhagavadGitaContent(chapter);
     
-    case 'quran':
+    case 'islam':
       // Extract surah number from book name (format: "Name (Translation)" -> get index + 1)
       const quranBooks = [
         "Al-Fatihah (The Opening)", "Al-Baqarah (The Cow)", "Al-Imran (Family of Imran)", 
@@ -396,14 +396,11 @@ export async function fetchScriptureContent(
       // For Quran, return all verses for the surah (no pagination by chapters)
       return await fetchQuranContent(surahNumber);
     
-    case 'torah':
+    case 'judaism':
       return await fetchTorahContent(book, chapter);
     
-    case 'buddhist':
+    case 'buddhism':
       return getTripitakaContent(book, chapter);
-    
-    case 'hadith':
-      return await fetchHadithContent(book, chapter);
     
     default:
       return [];

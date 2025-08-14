@@ -311,24 +311,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const books = religionConfig.books;
       const randomBook = books[Math.floor(Math.random() * books.length)];
       
-      // Special handling for hadith - get a random hadith directly
-      if (randomReligion === 'hadith') {
-        const randomHadith = await getRandomHadith();
-        if (randomHadith) {
-          return res.json({
-            faith: randomHadith.religion,
-            book: randomHadith.book,
-            chapter: randomHadith.chapter,
-            verse: randomHadith.verse,
-            text: randomHadith.text,
-            reference: randomHadith.translation || `${randomHadith.book} ${randomHadith.verse}`
-          });
-        }
-      }
-      
-      // Check if the random book selected from quran religion is actually a hadith book
+      // Check if the random book selected from islam religion is actually a hadith book
       const hadithCollectionNames = ['Sahih al-Bukhari', 'Sahih Muslim', 'Sunan Abu Dawud', 'Jami\' at-Tirmidhi', 'Sunan an-Nasa\'i', 'Sunan Ibn Majah'];
-      if (randomReligion === 'quran' && hadithCollectionNames.includes(randomBook.name)) {
+      if (randomReligion === 'islam' && hadithCollectionNames.includes(randomBook.name)) {
         const randomHadith = await getRandomHadith();
         if (randomHadith) {
           return res.json({

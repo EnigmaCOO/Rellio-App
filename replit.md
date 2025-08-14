@@ -31,13 +31,14 @@ Preferred communication style: Simple, everyday language.
     - **Text-to-Speech**: ElevenLabs integration with fallback to browser voices.
 
 ### Feature Specifications
-- **Multi-Religious Scripture Library**: Supports Bible, Quran, Torah, Bhagavad Gita, and Tripitaka.
-- **Dynamic Navigation**: Chapter/Surah/Page-based navigation with verse counts.
-- **AI Chatbot**: Contextual AI discussions with religious texts, multi-religious perspective generation, intelligent question classification, smart bookmarking of AI responses, and chat history management.
+- **Multi-Religious Scripture Library**: Supports Christianity (Bible), Islam (Quran + Hadith Collections), Judaism (Torah), Hinduism (Bhagavad Gita, Upanishads), and Buddhism (Tripitaka texts).
+- **Hadith Integration**: Full integration of 6 major hadith collections (Bukhari, Muslim, Abu Dawud, Tirmidhi, Nasa'i, Ibn Majah) under Islam category with authentic prophetic traditions from fawazahmed0/hadith-api.
+- **Dynamic Navigation**: Chapter/Surah/Section-based navigation with verse counts across all religious texts.
+- **AI Chatbot**: Contextual AI discussions with religious texts, featuring specialized Islamic Mufti and Hadith Scholar personas for Quranic and Hadith content respectively.
 - **Voice-First Interface**: Browser speech recognition and ElevenLabs voice synthesis for AI interactions.
 - **User Management**: Basic user authentication and session persistence.
-- **Reading Progress**: Tracking of user reading progress.
-- **Contextual Activation**: Religion-specific spiritual guides that automatically activate when studying their respective religious texts.
+- **Reading Progress**: Tracking of user reading progress across all religious traditions.
+- **Religion-Specific Scholars**: Contextual activation of appropriate religious scholars (Christian Priest, Islamic Mufti, Hadith Scholar, Jewish Rabbi, Hindu Guru, Buddhist Monk) based on selected texts.
 
 ### System Design Choices
 - **Data Flow**:
@@ -46,12 +47,19 @@ Preferred communication style: Simple, everyday language.
     - Reading Tracking: Chapter changes update database.
     - Session Management: Persistent chat sessions.
 - **API Endpoints**:
-    - `GET /api/religions`: Available religions and their books.
-    - `GET /api/religions/:religion/books`: Books for specific religion.
-    - `GET /api/scriptures`: Scripture verses by religion/book/chapter.
-    - `POST /api/chat`: AI chat with scripture context.
+    - `GET /api/religions`: Available religions (Christianity, Islam, Judaism, Hinduism, Buddhism) and their books.
+    - `GET /api/religions/:religion/books`: Books for specific religion including hadith collections under Islam.
+    - `GET /api/scriptures`: Scripture verses by religion/book/chapter with intelligent routing for Quran vs Hadith content.
+    - `GET /api/verse/random`: Random verse selection across all religious texts including hadith.
+    - `POST /api/chat`: AI chat with scripture context and appropriate scholar persona selection.
     - `POST /api/readings`: Track user reading progress.
 - **Database Schema**: Users, Scriptures, Chat Messages, User Readings.
+
+## Recent Changes (August 2025)
+- **Religion Reorganization**: Restructured from individual text categories (bible, quran, hadith, etc.) to proper religious groupings (Christianity, Islam, Judaism, Hinduism, Buddhism).
+- **Hadith Integration Under Islam**: Moved all 6 hadith collections from separate category to appear under Islam alongside Quran surahs for better discoverability.
+- **Smart Scholar Selection**: Enhanced persona system to automatically choose between Islamic Mufti (for Quran) and Hadith Scholar (for Hadith collections) when studying Islamic texts.
+- **Unified Islamic Experience**: Users can now access both primary Islamic texts (Quran) and prophetic traditions (Hadith) from a single "Islam" selection in the interface.
 
 ## External Dependencies
 

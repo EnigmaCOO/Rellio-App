@@ -11,8 +11,8 @@ export interface ReligionConfig {
 }
 
 export const RELIGION_CONFIGS: Record<Religion, ReligionConfig> = {
-  bible: {
-    name: "Holy Bible",
+  christianity: {
+    name: "Christianity",
     books: [
       // Old Testament
       { name: "Genesis", chapters: 50 },
@@ -84,8 +84,8 @@ export const RELIGION_CONFIGS: Record<Religion, ReligionConfig> = {
       { name: "Revelation", chapters: 22 }
     ]
   },
-  quran: {
-    name: "Islamic Texts",
+  islam: {
+    name: "Islam",
     books: [
       // Quran (Primary Islamic Text)
       { name: "Al-Fatihah (The Opening)", chapters: 1 },
@@ -212,8 +212,8 @@ export const RELIGION_CONFIGS: Record<Religion, ReligionConfig> = {
       { name: "Sunan Ibn Majah", chapters: 37 }
     ]
   },
-  torah: {
-    name: "Torah",
+  judaism: {
+    name: "Judaism",
     books: [
       { name: "Bereshit", chapters: 50 }, // Genesis
       { name: "Shemot", chapters: 40 },   // Exodus
@@ -222,8 +222,8 @@ export const RELIGION_CONFIGS: Record<Religion, ReligionConfig> = {
       { name: "Devarim", chapters: 34 },  // Deuteronomy
     ]
   },
-  buddhist: {
-    name: "Tripitaka",
+  buddhism: {
+    name: "Buddhism",
     books: [
       { name: "Dhammapada", chapters: 26 },
       { name: "Lotus Sutra", chapters: 28 },
@@ -231,22 +231,11 @@ export const RELIGION_CONFIGS: Record<Religion, ReligionConfig> = {
       { name: "Vinaya Pitaka", chapters: 20 },
     ]
   },
-  hindu: {
-    name: "Bhagavad Gita",
+  hinduism: {
+    name: "Hinduism",
     books: [
       { name: "Bhagavad Gita", chapters: 18 },
       { name: "Upanishads", chapters: 10 },
-    ]
-  },
-  hadith: {
-    name: "Hadith Collections",
-    books: [
-      { name: "Sahih al-Bukhari", chapters: 97 },
-      { name: "Sahih Muslim", chapters: 56 },
-      { name: "Sunan Abu Dawud", chapters: 43 },
-      { name: "Jami' at-Tirmidhi", chapters: 51 },
-      { name: "Sunan an-Nasa'i", chapters: 51 },
-      { name: "Sunan Ibn Majah", chapters: 37 }
     ]
   }
 };
