@@ -113,23 +113,47 @@ export async function fetchHadithEditions(): Promise<Record<string, HadithEditio
 
 export async function fetchHadithSection(collectionId: string, sectionNumber: number): Promise<HadithResponse | null> {
   try {
-    // Try the direct section URL first (this is the correct structure based on API documentation)
-    const response = await fetch(`${HADITH_API_BASE}/editions/${collectionId}/${sectionNumber}.min.json`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch section: ${response.status}`);
+    // First get section details to find the range of hadiths
+    const sectionResponse = await fetch(`${HADITH_API_BASE}/editions/${collectionId}/sections/${sectionNumber}.min.json`);
+    if (!sectionResponse.ok) {
+      throw new Error(`Failed to fetch section metadata: ${sectionResponse.status}`);
     }
-    return await response.json();
+    
+    const sectionData = await sectionResponse.json();
+    const sectionDetail = sectionData.metadata?.section_detail?.[sectionNumber.toString()];
+    
+    if (!sectionDetail) {
+      console.error(`No section detail found for section ${sectionNumber}`);
+      return null;
+    }
+    
+    const firstHadith = sectionDetail.hadithnumber_first;
+    const lastHadith = sectionDetail.hadithnumber_last;
+    const sectionName = sectionData.metadata?.section?.[sectionNumber.toString()] || 'Unknown';
+    
+    console.log(`Fetching hadiths ${firstHadith}-${lastHadith} for section ${sectionNumber}: ${sectionName}`);
+    
+    // Fetch all hadiths in the range
+    const hadithPromises = [];
+    for (let i = firstHadith; i <= lastHadith; i++) {
+      hadithPromises.push(fetchSpecificHadith(collectionId, i));
+    }
+    
+    const hadithResults = await Promise.allSettled(hadithPromises);
+    const hadiths = hadithResults
+      .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled' && result.value !== null)
+      .map(result => result.value);
+    
+    return {
+      metadata: {
+        name: sectionData.metadata?.name || '',
+        section: { [sectionNumber]: sectionName },
+        section_detail: { [sectionNumber]: sectionDetail }
+      },
+      hadiths: hadiths
+    };
   } catch (error) {
     console.error(`Error fetching hadith section ${sectionNumber} from ${collectionId}:`, error);
-    // Fallback to the main URL
-    try {
-      const fallbackResponse = await fetch(`${HADITH_API_BASE}/editions/${collectionId}/${sectionNumber}.json`);
-      if (fallbackResponse.ok) {
-        return await fallbackResponse.json();
-      }
-    } catch (fallbackError) {
-      console.error('Fallback also failed:', fallbackError);
-    }
     return null;
   }
 }

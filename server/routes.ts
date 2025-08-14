@@ -340,7 +340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const randomHadith = await getRandomHadith();
         if (randomHadith) {
           return res.json({
-            faith: 'hadith',
+            faith: 'islam',
             book: randomHadith.book,
             chapter: randomHadith.chapter,
             verse: randomHadith.verse,
@@ -360,42 +360,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Fallback to predefined verses if external API fails
         const fallbackVerses = [
           {
-            religion: "bible",
+            religion: "christianity",
             book: "Matthew",
             chapter: 5,
             verse: 9,
             text: "Blessed are the peacemakers, for they will be called children of God."
           },
           {
-            religion: "quran",
+            religion: "islam",
             book: "Al-Baqarah",
             chapter: 2,
             verse: 255,
             text: "Allah - there is no deity except Him, the Ever-Living, the Sustainer of existence."
           },
           {
-            religion: "torah",
+            religion: "judaism",
             book: "Leviticus",
             chapter: 19,
             verse: 18,
             text: "Do not seek revenge or bear a grudge against anyone among your people, but love your neighbor as yourself."
           },
           {
-            religion: "hindu",
+            religion: "hinduism",
             book: "Bhagavad Gita",
             chapter: 2,
             verse: 47,
             text: "You have a right to perform your prescribed duty, but not to the fruits of action."
           },
           {
-            religion: "buddhist",
+            religion: "buddhism",
             book: "Tripitaka",
             chapter: 1,
             verse: 1,
             text: "All conditioned things are impermanent. Work out your salvation with diligence."
           },
           {
-            religion: "hadith",
+            religion: "islam",
             book: "Sahih al-Bukhari",
             chapter: 1,
             verse: 1,

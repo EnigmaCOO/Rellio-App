@@ -266,7 +266,7 @@ export async function fetchHadithContent(book: string, chapter: number): Promise
     console.log(`Fetched ${hadithResponse.hadiths.length} hadiths from section ${chapter}`);
     
     return hadithResponse.hadiths.map((hadith, index) => ({
-      religion: 'hadith' as Religion,
+      religion: 'islam' as Religion,
       book: book,
       chapter: chapter,
       verse: hadith.hadithnumber || index + 1,
@@ -294,7 +294,7 @@ export async function getRandomHadith(): Promise<ExternalScripture | null> {
       }
       const data = await fallbackResponse.json();
       return {
-        religion: 'hadith' as Religion,
+        religion: 'islam' as Religion,
         book: randomCollection.name,
         chapter: 1,
         verse: data.hadithnumber || randomHadithNumber,
@@ -305,7 +305,7 @@ export async function getRandomHadith(): Promise<ExternalScripture | null> {
     
     const data = await response.json();
     return {
-      religion: 'hadith' as Religion,
+      religion: 'islam' as Religion,
       book: randomCollection.name,
       chapter: 1,
       verse: data.hadithnumber || randomHadithNumber,
