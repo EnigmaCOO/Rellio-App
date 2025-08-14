@@ -11,11 +11,121 @@ import {
   chatRequestSchema, 
   insertChatMessageSchema,
   insertUserReadingSchema,
-  religionSchema 
+  religionSchema,
+  loginSchema,
+  signupSchema
 } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+
+  // Authentication routes
+  app.get("/api/auth/user", async (req: any, res) => {
+    try {
+      if (req.session?.userId) {
+        const user = await storage.getUser(req.session.userId);
+        if (user) {
+          res.json(user);
+        } else {
+          res.status(401).json({ error: "User not found" });
+        }
+      } else {
+        res.status(401).json({ error: "Not authenticated" });
+      }
+    } catch (error) {
+      console.error("Auth user error:", error);
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req: any, res) => {
+    try {
+      const { email, username, password } = loginSchema.parse(req.body);
+      
+      let user;
+      if (email) {
+        user = await storage.getUserByEmail(email);
+      } else if (username) {
+        user = await storage.getUserByUsername(username);
+      }
+
+      if (!user || !user.password) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      // For demo purposes, we'll use simple password comparison
+      // In production, use bcrypt.compare
+      if (user.password !== password) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      req.session.userId = user.id;
+      res.json({ success: true, user: { id: user.id, email: user.email, username: user.username } });
+    } catch (error) {
+      console.error("Login error:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid input", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Server error" });
+      }
+    }
+  });
+
+  app.post("/api/auth/signup", async (req: any, res) => {
+    try {
+      const userData = signupSchema.parse(req.body);
+      
+      // Check if user already exists
+      const existingEmail = await storage.getUserByEmail(userData.email);
+      if (existingEmail) {
+        return res.status(400).json({ error: "Email already registered" });
+      }
+
+      const existingUsername = await storage.getUserByUsername(userData.username);
+      if (existingUsername) {
+        return res.status(400).json({ error: "Username already taken" });
+      }
+
+      // Create new user (in production, hash the password)
+      const newUser = await storage.createUser(userData);
+      req.session.userId = newUser.id;
+      
+      res.json({ success: true, user: { id: newUser.id, email: newUser.email, username: newUser.username } });
+    } catch (error) {
+      console.error("Signup error:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid input", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Server error" });
+      }
+    }
+  });
+
+  app.post("/api/auth/guest", async (req: any, res) => {
+    try {
+      // Create a temporary guest session
+      req.session.isGuest = true;
+      req.session.userId = `guest_${Date.now()}`;
+      res.json({ success: true, guest: true });
+    } catch (error) {
+      console.error("Guest access error:", error);
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.post("/api/auth/logout", async (req: any, res) => {
+    try {
+      req.session.destroy((err: any) => {
+        if (err) {
+          return res.status(500).json({ error: "Could not log out" });
+        }
+        res.json({ success: true });
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.status(500).json({ error: "Server error" });
+    }
+  });
   // Get available religions
   app.get("/api/religions", async (req, res) => {
     try {
@@ -315,7 +425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user readings
   app.get("/api/readings/:userId", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.params.userId;
       const readings = await storage.getUserReadings(userId);
       res.json(readings);
     } catch (error) {

@@ -24,6 +24,19 @@
   --ring: hsl(20, 14.3%, 4.1%);
   --radius: 0.5rem;
   
+  /* Futuristic theme colors */
+  --deep-indigo: hsl(235, 100%, 8%);
+  --dark-indigo: hsl(233, 50%, 12%);
+  --indigo-900: hsl(234, 50%, 15%);
+  --indigo-800: hsl(236, 55%, 20%);
+  --indigo-700: hsl(238, 60%, 28%);
+  --neon-blue: hsl(212, 100%, 60%);
+  --neon-cyan: hsl(189, 100%, 55%);
+  --neon-purple: hsl(275, 100%, 65%);
+  --holographic-pink: hsl(320, 100%, 70%);
+  --holographic-green: hsl(160, 100%, 60%);
+  --cosmic-gold: hsl(45, 100%, 65%);
+  
   /* Aura Archivist teal accent colors */
   --teal-50: hsl(166, 76%, 97%);
   --teal-100: hsl(167, 85%, 89%);
@@ -110,25 +123,25 @@
 }
 
 .dark {
-  --background: hsl(240, 10%, 3.9%);
+  --background: var(--deep-indigo);
   --foreground: hsl(0, 0%, 98%);
-  --muted: hsl(240, 3.7%, 15.9%);
+  --muted: var(--dark-indigo);
   --muted-foreground: hsl(240, 5%, 64.9%);
-  --popover: hsl(240, 10%, 3.9%);
+  --popover: var(--dark-indigo);
   --popover-foreground: hsl(0, 0%, 98%);
-  --card: hsl(240, 10%, 3.9%);
+  --card: var(--indigo-900);
   --card-foreground: hsl(0, 0%, 98%);
-  --border: hsl(240, 3.7%, 15.9%);
-  --input: hsl(240, 3.7%, 15.9%);
-  --primary: hsl(207, 90%, 54%);
+  --border: var(--indigo-800);
+  --input: var(--indigo-800);
+  --primary: var(--neon-blue);
   --primary-foreground: hsl(211, 100%, 99%);
-  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary: var(--indigo-800);
   --secondary-foreground: hsl(0, 0%, 98%);
-  --accent: hsl(240, 3.7%, 15.9%);
-  --accent-foreground: hsl(0, 0%, 98%);
+  --accent: var(--neon-cyan);
+  --accent-foreground: var(--deep-indigo);
   --destructive: hsl(0, 62.8%, 30.6%);
   --destructive-foreground: hsl(0, 0%, 98%);
-  --ring: hsl(240, 4.9%, 83.9%);
+  --ring: var(--neon-blue);
   --radius: 0.5rem;
 }
 
@@ -139,6 +152,28 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+  }
+  
+  /* Futuristic background for landing page */
+  .futuristic-bg {
+    background: linear-gradient(135deg, var(--deep-indigo) 0%, var(--dark-indigo) 50%, var(--indigo-900) 100%);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+  
+  .futuristic-bg::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(0, 150, 255, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(0, 255, 200, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(150, 0, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
   }
 }
 
@@ -355,3 +390,147 @@
 .border-teal-700 { border-color: var(--teal-700); }
 .border-teal-800 { border-color: var(--teal-800); }
 .border-teal-900 { border-color: var(--teal-900); }
+
+/* Futuristic animations */
+@keyframes neonPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px var(--neon-blue), 0 0 40px var(--neon-blue), 0 0 60px var(--neon-blue);
+  }
+  50% {
+    box-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue), 0 0 30px var(--neon-blue);
+  }
+}
+
+@keyframes holographicShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes floatingSymbol {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-10px) rotate(120deg);
+  }
+  66% {
+    transform: translateY(5px) rotate(240deg);
+  }
+}
+
+@keyframes circuitLine {
+  0% {
+    stroke-dashoffset: 1000;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-neon-pulse {
+  animation: neonPulse 2s ease-in-out infinite;
+}
+
+.animate-holographic-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--neon-cyan),
+    var(--holographic-pink),
+    var(--neon-purple),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: holographicShimmer 3s linear infinite;
+}
+
+.animate-floating-symbol {
+  animation: floatingSymbol 6s ease-in-out infinite;
+}
+
+.animate-circuit-line {
+  stroke-dasharray: 1000;
+  animation: circuitLine 4s ease-in-out infinite;
+}
+
+/* Neon text effects */
+.neon-text {
+  color: var(--neon-blue);
+  text-shadow: 
+    0 0 5px currentColor,
+    0 0 10px currentColor,
+    0 0 15px currentColor,
+    0 0 20px currentColor;
+}
+
+.neon-text-cyan {
+  color: var(--neon-cyan);
+  text-shadow: 
+    0 0 5px currentColor,
+    0 0 10px currentColor,
+    0 0 15px currentColor,
+    0 0 20px currentColor;
+}
+
+.neon-border {
+  border: 2px solid var(--neon-blue);
+  box-shadow: 
+    0 0 10px var(--neon-blue),
+    inset 0 0 10px rgba(0, 150, 255, 0.1);
+}
+
+.holographic-card {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 150, 255, 0.1) 0%,
+    rgba(0, 255, 200, 0.1) 50%,
+    rgba(150, 0, 255, 0.1) 100%
+  );
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Religious symbol styles */
+.religious-symbol {
+  color: var(--neon-blue);
+  filter: drop-shadow(0 0 10px currentColor);
+  transition: all 0.3s ease;
+}
+
+.religious-symbol:hover {
+  color: var(--neon-cyan);
+  transform: scale(1.1);
+}
+
+/* Utility classes for futuristic theme */
+.bg-deep-indigo { background-color: var(--deep-indigo); }
+.bg-dark-indigo { background-color: var(--dark-indigo); }
+.bg-indigo-900 { background-color: var(--indigo-900); }
+.bg-indigo-800 { background-color: var(--indigo-800); }
+.bg-indigo-700 { background-color: var(--indigo-700); }
+.bg-neon-blue { background-color: var(--neon-blue); }
+.bg-neon-cyan { background-color: var(--neon-cyan); }
+.bg-neon-purple { background-color: var(--neon-purple); }
+.bg-holographic-pink { background-color: var(--holographic-pink); }
+.bg-holographic-green { background-color: var(--holographic-green); }
+.bg-cosmic-gold { background-color: var(--cosmic-gold); }
+
+.text-deep-indigo { color: var(--deep-indigo); }
+.text-dark-indigo { color: var(--dark-indigo); }
+.text-indigo-900 { color: var(--indigo-900); }
+.text-indigo-800 { color: var(--indigo-800); }
+.text-indigo-700 { color: var(--indigo-700); }
+.text-neon-blue { color: var(--neon-blue); }
+.text-neon-cyan { color: var(--neon-cyan); }
+.text-neon-purple { color: var(--neon-purple); }
+.text-holographic-pink { color: var(--holographic-pink); }
+.text-holographic-green { color: var(--holographic-green); }
+.text-cosmic-gold { color: var(--cosmic-gold); }
+
+.border-neon-blue { border-color: var(--neon-blue); }
+.border-neon-cyan { border-color: var(--neon-cyan); }
+.border-neon-purple { border-color: var(--neon-purple); }

@@ -15,8 +15,9 @@ import {
 } from "@shared/schema";
 
 export interface IStorage {
-  getUser(id: number): Promise<User | undefined>;
+  getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
   getScriptures(religion: Religion, book: string, chapter: number): Promise<Scripture[]>;
@@ -143,8 +144,8 @@ export class MemStorage implements IStorage {
     });
   }
 
-  async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+  async getUser(id: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.id === id);
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
@@ -153,10 +154,21 @@ export class MemStorage implements IStorage {
     );
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.email === email,
+    );
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const id = `user_${this.currentId++}`;
+    const user: User = { 
+      ...insertUser, 
+      id,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.users.set(this.currentId - 1, user);
     return user;
   }
 
@@ -206,8 +218,10 @@ export class MemStorage implements IStorage {
     return message;
   }
 
-  async getUserReadings(userId: number): Promise<UserReading[]> {
-    return this.userReadings.get(userId) || [];
+  async getUserReadings(userId: string): Promise<UserReading[]> {
+    return Array.from(this.userReadings.values()).flat().filter(
+      reading => reading.userId === userId
+    );
   }
 
   async createUserReading(insertReading: InsertUserReading): Promise<UserReading> {
@@ -219,12 +233,11 @@ export class MemStorage implements IStorage {
       timestamp: new Date()
     };
     
-    const userId = insertReading.userId || 0;
-    if (!this.userReadings.has(userId)) {
-      this.userReadings.set(userId, []);
-    }
+    const userId = insertReading.userId || "";
+    const readings = this.userReadings.get(0) || [];
+    readings.push(reading);
+    this.userReadings.set(0, readings);
     
-    this.userReadings.get(userId)!.push(reading);
     return reading;
   }
 }

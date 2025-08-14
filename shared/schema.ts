@@ -1,11 +1,29 @@
-import { pgTable, text, serial, integer, json, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, json, timestamp, varchar, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { sql } from 'drizzle-orm';
+
+// Session storage table for authentication
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: json("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
 
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").unique(),
+  username: text("username").unique(),
+  password: text("password"),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const scriptures = pgTable("scriptures", {
@@ -29,7 +47,7 @@ export const chatMessages = pgTable("chat_messages", {
 
 export const userReadings = pgTable("user_readings", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id"),
+  userId: varchar("user_id"),
   religion: text("religion").notNull(),
   book: text("book").notNull(),
   chapter: integer("chapter").notNull(),
@@ -51,8 +69,27 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export const insertUserSchema = createInsertSchema(users).pick({
+  email: true,
   username: true,
   password: true,
+  firstName: true,
+  lastName: true,
+});
+
+export const loginSchema = z.object({
+  email: z.string().email().optional(),
+  username: z.string().optional(),
+  password: z.string().min(6),
+}).refine(data => data.email || data.username, {
+  message: "Either email or username is required",
+});
+
+export const signupSchema = z.object({
+  email: z.string().email(),
+  username: z.string().min(3).max(20),
+  password: z.string().min(6),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
 });
 
 export const religionSchema = z.enum(['christianity', 'islam', 'judaism', 'hinduism', 'buddhism']);
