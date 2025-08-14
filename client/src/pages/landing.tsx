@@ -134,7 +134,7 @@ export default function LandingPage() {
   }, [sampleQuery]);
 
   const handleGetStarted = () => {
-    setLocation('/auth');
+    setLocation('/dashboard');
   };
 
   return (
@@ -229,7 +229,7 @@ export default function LandingPage() {
                   onClick={handleGetStarted}
                   className="w-full bg-neon-cyan hover:bg-holographic-pink text-deep-indigo"
                 >
-                  Sign up to explore
+                  Start exploring now
                 </Button>
               </CardContent>
             </Card>

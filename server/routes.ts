@@ -23,14 +23,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/auth/user", async (req: any, res) => {
     try {
       if (req.session?.userId) {
-        const user = await storage.getUser(req.session.userId);
-        if (user) {
-          res.json(user);
+        if (req.session.isGuest) {
+          res.json({ guest: true, id: req.session.userId });
         } else {
-          res.status(401).json({ error: "User not found" });
+          const user = await storage.getUser(req.session.userId);
+          if (user) {
+            res.json(user);
+          } else {
+            res.status(401).json({ error: "User not found" });
+          }
         }
       } else {
-        res.status(401).json({ error: "Not authenticated" });
+        // Create guest session automatically
+        req.session.isGuest = true;
+        req.session.userId = `guest_${Date.now()}`;
+        res.json({ guest: true, id: req.session.userId });
       }
     } catch (error) {
       console.error("Auth user error:", error);

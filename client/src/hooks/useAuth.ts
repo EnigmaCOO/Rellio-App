@@ -9,6 +9,7 @@ export function useAuth() {
   return {
     user,
     isLoading,
-    isAuthenticated: !!user && !error,
+    isAuthenticated: !!user && !error && !user?.guest,
+    isGuest: user?.guest === true,
   };
 }
