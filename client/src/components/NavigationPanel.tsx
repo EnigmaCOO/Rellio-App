@@ -18,7 +18,7 @@ interface NavigationPanelProps {
   selectedReligion: Religion | null;
   selectedBook: string;
   selectedChapter: number;
-  religions?: any[];
+  religions?: Array<{id: Religion, name: string, books: string[], sections?: Record<string, string[]>}>;
   books?: string[];
   maxChapters?: number;
   onReligionChange: (religion: Religion) => void;
@@ -73,18 +73,18 @@ export function NavigationPanel({
     if (!selectedReligion || !selectedBook) return 0; // No chapters when no book selected
 
     switch (selectedReligion) {
-      case 'bible':
+      case 'christianity':
         // Use the API-provided maxChapters for Bible books since we have accurate data
         return maxChapters || 1;
-      case 'quran':
-        // For Quran, each surah is a book with 1 chapter
+      case 'islam':
+        // For Quran surahs, each is a book with 1 chapter; for hadith, multiple chapters
         return maxChapters || 1;
-      case 'hindu':
+      case 'hinduism':
         return 18; // Bhagavad Gita chapters
-      case 'torah':
+      case 'judaism':
         // Use the API-provided maxChapters for Torah books since we have accurate data
         return maxChapters || 1;
-      case 'buddhist':
+      case 'buddhism':
         return 10; // Tripitaka sample
       default:
         return maxChapters || 1;
@@ -248,7 +248,7 @@ export function NavigationPanel({
               src={uploadedSymbols.christianity || undefined}
               alt="Christian Symbol"
               className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
-              onClick={() => handleSymbolClick('bible')}
+              onClick={() => handleSymbolClick('christianity')}
               title="Holy Bible"
             />
             
@@ -257,7 +257,7 @@ export function NavigationPanel({
               src={uploadedSymbols.islam || undefined}
               alt="Islamic Symbol"
               className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
-              onClick={() => handleSymbolClick('quran')}
+              onClick={() => handleSymbolClick('islam')}
               title="Quran"
             />
             
@@ -266,7 +266,7 @@ export function NavigationPanel({
               src={uploadedSymbols.judaism || undefined}
               alt="Jewish Symbol"
               className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
-              onClick={() => handleSymbolClick('torah')}
+              onClick={() => handleSymbolClick('judaism')}
               title="Torah"
             />
             
@@ -275,7 +275,7 @@ export function NavigationPanel({
               src={uploadedSymbols.buddhism || undefined}
               alt="Buddhist Symbol"
               className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
-              onClick={() => handleSymbolClick('buddhist')}
+              onClick={() => handleSymbolClick('buddhism')}
               title="Tripitaka"
             />
             
@@ -284,7 +284,7 @@ export function NavigationPanel({
               src={uploadedSymbols.hinduism || undefined}
               alt="Hindu Symbol"
               className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded object-cover"
-              onClick={() => handleSymbolClick('hindu')}
+              onClick={() => handleSymbolClick('hinduism')}
               title="Bhagavad Gita"
             />
           </div>
@@ -324,20 +324,47 @@ export function NavigationPanel({
               <SelectTrigger className="w-full h-11 bg-white border-scripture-300 hover:border-scripture-400 focus:border-scripture-500 focus:ring-2 focus:ring-scripture-100 transition-all duration-200">
                 <SelectValue placeholder="Select a book..." className="text-scripture-700" />
               </SelectTrigger>
-              <SelectContent className="bg-white border-scripture-200 shadow-lg max-h-60">
-                {books?.map((book, index) => {
-                  // Handle both string and object formats
-                  const bookName = typeof book === 'string' ? book : (book as any)?.name || book;
-                  return (
-                    <SelectItem 
-                      key={`${bookName}-${index}`} 
-                      value={bookName}
-                      className="cursor-pointer hover:bg-scripture-50 focus:bg-scripture-100 py-2.5 px-3 text-scripture-700 font-medium"
-                    >
-                      {bookName}
-                    </SelectItem>
-                  );
-                })}
+              <SelectContent className="bg-white border-scripture-200 shadow-lg max-h-80">
+                {(() => {
+                  const currentReligion = religions?.find(r => r.id === selectedReligion);
+                  
+                  // Special handling for Islam - show sectioned books
+                  if (selectedReligion === 'islam' && currentReligion?.sections) {
+                    return Object.entries(currentReligion.sections).map(([sectionName, sectionBooks]) => (
+                      <div key={sectionName}>
+                        {/* Section Header */}
+                        <div className="px-3 py-2 text-xs font-semibold text-scripture-600 bg-scripture-50 border-b border-scripture-100 uppercase tracking-wider">
+                          {sectionName}
+                        </div>
+                        {/* Section Books */}
+                        {sectionBooks.map((bookName) => (
+                          <SelectItem
+                            key={bookName}
+                            value={bookName}
+                            className="cursor-pointer hover:bg-scripture-50 focus:bg-scripture-100 py-2.5 pl-6 pr-3 text-scripture-700 font-medium"
+                          >
+                            {bookName}
+                          </SelectItem>
+                        ))}
+                      </div>
+                    ));
+                  }
+                  
+                  // Regular handling for other religions - use books prop
+                  return books?.map((book, index) => {
+                    // Handle both string and object formats
+                    const bookName = typeof book === 'string' ? book : (book as any)?.name || book;
+                    return (
+                      <SelectItem 
+                        key={`${bookName}-${index}`} 
+                        value={bookName}
+                        className="cursor-pointer hover:bg-scripture-50 focus:bg-scripture-100 py-2.5 px-3 text-scripture-700 font-medium"
+                      >
+                        {bookName}
+                      </SelectItem>
+                    );
+                  });
+                })()}
               </SelectContent>
             </Select>
           </div>

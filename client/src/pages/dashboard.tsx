@@ -51,7 +51,7 @@ export default function Dashboard() {
     };
   }, []);
 
-  const { data: religions, isLoading: religionsLoading } = useQuery<Array<{id: Religion, name: string, books: string[]}>>({
+  const { data: religions, isLoading: religionsLoading } = useQuery<Array<{id: Religion, name: string, books: string[], sections?: Record<string, string[]>}>>({
     queryKey: ['/api/religions'],
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -210,9 +210,9 @@ export default function Dashboard() {
     // Update navigation state
     setSelectedReligion(religion);
     
-    // For Quran, we need to map the book name to match the available books
-    if (religion === 'quran') {
-      const currentBooks = religions?.find(r => r.id === 'quran')?.books || [];
+    // For Islam, we need to map the book name to match the available books
+    if (religion === 'islam') {
+      const currentBooks = religions?.find(r => r.id === 'islam')?.books || [];
       
       // Try to find an exact match first
       let matchingBook = currentBooks.find(b => b === book);

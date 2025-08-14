@@ -20,11 +20,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/religions", async (req, res) => {
     try {
       const religions = getAvailableReligions();
-      const religionData = religions.map(religion => ({
-        id: religion,
-        name: getReligionConfig(religion).name,
-        books: getReligionConfig(religion).books.map(book => book.name)
-      }));
+      const religionData = religions.map(religion => {
+        const config = getReligionConfig(religion);
+        
+        // For Islam, group books by sections
+        if (religion === 'islam') {
+          const sections: Record<string, string[]> = {};
+          config.books.forEach(book => {
+            const section = book.section || 'Other';
+            if (!sections[section]) {
+              sections[section] = [];
+            }
+            sections[section].push(book.name);
+          });
+          
+          return {
+            id: religion,
+            name: config.name,
+            books: config.books.map(book => book.name),
+            sections: sections
+          };
+        }
+        
+        return {
+          id: religion,
+          name: config.name,
+          books: config.books.map(book => book.name)
+        };
+      });
       res.json(religionData);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch religions" });
