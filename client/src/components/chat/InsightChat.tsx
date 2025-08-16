@@ -84,7 +84,8 @@ function EnhancedMessageBubble({
   isVoicePlaying,
   isVoiceLoading,
   onVoiceStop,
-  toast
+  toast,
+  onVerseClick
 }: { 
   message: ChatMessage;
   index: number;
@@ -94,6 +95,7 @@ function EnhancedMessageBubble({
   isVoiceLoading: boolean;
   onVoiceStop: () => void;
   toast: (options: { title: string; description: string; duration?: number }) => void;
+  onVerseClick: (reference: string) => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const needsTruncation = message.content.length > 300;
@@ -138,17 +140,43 @@ function EnhancedMessageBubble({
     const hasMultiReligious = hasXMLPerspectives || hasTraditionalPerspectives;
 
     if (!hasMultiReligious) {
+      // Function to make verse references clickable in regular responses
+      const makeTextReferencesClickable = (text: string) => {
+        const patterns = [
+          // Bible: "John 3:16", "1 John 4:8", "Matthew 11:15"
+          /\b(\d*\s*[A-Z][a-z]+)\s+(\d+):(\d+)\b/g,
+          // Quran: "Surah Al-Ikhlas 112:1", "Quran 39:17-18"
+          /\b(Surah\s+[A-Z][a-z-]+|Quran)\s+(\d+):(\d+)(?:-(\d+))?\b/g,
+        ];
+        
+        let processedText = text;
+        patterns.forEach(pattern => {
+          processedText = processedText.replace(pattern, (match) => {
+            return `<button class="inline-flex items-center gap-1 mx-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-xs font-medium hover:bg-blue-200 transition-colors cursor-pointer" onclick="window.handleVerseClick('${match}')" title="Click to navigate to ${match}">${match} <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></button>`;
+          });
+        });
+        
+        return processedText;
+      };
+
+      const processedContent = makeTextReferencesClickable(displayContent);
+      
       return (
-        <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
-          {displayContent}
-        </div>
+        <div 
+          className="text-gray-800 text-sm leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: processedContent }}
+        />
       );
     }
 
     // Parse XML-style perspectives
     if (hasXMLPerspectives) {
       const perspectiveRegex = /<perspective>(Christianity|Islam|Judaism|Hinduism|Buddhism)<\/perspective>([\s\S]*?)(?=<perspective>|$)/g;
-      const matches = [...content.matchAll(perspectiveRegex)];
+      const matches = [];
+      let match;
+      while ((match = perspectiveRegex.exec(content)) !== null) {
+        matches.push(match);
+      }
       
       // Extract introduction (text before first perspective tag)
       const introMatch = content.match(/^([\s\S]*?)(?=<perspective>)/);
@@ -159,6 +187,28 @@ function EnhancedMessageBubble({
         const [, religion, perspectiveText] = match;
         perspectiveMap.set(religion, perspectiveText.trim());
       });
+
+      // Function to make verse references clickable
+      const makeReferencesClickable = (text: string) => {
+        // Regex patterns for different religious text references
+        const patterns = [
+          // Bible: "John 3:16", "1 John 4:8", "Matthew 11:15"
+          /\b(\d*\s*[A-Z][a-z]+)\s+(\d+):(\d+)\b/g,
+          // Quran: "Surah Al-Ikhlas 112:1", "Quran 39:17-18"
+          /\b(Surah\s+[A-Z][a-z-]+|Quran)\s+(\d+):(\d+)(?:-(\d+))?\b/g,
+          // Torah: "Deuteronomy 6:4"
+          /\b([A-Z][a-z]+)\s+(\d+):(\d+)\b/g
+        ];
+        
+        let processedText = text;
+        patterns.forEach(pattern => {
+          processedText = processedText.replace(pattern, (match) => {
+            return `<span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-xs font-medium cursor-pointer hover:bg-blue-200 transition-colors" title="Click to navigate to ${match}">${match} <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></span>`;
+          });
+        });
+        
+        return processedText;
+      };
 
       const perspectives = [
         { key: 'Christianity', name: 'Christian', icon: Eye, bgColor: 'bg-blue-50', borderColor: 'border-blue-200', textColor: 'text-blue-700', iconColor: 'text-blue-600' },
@@ -187,11 +237,32 @@ function EnhancedMessageBubble({
                   className={`group flex items-center gap-1.5 px-3 py-2 ${bgColor} border ${borderColor} rounded-full hover:shadow-lg perspective-chip-transition`}
                   title={`Click to read ${name} perspective: ${perspectiveContent.substring(0, 100)}...`}
                   onClick={() => {
-                    // Show perspective content in a toast or modal
+                    // Create a formatted version with clickable references
+                    const formattedContent = makeReferencesClickable(perspectiveContent);
+                    
+                    // Create a custom toast with HTML content
+                    const toastDiv = document.createElement('div');
+                    toastDiv.innerHTML = `
+                      <div class="space-y-3">
+                        <h4 class="font-semibold text-sm">${name} Perspective</h4>
+                        <div class="text-sm leading-relaxed" style="max-height: 200px; overflow-y: auto;">
+                          ${formattedContent}
+                        </div>
+                      </div>
+                    `;
+                    
+                    // Add click handlers for verse references
+                    toastDiv.addEventListener('click', (e) => {
+                      const target = e.target as HTMLElement;
+                      if (target.classList.contains('cursor-pointer') && target.textContent) {
+                        onVerseClick(target.textContent.trim());
+                      }
+                    });
+                    
                     toast({
                       title: `${name} Perspective`,
                       description: perspectiveContent,
-                      duration: 8000
+                      duration: 10000
                     });
                   }}
                 >
@@ -477,6 +548,59 @@ export function InsightChat({
     }
   }, [isVoicePlaying, stopPlayback]);
 
+  // Handle verse reference clicks
+  const handleVerseReferenceClick = useCallback((reference: string) => {
+    console.log('Verse reference clicked:', reference);
+    
+    // Parse the reference to extract religion, book, and verse info
+    let religion: Religion | null = null;
+    let book = '';
+    let chapter = 1;
+    let verse = 1;
+    
+    // Bible references: "John 3:16", "1 John 4:8"
+    const bibleMatch = reference.match(/^(\d*\s*[A-Z][a-z]+)\s+(\d+):(\d+)$/);
+    if (bibleMatch) {
+      religion = 'christianity';
+      book = bibleMatch[1].trim();
+      chapter = parseInt(bibleMatch[2]);
+      verse = parseInt(bibleMatch[3]);
+    }
+    
+    // Quran references: "Surah Al-Ikhlas 112:1"
+    const quranMatch = reference.match(/^(?:Surah\s+)?([A-Z][a-z-]+)\s+(\d+):(\d+)$/);
+    if (quranMatch && reference.includes('Surah')) {
+      religion = 'islam';
+      book = `Al-${quranMatch[1].replace('Al-', '')}`;
+      chapter = parseInt(quranMatch[2]);
+      verse = parseInt(quranMatch[3]);
+    }
+    
+    // Torah references: "Deuteronomy 6:4"
+    const torahMatch = reference.match(/^([A-Z][a-z]+)\s+(\d+):(\d+)$/);
+    if (torahMatch && !bibleMatch) {
+      religion = 'judaism';
+      book = torahMatch[1];
+      chapter = parseInt(torahMatch[2]);
+      verse = parseInt(torahMatch[3]);
+    }
+    
+    if (religion && book && onNavigateToVerse) {
+      onNavigateToVerse(religion, book, chapter, verse);
+      toast({
+        title: "Navigating to Verse",
+        description: `Opening ${reference} in the scripture reader`,
+        duration: 3000
+      });
+    } else {
+      toast({
+        title: "Reference Info",
+        description: `Scripture reference: ${reference}`,
+        duration: 4000
+      });
+    }
+  }, [onNavigateToVerse, toast]);
+
   // Handle external message processing
   useEffect(() => {
     if (externalMessage && !sendMessageMutation.isPending) {
@@ -491,6 +615,14 @@ export function InsightChat({
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Set up global verse click handler
+  useEffect(() => {
+    (window as any).handleVerseClick = handleVerseReferenceClick;
+    return () => {
+      delete (window as any).handleVerseClick;
+    };
+  }, [handleVerseReferenceClick]);
+  
   // Bookmarking system
   const handleBookmark = useCallback((content: string) => {
     const bookmark = {
@@ -558,6 +690,48 @@ export function InsightChat({
               <Badge variant="outline" className="text-xs text-teal-600 border-teal-200">
                 Voice AI
               </Badge>
+            )}
+            
+            {/* History and Clear buttons */}
+            {messages.length > 0 && (
+              <div className="flex items-center space-x-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs text-gray-500 hover:text-gray-700"
+                  onClick={() => {
+                    // Toggle conversation history visibility or show in modal
+                    toast({
+                      title: "Conversation History",
+                      description: `You have ${messages.length} messages in this session. Use the scroll area to review past messages.`,
+                      duration: 4000
+                    });
+                  }}
+                >
+                  <History className="w-3 h-3 mr-1" />
+                  History
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => {
+                    if (confirm('Clear all conversation history? This action cannot be undone.')) {
+                      // Clear messages by invalidating the query cache
+                      queryClient.setQueryData(['/api/chat', sessionId], []);
+                      conversationManager.conversationState.turns = [];
+                      toast({
+                        title: "Conversation Cleared",
+                        description: "All messages have been removed from this session.",
+                        duration: 3000
+                      });
+                    }
+                  }}
+                >
+                  <RefreshCw className="w-3 h-3 mr-1" />
+                  Clear
+                </Button>
+              </div>
             )}
           </div>
         </div>
@@ -654,6 +828,7 @@ export function InsightChat({
                 isVoiceLoading={isVoiceLoading}
                 onVoiceStop={stopPlayback}
                 toast={toast}
+                onVerseClick={handleVerseReferenceClick}
               />
             ))
           )}
