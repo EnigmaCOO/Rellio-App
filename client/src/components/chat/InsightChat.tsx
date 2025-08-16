@@ -479,7 +479,7 @@ export function InsightChat({
             <GrokStyleOrb state={orbState} size="md" />
             <div>
               <h3 className="font-semibold text-sm text-gray-900">Universal Wisdom Explorer</h3>
-              <p className="text-xs text-gray-500">Grok-style conversational guidance</p>
+              <p className="text-xs text-gray-500">Your spiritual guide for multi-faith wisdom</p>
             </div>
           </div>
           
