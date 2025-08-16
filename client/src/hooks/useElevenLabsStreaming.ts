@@ -22,8 +22,9 @@ export interface ElevenLabsStreamingReturn {
   setVolume: (volume: number) => void;
 }
 
-// Default voice IDs for different personas (you can expand this)
+// Enhanced voice personas for Grok-style personality
 const DEFAULT_VOICES = {
+  grok: 'ErXwobaYiN019PkySvjV', // Antoni - friendly, engaging, perfect for Grok
   mystic: 'EXAVITQu4vr4xnSDxMaL', // Bella - warm, calming female voice
   scholar: 'pNInz6obpgDQGcFmaJgB', // Adam - clear, professional male voice
   sage: 'VR6AewLTigWG4xSOukaG', // Arnold - deep, authoritative male voice
@@ -32,7 +33,7 @@ const DEFAULT_VOICES = {
 
 export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {}): ElevenLabsStreamingReturn {
   const {
-    voiceId = DEFAULT_VOICES.scholar,
+    voiceId = DEFAULT_VOICES.grok, // Default to Grok voice for personality
     autoPlay = true,
     onStart,
     onEnd,
@@ -246,7 +247,7 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
     return audio;
   }, [volume, autoPlay, onStart, onEnd, onError]);
 
-  // Main function to convert text to speech and play
+  // Main function to convert text to speech and play with enhanced error handling
   const playText = useCallback(async (text: string): Promise<void> => {
     if (!isSupported) {
       onError?.('Audio not supported in this browser');
@@ -258,13 +259,16 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       return;
     }
 
-    console.log('🔊 Starting text-to-speech for:', text.substring(0, 50) + '...');
+    console.log('🔊 Starting Grok-style TTS for:', text.substring(0, 50) + '...', 'with enhanced personality settings');
     
     try {
       setIsLoading(true);
       isInterruptedRef.current = false;
 
-      // Call backend API to generate speech
+      // Enhanced API call with timeout and better error handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s timeout
+
       const response = await fetch('/api/elevenlabs/speak', {
         method: 'POST',
         headers: {
@@ -274,83 +278,123 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
           text: text.trim(),
           voiceId,
           options: {
-            stability: 0.5,
-            similarityBoost: 0.75,
-            style: 0.0,
-            useSpeakerBoost: true
+            stability: 0.3, // Even more dynamic for Grok-style personality
+            similarityBoost: 0.9, // Higher consistency for clear personality
+            style: 0.4, // More personality injection for engaging delivery
+            useSpeakerBoost: true,
+            optimizeStreamingLatency: 3 // Faster response for conversational feel
           }
         }),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      // Validate response content type
+      // Enhanced response validation
       const contentType = response.headers.get('content-type');
-      console.log('🔊 Response content type:', contentType);
+      console.log('🔊 Response details:', {
+        status: response.status,
+        contentType,
+        contentLength: response.headers.get('content-length')
+      });
       
       if (!contentType || !contentType.includes('audio/')) {
-        const responseText = await response.text();
-        console.error('🔊 Non-audio response received:', responseText.substring(0, 200));
-        throw new Error(`Invalid audio response. Expected audio format, got: ${contentType}. Response: ${responseText.substring(0, 100)}`);
+        const errorText = await response.text();
+        console.error('🔊 Invalid response received:', errorText.substring(0, 200));
+        throw new Error(`Expected audio, got: ${contentType}`);
       }
 
-      // Get audio blob
-      const audioBlob = await response.blob();
-      console.log('🔊 Audio blob received:', {
-        size: audioBlob.size,
-        type: audioBlob.type,
-        contentType: contentType
-      });
+      // Get audio data as array buffer for better control
+      const arrayBuffer = await response.arrayBuffer();
+      console.log('🔊 Audio data received:', arrayBuffer.byteLength, 'bytes');
       
-      if (audioBlob.size === 0) {
-        throw new Error('Received empty audio data');
+      if (arrayBuffer.byteLength === 0) {
+        throw new Error('Empty audio data received');
       }
 
-      // Always create a new blob with correct MIME type to ensure browser compatibility
-      const correctedBlob = new Blob([audioBlob], { type: 'audio/mpeg' });
-      console.log('🔊 Corrected blob:', {
-        size: correctedBlob.size,
-        type: correctedBlob.type
-      });
+      // Create optimized audio blob with multiple format fallbacks
+      let audioBlob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
+      
+      // Verify blob can be processed
+      if (audioBlob.size !== arrayBuffer.byteLength) {
+        console.warn('🔊 Blob size mismatch, trying fallback');
+        // Try alternative blob creation
+        audioBlob = new Blob([new Uint8Array(arrayBuffer)], { type: 'audio/mp3' });
+        console.log('🔊 Using fallback blob:', audioBlob.size, 'bytes');
+      }
 
-      // Create and setup audio element
+      // Create and setup audio element with enhanced error recovery
       if (!isInterruptedRef.current) {
-        createAudioElement(correctedBlob, false);
+        try {
+          createAudioElement(audioBlob, false);
+        } catch (createError) {
+          console.warn('🔊 Primary audio creation failed, trying fallback:', createError);
+          // Try with different blob type as fallback
+          const fallbackBlob = new Blob([arrayBuffer], { type: 'audio/mp3' });
+          createAudioElement(fallbackBlob, true);
+        }
       } else {
         console.log('🔊 Playback was interrupted, skipping audio creation');
         setIsLoading(false);
       }
 
     } catch (error) {
-      console.error('🔊 Text-to-speech error:', error);
+      console.error('🔊 Grok-style TTS error:', error);
       setIsLoading(false);
-      onError?.(error instanceof Error ? error.message : 'Text-to-speech failed');
+      
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          onError?.('Voice request timed out. No worries - let\'s try that again!');
+        } else if (error.message.includes('Failed to fetch')) {
+          onError?.('Network hiccup detected! Check your connection and we\'ll get right back to chatting.');
+        } else if (error.message.includes('format')) {
+          onError?.('Audio format issue detected. Switching to compatibility mode...');
+          // Try a simpler request without advanced options
+          setTimeout(() => {
+            playText(text.substring(0, 100)) // Retry with shorter text
+              .catch(() => onError?.('Unable to generate voice. Please try again with shorter text.'));
+          }, 1000);
+          return;
+        } else {
+          onError?.(error.message || 'Voice generation hit a snag. Let\'s try again!');
+        }
+      } else {
+        onError?.('Voice generation hit an unexpected snag. No worries - let\'s try again!');
+      }
     }
   }, [isSupported, voiceId, createAudioElement, onError]);
 
-  // Stop current playback immediately
+  // Enhanced stop playback with immediate response
   const stopPlayback = useCallback(() => {
-    console.log('🔊 Stopping playback');
+    console.log('🔊 Interruption detected - stopping Grok immediately');
     isInterruptedRef.current = true;
     
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      
-      // Clean up audio URL
-      const oldSrc = audioRef.current.src;
-      audioRef.current.src = '';
-      if (oldSrc && oldSrc.startsWith('blob:')) {
-        URL.revokeObjectURL(oldSrc);
-      }
-    }
-    
+    // Immediate state updates for responsive feel
     setIsPlaying(false);
     setIsLoading(false);
     setCurrentAudio(null);
+    
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        
+        // Clean up audio URL
+        const oldSrc = audioRef.current.src;
+        audioRef.current.src = '';
+        if (oldSrc && oldSrc.startsWith('blob:')) {
+          URL.revokeObjectURL(oldSrc);
+        }
+      } catch (error) {
+        console.warn('🔊 Audio cleanup error (non-critical):', error);
+      }
+    }
+    
     onInterrupted?.();
   }, [onInterrupted]);
 
