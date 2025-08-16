@@ -163,7 +163,7 @@ export function VoiceFirstInterface({
       };
       
       backgroundRecognition.onresult = (event: any) => {
-        // Detect any speech activity during AI response with better filtering
+        // Immediate interruption on ANY voice detection during AI response
         if (isAIResponding) {
           let hasValidUserInput = false;
           let detectedText = '';
@@ -172,38 +172,46 @@ export function VoiceFirstInterface({
             const transcript = event.results[i][0].transcript.trim().toLowerCase();
             detectedText += transcript + ' ';
             
-            // More aggressive interruption detection - respond to ANY clear user input
-            if (transcript.length >= 2 && 
-                event.results[i][0].confidence > 0.6) { // Lower confidence threshold for faster interruption
+            // IMMEDIATE interruption - respond to ANY voice input (like Grok)
+            if (transcript.length >= 1 && 
+                event.results[i][0].confidence > 0.3) { // Very low threshold for instant response
               
-              // Simple filter for obvious AI voice feedback
-              const isLikelyAIFeedback = transcript.includes('perspective') ||
-                                       transcript.includes('christianity') ||
-                                       transcript.includes('islam') ||
-                                       transcript.includes('judaism') ||
-                                       transcript.includes('hinduism') ||
-                                       transcript.includes('buddhism');
+              // Minimal filtering - only filter out obvious repeated AI words
+              const isObviousAIEcho = transcript === 'perspective' ||
+                                    transcript === 'christianity' ||
+                                    transcript === 'islam' ||
+                                    transcript === 'judaism' ||
+                                    transcript === 'hinduism' ||
+                                    transcript === 'buddhism';
               
-              if (!isLikelyAIFeedback) {
+              if (!isObviousAIEcho) {
                 hasValidUserInput = true;
+                console.log('🎤 INSTANT interruption triggered by voice:', transcript);
                 break;
               }
             }
           }
           
           if (hasValidUserInput) {
-            console.log('🎤 Valid user interruption detected during AI response:', detectedText.trim());
-            console.log('🎤 Triggering interrupt to stop AI voice');
-            onInterrupt();
+            console.log('🎤 INTERRUPTING AI IMMEDIATELY - User spoke:', detectedText.trim());
+            onInterrupt(); // Stop AI voice immediately
             
-            // Stop background recognition immediately to prevent further feedback
+            // Capture the user input for processing
+            setVoiceTranscript(detectedText.trim());
+            
+            // Stop background recognition and switch to main recognition
             try {
               backgroundRecognition.stop();
+              // Give user a moment to continue speaking
+              setTimeout(() => {
+                if (recognitionRef.current && !isListening) {
+                  recognitionRef.current.start();
+                  console.log('🎤 Switched to main recognition after interruption');
+                }
+              }, 200);
             } catch (error) {
-              console.log('🎤 Background recognition stop error:', error);
+              console.log('🎤 Recognition switch error:', error);
             }
-          } else if (detectedText.length > 0) {
-            console.log('🎤 Ignoring potential AI voice feedback:', detectedText.trim());
           }
         }
       };
@@ -239,7 +247,7 @@ export function VoiceFirstInterface({
             console.log('🎤 Background recognition error:', error);
           }
         }
-      }, 500); // Quick start for interruption detection
+      }, 100); // Very quick start for instant interruption detection
       
       return () => clearTimeout(startBackgroundTimer);
     } else if (!isAIResponding && isBackgroundListening) {
