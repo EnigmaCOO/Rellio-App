@@ -101,11 +101,28 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
 
     audio.onerror = (error) => {
       console.error('🔊 Audio error:', error);
+      console.error('🔊 Audio error details:', {
+        error: audio.error,
+        networkState: audio.networkState,
+        readyState: audio.readyState,
+        src: audio.src
+      });
       setIsPlaying(false);
       setIsLoading(false);
       setCurrentAudio(null);
       URL.revokeObjectURL(audioUrl);
-      onError?.('Audio playback failed. Please try again.');
+      onError?.('Audio crashed during playback. The response might be too long.');
+    };
+    
+    // Add additional error handling for crashes
+    audio.onstalled = () => {
+      console.warn('🔊 Audio stalled');
+    };
+    
+    audio.onabort = () => {
+      console.warn('🔊 Audio aborted');
+      setIsPlaying(false);
+      setIsLoading(false);
     };
 
     // Try to play immediately
@@ -132,7 +149,15 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       return;
     }
 
-    console.log('🔊 Starting Grok-style TTS for:', text.substring(0, 50) + '...', 'with enhanced personality settings');
+    // Limit text length to prevent crashes with huge responses
+    const maxLength = 1500; // Reasonable limit for audio generation
+    const textToSpeak = text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    
+    if (text.length > maxLength) {
+      console.log('🔊 Text truncated from', text.length, 'to', textToSpeak.length, 'characters');
+    }
+
+    console.log('🔊 Starting Grok-style TTS for:', textToSpeak.substring(0, 50) + '...', 'with enhanced personality settings');
     
     try {
       setIsLoading(true);
@@ -148,7 +173,7 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          text: text.trim(),
+          text: textToSpeak.trim(),
           voiceId,
           options: {
             stability: 0.3, // Even more dynamic for Grok-style personality
