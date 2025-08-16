@@ -66,168 +66,55 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
     };
   }, []);
 
-  // Create audio element with event handlers with retry mechanism
-  const createAudioElement = useCallback((audioBlob: Blob, isRetry = false) => {
+  // Simplified audio element creation
+  const createAudioElement = useCallback((audioBlob: Blob) => {
+    console.log('🔊 Creating simple audio element:', audioBlob.size, 'bytes');
+    
     // Clean up previous audio
     if (audioRef.current) {
       audioRef.current.pause();
-      const oldSrc = audioRef.current.src;
       audioRef.current.src = '';
-      if (oldSrc && oldSrc.startsWith('blob:')) {
-        URL.revokeObjectURL(oldSrc);
-      }
     }
 
-    console.log('🔊 Creating audio element for blob:', audioBlob.size, 'bytes, type:', audioBlob.type);
-    
-    // Validate audio blob
-    if (audioBlob.size === 0) {
-      console.error('🔊 Empty audio blob received');
-      onError?.('Empty audio response received');
-      setIsLoading(false);
-      return;
-    }
-
-    // Check browser audio support for the specific format
-    const testAudio = new Audio();
-    const canPlayMP3 = testAudio.canPlayType('audio/mpeg');
-    const canPlayOGG = testAudio.canPlayType('audio/ogg');
-    const canPlayWAV = testAudio.canPlayType('audio/wav');
-    console.log('🔊 Browser audio support:', {
-      mp3: canPlayMP3,
-      ogg: canPlayOGG,
-      wav: canPlayWAV,
-      blobType: audioBlob.type
-    });
-    
-    if (!canPlayMP3) {
-      console.warn('🔊 Browser MP3 support limited:', canPlayMP3);
-      // Don't fail here, let the browser try to play it anyway
-    }
-
+    // Create audio element with blob URL
     const audio = new Audio();
-    audio.setAttribute('controls', 'false'); // Explicitly set no controls
-    audio.setAttribute('preload', 'auto');
     const audioUrl = URL.createObjectURL(audioBlob);
-    console.log('🔊 Audio URL created:', audioUrl);
-    
     audio.src = audioUrl;
     audio.volume = volume;
-    audio.preload = 'auto';
-    audio.crossOrigin = 'anonymous';
 
-    // Set up event listeners
-    audio.addEventListener('loadstart', () => {
-      console.log('🔊 Audio loading started');
-      setIsLoading(true);
-    });
-
-    audio.addEventListener('loadeddata', () => {
-      console.log('🔊 Audio data loaded');
-    });
-
-    audio.addEventListener('canplay', () => {
-      console.log('🔊 Audio can start playing - ready state:', audio.readyState);
-      setIsLoading(false);
-      if (autoPlay && !isInterruptedRef.current) {
-        console.log('🔊 Starting auto-play');
-        audio.play().catch(error => {
-          console.error('🔊 Auto-play failed:', {
-            error: error.message,
-            name: error.name,
-            readyState: audio.readyState,
-            networkState: audio.networkState
-          });
-          setIsLoading(false);
-          onError?.(`Auto-play blocked: ${error.message}. Click play button manually.`);
-        });
-      }
-    });
-
-    audio.addEventListener('canplaythrough', () => {
-      console.log('🔊 Audio ready to play through');
-      setIsLoading(false);
-    });
-
-    audio.addEventListener('play', () => {
-      console.log('🔊 Audio playback started');
+    // Basic event listeners
+    audio.onplay = () => {
+      console.log('🔊 Audio started playing');
       setIsPlaying(true);
-      setCurrentAudio(audio);
       setIsLoading(false);
+      setCurrentAudio(audio);
       onStart?.();
-    });
+    };
 
-    audio.addEventListener('pause', () => {
-      console.log('🔊 Audio playback paused');
-      setIsPlaying(false);
-    });
-
-    audio.addEventListener('ended', () => {
-      console.log('🔊 Audio playback ended');
+    audio.onended = () => {
+      console.log('🔊 Audio finished');
       setIsPlaying(false);
       setCurrentAudio(null);
       URL.revokeObjectURL(audioUrl);
       onEnd?.();
-    });
+    };
 
-    audio.addEventListener('error', (event) => {
-      const audioError = audio.error;
-      console.error('🔊 Audio playback error details:', {
-        event,
-        audioError,
-        errorCode: audioError?.code,
-        audioSrc: audio.src,
-        audioReadyState: audio.readyState,
-        networkState: audio.networkState,
-        blobSize: audioBlob.size,
-        blobType: audioBlob.type
-      });
-      
-      let errorMessage = 'Audio playback failed';
-      let debugInfo = '';
-      
-      if (audioError) {
-        switch (audioError.code) {
-          case audioError.MEDIA_ERR_ABORTED:
-            errorMessage = 'Audio playback was aborted';
-            debugInfo = 'The audio was stopped before it finished loading.';
-            break;
-          case audioError.MEDIA_ERR_NETWORK:
-            errorMessage = 'Network error during audio playback';
-            debugInfo = 'Network issue while loading audio.';
-            break;
-          case audioError.MEDIA_ERR_DECODE:
-            errorMessage = 'Audio decoding error - invalid audio format';
-            debugInfo = `Blob type: ${audioBlob.type}, Size: ${audioBlob.size} bytes`;
-            break;
-          case audioError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-            errorMessage = 'Audio format not supported by browser';
-            debugInfo = `Browser cannot play ${audioBlob.type}. Browser MP3 support: ${canPlayMP3}`;
-            break;
-          default:
-            errorMessage = `Audio error: ${audioError.message || 'Unknown error'}`;
-            debugInfo = `Error code: ${audioError.code}`;
-        }
-      }
-      
-      console.error('🔊 Full error context:', { errorMessage, debugInfo });
-      
+    audio.onerror = (error) => {
+      console.error('🔊 Audio error:', error);
       setIsPlaying(false);
       setIsLoading(false);
       setCurrentAudio(null);
       URL.revokeObjectURL(audioUrl);
-      
-      // Simple error handling - no complex retries
-      onError?.(`Audio playback error: ${errorMessage}`);
-    });
+      onError?.('Audio playback failed. Please try again.');
+    };
 
-    audio.addEventListener('stalled', () => {
-      console.warn('🔊 Audio playback stalled');
-    });
-
-    audio.addEventListener('waiting', () => {
-      console.log('🔊 Audio waiting for data');
-    });
+    // Try to play immediately
+    if (autoPlay && !isInterruptedRef.current) {
+      audio.play().catch(error => {
+        console.error('🔊 Play failed:', error);
+        onError?.('Could not start audio. Please click to enable sound.');
+      });
+    }
 
     audioRef.current = audio;
     return audio;
@@ -309,7 +196,7 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
 
       // Simple audio element creation
       if (!isInterruptedRef.current) {
-        createAudioElement(audioBlob, false);
+        createAudioElement(audioBlob);
       } else {
         console.log('🔊 Playback was interrupted, skipping audio creation');
         setIsLoading(false);
