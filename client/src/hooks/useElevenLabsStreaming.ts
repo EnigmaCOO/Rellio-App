@@ -67,16 +67,34 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
 
   // Create audio element with event handlers
   const createAudioElement = useCallback((audioBlob: Blob) => {
+    // Clean up previous audio
     if (audioRef.current) {
       audioRef.current.pause();
+      const oldSrc = audioRef.current.src;
       audioRef.current.src = '';
+      if (oldSrc && oldSrc.startsWith('blob:')) {
+        URL.revokeObjectURL(oldSrc);
+      }
+    }
+
+    console.log('🔊 Creating audio element for blob:', audioBlob.size, 'bytes, type:', audioBlob.type);
+    
+    // Validate audio blob
+    if (audioBlob.size === 0) {
+      console.error('🔊 Empty audio blob received');
+      onError?.('Empty audio response received');
+      setIsLoading(false);
+      return;
     }
 
     const audio = new Audio();
     const audioUrl = URL.createObjectURL(audioBlob);
+    console.log('🔊 Audio URL created:', audioUrl);
+    
     audio.src = audioUrl;
     audio.volume = volume;
     audio.preload = 'auto';
+    audio.crossOrigin = 'anonymous';
 
     // Set up event listeners
     audio.addEventListener('loadstart', () => {
@@ -84,21 +102,33 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       setIsLoading(true);
     });
 
-    audio.addEventListener('canplaythrough', () => {
-      console.log('🔊 Audio ready to play');
+    audio.addEventListener('loadeddata', () => {
+      console.log('🔊 Audio data loaded');
+    });
+
+    audio.addEventListener('canplay', () => {
+      console.log('🔊 Audio can start playing');
       setIsLoading(false);
       if (autoPlay && !isInterruptedRef.current) {
+        console.log('🔊 Starting auto-play');
         audio.play().catch(error => {
           console.error('🔊 Auto-play failed:', error);
-          onError?.('Auto-play blocked. Click to play manually.');
+          setIsLoading(false);
+          onError?.(`Auto-play blocked: ${error.message}. Click play button manually.`);
         });
       }
+    });
+
+    audio.addEventListener('canplaythrough', () => {
+      console.log('🔊 Audio ready to play through');
+      setIsLoading(false);
     });
 
     audio.addEventListener('play', () => {
       console.log('🔊 Audio playback started');
       setIsPlaying(true);
       setCurrentAudio(audio);
+      setIsLoading(false);
       onStart?.();
     });
 
@@ -116,12 +146,42 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
     });
 
     audio.addEventListener('error', (event) => {
-      console.error('🔊 Audio playback error:', event);
+      const audioError = audio.error;
+      console.error('🔊 Audio playback error:', event, audioError);
+      
+      let errorMessage = 'Audio playback failed';
+      if (audioError) {
+        switch (audioError.code) {
+          case audioError.MEDIA_ERR_ABORTED:
+            errorMessage = 'Audio playback was aborted';
+            break;
+          case audioError.MEDIA_ERR_NETWORK:
+            errorMessage = 'Network error during audio playback';
+            break;
+          case audioError.MEDIA_ERR_DECODE:
+            errorMessage = 'Audio decoding error';
+            break;
+          case audioError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+            errorMessage = 'Audio format not supported';
+            break;
+          default:
+            errorMessage = `Audio error: ${audioError.message || 'Unknown error'}`;
+        }
+      }
+      
       setIsPlaying(false);
       setIsLoading(false);
       setCurrentAudio(null);
       URL.revokeObjectURL(audioUrl);
-      onError?.('Audio playback failed');
+      onError?.(errorMessage);
+    });
+
+    audio.addEventListener('stalled', () => {
+      console.warn('🔊 Audio playback stalled');
+    });
+
+    audio.addEventListener('waiting', () => {
+      console.log('🔊 Audio waiting for data');
     });
 
     audioRef.current = audio;
@@ -169,13 +229,28 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
         throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
 
+      // Validate response content type
+      const contentType = response.headers.get('content-type');
+      console.log('🔊 Response content type:', contentType);
+      
+      if (!contentType || !contentType.includes('audio/')) {
+        throw new Error(`Invalid audio response: ${contentType}`);
+      }
+
       // Get audio blob
       const audioBlob = await response.blob();
-      console.log('🔊 Audio blob received:', audioBlob.size, 'bytes');
+      console.log('🔊 Audio blob received:', audioBlob.size, 'bytes, type:', audioBlob.type);
+      
+      if (audioBlob.size === 0) {
+        throw new Error('Received empty audio data');
+      }
 
       // Create and setup audio element
       if (!isInterruptedRef.current) {
         createAudioElement(audioBlob);
+      } else {
+        console.log('🔊 Playback was interrupted, skipping audio creation');
+        setIsLoading(false);
       }
 
     } catch (error) {
@@ -193,7 +268,13 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+      
+      // Clean up audio URL
+      const oldSrc = audioRef.current.src;
       audioRef.current.src = '';
+      if (oldSrc && oldSrc.startsWith('blob:')) {
+        URL.revokeObjectURL(oldSrc);
+      }
     }
     
     setIsPlaying(false);

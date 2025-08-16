@@ -351,9 +351,13 @@ function EnhancedMessageBubble({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onVoicePlay(message.content)}
+                onClick={() => {
+                  console.log('🔊 Manual voice play requested for:', message.content.substring(0, 50) + '...');
+                  onVoicePlay(message.content);
+                }}
                 disabled={isVoiceLoading}
                 className="h-6 px-2 text-xs text-gray-500 hover:text-teal-600 hover:bg-teal-50"
+                title={isVoiceLoading ? 'Loading audio...' : isVoicePlaying ? 'Audio is playing' : 'Click to listen to this response'}
               >
                 {isVoiceLoading ? (
                   <Loader className="w-3 h-3 mr-1 animate-spin" />
