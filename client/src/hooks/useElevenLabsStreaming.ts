@@ -87,6 +87,27 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       return;
     }
 
+    // Check if blob type is audio
+    if (!audioBlob.type.includes('audio/')) {
+      console.error('🔊 Invalid blob type:', audioBlob.type);
+      onError?.(`Invalid audio format: ${audioBlob.type}. Expected audio format.`);
+      setIsLoading(false);
+      return;
+    }
+
+    // Check browser audio support for the specific format
+    const testAudio = new Audio();
+    const canPlayMP3 = testAudio.canPlayType('audio/mpeg');
+    const canPlayMP4 = testAudio.canPlayType('audio/mp4');
+    console.log('🔊 Browser audio support - MP3:', canPlayMP3, 'MP4:', canPlayMP4);
+    
+    if (!canPlayMP3 && !canPlayMP4) {
+      console.error('🔊 Browser does not support MP3/MP4 audio formats');
+      onError?.('Browser does not support required audio formats (MP3/MP4)');
+      setIsLoading(false);
+      return;
+    }
+
     const audio = new Audio();
     const audioUrl = URL.createObjectURL(audioBlob);
     console.log('🔊 Audio URL created:', audioUrl);
@@ -234,7 +255,9 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       console.log('🔊 Response content type:', contentType);
       
       if (!contentType || !contentType.includes('audio/')) {
-        throw new Error(`Invalid audio response: ${contentType}`);
+        const responseText = await response.text();
+        console.error('🔊 Non-audio response received:', responseText.substring(0, 200));
+        throw new Error(`Invalid audio response. Expected audio format, got: ${contentType}. Response: ${responseText.substring(0, 100)}`);
       }
 
       // Get audio blob
@@ -245,9 +268,16 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
         throw new Error('Received empty audio data');
       }
 
+      // Ensure blob has correct type (sometimes servers return generic types)
+      let correctedBlob = audioBlob;
+      if (!audioBlob.type || audioBlob.type === 'application/octet-stream') {
+        console.log('🔊 Correcting blob type from', audioBlob.type, 'to audio/mpeg');
+        correctedBlob = new Blob([audioBlob], { type: 'audio/mpeg' });
+      }
+
       // Create and setup audio element
       if (!isInterruptedRef.current) {
-        createAudioElement(audioBlob);
+        createAudioElement(correctedBlob);
       } else {
         console.log('🔊 Playback was interrupted, skipping audio creation');
         setIsLoading(false);

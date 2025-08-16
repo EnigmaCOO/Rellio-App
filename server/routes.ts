@@ -614,24 +614,29 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
         return res.status(503).json({ error: "ElevenLabs service not available" });
       }
 
-      const { text, voiceId, settings } = req.body;
+      const { text, voiceId, options } = req.body;
       
       if (!text || !voiceId) {
         return res.status(400).json({ error: "Text and voiceId are required" });
       }
 
-      const audioBuffer = await elevenLabsService.generateSpeech(text, voiceId, settings);
+      console.log('🔊 ElevenLabs TTS request:', { textLength: text.length, voiceId, options });
+
+      const audioBuffer = await elevenLabsService.generateSpeech(text, voiceId, options || {});
+      
+      console.log('🔊 Generated audio buffer:', audioBuffer.length, 'bytes');
       
       res.set({
         'Content-Type': 'audio/mpeg',
         'Content-Length': audioBuffer.length,
-        'Cache-Control': 'public, max-age=3600' // Cache for 1 hour
+        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+        'Accept-Ranges': 'bytes'
       });
       
       res.send(audioBuffer);
     } catch (error) {
       console.error("Error generating speech:", error);
-      res.status(500).json({ error: "Failed to generate speech" });
+      res.status(500).json({ error: "Failed to generate speech", details: error.message });
     }
   });
 
