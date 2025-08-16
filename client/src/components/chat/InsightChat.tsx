@@ -83,7 +83,8 @@ function EnhancedMessageBubble({
   onVoicePlay,
   isVoicePlaying,
   isVoiceLoading,
-  onVoiceStop
+  onVoiceStop,
+  toast
 }: { 
   message: ChatMessage;
   index: number;
@@ -92,6 +93,7 @@ function EnhancedMessageBubble({
   isVoicePlaying: boolean;
   isVoiceLoading: boolean;
   onVoiceStop: () => void;
+  toast: (options: { title: string; description: string; duration?: number }) => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const needsTruncation = message.content.length > 300;
@@ -651,6 +653,7 @@ export function InsightChat({
                 isVoicePlaying={isVoicePlaying}
                 isVoiceLoading={isVoiceLoading}
                 onVoiceStop={stopPlayback}
+                toast={toast}
               />
             ))
           )}
