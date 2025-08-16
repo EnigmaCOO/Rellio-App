@@ -543,8 +543,14 @@ export function InsightChat({
   // Handle voice interruption
   const handleVoiceInterruption = useCallback(() => {
     if (isVoicePlaying) {
+      console.log('🛑 Voice interruption triggered - stopping AI voice');
       stopPlayback();
       setOrbState('interrupted');
+      
+      // Reset to idle after a brief moment
+      setTimeout(() => {
+        setOrbState('idle');
+      }, 1000);
     }
   }, [isVoicePlaying, stopPlayback]);
 
@@ -852,6 +858,7 @@ export function InsightChat({
           onInterrupt={handleVoiceInterruption}
           placeholder="Speak or type your spiritual question..."
           disabled={sendMessageMutation.isPending}
+          isAIResponding={isVoicePlaying || orbState === 'responding'}
         />
       </div>
     </div>

@@ -14,6 +14,7 @@ interface VoiceFirstInterfaceProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  isAIResponding?: boolean;
 }
 
 export function VoiceFirstInterface({
@@ -23,7 +24,8 @@ export function VoiceFirstInterface({
   onInterrupt,
   placeholder = "Speak or type your spiritual question...",
   disabled = false,
-  className = ""
+  className = "",
+  isAIResponding = false
 }: VoiceFirstInterfaceProps) {
   const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice');
   const [isListening, setIsListening] = useState(false);
@@ -31,11 +33,14 @@ export function VoiceFirstInterface({
   const [voiceTranscript, setVoiceTranscript] = useState("");
   const [textInput, setTextInput] = useState("");
   const [orbState, setOrbState] = useState<'idle' | 'listening' | 'processing' | 'responding' | 'interrupted'>('idle');
+  const [isBackgroundListening, setIsBackgroundListening] = useState(false);
   
   const recognitionRef = useRef<any>(null);
+  const backgroundRecognitionRef = useRef<any>(null);
   const timeoutRef = useRef<NodeJS.Timeout>();
+  const interruptTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Initialize speech recognition
+  // Initialize main speech recognition for user input
   useEffect(() => {
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
       const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
@@ -103,8 +108,89 @@ export function VoiceFirstInterface({
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      if (interruptTimeoutRef.current) {
+        clearTimeout(interruptTimeoutRef.current);
+      }
     };
   }, [orbState]);
+
+  // Initialize background speech recognition for interruption detection
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      const backgroundRecognition = new SpeechRecognition();
+      
+      backgroundRecognition.continuous = true;
+      backgroundRecognition.interimResults = true;
+      backgroundRecognition.lang = 'en-US';
+      
+      backgroundRecognition.onstart = () => {
+        setIsBackgroundListening(true);
+        console.log('🎤 Background voice detection started');
+      };
+      
+      backgroundRecognition.onresult = (event: any) => {
+        // Detect any speech activity during AI response
+        if (isAIResponding) {
+          let hasAnyTranscript = false;
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript.trim();
+            if (transcript.length > 2) { // Filter out noise
+              hasAnyTranscript = true;
+              break;
+            }
+          }
+          
+          if (hasAnyTranscript) {
+            console.log('🎤 User speech detected during AI response - triggering interrupt');
+            onInterrupt();
+            
+            // Brief delay before stopping background recognition to allow for full interruption
+            if (interruptTimeoutRef.current) {
+              clearTimeout(interruptTimeoutRef.current);
+            }
+            interruptTimeoutRef.current = setTimeout(() => {
+              backgroundRecognition.stop();
+            }, 500);
+          }
+        }
+      };
+      
+      backgroundRecognition.onerror = (event: any) => {
+        console.error('🎤 Background speech recognition error:', event.error);
+        setIsBackgroundListening(false);
+      };
+      
+      backgroundRecognition.onend = () => {
+        setIsBackgroundListening(false);
+        console.log('🎤 Background voice detection ended');
+      };
+      
+      backgroundRecognitionRef.current = backgroundRecognition;
+    }
+  }, [isAIResponding, onInterrupt]);
+
+  // Manage background listening based on AI response state
+  useEffect(() => {
+    if (isAIResponding && !isListening && backgroundRecognitionRef.current && !isBackgroundListening) {
+      // Start background voice detection when AI is responding
+      try {
+        backgroundRecognitionRef.current.start();
+        console.log('🎤 Starting background voice detection for interruption');
+      } catch (error) {
+        console.log('🎤 Background recognition already running or error:', error);
+      }
+    } else if (!isAIResponding && backgroundRecognitionRef.current && isBackgroundListening) {
+      // Stop background detection when AI stops responding
+      try {
+        backgroundRecognitionRef.current.stop();
+        console.log('🎤 Stopping background voice detection');
+      } catch (error) {
+        console.log('🎤 Error stopping background recognition:', error);
+      }
+    }
+  }, [isAIResponding, isListening, isBackgroundListening]);
 
   // Update orb state based on app state
   useEffect(() => {
@@ -207,12 +293,20 @@ export function VoiceFirstInterface({
           )}
         </div>
         
-        <div className="text-xs text-gray-500">
-          {orbState === 'idle' && 'Ready'}
-          {orbState === 'listening' && 'Listening...'}
-          {orbState === 'processing' && 'Processing...'}
-          {orbState === 'responding' && 'Responding...'}
-          {orbState === 'interrupted' && 'Stopped'}
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <span>
+            {orbState === 'idle' && 'Ready'}
+            {orbState === 'listening' && 'Listening...'}
+            {orbState === 'processing' && 'Processing...'}
+            {orbState === 'responding' && 'Responding...'}
+            {orbState === 'interrupted' && 'Stopped'}
+          </span>
+          {isBackgroundListening && isAIResponding && (
+            <div className="flex items-center gap-1">
+              <div className="w-1 h-1 bg-amber-500 rounded-full animate-pulse" />
+              <span className="text-amber-600">Interrupt Ready</span>
+            </div>
+          )}
         </div>
       </div>
 
