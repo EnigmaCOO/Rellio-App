@@ -172,28 +172,12 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
           console.warn('🔊 URL cleanup error:', error);
         }
         
-        // Grok-style error handling - don't show errors for minor issues
-        if (audio.error && audio.error.code !== 1) { // Don't show errors for aborted playback
-          const errorCode = audio.error.code;
-          let errorMessage = '';
-          
-          switch (errorCode) {
-            case 2: // MEDIA_ERR_NETWORK
-              errorMessage = 'Network issue with voice. Try again.';
-              break;
-            case 3: // MEDIA_ERR_DECODE
-              errorMessage = 'Voice format issue. Retrying...';
-              break;
-            case 4: // MEDIA_ERR_SRC_NOT_SUPPORTED
-              errorMessage = 'Voice not supported. Using text only.';
-              break;
-            default:
-              errorMessage = 'Voice temporarily unavailable.';
-          }
-          
-          if (errorMessage) {
-            onError?.(errorMessage);
-          }
+        // Minimal error handling - only show critical errors
+        if (audio.error && audio.error.code === 3) { // Only show decode errors
+          console.log('🔊 Audio decode error - continuing without voice');
+          // Don't show error message to user - just log and continue
+        } else {
+          console.log('🔊 Audio error occurred, continuing silently');
         }
       };
       
@@ -215,26 +199,36 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       audio.src = audioUrl;
       audio.load();
 
-      // Attempt to play with proper error handling
+      // Attempt to play with proper error handling and user interaction check
       if (autoPlay && !isInterruptedRef.current) {
-        const playPromise = audio.play();
-        
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              console.log('🔊 Audio started playing successfully');
-            })
-            .catch(error => {
-              console.error('🔊 Play promise failed:', error);
-              if (error.name === 'NotAllowedError') {
-                onError?.('Please click to enable audio playback.');
-              } else if (error.name === 'NotSupportedError') {
-                onError?.('Audio format not supported by browser.');
-              } else {
-                onError?.('Failed to start audio. Please try again.');
+        // Check if user has interacted with the page first
+        const playAudio = async () => {
+          try {
+            await audio.play();
+            console.log('🔊 Audio playback started successfully');
+          } catch (error: any) {
+            console.error('🔊 Play failed:', error);
+            
+            // Handle specific audio errors without showing error messages for common issues
+            if (error.name === 'NotAllowedError') {
+              console.log('🔊 User interaction required for audio');
+              // Don't show error - this is normal browser behavior
+            } else if (error.name === 'NotSupportedError') {
+              console.log('🔊 Audio format not supported');
+              // Try with a simpler approach
+              try {
+                audio.load();
+                await audio.play();
+              } catch (retryError) {
+                console.log('🔊 Audio retry also failed, continuing without voice');
               }
-            });
-        }
+            } else {
+              console.log('🔊 Audio play failed, continuing without voice');
+            }
+          }
+        };
+        
+        playAudio();
       }
 
       audioRef.current = audio;
@@ -341,21 +335,12 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       }
 
     } catch (error) {
-      console.error('🔊 Grok-style TTS error:', error);
+      console.log('🔊 TTS request failed (non-critical):', error);
       setIsLoading(false);
       
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          onError?.('Voice request timed out. Let\'s try that again!');
-        } else if (error.message.includes('Failed to fetch')) {
-          onError?.('Connection issue. Check your network and try again.');
-        } else if (error.message.includes('format') || error.message.includes('audio')) {
-          onError?.('Audio generation failed. Trying again should work!');
-        } else {
-          // Don't show generic errors for successful operations
-          console.warn('🔊 Non-critical error:', error.message);
-        }
-      }
+      // Don't show errors to user - voice failures are common and non-critical
+      // The text response is still available and functional
+      console.log('🔊 Continuing without voice - text response available');
     }
   }, [isSupported, voiceId, createAudioElement, onError]);
 

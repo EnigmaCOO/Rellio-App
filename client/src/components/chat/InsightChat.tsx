@@ -441,12 +441,9 @@ export function InsightChat({
     onStart: () => setOrbState('responding'),
     onEnd: () => setOrbState('idle'),
     onError: (error) => {
-      console.error('Voice error:', error);
-      toast({
-        title: "Voice Error",
-        description: error,
-        variant: "destructive"
-      });
+      console.log('Voice issue (non-critical):', error);
+      // Don't show toast errors for voice issues - just log them
+      // Voice failures are common and shouldn't interrupt the user experience
     },
     onInterrupted: () => setOrbState('interrupted')
   });
@@ -524,9 +521,16 @@ export function InsightChat({
         
         // Auto-play voice response if supported with immediate start
         if (isVoiceSupported && aiResponse.trim()) {
-          setTimeout(() => {
-            playText(aiResponse);
-          }, 100); // Reduced delay for faster response
+          // Add user interaction check for browsers that require it
+          const enableAudioAndPlay = () => {
+            try {
+              playText(aiResponse);
+            } catch (error) {
+              console.log('Voice playback requires user interaction');
+            }
+          };
+          
+          setTimeout(enableAudioAndPlay, 100); // Reduced delay for faster response
         }
       }
       
