@@ -217,22 +217,8 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       setCurrentAudio(null);
       URL.revokeObjectURL(audioUrl);
       
-      // Try fallback approach on first failure
-      if (!isRetry && audioError && audioError.code === audioError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
-        console.log('🔊 Retrying with different blob approach...');
-        setTimeout(() => {
-          try {
-            // Try creating a new blob with different options
-            const fallbackBlob = new Blob([audioBlob], { type: 'audio/mpeg' });
-            createAudioElement(fallbackBlob, true);
-          } catch (retryError) {
-            console.error('🔊 Retry failed:', retryError);
-            onError?.(`${errorMessage}. ${debugInfo}`);
-          }
-        }, 100);
-      } else {
-        onError?.(`${errorMessage}. ${debugInfo}`);
-      }
+      // Simple error handling - no complex retries
+      onError?.(`Audio playback error: ${errorMessage}`);
     });
 
     audio.addEventListener('stalled', () => {
@@ -317,27 +303,13 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
         throw new Error('Empty audio data received');
       }
 
-      // Create optimized audio blob with multiple format fallbacks
-      let audioBlob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
-      
-      // Verify blob can be processed
-      if (audioBlob.size !== arrayBuffer.byteLength) {
-        console.warn('🔊 Blob size mismatch, trying fallback');
-        // Try alternative blob creation
-        audioBlob = new Blob([new Uint8Array(arrayBuffer)], { type: 'audio/mp3' });
-        console.log('🔊 Using fallback blob:', audioBlob.size, 'bytes');
-      }
+      // Simple audio blob creation - no complex fallbacks
+      const audioBlob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
+      console.log('🔊 Created simple audio blob:', audioBlob.size, 'bytes');
 
-      // Create and setup audio element with enhanced error recovery
+      // Simple audio element creation
       if (!isInterruptedRef.current) {
-        try {
-          createAudioElement(audioBlob, false);
-        } catch (createError) {
-          console.warn('🔊 Primary audio creation failed, trying fallback:', createError);
-          // Try with different blob type as fallback
-          const fallbackBlob = new Blob([arrayBuffer], { type: 'audio/mp3' });
-          createAudioElement(fallbackBlob, true);
-        }
+        createAudioElement(audioBlob, false);
       } else {
         console.log('🔊 Playback was interrupted, skipping audio creation');
         setIsLoading(false);
@@ -353,13 +325,7 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
         } else if (error.message.includes('Failed to fetch')) {
           onError?.('Network hiccup detected! Check your connection and we\'ll get right back to chatting.');
         } else if (error.message.includes('format')) {
-          onError?.('Audio format issue detected. Switching to compatibility mode...');
-          // Try a simpler request without advanced options
-          setTimeout(() => {
-            playText(text.substring(0, 100)) // Retry with shorter text
-              .catch(() => onError?.('Unable to generate voice. Please try again with shorter text.'));
-          }, 1000);
-          return;
+          onError?.('Audio format issue. Please try again.');
         } else {
           onError?.(error.message || 'Voice generation hit a snag. Let\'s try again!');
         }
