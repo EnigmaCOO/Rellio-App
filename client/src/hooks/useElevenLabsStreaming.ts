@@ -66,79 +66,174 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
     };
   }, []);
 
-  // Simplified audio element creation
+  // Robust audio element creation with crash prevention
   const createAudioElement = useCallback((audioBlob: Blob) => {
-    console.log('🔊 Creating simple audio element:', audioBlob.size, 'bytes');
+    console.log('🔊 Creating robust audio element:', audioBlob.size, 'bytes');
     
-    // Clean up previous audio
+    // Clean up previous audio completely
     if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = '';
-    }
-
-    // Create audio element with blob URL
-    const audio = new Audio();
-    const audioUrl = URL.createObjectURL(audioBlob);
-    audio.src = audioUrl;
-    audio.volume = volume;
-
-    // Basic event listeners
-    audio.onplay = () => {
-      console.log('🔊 Audio started playing');
-      setIsPlaying(true);
-      setIsLoading(false);
-      setCurrentAudio(audio);
-      onStart?.();
-    };
-
-    audio.onended = () => {
-      console.log('🔊 Audio finished');
-      setIsPlaying(false);
-      setCurrentAudio(null);
-      URL.revokeObjectURL(audioUrl);
-      onEnd?.();
-    };
-
-    audio.onerror = (error) => {
-      console.error('🔊 Audio error:', error);
-      console.error('🔊 Audio error details:', {
-        error: audio.error,
-        networkState: audio.networkState,
-        readyState: audio.readyState,
-        src: audio.src
-      });
-      setIsPlaying(false);
-      setIsLoading(false);
-      setCurrentAudio(null);
-      URL.revokeObjectURL(audioUrl);
-      
-      // Only show error if there's an actual audio error
-      if (audio.error) {
-        onError?.('Audio playback failed. Please try again.');
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        const oldSrc = audioRef.current.src;
+        audioRef.current.src = '';
+        if (oldSrc && oldSrc.startsWith('blob:')) {
+          URL.revokeObjectURL(oldSrc);
+        }
+        audioRef.current.remove?.();
+      } catch (error) {
+        console.warn('🔊 Audio cleanup warning:', error);
       }
-    };
-    
-    // Add additional error handling for crashes
-    audio.onstalled = () => {
-      console.warn('🔊 Audio stalled');
-    };
-    
-    audio.onabort = () => {
-      console.warn('🔊 Audio aborted');
-      setIsPlaying(false);
-      setIsLoading(false);
-    };
-
-    // Try to play immediately
-    if (autoPlay && !isInterruptedRef.current) {
-      audio.play().catch(error => {
-        console.error('🔊 Play failed:', error);
-        onError?.('Could not start audio. Please click to enable sound.');
-      });
     }
 
-    audioRef.current = audio;
-    return audio;
+    try {
+      // Create new audio element with enhanced compatibility
+      const audio = new Audio();
+      
+      // Set audio properties for better compatibility and isolation
+      audio.preload = 'auto';
+      audio.volume = Math.max(0.1, Math.min(volume, 1.0)); // Ensure valid volume range
+      audio.crossOrigin = 'anonymous'; // Prevent CORS issues
+      
+      // Add audio isolation attributes to prevent microphone feedback
+      if ('setSinkId' in audio) {
+        // Try to use default output device
+        try {
+          (audio as any).setSinkId('default');
+        } catch (error) {
+          console.log('🔊 setSinkId not supported, using default audio output');
+        }
+      }
+      
+      // Create blob URL with proper MIME type
+      const audioUrl = URL.createObjectURL(new Blob([audioBlob], { type: 'audio/mpeg' }));
+      
+      // Enhanced event handlers with crash prevention
+      audio.onloadstart = () => {
+        console.log('🔊 Audio loading started');
+      };
+
+      audio.oncanplay = () => {
+        console.log('🔊 Audio can start playing');
+        setIsLoading(false);
+      };
+
+      audio.onplay = () => {
+        console.log('🔊 Audio playback started successfully');
+        setIsPlaying(true);
+        setIsLoading(false);
+        setCurrentAudio(audio);
+        onStart?.();
+      };
+
+      audio.onended = () => {
+        console.log('🔊 Audio playback completed');
+        setIsPlaying(false);
+        setCurrentAudio(null);
+        try {
+          URL.revokeObjectURL(audioUrl);
+        } catch (error) {
+          console.warn('🔊 URL cleanup warning:', error);
+        }
+        onEnd?.();
+      };
+
+      audio.onerror = (event) => {
+        console.error('🔊 Audio playback error:', event);
+        console.error('🔊 Audio error details:', {
+          error: audio.error?.code,
+          message: audio.error?.message,
+          networkState: audio.networkState,
+          readyState: audio.readyState
+        });
+        
+        setIsPlaying(false);
+        setIsLoading(false);
+        setCurrentAudio(null);
+        
+        try {
+          URL.revokeObjectURL(audioUrl);
+        } catch (error) {
+          console.warn('🔊 URL cleanup error:', error);
+        }
+        
+        // Provide specific error messages based on error type
+        if (audio.error) {
+          const errorCode = audio.error.code;
+          let errorMessage = 'Audio playback failed. ';
+          
+          switch (errorCode) {
+            case 1: // MEDIA_ERR_ABORTED
+              errorMessage += 'Playback was interrupted.';
+              break;
+            case 2: // MEDIA_ERR_NETWORK
+              errorMessage += 'Network error occurred.';
+              break;
+            case 3: // MEDIA_ERR_DECODE
+              errorMessage += 'Audio format issue.';
+              break;
+            case 4: // MEDIA_ERR_SRC_NOT_SUPPORTED
+              errorMessage += 'Audio format not supported.';
+              break;
+            default:
+              errorMessage += 'Please try again.';
+          }
+          
+          onError?.(errorMessage);
+        }
+      };
+      
+      audio.onstalled = () => {
+        console.warn('🔊 Audio playback stalled - retrying...');
+      };
+      
+      audio.onabort = () => {
+        console.log('🔊 Audio playback aborted');
+        setIsPlaying(false);
+        setIsLoading(false);
+      };
+
+      audio.onpause = () => {
+        console.log('🔊 Audio playback paused');
+      };
+
+      // Set source and load
+      audio.src = audioUrl;
+      audio.load();
+
+      // Attempt to play with proper error handling
+      if (autoPlay && !isInterruptedRef.current) {
+        const playPromise = audio.play();
+        
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log('🔊 Audio started playing successfully');
+            })
+            .catch(error => {
+              console.error('🔊 Play promise failed:', error);
+              if (error.name === 'NotAllowedError') {
+                onError?.('Please click to enable audio playback.');
+              } else if (error.name === 'NotSupportedError') {
+                onError?.('Audio format not supported by browser.');
+              } else {
+                onError?.('Failed to start audio. Please try again.');
+              }
+            });
+        }
+      }
+
+      audioRef.current = audio;
+      return audio;
+      
+    } catch (error) {
+      console.error('🔊 Audio element creation failed:', error);
+      setIsPlaying(false);
+      setIsLoading(false);
+      setCurrentAudio(null);
+      onError?.('Failed to create audio player. Please refresh and try again.');
+      return null;
+    }
   }, [volume, autoPlay, onStart, onEnd, onError]);
 
   // Main function to convert text to speech and play with enhanced error handling

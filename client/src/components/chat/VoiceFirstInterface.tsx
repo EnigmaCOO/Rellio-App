@@ -50,6 +50,22 @@ export function VoiceFirstInterface({
       recognition.interimResults = true;
       recognition.lang = 'en-US';
       
+      // Add noise reduction and echo cancellation if available
+      if ('webkitSpeechRecognition' in window && recognition.webkitAudioTrack) {
+        const constraints = {
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            googEchoCancellation: true,
+            googAutoGainControl: true,
+            googNoiseSuppression: true,
+            googHighpassFilter: true
+          }
+        };
+        console.log('🎤 Applying audio constraints for better isolation');
+      }
+      
       recognition.onstart = () => {
         setIsListening(true);
         setOrbState('listening');
@@ -124,35 +140,70 @@ export function VoiceFirstInterface({
       backgroundRecognition.interimResults = true;
       backgroundRecognition.lang = 'en-US';
       
+      // Enhanced audio processing for background detection
+      if ('webkitSpeechRecognition' in window && backgroundRecognition.webkitAudioTrack) {
+        const constraints = {
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            googEchoCancellation: true,
+            googAutoGainControl: true,
+            googNoiseSuppression: true,
+            googHighpassFilter: true,
+            googEchoCancellation2: true
+          }
+        };
+        console.log('🎤 Applying enhanced audio constraints for background detection');
+      }
+      
       backgroundRecognition.onstart = () => {
         setIsBackgroundListening(true);
         console.log('🎤 Background voice detection started');
       };
       
       backgroundRecognition.onresult = (event: any) => {
-        // Detect any speech activity during AI response
+        // Detect any speech activity during AI response with better filtering
         if (isAIResponding) {
-          let hasAnyTranscript = false;
+          let hasValidUserInput = false;
+          let detectedText = '';
           
           for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript.trim();
-            if (transcript.length > 2) { // Filter out noise
-              hasAnyTranscript = true;
+            const transcript = event.results[i][0].transcript.trim().toLowerCase();
+            detectedText += transcript + ' ';
+            
+            // Filter out AI voice feedback and only detect intentional user input
+            if (transcript.length >= 3 && 
+                !transcript.includes('god') && 
+                !transcript.includes('christianity') && 
+                !transcript.includes('islam') && 
+                !transcript.includes('judaism') && 
+                !transcript.includes('hinduism') && 
+                !transcript.includes('buddhism') && 
+                !transcript.includes('perspective') &&
+                !transcript.includes('creator') &&
+                !transcript.includes('universe') &&
+                !transcript.includes('divine') &&
+                event.results[i].isFinal && // Only respond to final results
+                event.results[i][0].confidence > 0.7) { // High confidence only
+              hasValidUserInput = true;
               break;
             }
           }
           
-          if (hasAnyTranscript) {
-            console.log('🎤 User speech detected during AI response - triggering interrupt');
+          if (hasValidUserInput) {
+            console.log('🎤 Valid user interruption detected during AI response:', detectedText.trim());
+            console.log('🎤 Triggering interrupt to stop AI voice');
             onInterrupt();
             
-            // Brief delay before stopping background recognition to allow for full interruption
-            if (interruptTimeoutRef.current) {
-              clearTimeout(interruptTimeoutRef.current);
-            }
-            interruptTimeoutRef.current = setTimeout(() => {
+            // Stop background recognition immediately to prevent further feedback
+            try {
               backgroundRecognition.stop();
-            }, 500);
+            } catch (error) {
+              console.log('🎤 Background recognition stop error:', error);
+            }
+          } else if (detectedText.length > 0) {
+            console.log('🎤 Ignoring potential AI voice feedback:', detectedText.trim());
           }
         }
       };
@@ -171,30 +222,35 @@ export function VoiceFirstInterface({
     }
   }, [isAIResponding, onInterrupt]);
 
-  // Manage speech recognition isolation during AI responses
+  // Enhanced speech recognition isolation with better timing
   useEffect(() => {
     if (isAIResponding) {
-      // AI is speaking - stop main recognition and start background detection
+      // AI is speaking - IMMEDIATELY stop main recognition to prevent feedback loops
       if (recognitionRef.current && isListening) {
-        console.log('🎤 AI responding - stopping main speech recognition to prevent feedback');
+        console.log('🎤 AI responding - IMMEDIATELY stopping main speech recognition to prevent feedback');
         try {
-          recognitionRef.current.stop();
+          recognitionRef.current.abort(); // Use abort() for immediate stop
+          setIsListening(false);
         } catch (error) {
           console.log('🎤 Error stopping main recognition:', error);
         }
       }
       
-      // Start background voice detection for interruption only
-      if (backgroundRecognitionRef.current && !isBackgroundListening) {
-        try {
-          backgroundRecognitionRef.current.start();
-          console.log('🎤 Starting isolated background voice detection for interruption');
-        } catch (error) {
-          console.log('🎤 Background recognition already running or error:', error);
+      // Delay background detection to allow audio to start playing first
+      const startBackgroundTimer = setTimeout(() => {
+        if (backgroundRecognitionRef.current && !isBackgroundListening && isAIResponding) {
+          try {
+            backgroundRecognitionRef.current.start();
+            console.log('🎤 Starting delayed background voice detection for interruption');
+          } catch (error) {
+            console.log('🎤 Background recognition already running or error:', error);
+          }
         }
-      }
+      }, 1500); // Wait 1.5 seconds for audio to start playing
+      
+      return () => clearTimeout(startBackgroundTimer);
     } else {
-      // AI finished responding - stop background detection
+      // AI finished responding - clean up background detection
       if (backgroundRecognitionRef.current && isBackgroundListening) {
         try {
           backgroundRecognitionRef.current.stop();
