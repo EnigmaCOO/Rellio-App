@@ -171,24 +171,41 @@ export function VoiceFirstInterface({
     }
   }, [isAIResponding, onInterrupt]);
 
-  // Manage background listening based on AI response state
+  // Manage speech recognition isolation during AI responses
   useEffect(() => {
-    if (isAIResponding && !isListening && backgroundRecognitionRef.current && !isBackgroundListening) {
-      // Start background voice detection when AI is responding
-      try {
-        backgroundRecognitionRef.current.start();
-        console.log('🎤 Starting background voice detection for interruption');
-      } catch (error) {
-        console.log('🎤 Background recognition already running or error:', error);
+    if (isAIResponding) {
+      // AI is speaking - stop main recognition and start background detection
+      if (recognitionRef.current && isListening) {
+        console.log('🎤 AI responding - stopping main speech recognition to prevent feedback');
+        try {
+          recognitionRef.current.stop();
+        } catch (error) {
+          console.log('🎤 Error stopping main recognition:', error);
+        }
       }
-    } else if (!isAIResponding && backgroundRecognitionRef.current && isBackgroundListening) {
-      // Stop background detection when AI stops responding
-      try {
-        backgroundRecognitionRef.current.stop();
-        console.log('🎤 Stopping background voice detection');
-      } catch (error) {
-        console.log('🎤 Error stopping background recognition:', error);
+      
+      // Start background voice detection for interruption only
+      if (backgroundRecognitionRef.current && !isBackgroundListening) {
+        try {
+          backgroundRecognitionRef.current.start();
+          console.log('🎤 Starting isolated background voice detection for interruption');
+        } catch (error) {
+          console.log('🎤 Background recognition already running or error:', error);
+        }
       }
+    } else {
+      // AI finished responding - stop background detection
+      if (backgroundRecognitionRef.current && isBackgroundListening) {
+        try {
+          backgroundRecognitionRef.current.stop();
+          console.log('🎤 AI finished - stopping background voice detection');
+        } catch (error) {
+          console.log('🎤 Error stopping background recognition:', error);
+        }
+      }
+      
+      // Reset to normal state - main recognition can be used again
+      console.log('🎤 AI finished responding - voice input available again');
     }
   }, [isAIResponding, isListening, isBackgroundListening]);
 
@@ -208,11 +225,16 @@ export function VoiceFirstInterface({
   }, [isListening, isProcessing, isStreaming, isInterrupted]);
 
   const startVoiceInput = useCallback(() => {
+    if (isAIResponding) {
+      console.log('🎤 Cannot start voice input - AI is currently responding');
+      return;
+    }
+    
     if (recognitionRef.current && !isListening) {
       setVoiceTranscript("");
       recognitionRef.current.start();
     }
-  }, [isListening]);
+  }, [isListening, isAIResponding]);
 
   const stopVoiceInput = useCallback(() => {
     if (recognitionRef.current && isListening) {
@@ -295,10 +317,11 @@ export function VoiceFirstInterface({
         
         <div className="flex items-center gap-2 text-xs text-gray-500">
           <span>
-            {orbState === 'idle' && 'Ready'}
+            {orbState === 'idle' && !isAIResponding && 'Ready'}
+            {orbState === 'idle' && isAIResponding && '🔊 AI Speaking'}
             {orbState === 'listening' && 'Listening...'}
             {orbState === 'processing' && 'Processing...'}
-            {orbState === 'responding' && 'Responding...'}
+            {orbState === 'responding' && '🔊 AI Speaking'}
             {orbState === 'interrupted' && 'Stopped'}
           </span>
           {isBackgroundListening && isAIResponding && (
@@ -336,7 +359,12 @@ export function VoiceFirstInterface({
                 <p className="text-sm text-gray-900">{voiceTranscript}</p>
               ) : (
                 <p className="text-xs text-gray-500 italic">
-                  {isListening ? 'Speak now...' : 'Click microphone to start'}
+                  {isAIResponding 
+                    ? '🤐 Voice input paused while AI is speaking...' 
+                    : isListening 
+                      ? 'Speak now...' 
+                      : 'Click microphone to start'
+                  }
                 </p>
               )}
             </div>
@@ -346,8 +374,9 @@ export function VoiceFirstInterface({
                 variant={isListening ? "destructive" : "default"}
                 size="sm"
                 onClick={isListening ? stopVoiceInput : startVoiceInput}
-                disabled={disabled || isProcessing}
+                disabled={disabled || isProcessing || isAIResponding}
                 className="flex items-center gap-1 h-8 px-3 text-xs"
+                title={isAIResponding ? "Voice input disabled while AI is responding" : undefined}
               >
                 {isListening ? (
                   <>
@@ -367,8 +396,9 @@ export function VoiceFirstInterface({
                   variant="outline"
                   size="sm"
                   onClick={() => handleVoiceSubmit(voiceTranscript)}
-                  disabled={disabled || isProcessing}
+                  disabled={disabled || isProcessing || isAIResponding}
                   className="flex items-center gap-1 h-8 px-3 text-xs"
+                  title={isAIResponding ? "Cannot send while AI is responding" : undefined}
                 >
                   <Send className="h-3 w-3" />
                   Send

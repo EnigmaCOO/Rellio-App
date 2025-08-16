@@ -222,7 +222,7 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
         setTimeout(() => {
           try {
             // Try creating a new blob with different options
-            const fallbackBlob = new Blob([audioBlob], { type: 'audio/mp3' });
+            const fallbackBlob = new Blob([audioBlob], { type: 'audio/mpeg' });
             createAudioElement(fallbackBlob, true);
           } catch (retryError) {
             console.error('🔊 Retry failed:', retryError);
