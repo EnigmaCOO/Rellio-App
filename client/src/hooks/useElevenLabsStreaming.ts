@@ -248,8 +248,8 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       return;
     }
 
-    // Limit text length to prevent crashes with huge responses
-    const maxLength = 2000; // Increased limit - the system is working well now
+    // Limit text length for faster voice synthesis and better interruption
+    const maxLength = 600; // Shorter responses for faster synthesis and easier interruption
     const textToSpeak = text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
     
     if (text.length > maxLength) {

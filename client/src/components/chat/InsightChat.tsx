@@ -522,11 +522,11 @@ export function InsightChat({
       if (aiResponse) {
         conversationManager.addTurn(currentMessage, aiResponse, context);
         
-        // Auto-play voice response if supported
+        // Auto-play voice response if supported with immediate start
         if (isVoiceSupported && aiResponse.trim()) {
           setTimeout(() => {
             playText(aiResponse);
-          }, 500);
+          }, 100); // Reduced delay for faster response
         }
       }
       

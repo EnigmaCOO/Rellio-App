@@ -172,22 +172,22 @@ export function VoiceFirstInterface({
             const transcript = event.results[i][0].transcript.trim().toLowerCase();
             detectedText += transcript + ' ';
             
-            // Filter out AI voice feedback and only detect intentional user input
-            if (transcript.length >= 3 && 
-                !transcript.includes('god') && 
-                !transcript.includes('christianity') && 
-                !transcript.includes('islam') && 
-                !transcript.includes('judaism') && 
-                !transcript.includes('hinduism') && 
-                !transcript.includes('buddhism') && 
-                !transcript.includes('perspective') &&
-                !transcript.includes('creator') &&
-                !transcript.includes('universe') &&
-                !transcript.includes('divine') &&
-                event.results[i].isFinal && // Only respond to final results
-                event.results[i][0].confidence > 0.7) { // High confidence only
-              hasValidUserInput = true;
-              break;
+            // More aggressive interruption detection - respond to ANY clear user input
+            if (transcript.length >= 2 && 
+                event.results[i][0].confidence > 0.6) { // Lower confidence threshold for faster interruption
+              
+              // Simple filter for obvious AI voice feedback
+              const isLikelyAIFeedback = transcript.includes('perspective') ||
+                                       transcript.includes('christianity') ||
+                                       transcript.includes('islam') ||
+                                       transcript.includes('judaism') ||
+                                       transcript.includes('hinduism') ||
+                                       transcript.includes('buddhism');
+              
+              if (!isLikelyAIFeedback) {
+                hasValidUserInput = true;
+                break;
+              }
             }
           }
           
@@ -282,15 +282,32 @@ export function VoiceFirstInterface({
 
   const startVoiceInput = useCallback(() => {
     if (isAIResponding) {
-      console.log('🎤 Cannot start voice input - AI is currently responding');
+      console.log('🎤 Interrupting AI to start voice input');
+      onInterrupt(); // Interrupt the AI immediately
+      
+      // Wait a moment then start voice input
+      setTimeout(() => {
+        if (recognitionRef.current && !isListening) {
+          setVoiceTranscript("");
+          try {
+            recognitionRef.current.start();
+          } catch (error) {
+            console.log('🎤 Voice start error:', error);
+          }
+        }
+      }, 200);
       return;
     }
     
     if (recognitionRef.current && !isListening) {
       setVoiceTranscript("");
-      recognitionRef.current.start();
+      try {
+        recognitionRef.current.start();
+      } catch (error) {
+        console.log('🎤 Voice start error:', error);
+      }
     }
-  }, [isListening, isAIResponding]);
+  }, [isListening, isAIResponding, onInterrupt]);
 
   const stopVoiceInput = useCallback(() => {
     if (recognitionRef.current && isListening) {
@@ -358,15 +375,29 @@ export function VoiceFirstInterface({
             {inputMode === 'voice' ? 'Voice' : 'Text'}
           </Button>
           
-          {orbState === 'responding' && (
+          {(orbState === 'responding' || isAIResponding) && (
             <Button
               variant="outline"
               size="sm"
-              onClick={onInterrupt}
-              className="text-red-600 hover:text-red-700 border-red-300 h-8 px-3 text-xs"
+              onClick={() => {
+                console.log('🛑 Manual interrupt button clicked');
+                onInterrupt();
+                // Force restart voice input after interrupt
+                setTimeout(() => {
+                  if (inputMode === 'voice' && recognitionRef.current && !isListening) {
+                    try {
+                      recognitionRef.current.start();
+                      console.log('🎤 Restarting voice input after interrupt');
+                    } catch (error) {
+                      console.log('🎤 Error restarting voice:', error);
+                    }
+                  }
+                }, 500);
+              }}
+              className="text-red-600 hover:text-red-700 border-red-300 h-8 px-3 text-xs animate-pulse"
             >
               <Square className="h-3 w-3 mr-1" />
-              Stop
+              Stop AI
             </Button>
           )}
         </div>

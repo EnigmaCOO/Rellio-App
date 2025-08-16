@@ -42,13 +42,13 @@ Format Guidelines:
 User's question: "${userMessage}"`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4o-mini", // Use faster model for quick responses
         messages: [
           { role: "system", content: multiReligiousPrompt },
           { role: "user", content: userMessage }
         ],
-        max_tokens: 1200,
-        temperature: 0.8,
+        max_tokens: 600, // Shorter responses for faster generation
+        temperature: 0.7,
       });
 
       const multiResponse = response.choices[0].message.content || "I apologize, but I couldn't generate a multi-religious response at this time.";
@@ -126,22 +126,22 @@ User's question: "${userMessage}"`;
 Format Guidelines:
 - Use ONLY the exact format shown above with <perspective>Tradition Name</perspective> tags
 - Never use asterisks (****) or other formatting for section headers
-- Provide 2-3 sentences for each perspective
+- Provide 1-2 sentences for each perspective (keep it brief for voice)
 - Include authentic scriptural references when possible
-- Ensure each perspective offers unique insights while highlighting common spiritual themes
-- Keep responses balanced in length across all five traditions
+- Focus on core insights rather than detailed explanations
+- Keep responses concise for better voice experience
 
 User's question: "${userMessage}"`;
 
         try {
           const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: "gpt-4o-mini", // Use faster model for quick responses
             messages: [
               { role: "system", content: multiReligiousPrompt },
               { role: "user", content: userMessage }
             ],
-            max_tokens: 1200,
-            temperature: 0.8,
+            max_tokens: 600, // Shorter responses for faster generation and voice
+            temperature: 0.7,
           });
 
           const multiResponse = response.choices[0].message.content || "I apologize, but I couldn't generate a response at this time.";
