@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { NavigationPanel } from "@/components/NavigationPanel";
 import { VerseSpotlight } from "@/components/VerseSpotlight";
 import { VerseList } from "@/components/IlluminVerse/VerseList";
-import { EnhancedAuraArchivistCard } from "@/components/EnhancedAuraArchivistCard";
+import { InsightChat } from "@/components/chat/InsightChat";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Settings, BookOpen, Menu, X, ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
 import rellioLogo from "@assets/image_1751817332000.png";
@@ -414,7 +414,7 @@ export default function Dashboard() {
               {/* Chat Header with Controls */}
               <div className="flex-shrink-0 bg-white border-b border-gray-200 p-4 rounded-t-lg lg:rounded-none">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">AI Scripture Guide</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Universal Wisdom Explorer</h3>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -428,13 +428,14 @@ export default function Dashboard() {
               </div>
               
               {/* Chat Content - Full Height */}
-              <div className="flex-1 min-h-0 p-4">
-                <EnhancedAuraArchivistCard
+              <div className="flex-1 min-h-0">
+                <InsightChat
                   sessionId={chatSessionId}
                   context={currentContext}
                   externalMessage={externalMessage}
                   onExternalMessageProcessed={handleExternalMessageProcessed}
                   onNavigateToVerse={handleNavigateToVerse}
+                  className="h-full"
                 />
               </div>
             </div>

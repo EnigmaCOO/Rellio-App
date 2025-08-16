@@ -32,13 +32,13 @@ export function VoiceFirstInterface({
   const [textInput, setTextInput] = useState("");
   const [orbState, setOrbState] = useState<'idle' | 'listening' | 'processing' | 'responding' | 'interrupted'>('idle');
   
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
   const timeoutRef = useRef<NodeJS.Timeout>();
 
   // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
       const recognition = new SpeechRecognition();
       
       recognition.continuous = true;
@@ -51,7 +51,7 @@ export function VoiceFirstInterface({
         console.log('🎤 Voice recognition started');
       };
       
-      recognition.onresult = (event) => {
+      recognition.onresult = (event: any) => {
         let finalTranscript = '';
         let interimTranscript = '';
         
@@ -82,7 +82,7 @@ export function VoiceFirstInterface({
         }
       };
       
-      recognition.onerror = (event) => {
+      recognition.onerror = (event: any) => {
         console.error('🎤 Speech recognition error:', event.error);
         setIsListening(false);
         setOrbState('idle');
