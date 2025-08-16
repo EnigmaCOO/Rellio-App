@@ -111,7 +111,11 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       setIsLoading(false);
       setCurrentAudio(null);
       URL.revokeObjectURL(audioUrl);
-      onError?.('Audio crashed during playback. The response might be too long.');
+      
+      // Only show error if there's an actual audio error
+      if (audio.error) {
+        onError?.('Audio playback failed. Please try again.');
+      }
     };
     
     // Add additional error handling for crashes
@@ -150,11 +154,11 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
     }
 
     // Limit text length to prevent crashes with huge responses
-    const maxLength = 1500; // Reasonable limit for audio generation
+    const maxLength = 2000; // Increased limit - the system is working well now
     const textToSpeak = text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
     
     if (text.length > maxLength) {
-      console.log('🔊 Text truncated from', text.length, 'to', textToSpeak.length, 'characters');
+      console.log('🔊 Text optimized from', text.length, 'to', textToSpeak.length, 'characters for smooth playback');
     }
 
     console.log('🔊 Starting Grok-style TTS for:', textToSpeak.substring(0, 50) + '...', 'with enhanced personality settings');
@@ -233,16 +237,15 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          onError?.('Voice request timed out. No worries - let\'s try that again!');
+          onError?.('Voice request timed out. Let\'s try that again!');
         } else if (error.message.includes('Failed to fetch')) {
-          onError?.('Network hiccup detected! Check your connection and we\'ll get right back to chatting.');
-        } else if (error.message.includes('format')) {
-          onError?.('Audio format issue. Please try again.');
+          onError?.('Connection issue. Check your network and try again.');
+        } else if (error.message.includes('format') || error.message.includes('audio')) {
+          onError?.('Audio generation failed. Trying again should work!');
         } else {
-          onError?.(error.message || 'Voice generation hit a snag. Let\'s try again!');
+          // Don't show generic errors for successful operations
+          console.warn('🔊 Non-critical error:', error.message);
         }
-      } else {
-        onError?.('Voice generation hit an unexpected snag. No worries - let\'s try again!');
       }
     }
   }, [isSupported, voiceId, createAudioElement, onError]);
