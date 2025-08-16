@@ -202,11 +202,19 @@ export function VoiceFirstInterface({
             // Stop background recognition and switch to main recognition
             try {
               backgroundRecognition.stop();
-              // Give user a moment to continue speaking
+              // Give user a moment to continue speaking - check if recognition is available
               setTimeout(() => {
                 if (recognitionRef.current && !isListening) {
-                  recognitionRef.current.start();
-                  console.log('🎤 Switched to main recognition after interruption');
+                  try {
+                    recognitionRef.current.start();
+                    console.log('🎤 Switched to main recognition after interruption');
+                  } catch (startError: any) {
+                    if (startError.message.includes('already started')) {
+                      console.log('🎤 Recognition already active - continuing with current session');
+                    } else {
+                      console.log('🎤 Recognition start error:', startError);
+                    }
+                  }
                 }
               }, 200);
             } catch (error) {
@@ -243,8 +251,12 @@ export function VoiceFirstInterface({
           try {
             backgroundRecognitionRef.current.start();
             console.log('🎤 Starting background interruption detection while keeping main voice active');
-          } catch (error) {
-            console.log('🎤 Background recognition error:', error);
+          } catch (error: any) {
+            if (!error.message.includes('already started')) {
+              console.log('🎤 Background recognition error:', error);
+            } else {
+              console.log('🎤 Background recognition already active');
+            }
           }
         }
       }, 100); // Very quick start for instant interruption detection
@@ -287,18 +299,25 @@ export function VoiceFirstInterface({
       try {
         recognitionRef.current.start();
         console.log('🎤 Voice recognition started successfully');
-      } catch (error) {
-        console.log('🎤 Voice start error:', error);
-        // Try to restart recognition if it fails
-        setTimeout(() => {
-          if (recognitionRef.current && !isListening) {
-            try {
-              recognitionRef.current.start();
-            } catch (retryError) {
-              console.log('🎤 Voice retry failed:', retryError);
+      } catch (error: any) {
+        if (error.message.includes('already started')) {
+          console.log('🎤 Voice recognition already active - continuing');
+          setIsListening(true); // Update state to match reality
+        } else {
+          console.log('🎤 Voice start error:', error);
+          // Try to restart recognition if it fails
+          setTimeout(() => {
+            if (recognitionRef.current && !isListening) {
+              try {
+                recognitionRef.current.start();
+              } catch (retryError: any) {
+                if (!retryError.message.includes('already started')) {
+                  console.log('🎤 Voice retry failed:', retryError);
+                }
+              }
             }
-          }
-        }, 1000);
+          }, 1000);
+        }
       }
     }
   }, [isListening]);
