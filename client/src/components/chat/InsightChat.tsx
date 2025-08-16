@@ -125,11 +125,15 @@ function EnhancedMessageBubble({
   };
 
   const renderEnhancedResponse = (content: string) => {
-    const hasMultiReligious = content.includes('Biblical perspective') || 
-                              content.includes('Quranic perspective') ||
-                              content.includes('Torah perspective') ||
-                              content.includes('Hindu perspective') ||
-                              content.includes('Buddhist perspective');
+    // Check for XML-style perspective tags or traditional perspective patterns
+    const hasXMLPerspectives = /<perspective>(Christianity|Islam|Judaism|Hinduism|Buddhism)<\/perspective>/.test(content);
+    const hasTraditionalPerspectives = content.includes('Biblical perspective') || 
+                                      content.includes('Quranic perspective') ||
+                                      content.includes('Torah perspective') ||
+                                      content.includes('Hindu perspective') ||
+                                      content.includes('Buddhist perspective');
+
+    const hasMultiReligious = hasXMLPerspectives || hasTraditionalPerspectives;
 
     if (!hasMultiReligious) {
       return (
@@ -139,7 +143,68 @@ function EnhancedMessageBubble({
       );
     }
 
-    // Parse multi-religious response
+    // Parse XML-style perspectives
+    if (hasXMLPerspectives) {
+      const perspectiveRegex = /<perspective>(Christianity|Islam|Judaism|Hinduism|Buddhism)<\/perspective>([\s\S]*?)(?=<perspective>|$)/g;
+      const matches = [...content.matchAll(perspectiveRegex)];
+      
+      // Extract introduction (text before first perspective tag)
+      const introMatch = content.match(/^([\s\S]*?)(?=<perspective>)/);
+      const introduction = introMatch ? introMatch[1].trim() : '';
+
+      const perspectiveMap = new Map();
+      matches.forEach(match => {
+        const [, religion, perspectiveText] = match;
+        perspectiveMap.set(religion, perspectiveText.trim());
+      });
+
+      const perspectives = [
+        { key: 'Christianity', name: 'Christian', icon: Eye, bgColor: 'bg-blue-50', borderColor: 'border-blue-200', textColor: 'text-blue-700', iconColor: 'text-blue-600' },
+        { key: 'Islam', name: 'Islamic', icon: Heart, bgColor: 'bg-green-50', borderColor: 'border-green-200', textColor: 'text-green-700', iconColor: 'text-green-600' },
+        { key: 'Judaism', name: 'Jewish', icon: Star, bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200', textColor: 'text-indigo-700', iconColor: 'text-indigo-600' },
+        { key: 'Hinduism', name: 'Hindu', icon: Zap, bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-700', iconColor: 'text-orange-600' },
+        { key: 'Buddhism', name: 'Buddhist', icon: Flame, bgColor: 'bg-purple-50', borderColor: 'border-purple-200', textColor: 'text-purple-700', iconColor: 'text-purple-600' },
+      ];
+
+      return (
+        <div className="space-y-4">
+          {introduction && (
+            <div className="text-gray-800 text-sm leading-relaxed">
+              {introduction}
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            {perspectives.map(({ key, name, icon: Icon, bgColor, borderColor, textColor, iconColor }) => {
+              const perspectiveContent = perspectiveMap.get(key);
+              if (!perspectiveContent) return null;
+              
+              return (
+                <button
+                  key={key}
+                  className={`group flex items-center gap-1.5 px-3 py-2 ${bgColor} border ${borderColor} rounded-full hover:shadow-lg perspective-chip-transition`}
+                  title={`Click to read ${name} perspective: ${perspectiveContent.substring(0, 100)}...`}
+                  onClick={() => {
+                    // Show perspective content in a toast or modal
+                    toast({
+                      title: `${name} Perspective`,
+                      description: perspectiveContent,
+                      duration: 8000
+                    });
+                  }}
+                >
+                  <Icon className={`w-4 h-4 ${iconColor} group-hover:scale-110 transition-transform`} />
+                  <span className={`text-sm font-medium ${textColor}`}>{name}</span>
+                  <div className={`w-1.5 h-1.5 ${bgColor.replace('50', '400')} rounded-full opacity-60 group-hover:opacity-100 transition-opacity`} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // Fallback for traditional perspective format
     const lines = content.split('\n');
     let introduction = '';
     
