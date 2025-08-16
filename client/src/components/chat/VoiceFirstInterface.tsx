@@ -222,48 +222,38 @@ export function VoiceFirstInterface({
     }
   }, [isAIResponding, onInterrupt]);
 
-  // Enhanced speech recognition isolation with better timing
+  // Grok-style independent voice system - voice input should ALWAYS be available
   useEffect(() => {
-    if (isAIResponding) {
-      // AI is speaking - IMMEDIATELY stop main recognition to prevent feedback loops
-      if (recognitionRef.current && isListening) {
-        console.log('🎤 AI responding - IMMEDIATELY stopping main speech recognition to prevent feedback');
-        try {
-          recognitionRef.current.abort(); // Use abort() for immediate stop
-          setIsListening(false);
-        } catch (error) {
-          console.log('🎤 Error stopping main recognition:', error);
-        }
-      }
-      
-      // Delay background detection to allow audio to start playing first
+    // Keep voice input always available like Grok - no interruption of voice recognition
+    console.log('🎤 Grok-style: Voice input remains independent of AI audio playback');
+    
+    // Only manage background detection for interruption, but keep main voice always active
+    if (isAIResponding && !isBackgroundListening) {
+      // Start background detection for interruption but don't stop main voice
       const startBackgroundTimer = setTimeout(() => {
         if (backgroundRecognitionRef.current && !isBackgroundListening && isAIResponding) {
           try {
             backgroundRecognitionRef.current.start();
-            console.log('🎤 Starting delayed background voice detection for interruption');
+            console.log('🎤 Starting background interruption detection while keeping main voice active');
           } catch (error) {
-            console.log('🎤 Background recognition already running or error:', error);
+            console.log('🎤 Background recognition error:', error);
           }
         }
-      }, 1500); // Wait 1.5 seconds for audio to start playing
+      }, 500); // Quick start for interruption detection
       
       return () => clearTimeout(startBackgroundTimer);
-    } else {
-      // AI finished responding - clean up background detection
-      if (backgroundRecognitionRef.current && isBackgroundListening) {
+    } else if (!isAIResponding && isBackgroundListening) {
+      // Clean up background detection when AI stops
+      if (backgroundRecognitionRef.current) {
         try {
           backgroundRecognitionRef.current.stop();
-          console.log('🎤 AI finished - stopping background voice detection');
+          console.log('🎤 Stopping background detection - AI finished');
         } catch (error) {
           console.log('🎤 Error stopping background recognition:', error);
         }
       }
-      
-      // Reset to normal state - main recognition can be used again
-      console.log('🎤 AI finished responding - voice input available again');
     }
-  }, [isAIResponding, isListening, isBackgroundListening]);
+  }, [isAIResponding, isBackgroundListening]);
 
   // Update orb state based on app state
   useEffect(() => {
@@ -281,33 +271,29 @@ export function VoiceFirstInterface({
   }, [isListening, isProcessing, isStreaming, isInterrupted]);
 
   const startVoiceInput = useCallback(() => {
-    if (isAIResponding) {
-      console.log('🎤 Interrupting AI to start voice input');
-      onInterrupt(); // Interrupt the AI immediately
-      
-      // Wait a moment then start voice input
-      setTimeout(() => {
-        if (recognitionRef.current && !isListening) {
-          setVoiceTranscript("");
-          try {
-            recognitionRef.current.start();
-          } catch (error) {
-            console.log('🎤 Voice start error:', error);
-          }
-        }
-      }, 200);
-      return;
-    }
+    // Grok-style: Voice input should work regardless of AI state
+    console.log('🎤 Starting Grok-style voice input - independent of AI audio');
     
     if (recognitionRef.current && !isListening) {
       setVoiceTranscript("");
       try {
         recognitionRef.current.start();
+        console.log('🎤 Voice recognition started successfully');
       } catch (error) {
         console.log('🎤 Voice start error:', error);
+        // Try to restart recognition if it fails
+        setTimeout(() => {
+          if (recognitionRef.current && !isListening) {
+            try {
+              recognitionRef.current.start();
+            } catch (retryError) {
+              console.log('🎤 Voice retry failed:', retryError);
+            }
+          }
+        }, 1000);
       }
     }
-  }, [isListening, isAIResponding, onInterrupt]);
+  }, [isListening]);
 
   const stopVoiceInput = useCallback(() => {
     if (recognitionRef.current && isListening) {
@@ -404,12 +390,13 @@ export function VoiceFirstInterface({
         
         <div className="flex items-center gap-2 text-xs text-gray-500">
           <span>
-            {orbState === 'idle' && !isAIResponding && 'Ready'}
+            {orbState === 'idle' && !isAIResponding && inputMode === 'voice' && 'Voice Ready'}
+            {orbState === 'idle' && !isAIResponding && inputMode === 'text' && 'Text Ready'}
             {orbState === 'idle' && isAIResponding && '🔊 AI Speaking'}
             {orbState === 'listening' && 'Listening...'}
             {orbState === 'processing' && 'Processing...'}
             {orbState === 'responding' && '🔊 AI Speaking'}
-            {orbState === 'interrupted' && 'Stopped'}
+            {orbState === 'interrupted' && 'Voice Ready'}
           </span>
           {isBackgroundListening && isAIResponding && (
             <div className="flex items-center gap-1">

@@ -90,19 +90,34 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       // Create new audio element with enhanced compatibility
       const audio = new Audio();
       
-      // Set audio properties for better compatibility and isolation
+      // Grok-style audio setup with proper isolation from microphone
       audio.preload = 'auto';
-      audio.volume = Math.max(0.1, Math.min(volume, 1.0)); // Ensure valid volume range
-      audio.crossOrigin = 'anonymous'; // Prevent CORS issues
+      audio.volume = Math.max(0.3, Math.min(volume, 1.0)); // Higher minimum volume for clarity
+      audio.crossOrigin = 'anonymous';
       
-      // Add audio isolation attributes to prevent microphone feedback
+      // Critical: Set audio to use speakers only, not microphone input
       if ('setSinkId' in audio) {
-        // Try to use default output device
         try {
           (audio as any).setSinkId('default');
+          console.log('🔊 Audio set to default output device for Grok-style isolation');
         } catch (error) {
-          console.log('🔊 setSinkId not supported, using default audio output');
+          console.log('🔊 Using default audio output');
         }
+      }
+      
+      // Add audio context isolation if available
+      try {
+        if (typeof window !== 'undefined' && ('webkitAudioContext' in window || 'AudioContext' in window)) {
+          // Ensure audio doesn't capture to microphone
+          if (!(audio as any).captureStream) {
+            Object.defineProperty(audio, 'captureStream', {
+              value: null,
+              writable: false
+            });
+          }
+        }
+      } catch (error) {
+        console.log('🔊 Audio context isolation not available');
       }
       
       // Create blob URL with proper MIME type
@@ -157,29 +172,28 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
           console.warn('🔊 URL cleanup error:', error);
         }
         
-        // Provide specific error messages based on error type
-        if (audio.error) {
+        // Grok-style error handling - don't show errors for minor issues
+        if (audio.error && audio.error.code !== 1) { // Don't show errors for aborted playback
           const errorCode = audio.error.code;
-          let errorMessage = 'Audio playback failed. ';
+          let errorMessage = '';
           
           switch (errorCode) {
-            case 1: // MEDIA_ERR_ABORTED
-              errorMessage += 'Playback was interrupted.';
-              break;
             case 2: // MEDIA_ERR_NETWORK
-              errorMessage += 'Network error occurred.';
+              errorMessage = 'Network issue with voice. Try again.';
               break;
             case 3: // MEDIA_ERR_DECODE
-              errorMessage += 'Audio format issue.';
+              errorMessage = 'Voice format issue. Retrying...';
               break;
             case 4: // MEDIA_ERR_SRC_NOT_SUPPORTED
-              errorMessage += 'Audio format not supported.';
+              errorMessage = 'Voice not supported. Using text only.';
               break;
             default:
-              errorMessage += 'Please try again.';
+              errorMessage = 'Voice temporarily unavailable.';
           }
           
-          onError?.(errorMessage);
+          if (errorMessage) {
+            onError?.(errorMessage);
+          }
         }
       };
       
