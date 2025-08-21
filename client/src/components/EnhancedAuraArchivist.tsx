@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +41,7 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
 import { AudioPlaybackButton } from "@/components/chat/AudioPlaybackButton";
 import { VoiceInputControls } from "@/components/chat/VoiceInputControls";
+import { GrokStyleVoiceInterface } from "@/components/chat/GrokStyleVoiceInterface";
 import { ScholarPersonaSelector, type ScholarPersona, getPersonaForReligion, PersonaBadge } from "@/components/chat/ScholarPersonas";
 import { PersonaCustomizer } from "@/components/chat/PersonaCustomizer";
 import { ChatHistoryManager } from "@/components/chat/ChatHistoryManager";
@@ -253,7 +254,7 @@ export function EnhancedAuraArchivist({
   const queryClient = useQueryClient();
   const messageEndRef = useRef<HTMLDivElement>(null);
   
-  // Enhanced State Management
+  // Enhanced State Management with Grok-like Features
   const [currentMessage, setCurrentMessage] = useState("");
   const [selectedPersona, setSelectedPersona] = useState<ScholarPersona | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -261,12 +262,16 @@ export function EnhancedAuraArchivist({
   const [isInterrupted, setIsInterrupted] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState(sessionId);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [orbState, setOrbState] = useState<'idle' | 'listening' | 'processing' | 'responding' | 'interrupted'>('idle');
   const [voiceTranscript, setVoiceTranscript] = useState("");
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [customPersona, setCustomPersona] = useState<Partial<ScholarPersona> | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showPersonaBanner, setShowPersonaBanner] = useState(false);
   const [bannerTimeout, setBannerTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [conversationHistory, setConversationHistory] = useState<Array<{id: string, content: string, type: 'user' | 'ai', timestamp: number}>>([]);
+  const [audioState, setAudioState] = useState<'idle' | 'listening' | 'processing' | 'responding' | 'interrupted'>('idle');
+  const [voiceMode, setVoiceMode] = useState(true); // Default to voice-first
 
   // Load saved persona and custom settings from localStorage
   useEffect(() => {
@@ -319,7 +324,7 @@ export function EnhancedAuraArchivist({
         
         toast({
           title: "Spiritual Guide Available",
-          description: `${religionPersona.name} is ready to guide you through ${context.religion === 'bible' ? 'the Bible' : context.religion === 'quran' ? 'the Quran' : context.religion === 'torah' ? 'the Torah' : context.religion === 'hindu' ? 'Hindu scriptures' : 'Buddhist texts'}`,
+          description: `${religionPersona.name} is ready to guide you through ${context.religion === 'christianity' ? 'the Bible' : context.religion === 'islam' ? 'the Quran' : context.religion === 'judaism' ? 'the Torah' : context.religion === 'hinduism' ? 'Hindu scriptures' : 'Buddhist texts'}`,
           variant: "default"
         });
       }
@@ -385,10 +390,24 @@ export function EnhancedAuraArchivist({
         setIsStreaming(false);
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/chat', currentSessionId] });
       setCurrentMessage("");
       setVoiceTranscript("");
+      setAudioState('responding');
+      
+      // Add AI response to conversation history
+      if (data?.aiMessage) {
+        const newAiMessage = {
+          id: Date.now().toString() + '_ai',
+          content: data.aiMessage.content,
+          type: 'ai' as const,
+          timestamp: Date.now()
+        };
+        setConversationHistory(prev => [...prev, newAiMessage]);
+      }
+      
+      setTimeout(() => setAudioState('idle'), 1000);
     },
     onError: (error: any) => {
       setIsStreaming(false);
@@ -420,6 +439,17 @@ export function EnhancedAuraArchivist({
     const messageToSend = messageOverride || currentMessage || voiceTranscript;
     if (!messageToSend.trim()) return;
     
+    // Update conversation history for context retention
+    const newUserMessage = {
+      id: Date.now().toString(),
+      content: messageToSend,
+      type: 'user' as const,
+      timestamp: Date.now()
+    };
+    
+    setConversationHistory(prev => [...prev, newUserMessage]);
+    setAudioState('processing');
+    
     sendMessageMutation.mutate({
       message: messageToSend,
       personaContext: selectedPersona || undefined
@@ -434,17 +464,7 @@ export function EnhancedAuraArchivist({
     handleSendMessage(transcript);
   };
 
-  const handleInterrupt = () => {
-    setIsInterrupted(true);
-    setIsStreaming(false);
-    // Add visual feedback for interruption
-    toast({
-      title: "Response Interrupted",
-      description: "You can now ask a new question",
-      variant: "default"
-    });
-    setTimeout(() => setIsInterrupted(false), 2000);
-  };
+  // Remove duplicate - using enhanced version below
 
   const handleNewSession = () => {
     const newSessionId = `session_${Date.now()}`;
@@ -512,15 +532,60 @@ export function EnhancedAuraArchivist({
     });
   };
 
-  // Get contextual header text
+  // Enhanced interruption with context retention
+  const handleInterrupt = useCallback(() => {
+    if (isStreaming) {
+      console.log('🛑 Interrupting AI response with context retention');
+      setIsStreaming(false);
+      setIsInterrupted(true);
+      setOrbState('interrupted');
+      
+      // Retain conversation context for seamless continuation
+      const lastMessages = conversationHistory.slice(-3); // Keep last 3 for context
+      
+      toast({
+        title: "Response Interrupted",
+        description: "Context retained - continue your conversation",
+        variant: "default"
+      });
+      
+      setTimeout(() => {
+        setIsInterrupted(false);
+        setOrbState('idle');
+      }, 2000);
+    }
+  }, [isStreaming, conversationHistory, toast]);
+
+  // Enhanced persona switching based on context
+  const getActivePersona = useCallback(() => {
+    if (context.religion) {
+      const religionPersona = getPersonaForReligion(context.religion);
+      if (religionPersona) return religionPersona;
+    }
+    return selectedPersona; // Fallback to manually selected or default
+  }, [context.religion, selectedPersona]);
+
+  // Get contextual header text with dynamic persona
   const getHeaderText = () => {
+    const activePersona = getActivePersona();
     if (context.religion && context.book) {
-      return `Exploring ${context.book} Chapter ${context.chapter}`;
+      return `${activePersona?.name || 'Universal Guide'} • ${context.book} Ch.${context.chapter}`;
     }
     if (context.religion) {
-      return `Spiritual Guide for ${context.religion}`;
+      return `${activePersona?.name || 'Spiritual Guide'} • ${context.religion}`;
     }
-    return 'Universal Wisdom Explorer';
+    return activePersona?.name || 'Universal Wisdom Explorer';
+  };
+
+  // Dynamic orb state management
+  const getOrbColor = () => {
+    switch(orbState) {
+      case 'listening': return 'from-teal-400 to-cyan-500';
+      case 'processing': return 'from-purple-400 to-indigo-500';
+      case 'responding': return 'from-blue-400 to-purple-500';
+      case 'interrupted': return 'from-red-400 to-orange-500';
+      default: return 'from-teal-500 to-cyan-600';
+    }
   };
 
   return (
@@ -532,16 +597,45 @@ export function EnhancedAuraArchivist({
       <div className="flex-shrink-0 relative bg-gradient-to-r from-purple-50 via-white to-yellow-50 border-b border-gray-100 p-2">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center shadow-md">
-              <Brain className="h-3 w-3 text-white" />
+            {/* Dynamic Grok-style Orb Indicator */}
+            <div className={cn(
+              "w-7 h-7 rounded-full flex items-center justify-center shadow-md transition-all duration-300",
+              `bg-gradient-to-br ${getOrbColor()}`,
+              orbState === 'listening' && "animate-pulse scale-110",
+              orbState === 'processing' && "animate-spin",
+              orbState === 'responding' && "animate-pulse",
+              orbState === 'interrupted' && "animate-bounce"
+            )}>
+              {orbState === 'listening' ? (
+                <Mic className="h-3 w-3 text-white" />
+              ) : orbState === 'processing' ? (
+                <Brain className="h-3 w-3 text-white animate-pulse" />
+              ) : orbState === 'responding' ? (
+                <Volume2 className="h-3 w-3 text-white" />
+              ) : orbState === 'interrupted' ? (
+                <AlertCircle className="h-3 w-3 text-white" />
+              ) : (
+                <Brain className="h-3 w-3 text-white" />
+              )}
             </div>
             <div>
-              <h2 className="text-sm font-bold text-gray-900">Aura Archivist</h2>
+              <h2 className="text-sm font-bold text-gray-900">Universal Wisdom Explorer</h2>
               <p className="text-xs text-gray-600">{getHeaderText()}</p>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Voice Mode Indicator */}
+            <Badge 
+              variant={voiceMode ? "default" : "secondary"} 
+              className={cn(
+                "text-xs",
+                voiceMode ? "bg-teal-100 text-teal-800" : "bg-gray-100 text-gray-600"
+              )}
+            >
+              {voiceMode ? "Voice Active" : "Text Mode"}
+            </Badge>
+            
             <Button
               variant="ghost"
               size="sm"
@@ -684,19 +778,48 @@ export function EnhancedAuraArchivist({
 
       {/* Enhanced Input Area with Voice-First Design */}
       <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white p-2 flex-shrink-0">
-        {/* Voice-First Interface */}
-        <VoiceFirstInterface
-          onSubmit={handleSendMessage}
-          isStreaming={isStreaming}
-          isInterrupted={isInterrupted}
+        {/* Enhanced Grok-Style Voice Interface */}
+        <GrokStyleVoiceInterface
+          onSendMessage={handleSendMessage}
+          isLoading={sendMessageMutation.isPending}
+          selectedPersona={getActivePersona()}
           onInterrupt={handleInterrupt}
-          placeholder={
-            selectedPersona 
-              ? `Ask ${selectedPersona.name} about spiritual wisdom...`
-              : "Ask about spiritual wisdom..."
-          }
-          disabled={sendMessageMutation.isPending}
+          isStreaming={isStreaming}
         />
+        
+        {/* Text Input Fallback */}
+        {!voiceMode && (
+          <div className="flex items-center gap-2 mt-2 p-2 bg-gray-50 rounded-lg">
+            <Input
+              value={currentMessage}
+              onChange={(e) => setCurrentMessage(e.target.value)}
+              placeholder={getActivePersona() ? `Ask ${getActivePersona()?.name} about spiritual wisdom...` : "Ask about spiritual wisdom..."}
+              className="flex-1 border-none bg-transparent focus:ring-0"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+            />
+            <Button
+              onClick={() => handleSendMessage()}
+              disabled={!currentMessage.trim() || sendMessageMutation.isPending}
+              size="sm"
+              className="bg-teal-500 hover:bg-teal-600"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+            <Button
+              onClick={() => setVoiceMode(true)}
+              size="sm"
+              variant="outline"
+              className="border-teal-200 text-teal-600 hover:bg-teal-50"
+            >
+              <Mic className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Persona Customizer Modal */}

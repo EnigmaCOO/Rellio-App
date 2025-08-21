@@ -636,7 +636,7 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
       res.send(audioBuffer);
     } catch (error) {
       console.error("Error generating speech:", error);
-      res.status(500).json({ error: "Failed to generate speech", details: error.message });
+      res.status(500).json({ error: "Failed to generate speech", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
