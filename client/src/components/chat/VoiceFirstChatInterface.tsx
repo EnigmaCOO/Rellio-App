@@ -537,6 +537,134 @@ export function VoiceFirstChatInterface({
     }
   }, [selectedPersona, isInsideBook, context]);
 
+  // Voice synthesis function
+  const speakMessage = useCallback(async (text: string) => {
+    if (!text.trim() || isTalkingBack) {
+      console.log('⚠️ Skipping voice synthesis - empty text or already speaking');
+      return;
+    }
+
+    // Clean the text - remove HTML tags and perspective markers
+    const cleanText = text
+      .replace(/<perspective>.*?<\/perspective>/g, '')
+      .replace(/<\/?[^>]+(>|$)/g, "")
+      .trim();
+
+    if (!cleanText) {
+      console.log('⚠️ No clean text to speak');
+      return;
+    }
+
+    setIsTalkingBack(true);
+    setIsAISpeaking(true);
+    console.log('🔊 Starting voice synthesis:', cleanText.substring(0, 50) + '...');
+
+    try {
+      // Try ElevenLabs streaming first
+      console.log('🎤 Attempting ElevenLabs TTS with voice:', selectedPersona?.elevenLabsVoice);
+      
+      const response = await fetch('/api/elevenlabs/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: cleanText,
+          voice_id: selectedPersona?.elevenLabsVoice || 'pNInz6obpgDQGcFmaJgB',
+          model_id: "eleven_turbo_v2_5",
+          voice_settings: {
+            stability: 0.75,
+            similarity_boost: 0.8,
+            style: 0.2,
+            use_speaker_boost: true
+          }
+        })
+      });
+
+      if (response.ok) {
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        
+        audio.volume = settings.volume;
+        console.log('🔊 Playing ElevenLabs audio with volume:', settings.volume);
+        
+        audio.onplay = () => {
+          console.log('✅ ElevenLabs audio playback started');
+        };
+        
+        audio.onended = () => {
+          console.log('✅ ElevenLabs audio playback finished');
+          setIsTalkingBack(false);
+          setIsAISpeaking(false);
+          URL.revokeObjectURL(audioUrl);
+        };
+        
+        audio.onerror = (error) => {
+          console.error('❌ ElevenLabs audio error, falling back to browser speech:', error);
+          URL.revokeObjectURL(audioUrl);
+          fallbackToBrowserSpeech(cleanText);
+        };
+        
+        await audio.play();
+        return;
+      } else {
+        console.log('⚠️ ElevenLabs API failed, status:', response.status);
+        throw new Error(`ElevenLabs API failed: ${response.status}`);
+      }
+    } catch (error) {
+      console.log('⚠️ ElevenLabs failed, using browser speech synthesis:', error);
+      fallbackToBrowserSpeech(cleanText);
+    }
+  }, [selectedPersona, settings.volume, isTalkingBack]);
+
+  // Browser speech synthesis fallback
+  const fallbackToBrowserSpeech = useCallback((text: string) => {
+    if ('speechSynthesis' in window) {
+      console.log('🗣️ Using browser speech synthesis');
+      speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.volume = settings.volume;
+      utterance.rate = 0.9;
+      utterance.pitch = selectedPersona?.voiceTone?.includes('warm') ? 1.1 : 1.0;
+      
+      utterance.onstart = () => {
+        console.log('✅ Browser speech synthesis started');
+      };
+      
+      utterance.onend = () => {
+        console.log('✅ Browser speech synthesis ended');
+        setIsTalkingBack(false);
+        setIsAISpeaking(false);
+      };
+      
+      utterance.onerror = (error) => {
+        console.error('❌ Speech synthesis error:', error);
+        setIsTalkingBack(false);
+        setIsAISpeaking(false);
+      };
+      
+      speechSynthesis.speak(utterance);
+    } else {
+      console.error('❌ No speech synthesis available');
+      setIsTalkingBack(false);
+      setIsAISpeaking(false);
+    }
+  }, [settings.volume, selectedPersona]);
+
+  // Auto-play new AI messages
+  useEffect(() => {
+    if (lastAIMessage && settings.autoPlayAI && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage?.type === 'ai' && lastMessage.content === lastAIMessage) {
+        console.log('🔊 Auto-playing AI response...');
+        // Small delay to ensure message is rendered
+        setTimeout(() => {
+          speakMessage(lastAIMessage);
+        }, 1000);
+      }
+    }
+  }, [lastAIMessage, settings.autoPlayAI, messages, speakMessage]);
+
   return (
     <Card className={cn("flex flex-col h-full bg-white shadow-lg", className)}>
       {/* Enhanced Header with Dynamic Persona Display */}

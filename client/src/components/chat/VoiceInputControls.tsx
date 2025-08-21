@@ -70,6 +70,8 @@ export function VoiceInputControls({
   const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice');
   const [pauseTimeout, setPauseTimeout] = useState<NodeJS.Timeout | null>(null);
   const [isSupported, setIsSupported] = useState(false);
+  const [isContinuousListening, setIsContinuousListening] = useState(false);
+  const [backgroundListener, setBackgroundListener] = useState<any>(null);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const waveformRef = useRef<HTMLDivElement>(null);
