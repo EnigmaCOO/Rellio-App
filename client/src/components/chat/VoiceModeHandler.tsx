@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
 
-// Enhanced Web Speech API declarations for better TypeScript support
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
@@ -21,9 +20,9 @@ export interface VoiceModeHandlerProps {
   onInterrupt: () => void;
   disabled?: boolean;
   isAIResponding?: boolean;
-  autoSendDelay?: number; // Configurable pause duration (1-3s)
-  confidenceThreshold?: number; // Confidence threshold for auto-send
-  interruptionSensitivity?: number; // Volume threshold for interruption detection
+  autoSendDelay?: number;
+  confidenceThreshold?: number;
+  interruptionSensitivity?: number;
 }
 
 export interface VoiceModeHandlerReturn {
@@ -61,91 +60,58 @@ export function useVoiceModeHandler({
   const [isSupported, setIsSupported] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
 
-  // Refs for audio processing and recognition
+  // Single recognition instance
   const recognitionRef = useRef<any>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const microphoneRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const backgroundRecognitionRef = useRef<any>(null);
   const autoSendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const audioProcessingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const lastSpeechTimeRef = useRef<number>(0);
+  const isInitializingRef = useRef(false);
 
-  // Echo cancellation and noise suppression
-  const echoCancellationRef = useRef<boolean>(true);
-  const noiseSuppression = useRef<boolean>(true);
-
-  // Initialize speech recognition support check
+  // Check support once
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     setIsSupported(!!SpeechRecognition);
-    setHasPermission(true); // Assume permission for now, will be checked when needed
+    
+    // Check permission
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(() => setHasPermission(true))
+        .catch(() => setHasPermission(false));
+    }
   }, []);
 
-  // Update voice state and notify parent
   const updateVoiceState = useCallback((newState: VoiceState) => {
+    console.log('🎤 State change:', newState);
     setVoiceState(newState);
     onStateChange(newState);
   }, [onStateChange]);
 
-  // Audio setup with permission check
-  const setupAudioContext = useCallback(async () => {
-    console.log('🎧 Setting up audio context and permissions...');
-    try {
-      // Check if we already have permission
-      if (navigator.permissions) {
-        const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-        console.log('🎧 Microphone permission status:', permissionStatus.state);
-      }
-      
-      // Request microphone access
-      console.log('🎧 Requesting microphone access...');
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: echoCancellationRef.current,
-          noiseSuppression: noiseSuppression.current,
-          autoGainControl: true
-        } 
-      });
-      
-      console.log('🎧 ✅ Microphone access granted');
-      
-      // Store stream reference for cleanup
-      streamRef.current = stream;
-      setHasPermission(true);
-      
-      // Don't stop immediately - keep for monitoring
-      return true;
-    } catch (error) {
-      console.error('🎧 ❌ Failed to get microphone permission:', error);
-      setHasPermission(false);
-      return false;
-    }
-  }, []);
-
-  // Simplified audio monitoring - just show basic activity
-  const startAudioMonitoring = useCallback(() => {
-    // Simple animation for audio level without complex processing
-    const animateAudioLevel = () => {
-      if (isListening) {
-        setAudioLevel(0.3 + Math.random() * 0.4); // Simple animation
-      } else {
-        setAudioLevel(0);
-      }
-    };
+  // Cleanup function
+  const cleanup = useCallback(() => {
+    console.log('🧹 Cleaning up voice handler');
     
-    audioProcessingIntervalRef.current = setInterval(animateAudioLevel, 100);
-  }, [isListening]);
+    if (autoSendTimeoutRef.current) {
+      clearTimeout(autoSendTimeoutRef.current);
+      autoSendTimeoutRef.current = null;
+    }
 
-  // Removed complex recognition setup - now handled inline in startListening
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch (error) {
+        console.warn('Error aborting recognition:', error);
+      }
+      recognitionRef.current = null;
+    }
 
-  // Simplified interruption - no background recognition for now
-  // This was causing conflicts with the main recognition
+    setIsListening(false);
+    setCurrentTranscript('');
+    setAudioLevel(0);
+    setConfidence(0);
+    updateVoiceState('idle');
+  }, [updateVoiceState]);
 
-  // Start listening function
+  // Start listening - simplified and robust
   const startListening = useCallback(async (): Promise<boolean> => {
-    console.log('🎤 START LISTENING CALLED - Initial state:', { isSupported, disabled, hasPermission });
+    console.log('🎤 Starting listening...');
     
     if (!isSupported) {
       console.error('❌ Speech recognition not supported');
@@ -153,249 +119,126 @@ export function useVoiceModeHandler({
     }
     
     if (disabled) {
-      console.error('❌ Voice input is disabled');
+      console.log('⏸️ Voice input disabled');
       return false;
     }
 
-    // Stop any existing recognition first
-    if (recognitionRef.current) {
-      console.log('🛑 Stopping existing recognition');
-      try {
-        recognitionRef.current.stop();
-      } catch (error) {
-        console.warn('Error stopping existing recognition:', error);
-      }
-      recognitionRef.current = null;
+    if (isInitializingRef.current) {
+      console.log('⏳ Already initializing...');
+      return false;
     }
 
-    try {
-      // Setup audio context first
-      console.log('🔧 Setting up audio context...');
-      const audioSetup = await setupAudioContext();
-      if (!audioSetup) {
-        console.error('❌ Failed to setup audio context');
-        return false;
-      }
-      console.log('✅ Audio context setup successful');
+    // Cleanup any existing recognition
+    cleanup();
+    
+    isInitializingRef.current = true;
 
-      // Create simple recognition
+    try {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        console.error('❌ SpeechRecognition not available');
-        return false;
-      }
-      
-      console.log('🔧 Creating SpeechRecognition instance...');
       recognitionRef.current = new SpeechRecognition();
       
-      // Configure recognition settings
-      recognitionRef.current.continuous = true;
-      recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = 'en-US';
-      recognitionRef.current.maxAlternatives = 1;
-      
-      console.log('⚙️ Speech recognition configured:', {
-        continuous: recognitionRef.current.continuous,
-        interimResults: recognitionRef.current.interimResults,
-        lang: recognitionRef.current.lang
-      });
+      const recognition = recognitionRef.current;
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      recognition.maxAlternatives = 1;
 
-      // Set up event handlers
-      recognitionRef.current.onstart = () => {
-        console.log('🎤 ✅ SPEECH RECOGNITION STARTED!');
+      recognition.onstart = () => {
+        console.log('✅ Recognition started');
         setIsListening(true);
         updateVoiceState('listening');
-        startAudioMonitoring();
-        console.log('🎤 ✅ Listening state set to TRUE');
+        setAudioLevel(0.5); // Simple audio indication
+        isInitializingRef.current = false;
       };
 
-      recognitionRef.current.onresult = (event: any) => {
-        console.log('🎤 🗣️ SPEECH RESULT RECEIVED!');
-        console.log('Event results length:', event.results.length);
-        
-        let interimTranscript = '';
+      recognition.onresult = (event: any) => {
         let finalTranscript = '';
+        let interimTranscript = '';
         
-        // Process all results
-        for (let i = 0; i < event.results.length; i++) {
-          const result = event.results[i];
-          const transcript = result[0].transcript;
-          const confidence = result[0].confidence;
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript.trim();
+          const resultConfidence = event.results[i][0].confidence || 0.8;
           
-          console.log(`Result ${i}: "${transcript}" (final: ${result.isFinal}, confidence: ${confidence})`);
-          
-          if (result.isFinal) {
-            finalTranscript += transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript + ' ';
+            setConfidence(resultConfidence);
           } else {
-            interimTranscript += transcript;
+            interimTranscript += transcript + ' ';
           }
         }
         
-        const fullTranscript = finalTranscript + interimTranscript;
-        console.log('📝 FULL TRANSCRIPT:', { fullTranscript, final: finalTranscript, interim: interimTranscript });
+        const fullTranscript = (finalTranscript + interimTranscript).trim();
+        console.log('📝 Transcript:', fullTranscript);
         
-        // IMMEDIATE UPDATE - This is key for real-time display
-        console.log('🔄 UPDATING CURRENT TRANSCRIPT:', fullTranscript);
         setCurrentTranscript(fullTranscript);
-        setConfidence(event.results[event.results.length - 1][0].confidence || 0.8);
-        
-        // Notify parent component
         onTranscript(fullTranscript, interimTranscript.length > 0);
         
-        // Ensure visual feedback is active
-        if (fullTranscript.trim()) {
-          console.log('💫 Keeping visual state active for transcript:', fullTranscript.trim());
-          setIsListening(true);
-          updateVoiceState('listening');
-        }
-        
-        // Auto-send final results
-        if (finalTranscript.trim()) {
-          console.log('🚀 FINAL RESULT DETECTED - Setting up auto-send for:', finalTranscript);
+        // Auto-send on final result
+        if (finalTranscript.trim() && confidence >= confidenceThreshold) {
+          console.log('🚀 Scheduling auto-send');
           
-          // Clear existing timeout
           if (autoSendTimeoutRef.current) {
             clearTimeout(autoSendTimeoutRef.current);
-            console.log('⏰ Cleared existing timeout');
           }
           
-          // Set new timeout for auto-send
           autoSendTimeoutRef.current = setTimeout(() => {
             const messageToSend = finalTranscript.trim();
-            console.log('🚀 AUTO-SENDING MESSAGE NOW:', messageToSend);
-            console.log('🚀 Calling onAutoSend with:', messageToSend);
+            console.log('📤 Auto-sending:', messageToSend);
             
-            // Clear transcript and reset state BEFORE sending to avoid conflicts
+            // Clear state before sending
             setCurrentTranscript('');
             setIsListening(false);
-            updateVoiceState('idle');
+            updateVoiceState('processing');
             
-            // Send the message
+            // Send message
             onAutoSend(messageToSend);
             
-            console.log('✅ Auto-send completed');
+            // Reset to idle after brief processing state
+            setTimeout(() => updateVoiceState('idle'), 500);
           }, autoSendDelay);
-          console.log(`⏰ Auto-send scheduled in ${autoSendDelay}ms`);
         }
       };
 
-      recognitionRef.current.onerror = (event: any) => {
-        console.error('🎤 ❌ SPEECH RECOGNITION ERROR:', event.error, event.message);
+      recognition.onerror = (event: any) => {
+        console.error('🎤 Recognition error:', event.error);
+        isInitializingRef.current = false;
         
-        // Handle different error types
-        switch (event.error) {
-          case 'no-speech':
-            console.log('⏳ No speech detected - continuing to listen');
-            return; // Don't stop listening
-          case 'aborted':
-            console.log('🛑 Speech recognition aborted - this is normal when stopping');
-            // Don't change state if we have a transcript - let auto-send complete
-            if (!currentTranscript || !currentTranscript.trim()) {
-              setIsListening(false);
-              updateVoiceState('idle');
-            }
-            return;
-          case 'audio-capture':
-            console.error('❌ Audio capture failed - microphone access issue');
-            break;
-          case 'not-allowed':
-            console.error('❌ Microphone permission denied');
-            break;
-          default:
-            console.error('❌ Other recognition error:', event.error);
+        if (event.error === 'no-speech' || event.error === 'aborted') {
+          // These are normal, don't reset everything
+          return;
         }
         
-        // Only reset state for serious errors
+        cleanup();
+      };
+
+      recognition.onend = () => {
+        console.log('🛑 Recognition ended');
+        isInitializingRef.current = false;
         setIsListening(false);
-        updateVoiceState('idle');
-      };
-
-      recognitionRef.current.onend = () => {
-        console.log('🛑 SPEECH RECOGNITION ENDED');
-        
-        // Only reset if we don't have active transcript
-        if (!currentTranscript || !currentTranscript.trim()) {
-          console.log('🔄 Resetting state - no active transcript');
-          setIsListening(false);
-          updateVoiceState('idle');
-        } else {
-          console.log('📝 Keeping state active - transcript present:', currentTranscript);
-        }
-        
-        // Clean up audio monitoring
         setAudioLevel(0);
-        if (audioProcessingIntervalRef.current) {
-          clearInterval(audioProcessingIntervalRef.current);
+        
+        if (voiceState !== 'processing') {
+          updateVoiceState('idle');
         }
       };
 
       // Start recognition
-      console.log('🚀 STARTING SPEECH RECOGNITION NOW...');
-      recognitionRef.current.start();
-      console.log('🚀 Speech recognition.start() executed');
-      
-      // Set initial state
-      updateVoiceState('listening');
-      setIsListening(true); // Optimistically set to true
-      
+      recognition.start();
       return true;
+      
     } catch (error) {
-      console.error('❌ CRITICAL ERROR starting speech recognition:', error);
-      updateVoiceState('idle');
-      setIsListening(false);
+      console.error('❌ Failed to start recognition:', error);
+      isInitializingRef.current = false;
+      cleanup();
       return false;
     }
-  }, [isSupported, disabled, setupAudioContext, startAudioMonitoring, updateVoiceState, onTranscript, onAutoSend, autoSendDelay, currentTranscript]);
+  }, [isSupported, disabled, cleanup, updateVoiceState, onTranscript, onAutoSend, autoSendDelay, confidence, confidenceThreshold, voiceState]);
 
-  // Stop listening function
   const stopListening = useCallback(() => {
-    console.log('🛑 STOP LISTENING CALLED');
-    
-    // Clear timeouts
-    if (autoSendTimeoutRef.current) {
-      console.log('⏰ Clearing auto-send timeout');
-      clearTimeout(autoSendTimeoutRef.current);
-      autoSendTimeoutRef.current = null;
-    }
+    console.log('🛑 Stopping listening');
+    cleanup();
+  }, [cleanup]);
 
-    if (audioProcessingIntervalRef.current) {
-      console.log('🔊 Clearing audio processing interval');
-      clearInterval(audioProcessingIntervalRef.current);
-      audioProcessingIntervalRef.current = null;
-    }
-
-    // Stop recognition
-    if (recognitionRef.current) {
-      console.log('🛑 Stopping speech recognition');
-      try {
-        recognitionRef.current.stop();
-      } catch (error) {
-        console.warn('Error stopping recognition:', error);
-      }
-      recognitionRef.current = null;
-    }
-
-    // Clean up media stream
-    if (streamRef.current) {
-      console.log('📹 Cleaning up media stream');
-      streamRef.current.getTracks().forEach(track => {
-        track.stop();
-      });
-      streamRef.current = null;
-    }
-
-    // Reset all states
-    console.log('🔄 Resetting all voice states');
-    setIsListening(false);
-    setCurrentTranscript('');
-    setAudioLevel(0);
-    updateVoiceState('idle');
-    setConfidence(0);
-    
-    console.log('🚀 Stop listening completed');
-  }, [updateVoiceState]);
-
-  // Toggle listening
   const toggleListening = useCallback(async (): Promise<boolean> => {
     if (isListening) {
       stopListening();
@@ -405,21 +248,18 @@ export function useVoiceModeHandler({
     }
   }, [isListening, startListening, stopListening]);
 
-  // Simple interrupt AI function
   const interruptAI = useCallback(() => {
-    console.log('🛑 Interrupting AI response');
+    console.log('🛑 Interrupting AI');
     updateVoiceState('interrupted');
     onInterrupt();
   }, [updateVoiceState, onInterrupt]);
 
-  // Removed background recognition for now - was causing conflicts
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      stopListening();
+      cleanup();
     };
-  }, [stopListening]);
+  }, [cleanup]);
 
   return {
     isListening,

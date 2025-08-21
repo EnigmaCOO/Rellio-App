@@ -2,9 +2,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { GrokStyleOrb } from "./GrokStyleOrb";
-import { VoiceInputControls } from "./VoiceInputControls";
 import { cn } from "@/lib/utils";
-import { Mic, MicOff, Square, Send, Keyboard, Volume2 } from "lucide-react";
+import { Mic, MicOff, Square, Send, Keyboard } from "lucide-react";
+import { useVoiceModeHandler, VoiceState } from "./VoiceModeHandler";
 
 interface VoiceFirstInterfaceProps {
   onSubmit: (message: string) => void;
@@ -28,333 +28,66 @@ export function VoiceFirstInterface({
   isAIResponding = false
 }: VoiceFirstInterfaceProps) {
   const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice');
-  const [isListening, setIsListening] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [voiceTranscript, setVoiceTranscript] = useState("");
   const [textInput, setTextInput] = useState("");
   const [orbState, setOrbState] = useState<'idle' | 'listening' | 'processing' | 'responding' | 'interrupted'>('idle');
-  const [isBackgroundListening, setIsBackgroundListening] = useState(false);
-  
-  const recognitionRef = useRef<any>(null);
-  const backgroundRecognitionRef = useRef<any>(null);
-  const timeoutRef = useRef<NodeJS.Timeout>();
-  const interruptTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Initialize main speech recognition for user input
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-      const recognition = new SpeechRecognition();
-      
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
-      
-      // Add noise reduction and echo cancellation if available
-      if ('webkitSpeechRecognition' in window && recognition.webkitAudioTrack) {
-        const constraints = {
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-            googEchoCancellation: true,
-            googAutoGainControl: true,
-            googNoiseSuppression: true,
-            googHighpassFilter: true
-          }
-        };
-        console.log('🎤 Applying audio constraints for better isolation');
-      }
-      
-      recognition.onstart = () => {
-        setIsListening(true);
-        setOrbState('listening');
-        console.log('🎤 Voice recognition started');
-      };
-      
-      recognition.onresult = (event: any) => {
-        let finalTranscript = '';
-        let interimTranscript = '';
-        
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalTranscript += transcript;
-          } else {
-            interimTranscript += transcript;
-          }
-        }
-        
-        if (finalTranscript) {
-          setVoiceTranscript(finalTranscript.trim());
-          console.log('🎤 Final transcript:', finalTranscript);
-          
-          // Auto-submit after 2 seconds of silence
-          if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-          }
-          timeoutRef.current = setTimeout(() => {
-            if (finalTranscript.trim()) {
-              handleVoiceSubmit(finalTranscript.trim());
-            }
-          }, 1500);
-        } else {
-          setVoiceTranscript(interimTranscript);
-        }
-      };
-      
-      recognition.onerror = (event: any) => {
-        console.error('🎤 Speech recognition error:', event.error);
-        setIsListening(false);
-        setOrbState('idle');
-      };
-      
-      recognition.onend = () => {
-        setIsListening(false);
-        if (orbState !== 'processing') {
-          setOrbState('idle');
-        }
-        console.log('🎤 Voice recognition ended');
-      };
-      
-      recognitionRef.current = recognition;
-    }
+  // Use the simplified voice handler
+  const {
+    isListening,
+    currentTranscript,
+    confidence,
+    voiceState,
+    audioLevel,
+    startListening,
+    stopListening,
+    toggleListening,
+    isSupported,
+    hasPermission,
+    interruptAI
+  } = useVoiceModeHandler({
+    onTranscript: (text, isInterim) => {
+      console.log('📝 Voice transcript:', { text, isInterim });
+    },
+    onAutoSend: (text) => {
+      console.log('🚀 Auto-sending message:', text);
+      onSubmit(text);
+    },
+    onStateChange: (state: VoiceState) => {
+      console.log('🎤 Voice state changed:', state);
+    },
+    onInterrupt: () => {
+      console.log('🛑 Voice interrupted AI');
+      onInterrupt();
+    },
+    disabled,
+    isAIResponding,
+    autoSendDelay: 1500,
+    confidenceThreshold: 0.8
+  });
 
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      if (interruptTimeoutRef.current) {
-        clearTimeout(interruptTimeoutRef.current);
-      }
-    };
-  }, [orbState]);
-
-  // Initialize background speech recognition for interruption detection
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-      const backgroundRecognition = new SpeechRecognition();
-      
-      backgroundRecognition.continuous = true;
-      backgroundRecognition.interimResults = true;
-      backgroundRecognition.lang = 'en-US';
-      
-      // Enhanced audio processing for background detection
-      if ('webkitSpeechRecognition' in window && backgroundRecognition.webkitAudioTrack) {
-        const constraints = {
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-            googEchoCancellation: true,
-            googAutoGainControl: true,
-            googNoiseSuppression: true,
-            googHighpassFilter: true,
-            googEchoCancellation2: true
-          }
-        };
-        console.log('🎤 Applying enhanced audio constraints for background detection');
-      }
-      
-      backgroundRecognition.onstart = () => {
-        setIsBackgroundListening(true);
-        console.log('🎤 Background voice detection started');
-      };
-      
-      backgroundRecognition.onresult = (event: any) => {
-        // Immediate interruption on ANY voice detection during AI response
-        if (isAIResponding) {
-          let hasValidUserInput = false;
-          let detectedText = '';
-          
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript.trim().toLowerCase();
-            detectedText += transcript + ' ';
-            
-            // Smooth interruption - respond to clear voice input
-            if (transcript.length >= 3 && 
-                event.results[i][0].confidence > 0.7) { // Higher confidence for reliable detection
-              
-              // Filter out AI voice feedback more effectively
-              const containsAIWords = transcript.includes('perspective') ||
-                                    transcript.includes('christian') ||
-                                    transcript.includes('islam') ||
-                                    transcript.includes('jewish') ||
-                                    transcript.includes('hindu') ||
-                                    transcript.includes('buddha') ||
-                                    transcript.includes('creator') ||
-                                    transcript.includes('divine') ||
-                                    transcript.includes('sacred');
-              
-              if (!containsAIWords) {
-                hasValidUserInput = true;
-                console.log('🎤 Clean user interruption detected:', transcript);
-                break;
-              }
-            }
-          }
-          
-          if (hasValidUserInput) {
-            console.log('🎤 INTERRUPTING AI IMMEDIATELY - User spoke:', detectedText.trim());
-            onInterrupt(); // Stop AI voice immediately
-            
-            // Capture the user input for processing
-            setVoiceTranscript(detectedText.trim());
-            
-            // Stop background recognition and switch to main recognition
-            try {
-              backgroundRecognition.stop();
-              // Give user a moment to continue speaking - check if recognition is available
-              setTimeout(() => {
-                if (recognitionRef.current && !isListening) {
-                  try {
-                    recognitionRef.current.start();
-                    console.log('🎤 Switched to main recognition after interruption');
-                  } catch (startError: any) {
-                    if (startError.message.includes('already started')) {
-                      console.log('🎤 Recognition already active - continuing with current session');
-                    } else {
-                      console.log('🎤 Recognition start error:', startError);
-                    }
-                  }
-                }
-              }, 200);
-            } catch (error) {
-              console.log('🎤 Recognition switch error:', error);
-            }
-          }
-        }
-      };
-      
-      backgroundRecognition.onerror = (event: any) => {
-        console.error('🎤 Background speech recognition error:', event.error);
-        setIsBackgroundListening(false);
-      };
-      
-      backgroundRecognition.onend = () => {
-        setIsBackgroundListening(false);
-        console.log('🎤 Background voice detection ended');
-      };
-      
-      backgroundRecognitionRef.current = backgroundRecognition;
-    }
-  }, [isAIResponding, onInterrupt]);
-
-  // Grok-style independent voice system - voice input should ALWAYS be available
-  useEffect(() => {
-    // Keep voice input always available like Grok - no interruption of voice recognition
-    console.log('🎤 Grok-style: Voice input remains independent of AI audio playback');
-    
-    // Only manage background detection for interruption, but keep main voice always active
-    if (isAIResponding && !isBackgroundListening) {
-      // Start background detection for interruption but don't stop main voice
-      const startBackgroundTimer = setTimeout(() => {
-        if (backgroundRecognitionRef.current && !isBackgroundListening && isAIResponding) {
-          try {
-            backgroundRecognitionRef.current.start();
-            console.log('🎤 Starting background interruption detection while keeping main voice active');
-          } catch (error: any) {
-            if (!error.message.includes('already started')) {
-              console.log('🎤 Background recognition error:', error);
-            } else {
-              console.log('🎤 Background recognition already active');
-            }
-          }
-        }
-      }, 300); // Balanced timing to avoid audio conflicts
-      
-      return () => clearTimeout(startBackgroundTimer);
-    } else if (!isAIResponding && isBackgroundListening) {
-      // Clean up background detection when AI stops
-      if (backgroundRecognitionRef.current) {
-        try {
-          backgroundRecognitionRef.current.stop();
-          console.log('🎤 Stopping background detection - AI finished');
-        } catch (error) {
-          console.log('🎤 Error stopping background recognition:', error);
-        }
-      }
-    }
-  }, [isAIResponding, isBackgroundListening]);
-
-  // Update orb state based on app state
+  // Update orb state based on voice and app state
   useEffect(() => {
     if (isInterrupted) {
       setOrbState('interrupted');
     } else if (isStreaming) {
       setOrbState('responding');
-    } else if (isProcessing) {
+    } else if (voiceState === 'processing') {
       setOrbState('processing');
     } else if (isListening) {
       setOrbState('listening');
     } else {
       setOrbState('idle');
     }
-  }, [isListening, isProcessing, isStreaming, isInterrupted]);
-
-  const startVoiceInput = useCallback(() => {
-    // Grok-style: Voice input should work regardless of AI state
-    console.log('🎤 Starting Grok-style voice input - independent of AI audio');
-    
-    if (recognitionRef.current && !isListening) {
-      setVoiceTranscript("");
-      try {
-        recognitionRef.current.start();
-        console.log('🎤 Voice recognition started successfully');
-      } catch (error: any) {
-        if (error.message.includes('already started')) {
-          console.log('🎤 Voice recognition already active - continuing');
-          setIsListening(true); // Update state to match reality
-        } else {
-          console.log('🎤 Voice start error:', error);
-          // Try to restart recognition if it fails
-          setTimeout(() => {
-            if (recognitionRef.current && !isListening) {
-              try {
-                recognitionRef.current.start();
-              } catch (retryError: any) {
-                if (!retryError.message.includes('already started')) {
-                  console.log('🎤 Voice retry failed:', retryError);
-                }
-              }
-            }
-          }, 1000);
-        }
-      }
-    }
-  }, [isListening]);
-
-  const stopVoiceInput = useCallback(() => {
-    if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
-    }
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-  }, [isListening]);
-
-  const handleVoiceSubmit = (transcript: string) => {
-    setIsProcessing(true);
-    setOrbState('processing');
-    stopVoiceInput();
-    
-    setTimeout(() => {
-      onSubmit(transcript);
-      setVoiceTranscript("");
-      setIsProcessing(false);
-    }, 500);
-  };
+  }, [isListening, voiceState, isStreaming, isInterrupted]);
 
   const handleTextSubmit = () => {
     if (textInput.trim()) {
-      setIsProcessing(true);
       setOrbState('processing');
-      
+
       setTimeout(() => {
         onSubmit(textInput.trim());
         setTextInput("");
-        setIsProcessing(false);
+        setOrbState('idle');
       }, 300);
     }
   };
@@ -368,16 +101,26 @@ export function VoiceFirstInterface({
 
   const toggleInputMode = () => {
     if (isListening) {
-      stopVoiceInput();
+      stopListening();
     }
     setInputMode(prev => prev === 'voice' ? 'text' : 'voice');
-    setVoiceTranscript("");
     setTextInput("");
+  };
+
+  const handleVoiceToggle = async () => {
+    console.log('🎤 Voice toggle clicked');
+    await toggleListening();
+  };
+
+  const handleManualInterrupt = () => {
+    console.log('🛑 Manual interrupt clicked');
+    onInterrupt();
+    interruptAI();
   };
 
   return (
     <div className={cn("space-y-2", className)}>
-      {/* Compact Mode Toggle & Orb Header */}
+      {/* Header with Orb and Controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <GrokStyleOrb state={orbState} size="sm" />
@@ -386,30 +129,17 @@ export function VoiceFirstInterface({
             size="sm"
             onClick={toggleInputMode}
             className="flex items-center gap-1 h-8 px-3 text-xs"
+            disabled={!isSupported}
           >
             {inputMode === 'voice' ? <Mic className="h-3 w-3" /> : <Keyboard className="h-3 w-3" />}
             {inputMode === 'voice' ? 'Voice' : 'Text'}
           </Button>
-          
+
           {(orbState === 'responding' || isAIResponding) && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                console.log('🛑 Manual interrupt button clicked');
-                onInterrupt();
-                // Force restart voice input after interrupt
-                setTimeout(() => {
-                  if (inputMode === 'voice' && recognitionRef.current && !isListening) {
-                    try {
-                      recognitionRef.current.start();
-                      console.log('🎤 Restarting voice input after interrupt');
-                    } catch (error) {
-                      console.log('🎤 Error restarting voice:', error);
-                    }
-                  }
-                }, 500);
-              }}
+              onClick={handleManualInterrupt}
               className="text-red-600 hover:text-red-700 border-red-300 h-8 px-3 text-xs animate-pulse"
             >
               <Square className="h-3 w-3 mr-1" />
@@ -417,27 +147,20 @@ export function VoiceFirstInterface({
             </Button>
           )}
         </div>
-        
+
         <div className="flex items-center gap-2 text-xs text-gray-500">
           <span>
             {orbState === 'idle' && !isAIResponding && inputMode === 'voice' && 'Voice Ready'}
             {orbState === 'idle' && !isAIResponding && inputMode === 'text' && 'Text Ready'}
-            {orbState === 'idle' && isAIResponding && '🔊 AI Speaking'}
             {orbState === 'listening' && 'Listening...'}
             {orbState === 'processing' && 'Processing...'}
             {orbState === 'responding' && '🔊 AI Speaking'}
             {orbState === 'interrupted' && 'Voice Ready'}
           </span>
-          {isBackgroundListening && isAIResponding && (
-            <div className="flex items-center gap-1">
-              <div className="w-1 h-1 bg-amber-500 rounded-full animate-pulse" />
-              <span className="text-amber-600">Interrupt Ready</span>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Compact Voice Input Mode */}
+      {/* Voice Input Mode */}
       {inputMode === 'voice' && (
         <div className="space-y-2">
           <div className={cn(
@@ -457,30 +180,24 @@ export function VoiceFirstInterface({
                 </div>
               )}
             </div>
-            
+
             <div className="min-h-[40px] flex items-center">
-              {voiceTranscript ? (
-                <p className="text-sm text-gray-900">{voiceTranscript}</p>
+              {currentTranscript ? (
+                <p className="text-sm text-gray-900">{currentTranscript}</p>
               ) : (
                 <p className="text-xs text-gray-500 italic">
-                  {isAIResponding 
-                    ? '🤐 Voice input paused while AI is speaking...' 
-                    : isListening 
-                      ? 'Speak now...' 
-                      : 'Click microphone to start'
-                  }
+                  {isListening ? 'Speak now...' : 'Click microphone to start'}
                 </p>
               )}
             </div>
-            
+
             <div className="flex items-center justify-between mt-2">
               <Button
                 variant={isListening ? "destructive" : "default"}
                 size="sm"
-                onClick={isListening ? stopVoiceInput : startVoiceInput}
-                disabled={disabled || isProcessing || isAIResponding}
+                onClick={handleVoiceToggle}
+                disabled={disabled}
                 className="flex items-center gap-1 h-8 px-3 text-xs"
-                title={isAIResponding ? "Voice input disabled while AI is responding" : undefined}
               >
                 {isListening ? (
                   <>
@@ -494,33 +211,25 @@ export function VoiceFirstInterface({
                   </>
                 )}
               </Button>
-              
-              {voiceTranscript && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleVoiceSubmit(voiceTranscript)}
-                  disabled={disabled || isProcessing || isAIResponding}
-                  className="flex items-center gap-1 h-8 px-3 text-xs"
-                  title={isAIResponding ? "Cannot send while AI is responding" : undefined}
-                >
-                  <Send className="h-3 w-3" />
-                  Send
-                </Button>
+
+              {confidence > 0 && (
+                <span className="text-xs text-teal-600">
+                  Confidence: {Math.round(confidence * 100)}%
+                </span>
               )}
             </div>
           </div>
-          
-          {/* Compact Voice Waveform */}
+
+          {/* Simple Voice Waveform */}
           {isListening && (
             <div className="flex items-center justify-center gap-1 py-1">
-              {[...Array(3)].map((_, i) => (
+              {[...Array(5)].map((_, i) => (
                 <div
                   key={i}
                   className="w-0.5 bg-teal-500 rounded-full animate-pulse"
                   style={{
                     animationDelay: `${i * 150}ms`,
-                    height: `${6 + (Math.sin(Date.now() * 0.001 + i) * 3)}px`
+                    height: `${4 + (audioLevel * 6)}px`
                   }}
                 />
               ))}
@@ -529,7 +238,7 @@ export function VoiceFirstInterface({
         </div>
       )}
 
-      {/* Compact Text Input Mode */}
+      {/* Text Input Mode */}
       {inputMode === 'text' && (
         <div className="space-y-1">
           <div className="relative">
@@ -538,19 +247,28 @@ export function VoiceFirstInterface({
               onChange={(e) => setTextInput(e.target.value)}
               onKeyDown={handleKeyPress}
               placeholder={placeholder}
-              disabled={disabled || isProcessing}
+              disabled={disabled}
               className="min-h-[60px] pr-12 resize-none text-sm"
             />
             <Button
               variant="ghost"
               size="sm"
               onClick={handleTextSubmit}
-              disabled={!textInput.trim() || disabled || isProcessing}
+              disabled={!textInput.trim() || disabled}
               className="absolute bottom-2 right-2 h-7 w-7 p-0"
             >
               <Send className="h-3 w-3" />
             </Button>
           </div>
+        </div>
+      )}
+
+      {/* Support Notice */}
+      {!isSupported && (
+        <div className="text-center p-2 bg-yellow-50 rounded-lg border border-yellow-200">
+          <p className="text-xs text-yellow-800">
+            Voice input not supported in this browser. Use text mode instead.
+          </p>
         </div>
       )}
     </div>
