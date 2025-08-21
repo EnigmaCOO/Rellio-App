@@ -88,6 +88,7 @@ export function VoiceFirstChatInterface({
   const [isTalkingBack, setIsTalkingBack] = useState(false);
   const [interruptedQuery, setInterruptedQuery] = useState<string>('');
   const [lastAIMessage, setLastAIMessage] = useState<string>('');
+  const [lastVoiceActivity, setLastVoiceActivity] = useState<number>(0);
   
   // Speech Recognition Setup
   const recognitionRef = useRef<any>(null);
@@ -322,6 +323,9 @@ export function VoiceFirstChatInterface({
       const fullTranscript = finalTranscript || interimTranscript;
       setCurrentTranscript(fullTranscript);
       setConfidence(maxConfidence);
+
+      // Track voice activity for cooldown system
+      setLastVoiceActivity(Date.now());
 
       // Auto-send logic with confidence threshold
       if (finalTranscript && maxConfidence > settings.confidenceThreshold) {
@@ -690,9 +694,16 @@ export function VoiceFirstChatInterface({
       return;
     }
     
-    // Additional safeguard: Check if user is currently speaking
+    // Additional safeguard: Check if user is currently speaking or microphone recently active
     if (currentTranscript && currentTranscript.trim().length > 0) {
       console.log('🚫 Auto-play BLOCKED - User transcript detected, preventing feedback');
+      return;
+    }
+    
+    // Cooldown period after voice activity
+    const now = Date.now();
+    if (lastVoiceActivity && (now - lastVoiceActivity) < 2000) {
+      console.log('🚫 Auto-play BLOCKED - Recent voice activity cooldown');
       return;
     }
     
@@ -720,7 +731,7 @@ export function VoiceFirstChatInterface({
         }, 1000);
       }
     }
-  }, [lastAIMessage, settings.autoPlayAI, messages, speakMessage, isTalkingBack, voiceState, inputIsolated]);
+  }, [lastAIMessage, settings.autoPlayAI, messages, speakMessage, isTalkingBack, voiceState, inputIsolated, lastVoiceActivity]);
 
   // Clean text function to remove HTML/XML tags and perspective markers from display
   const cleanTextForDisplay = useCallback((text: string): string => {
@@ -798,18 +809,21 @@ export function VoiceFirstChatInterface({
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Auto-play Toggle with Smart Protection */}
+          {/* Auto-play Toggle with Smart Protection and Warning */}
           <Button
             variant="outline"
             size="sm"
             onClick={toggleAutoPlay}
             className={cn(
-              "text-xs px-2 h-7",
-              autoPlayEnabled ? "text-teal-600 border-teal-300 bg-teal-50" : "text-gray-600 border-gray-300"
+              "text-xs px-2 h-7 relative",
+              autoPlayEnabled ? "text-teal-600 border-teal-300 bg-teal-100" : "text-gray-600 border-gray-300"
             )}
-            title={autoPlayEnabled ? "Auto-play ON (Protected from feedback)" : "Enable auto-play"}
+            title={autoPlayEnabled ? "⚠️ Auto-Play Active - Use headphones to avoid loops" : "Enable voice auto-play"}
           >
-            {autoPlayEnabled ? "🔊 Auto-play ON" : "Auto-play OFF"}
+            {autoPlayEnabled && (
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-teal-500 rounded-full animate-pulse" />
+            )}
+            {autoPlayEnabled ? "⚠️ Auto-play" : "Auto-play OFF"}
           </Button>
           
           {/* Text Input Toggle */}

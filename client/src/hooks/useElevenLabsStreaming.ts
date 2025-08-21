@@ -360,51 +360,81 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       console.log('🔊 ElevenLabs failed, falling back to browser speech:', error);
       setIsLoading(false);
       
-      // Fall back to browser speech synthesis when ElevenLabs fails
+      // Enhanced browser speech synthesis fallback
       try {
-        if ('speechSynthesis' in window) {
-          console.log('🔊 Using browser speech synthesis fallback');
+        if ('speechSynthesis' in window && window.speechSynthesis) {
+          console.log('🔊 Using browser speech synthesis fallback for:', textToSpeak.substring(0, 50));
           
-          // Stop any existing speech
+          // Clear any existing speech
           window.speechSynthesis.cancel();
           
-          const utterance = new SpeechSynthesisUtterance(textToSpeak);
-          utterance.volume = volume;
-          utterance.rate = 1.0;
-          utterance.pitch = 1.0;
-          
-          utterance.onstart = () => {
-            console.log('🔊 Browser speech started');
-            setIsPlaying(true);
-            setIsLoading(false);
-            onStart?.();
+          // Wait for voices to load if needed
+          const initializeSpeech = () => {
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            
+            // Enhanced voice settings for clarity
+            utterance.volume = Math.min(volume, 1.0);
+            utterance.rate = 0.9; // Slightly slower for clarity
+            utterance.pitch = 1.0;
+            
+            // Try to use a better voice if available
+            const voices = window.speechSynthesis.getVoices();
+            const englishVoice = voices.find(voice => 
+              voice.lang.includes('en') && (voice.name.includes('Google') || voice.name.includes('Microsoft'))
+            );
+            if (englishVoice) {
+              utterance.voice = englishVoice;
+              console.log('🔊 Using enhanced voice:', englishVoice.name);
+            }
+            
+            utterance.onstart = () => {
+              console.log('🔊 Browser speech started successfully');
+              setIsPlaying(true);
+              setIsLoading(false);
+              onStart?.();
+            };
+            
+            utterance.onend = () => {
+              console.log('🔊 Browser speech completed');
+              setIsPlaying(false);
+              setCurrentAudio(null);
+              onEnd?.();
+            };
+            
+            utterance.onerror = (event) => {
+              console.log('🔊 Browser speech error:', event.error);
+              setIsPlaying(false);
+              setIsLoading(false);
+              setCurrentAudio(null);
+              onEnd?.();
+            };
+            
+            if (!isInterruptedRef.current) {
+              console.log('🔊 Starting browser speech synthesis...');
+              setIsPlaying(true);
+              setIsLoading(false);
+              window.speechSynthesis.speak(utterance);
+            }
           };
           
-          utterance.onend = () => {
-            console.log('🔊 Browser speech completed');
-            setIsPlaying(false);
-            setCurrentAudio(null);
-            onEnd?.();
-          };
-          
-          utterance.onerror = (event) => {
-            console.log('🔊 Browser speech error:', event.error);
-            setIsPlaying(false);
-            setIsLoading(false);
-            setCurrentAudio(null);
-            onEnd?.();
-          };
-          
-          if (!isInterruptedRef.current) {
-            setIsPlaying(true);
-            setIsLoading(true);
-            window.speechSynthesis.speak(utterance);
+          // Handle voice loading
+          if (window.speechSynthesis.getVoices().length === 0) {
+            console.log('🔊 Waiting for voices to load...');
+            window.speechSynthesis.addEventListener('voiceschanged', initializeSpeech, { once: true });
+            // Fallback timeout
+            setTimeout(initializeSpeech, 1000);
+          } else {
+            initializeSpeech();
           }
         } else {
-          console.log('🔊 No speech synthesis available');
+          console.log('🔊 Speech synthesis not available in this browser');
+          setIsLoading(false);
+          onEnd?.();
         }
       } catch (fallbackError) {
-        console.log('🔊 Browser speech synthesis also failed:', fallbackError);
+        console.error('🔊 Browser speech synthesis failed:', fallbackError);
+        setIsLoading(false);
+        onEnd?.();
       }
     }
   }, [isSupported, voiceId, createAudioElement, onError, volume, onStart, onEnd, cleanTextForSpeech]);

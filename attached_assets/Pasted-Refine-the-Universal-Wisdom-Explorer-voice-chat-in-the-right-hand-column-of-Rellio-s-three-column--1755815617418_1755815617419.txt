@@ -1,0 +1,41 @@
+Refine the “Universal Wisdom Explorer” voice chat in the right-hand column of Rellio’s three-column Scripture Reader page (Left: Navigation, Center: Verse Card, Right: Chat) to restore seamless Grok-like voice talk-back, resolving the issue where audio is stuck or not triggering post-feedback-loop fix. Build on the current state (disabled auto-play, voice state protection, warnings) in <VoiceInputControls.tsx> and <AudioPlaybackButton.tsx>, reintroducing controlled auto-play with enhanced loop prevention, ensuring real-time ElevenLabs audio responses, and handling interruptions smoothly. Maintain the white UI (#FFFFFF, rounded corners 12px, shadow-md) with teal #00D5FF accents, purple-to-gold gradient overlay (#4B0082 to #D4AF37, 10% opacity), and mandala art.
+Key Features and Goals:
+
+Controlled Auto-Play with Loop Prevention:
+
+Re-enable auto-play as an opt-in toggle (default OFF per fix, switchable in header/settings): Trigger ElevenLabs playback (<AudioPlaybackButton.tsx>) after auto-send (1.5s pause via Web Speech API).
+Loop Safeguards: Block auto-play if microphone is active (voiceState.isListening=true); add 2s cooldown post-transcription; use Web Audio API echoCancellation to suppress feedback.
+Warning: Retain teal alert icon (“⚠ Auto-Play Active”) with tooltip “Use headphones to avoid loops.”
+Fix: Ensure talk-back triggers reliably—hook ElevenLabs call in useEffect on new response.
+
+
+Real-Time Voice Talk-Back (Isolated Output):
+
+After auto-send, stream ElevenLabs audio (low-latency <500ms) and render text in chat bubble (right-aligned, white with 1px border)—do not populate input field.
+Isolate Audio: Use separate state for response playback; lock input field visually (fade opacity) during talk-back, unlocking post-playback.
+Visual: Pulsing teal waveform/orb (24px) in bubble during audio; fade-in (200ms).
+
+
+Interruption Handling with Smooth Continuation:
+
+Monitor background audio (Web Speech API) during talk-back; interrupt on speech detection (volume > threshold, confidence >0.7).
+Pause ElevenLabs (fade-out 300ms), append interrupted text to history, process new query with context (e.g., “You paused—shifting to your new question…”).
+Ensure no sticking: Resume or reroute seamlessly; red orb flash (“Interrupted”) with resume option.
+
+
+Technical Fixes and Sync:
+
+Echo Cancellation: Enhance with noise suppression (Web Audio API); prompt “Switch to headphones” if feedback detected.
+Persona Sync: Maintain scholarly conversion (e.g., Bible → Priest) from <ScholarPersonas.tsx>.
+
+
+
+Deliverables:
+
+Updated <EnhancedAuraArchivist.tsx> / <RightColumnChat.tsx>: Add auto-play toggle, talk-back hook.
+<voiceloopguard> sub-component: For cooldown, state checks, echo handling.</voiceloopguard>
+ElevenLabs/Web Speech updates: <VoiceInputControls.tsx> for monitoring, <AudioPlaybackButton.tsx> for streaming.
+Tailwind/CSS: Warning icon (bg-teal-100), orb flash (transition-colors).
+State/Hooks: useState for isAutoPlay, isTalkingBack, interruptedAt; useEffect for playback (onNewResponse), interruption (onspeechstart).
+
+Provide React JSX code with Tailwind classes, and describe state/effects. Ensure a mesmerizing, loop-free voice experience with smart talk-back and interruptions
