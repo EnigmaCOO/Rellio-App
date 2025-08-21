@@ -786,14 +786,96 @@ export function EnhancedAuraArchivist({
 
       {/* Enhanced Input Area with Voice-First Design */}
       <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white p-2 flex-shrink-0">
-        {/* Enhanced Grok-Style Voice Interface */}
-        <GrokStyleVoiceInterface
-          onSendMessage={handleSendMessage}
-          isLoading={sendMessageMutation.isPending}
-          selectedPersona={getActivePersona()}
-          onInterrupt={handleInterrupt}
-          isStreaming={isStreaming}
-        />
+        {/* Simple Working Voice Interface */}
+        <div className="space-y-3">
+          {/* Debug Test Buttons */}
+          <div className="flex gap-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+            <button 
+              onClick={() => {
+                console.log('🧪 Test Send button clicked');
+                handleSendMessage('Test message - can you see this?');
+              }}
+              className="px-2 py-1 bg-blue-500 text-white rounded text-xs"
+            >
+              Test Send
+            </button>
+            <button 
+              onClick={() => {
+                console.log('🧪 Test Speech button clicked');
+                const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+                if (SpeechRecognition) {
+                  console.log('✅ Speech Recognition available');
+                  const recognition = new SpeechRecognition();
+                  recognition.onstart = () => console.log('🎤 Recognition started');
+                  recognition.onresult = (event: any) => {
+                    const transcript = event.results[0][0].transcript;
+                    console.log('🎯 Speech detected:', transcript);
+                    handleSendMessage(transcript);
+                  };
+                  recognition.onerror = (event: any) => console.error('❌ Speech error:', event.error);
+                  recognition.start();
+                } else {
+                  console.log('❌ No speech recognition support');
+                  alert('Speech recognition not supported in this browser. Try Chrome or Edge.');
+                }
+              }}
+              className="px-2 py-1 bg-green-500 text-white rounded text-xs"
+            >
+              Test Speech
+            </button>
+          </div>
+          
+          {/* Simple Voice Button */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => {
+                console.log('🎤 Main voice button clicked');
+                const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+                if (SpeechRecognition) {
+                  const recognition = new SpeechRecognition();
+                  recognition.continuous = false;
+                  recognition.interimResults = false;
+                  recognition.lang = 'en-US';
+                  
+                  recognition.onstart = () => {
+                    console.log('🎤 Voice recognition started');
+                    // Change button appearance to show listening
+                  };
+                  
+                  recognition.onresult = (event: any) => {
+                    const transcript = event.results[0][0].transcript;
+                    console.log('🎯 Voice input received:', transcript);
+                    handleSendMessage(transcript);
+                  };
+                  
+                  recognition.onerror = (event: any) => {
+                    console.error('❌ Voice recognition error:', event.error);
+                  };
+                  
+                  recognition.onend = () => {
+                    console.log('🛑 Voice recognition ended');
+                  };
+                  
+                  recognition.start();
+                } else {
+                  alert('Speech recognition not supported. Please use Chrome or Edge browser.');
+                }
+              }}
+              className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 shadow-lg border-2 border-teal-300 flex items-center justify-center"
+            >
+              <Mic className="w-5 h-5 text-white" />
+            </button>
+            
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-700">
+                Click to speak your question
+              </p>
+              <p className="text-xs text-gray-500">
+                Ask about spiritual wisdom and sacred texts
+              </p>
+            </div>
+          </div>
+        </div>
         
         {/* Text Input Fallback */}
         {!voiceMode && (
