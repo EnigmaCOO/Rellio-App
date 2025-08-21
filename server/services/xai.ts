@@ -20,19 +20,34 @@ interface ChatContext {
   persona: string | null;
 }
 
+export interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
+
 export async function generatePersonaResponse(
   message: string,
   context: ChatContext,
-  personaContext?: ScholarPersonaContext
+  personaContext?: ScholarPersonaContext,
+  conversationHistory: ConversationMessage[] = []
 ): Promise<string> {
   try {
-    // Enhanced system prompt for scholar personas
-    const baseSystemPrompt = `You are a distinguished religious scholar and spiritual guide. Your responses should be:
+    // Enhanced system prompt for scholar personas with conversation awareness
+    const baseSystemPrompt = `You are a distinguished religious scholar and spiritual guide who engages in natural, flowing conversations. Your responses should be:
 - Scholarly yet accessible, drawing from authentic religious texts and traditions
 - Respectful of all faith traditions while providing deep insights
 - Contextual to the specific scripture or religious text being discussed
 - Encouraging of spiritual growth and understanding
 - Rich with historical context and cross-references when appropriate
+- Building naturally on previous conversation when history exists
+- Include a thoughtful follow-up question to encourage deeper dialogue
+
+After providing your main response, add a proactive follow-up question such as:
+- "How does this resonate with your own spiritual journey?"
+- "Would you like to explore any specific aspect of this teaching further?"
+- "Building on [specific verse/concept], what questions arise for you?"
+- "Which part of this wisdom speaks most deeply to you?"
 
 Current context: ${context.religion ? `${context.religion} - ${context.book} Chapter ${context.chapter}` : 'General spiritual inquiry'}`;
 
@@ -40,24 +55,34 @@ Current context: ${context.religion ? `${context.religion} - ${context.book} Cha
       ? `${baseSystemPrompt}\n\nPersona: ${personaContext.systemPrompt}\n\nExpertise: ${personaContext.expertise.join(', ')}\n\nSpeaking style: ${personaContext.voiceTone}`
       : baseSystemPrompt;
 
-    // Enhanced message with context
+    // Build message array with conversation history
+    const messages = [{ role: "system" as const, content: systemPrompt }];
+    
+    // Add conversation history if present
+    if (conversationHistory.length > 0) {
+      conversationHistory.forEach(msg => {
+        messages.push({ role: msg.role, content: msg.content });
+      });
+    }
+    
+    // Enhanced current message with context
     const enhancedMessage = context.religion 
-      ? `Context: Reading ${context.religion} - ${context.book} Chapter ${context.chapter}\n\nQuestion: ${message}`
-      : message;
+      ? `Context: Reading ${context.religion} - ${context.book} Chapter ${context.chapter}\n\nCurrent question: ${message}`
+      : `Current question: ${message}`;
+    
+    // Add current user message
+    messages.push({ role: "user" as const, content: enhancedMessage });
+
+    console.log("XAI Persona Request:", { 
+      persona: personaContext?.name || 'Universal Guide', 
+      contextualMessage: enhancedMessage, 
+      historyLength: conversationHistory.length 
+    });
 
     const response = await xai.chat.completions.create({
       model: "grok-2-1212", // Use the latest Grok model for text-only processing
-      messages: [
-        { 
-          role: "system", 
-          content: systemPrompt 
-        },
-        { 
-          role: "user", 
-          content: enhancedMessage 
-        }
-      ],
-      max_tokens: 1000,
+      messages,
+      max_tokens: 1200, // Increased for proactive questions
       temperature: 0.7,
       presence_penalty: 0.1,
       frequency_penalty: 0.1
@@ -87,9 +112,12 @@ Current context: ${context.religion ? `${context.religion} - ${context.book} Cha
 }
 
 // Multi-religious perspective analysis for general questions
-export async function generateMultiReligiousPerspective(message: string): Promise<string> {
+export async function generateMultiReligiousPerspective(
+  message: string,
+  conversationHistory: ConversationMessage[] = []
+): Promise<string> {
   try {
-    const systemPrompt = `You are an interfaith scholar with deep knowledge of multiple religious traditions. When asked general spiritual questions, provide perspectives from exactly these five traditions in this order:
+    const systemPrompt = `You are an interfaith scholar with deep knowledge of multiple religious traditions who engages in natural, flowing conversations. When providing perspectives from multiple religious traditions, use exactly these five traditions in this order:
 
 <perspective>Christianity</perspective>
 <perspective>Islam</perspective>
@@ -97,27 +125,45 @@ export async function generateMultiReligiousPerspective(message: string): Promis
 <perspective>Hinduism</perspective>
 <perspective>Buddhism</perspective>
 
-Format Guidelines:
-- Use ONLY the exact format shown above with <perspective>Tradition Name</perspective> tags
-- Never use asterisks (****) or other formatting for section headers
+Enhanced Conversation Guidelines:
+- Build on previous exchanges naturally when conversation history exists
 - Provide 2-3 sentences for each perspective
 - Include authentic scriptural references when possible
 - Ensure each perspective offers unique insights while highlighting common spiritual themes
-- Keep responses balanced in length across all five traditions`;
+- Keep responses balanced in length across all five traditions
+- After your multi-religious response, add a proactive follow-up question to encourage deeper dialogue:
+  * "How does this resonate with your own spiritual journey?"
+  * "Would you like to explore any of these perspectives further?"
+  * "Building on these teachings, what questions arise for you?"
+  * "Which of these traditions speaks most deeply to you right now?"`;
+
+    // Build message array with conversation history
+    const messages = [{ role: "system" as const, content: systemPrompt }];
+    
+    // Add conversation history if present
+    if (conversationHistory.length > 0) {
+      conversationHistory.forEach(msg => {
+        messages.push({ role: msg.role, content: msg.content });
+      });
+    }
+    
+    // Enhanced current message with context
+    const enhancedMessage = conversationHistory.length > 0 
+      ? `Building on our conversation, please provide multi-religious perspectives on: ${message}`
+      : `Please provide perspectives from multiple religious traditions on this question: ${message}`;
+    
+    // Add current user message
+    messages.push({ role: "user" as const, content: enhancedMessage });
+
+    console.log("XAI Multi-Religious Request:", { 
+      question: message, 
+      historyLength: conversationHistory.length 
+    });
 
     const response = await xai.chat.completions.create({
       model: "grok-2-1212",
-      messages: [
-        { 
-          role: "system", 
-          content: systemPrompt 
-        },
-        { 
-          role: "user", 
-          content: `Please provide perspectives from multiple religious traditions on this question: ${message}` 
-        }
-      ],
-      max_tokens: 1200,
+      messages,
+      max_tokens: 1400, // Increased for proactive questions
       temperature: 0.8,
       presence_penalty: 0.2
     });

@@ -77,6 +77,11 @@ export function VoiceFirstChatInterface({
   const [playingMessageId, setPlayingMessageId] = useState<number | null>(null);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
   
+  // Input Isolation State
+  const [showTextInput, setShowTextInput] = useState(false);
+  const [textInputValue, setTextInputValue] = useState('');
+  const [inputIsolated, setInputIsolated] = useState(false);
+  
   // Speech Recognition Setup
   const recognitionRef = useRef<any>(null);
   const autoSendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -107,20 +112,23 @@ export function VoiceFirstChatInterface({
     voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV', // Default Grok voice
     autoPlay: true,
     onStart: () => {
-      console.log('🔊 AI started speaking');
+      console.log('🔊 AI started speaking - Activating input isolation');
       setVoiceState('responding');
+      setInputIsolated(true); // Enable input isolation during AI speech
     },
     onEnd: () => {
-      console.log('🔊 AI finished speaking');
+      console.log('🔊 AI finished speaking - Releasing input isolation');
       if (voiceState === 'responding') {
         setVoiceState('idle');
       }
       setPlayingMessageId(null);
+      setInputIsolated(false); // Disable input isolation when AI stops
     },
     onInterrupted: () => {
-      console.log('🚨 AI speech interrupted by user');
+      console.log('🚨 AI speech interrupted by user - Releasing input isolation');
       setVoiceState('interrupted');
       setPlayingMessageId(null);
+      setInputIsolated(false); // Release isolation on interruption
       toast({
         title: "Response Interrupted",
         description: "You can continue the conversation",
@@ -131,6 +139,7 @@ export function VoiceFirstChatInterface({
       console.error('🚨 ElevenLabs error:', error);
       setVoiceState('idle');
       setPlayingMessageId(null);
+      setInputIsolated(false); // Release isolation on error
       toast({
         title: "Audio Error",
         description: "Voice playback encountered an issue",
@@ -328,18 +337,31 @@ export function VoiceFirstChatInterface({
     return recognition;
   }, [voiceState, settings.confidenceThreshold, settings.autoSendDelay]);
 
-  // Initialize Audio Context for Level Detection
+  // Initialize Audio Context with Echo Cancellation for Level Detection
   const initializeAudioContext = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Enhanced getUserMedia with echo cancellation to prevent self-feedback
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
+          sampleRate: 44100,
+          sampleSize: 16
+        } 
+      });
       streamRef.current = stream;
       setHasPermission(true);
+
+      console.log('🎤 Audio stream initialized with echo cancellation');
 
       const audioContext = new AudioContext();
       const analyser = audioContext.createAnalyser();
       const microphone = audioContext.createMediaStreamSource(stream);
       
       analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
       microphone.connect(analyser);
       
       audioContextRef.current = audioContext;
@@ -400,7 +422,13 @@ export function VoiceFirstChatInterface({
 
   // Voice Control Functions
   const startListening = useCallback(async () => {
-    if (!recognitionRef.current || !isSupported || !hasPermission) return;
+    if (!recognitionRef.current || !isSupported || !hasPermission || inputIsolated) {
+      if (inputIsolated) {
+        console.log('🔒 Voice input blocked due to input isolation (AI speaking)');
+        return;
+      }
+      return;
+    }
     
     try {
       // Stop any ongoing AI speech before listening
@@ -417,7 +445,7 @@ export function VoiceFirstChatInterface({
       console.error('🚨 Failed to start listening:', error);
       setVoiceState('idle');
     }
-  }, [isSupported, hasPermission, isAIPlaying, stopAIPlayback]);
+  }, [isSupported, hasPermission, isAIPlaying, stopAIPlayback, inputIsolated]);
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
@@ -460,7 +488,20 @@ export function VoiceFirstChatInterface({
     
     console.log('📤 Sending message:', message);
     sendMessageMutation.mutate(message);
-  }, [sendMessageMutation]);
+    
+    // Clear text input if using text mode
+    if (showTextInput) {
+      setTextInputValue('');
+    }
+  }, [sendMessageMutation, showTextInput]);
+  
+  // Handle text input submission
+  const handleTextSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputIsolated) return; // Prevent submission during AI speech
+    
+    handleSendMessage(textInputValue);
+  }, [textInputValue, inputIsolated, handleSendMessage]);
 
   const toggleVoiceInput = useCallback(() => {
     if (voiceState === 'listening') {
@@ -517,6 +558,20 @@ export function VoiceFirstChatInterface({
             title={autoPlayEnabled ? "Disable auto-play" : "Enable auto-play"}
           >
             {autoPlayEnabled ? "Auto-play ON" : "Auto-play OFF"}
+          </Button>
+          
+          {/* Text Input Toggle */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowTextInput(!showTextInput)}
+            className={cn(
+              "text-xs px-2 h-7",
+              showTextInput ? "text-blue-600 border-blue-300 bg-blue-50" : "text-gray-600 border-gray-300"
+            )}
+            title={showTextInput ? "Hide text input" : "Show text input"}
+          >
+            {showTextInput ? "Text Input ON" : "Text Input OFF"}
           </Button>
           
           {isAIPlaying && (
@@ -657,15 +712,56 @@ export function VoiceFirstChatInterface({
           </div>
         )}
 
+        {/* Text Input with Isolation (Optional Alternative to Voice) */}
+        {showTextInput && (
+          <form onSubmit={handleTextSubmit} className="mb-4">
+            <div className={cn(
+              "flex gap-2 transition-all duration-300",
+              inputIsolated && "opacity-50 pointer-events-none"
+            )}>
+              <input
+                type="text"
+                value={textInputValue}
+                onChange={(e) => setTextInputValue(e.target.value)}
+                disabled={inputIsolated || sendMessageMutation.isPending}
+                placeholder={inputIsolated ? "Input locked - AI is speaking..." : "Type your spiritual question..."}
+                className={cn(
+                  "flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm transition-all duration-300",
+                  "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent",
+                  inputIsolated ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white text-gray-800"
+                )}
+              />
+              <Button
+                type="submit"
+                disabled={!textInputValue.trim() || inputIsolated || sendMessageMutation.isPending}
+                className={cn(
+                  "px-4 py-2 transition-all duration-300",
+                  inputIsolated 
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed" 
+                    : "bg-teal-600 text-white hover:bg-teal-700"
+                )}
+              >
+                Send
+              </Button>
+            </div>
+            {inputIsolated && (
+              <p className="text-xs text-red-600 mt-1 animate-pulse">
+                🔒 Input isolated - AI is speaking. Wait for completion or interrupt to continue.
+              </p>
+            )}
+          </form>
+        )}
+
         {/* Voice Controls */}
         <div className="flex items-center justify-center gap-4">
           {/* Main Voice Button */}
           <div className="flex flex-col items-center">
             <Button
               onClick={toggleVoiceInput}
-              disabled={!isSupported || !hasPermission || sendMessageMutation.isPending}
+              disabled={!isSupported || !hasPermission || sendMessageMutation.isPending || inputIsolated}
               className={cn(
                 "w-16 h-16 rounded-full transition-all duration-300",
+                inputIsolated ? "bg-gray-300 cursor-not-allowed" :
                 voiceState === 'listening' 
                   ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 animate-pulse"
                   : voiceState === 'processing'
@@ -683,6 +779,8 @@ export function VoiceFirstChatInterface({
                 <Square className="w-6 h-6 text-white" />
               ) : voiceState === 'responding' ? (
                 <Volume2 className="w-6 h-6 text-white" />
+              ) : inputIsolated ? (
+                <MicOff className="w-6 h-6 text-gray-500" />
               ) : (
                 <Mic className="w-6 h-6 text-white" />
               )}
@@ -710,9 +808,14 @@ export function VoiceFirstChatInterface({
                   Interrupted
                 </div>
               )}
-              {voiceState === 'idle' && isSupported && hasPermission && (
+              {voiceState === 'idle' && isSupported && hasPermission && !inputIsolated && (
                 <div className="text-xs text-gray-500">
                   Click to speak
+                </div>
+              )}
+              {inputIsolated && (
+                <div className="text-xs text-red-600 font-medium animate-pulse">
+                  🔒 Inputs Locked
                 </div>
               )}
             </div>

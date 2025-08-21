@@ -13,9 +13,16 @@ export interface ScriptureContext {
   multiReligiousPerspective?: boolean;
 }
 
+export interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
+
 export async function generateScriptureResponse(
   userMessage: string,
-  context?: ScriptureContext
+  context?: ScriptureContext,
+  conversationHistory: ConversationMessage[] = []
 ): Promise<string> {
   try {
     console.log("generateScriptureResponse called with:", { userMessage, context });
@@ -23,31 +30,53 @@ export async function generateScriptureResponse(
     if (context && context.multiReligiousPerspective === true) {
       console.log("Multi-religious perspective triggered:", { question: userMessage, context });
       
-      const multiReligiousPrompt = `You are an interfaith scholar with deep knowledge of multiple religious traditions. When asked general spiritual questions, provide perspectives from exactly these five traditions in this order:
+      // Build conversation context for better multi-turn dialogue
+      const contextualPrompt = conversationHistory.length > 0 
+        ? `Previous conversation context:\n${conversationHistory.map(msg => `${msg.role}: ${msg.content}`).join('\n')}\n\nCurrent question: "${userMessage}"`
+        : `User's question: "${userMessage}"`;
 
+      const multiReligiousPrompt = `You are an interfaith scholar with deep knowledge of multiple religious traditions. You engage in natural, flowing conversations, building on previous exchanges when appropriate.
+
+When providing perspectives from multiple religious traditions, use exactly these five traditions in this order:
 <perspective>Christianity</perspective>
 <perspective>Islam</perspective>
 <perspective>Judaism</perspective>
 <perspective>Hinduism</perspective>
 <perspective>Buddhism</perspective>
 
-Format Guidelines:
-- Use ONLY the exact format shown above with <perspective>Tradition Name</perspective> tags
-- Never use asterisks (****) or other formatting for section headers
+Enhanced Conversation Guidelines:
+- Build on previous exchanges naturally when conversation history exists
 - Provide 2-3 sentences for each perspective
 - Include authentic scriptural references when possible
-- Ensure each perspective offers unique insights while highlighting common spiritual themes
-- Keep responses balanced in length across all five traditions
+- After your response, add a proactive follow-up question to encourage deeper dialogue
+- Examples of proactive questions:
+  * "How does this resonate with your own spiritual journey?"
+  * "Would you like to explore any of these perspectives further?"
+  * "Building on [specific verse/teaching], what questions arise for you?"
+  * "Which of these traditions speaks most deeply to you right now?"`;
 
-User's question: "${userMessage}"`;
+      const messages = [
+        { role: "system" as const, content: multiReligiousPrompt }
+      ];
+
+      // Add conversation history if present
+      if (conversationHistory.length > 0) {
+        conversationHistory.forEach(msg => {
+          messages.push({ role: msg.role, content: msg.content });
+        });
+      }
+
+      // Add current user message with context
+      const contextualMessage = conversationHistory.length > 0 
+        ? `Building on our conversation: ${userMessage}`
+        : userMessage;
+      
+      messages.push({ role: "user" as const, content: contextualMessage });
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini", // Use faster model for quick responses
-        messages: [
-          { role: "system", content: multiReligiousPrompt },
-          { role: "user", content: userMessage }
-        ],
-        max_tokens: 400, // Very short responses for smooth conversation flow
+        messages,
+        max_tokens: 500, // Increased for proactive questions
         temperature: 0.7,
       });
 

@@ -267,7 +267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Send a chat message
+  // Send a chat message with conversation history context
   app.post("/api/chat", async (req, res) => {
     try {
       const { message, sessionId, context } = chatRequestSchema.parse(req.body);
@@ -275,6 +275,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Chat request payload:", { context });
       console.log("Context multiReligiousPerspective:", context?.multiReligiousPerspective);
       console.log("Context type:", typeof context?.multiReligiousPerspective);
+      
+      // Retrieve previous conversation history (last 5 messages for context)
+      const previousMessages = await storage.getChatMessages(sessionId);
+      const conversationHistory = previousMessages
+        .slice(-5) // Get last 5 messages for context
+        .map(msg => ({
+          role: msg.type === 'user' ? 'user' : 'assistant',
+          content: msg.content,
+          timestamp: msg.timestamp
+        }));
+      
+      console.log("Conversation history retrieved:", { 
+        sessionId, 
+        historyLength: conversationHistory.length,
+        recentMessages: conversationHistory.map(m => ({ role: m.role, preview: m.content.substring(0, 50) + '...' }))
+      });
       
       // Save user message
       const userMessage = await storage.createChatMessage({
@@ -330,7 +346,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               chapter: context.chapter || 1,
               persona: context.persona || null
             },
-            personaContext
+            personaContext,
+            conversationHistory
           );
         } catch (error) {
           console.error("XAI persona response failed, falling back to OpenAI:", error);
@@ -345,13 +362,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               verses: verses.map(v => ({ number: v.verse, text: v.text }))
             };
           }
-          aiResponse = await generateScriptureResponse(message, scriptureContext);
+          aiResponse = await generateScriptureResponse(message, scriptureContext, conversationHistory);
         }
       } else if (context?.multiReligiousPerspective) {
         // Multi-religious perspective using XAI
         console.log("Generating multi-religious perspective with XAI");
         try {
-          aiResponse = await generateMultiReligiousPerspective(message);
+          aiResponse = await generateMultiReligiousPerspective(message, conversationHistory);
         } catch (error) {
           console.error("XAI multi-religious response failed, falling back to OpenAI:", error);
           const scriptureContext = {
@@ -360,7 +377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             chapter: context.chapter || 1,
             multiReligiousPerspective: true
           };
-          aiResponse = await generateScriptureResponse(message, scriptureContext);
+          aiResponse = await generateScriptureResponse(message, scriptureContext, conversationHistory);
         }
       } else {
         // Standard response generation
@@ -384,11 +401,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               book: context?.book || "",
               chapter: context?.chapter || 1,
               persona: null
-            }
+            },
+            null,
+            conversationHistory
           );
         } catch (error) {
           console.error("XAI general response failed, falling back to OpenAI:", error);
-          aiResponse = await generateScriptureResponse(message, scriptureContext);
+          aiResponse = await generateScriptureResponse(message, scriptureContext, conversationHistory);
         }
       }
       
