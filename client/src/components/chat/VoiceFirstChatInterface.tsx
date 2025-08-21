@@ -103,7 +103,7 @@ export function VoiceFirstChatInterface({
     autoSendDelay: 1500,
     confidenceThreshold: 0.8,
     voiceEnabled: true,
-    autoPlayAI: false, // DISABLE auto-play by default to prevent feedback loops
+    autoPlayAI: true, // Enable auto-play with smart safeguards
     interruptionSensitivity: 0.3,
     volume: 0.8
   });
@@ -690,6 +690,12 @@ export function VoiceFirstChatInterface({
       return;
     }
     
+    // Additional safeguard: Check if user is currently speaking
+    if (currentTranscript && currentTranscript.trim().length > 0) {
+      console.log('🚫 Auto-play BLOCKED - User transcript detected, preventing feedback');
+      return;
+    }
+    
     if (lastAIMessage && settings.autoPlayAI && messages.length > 0 && !isTalkingBack) {
       const lastMessage = messages[messages.length - 1];
       if (lastMessage?.type === 'ai' && lastMessage.content === lastAIMessage) {
@@ -792,18 +798,18 @@ export function VoiceFirstChatInterface({
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Auto-play Toggle with Warning */}
+          {/* Auto-play Toggle with Smart Protection */}
           <Button
             variant="outline"
             size="sm"
             onClick={toggleAutoPlay}
             className={cn(
               "text-xs px-2 h-7",
-              autoPlayEnabled ? "text-orange-600 border-orange-300 bg-orange-50" : "text-gray-600 border-gray-300"
+              autoPlayEnabled ? "text-teal-600 border-teal-300 bg-teal-50" : "text-gray-600 border-gray-300"
             )}
-            title={autoPlayEnabled ? "Auto-play ON (May cause feedback with voice input)" : "Enable auto-play"}
+            title={autoPlayEnabled ? "Auto-play ON (Protected from feedback)" : "Enable auto-play"}
           >
-            {autoPlayEnabled ? "⚠️ Auto-play ON" : "Auto-play OFF"}
+            {autoPlayEnabled ? "🔊 Auto-play ON" : "Auto-play OFF"}
           </Button>
           
           {/* Text Input Toggle */}
