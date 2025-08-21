@@ -19,7 +19,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { VoiceFirstInterface } from './VoiceFirstInterface';
+import { SupremeVoiceInterface } from './SupremeVoiceInterface';
 import { AudioPlaybackButton } from './AudioPlaybackButton';
 import { GrokStyleOrb } from './GrokStyleOrb';
 
@@ -322,19 +322,18 @@ export function InsightChat({ context, className }: InsightChatProps) {
 
           <Separator />
 
-          {/* Voice Input Interface */}
+          {/* Supreme Voice Interface */}
           <div className="border-t border-gray-100 p-4 bg-gradient-to-t from-gray-50 to-white">
-            <VoiceFirstInterface
+            <SupremeVoiceInterface
               onSubmit={(message) => {
                 setCurrentMessage(message);
                 sendMessageMutation.mutate(message);
               }}
-              isStreaming={sendMessageMutation.isPending || isTyping}
-              isInterrupted={orbState === 'interrupted'}
               onInterrupt={handleVoiceInterruption}
+              isStreaming={sendMessageMutation.isPending || isTyping}
+              isAIResponding={isVoicePlaying || orbState === 'responding'}
               placeholder="Speak or type your spiritual question..."
               disabled={sendMessageMutation.isPending}
-              isAIResponding={isVoicePlaying || orbState === 'responding'}
             />
           </div>
         </>
