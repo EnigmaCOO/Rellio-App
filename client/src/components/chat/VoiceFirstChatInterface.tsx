@@ -74,6 +74,8 @@ export function VoiceFirstChatInterface({
   const [confidence, setConfidence] = useState(0);
   const [isSupported, setIsSupported] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
+  const [playingMessageId, setPlayingMessageId] = useState<number | null>(null);
+  const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
   
   // Speech Recognition Setup
   const recognitionRef = useRef<any>(null);
@@ -81,6 +83,8 @@ export function VoiceFirstChatInterface({
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const elevenLabsStreamRef = useRef<any>(null);
   
   // Settings
   const [settings, setSettings] = useState({
@@ -111,10 +115,12 @@ export function VoiceFirstChatInterface({
       if (voiceState === 'responding') {
         setVoiceState('idle');
       }
+      setPlayingMessageId(null);
     },
     onInterrupted: () => {
       console.log('🚨 AI speech interrupted by user');
       setVoiceState('interrupted');
+      setPlayingMessageId(null);
       toast({
         title: "Response Interrupted",
         description: "You can continue the conversation",
@@ -124,6 +130,7 @@ export function VoiceFirstChatInterface({
     onError: (error) => {
       console.error('🚨 ElevenLabs error:', error);
       setVoiceState('idle');
+      setPlayingMessageId(null);
       toast({
         title: "Audio Error",
         description: "Voice playback encountered an issue",
@@ -131,6 +138,42 @@ export function VoiceFirstChatInterface({
       });
     }
   });
+
+  // Individual Message Audio Controls
+  const playMessageAudio = useCallback(async (message: ChatMessage) => {
+    if (playingMessageId === message.id) {
+      // Stop current playback
+      stopAIPlayback();
+      setPlayingMessageId(null);
+      return;
+    }
+
+    // Stop any current playback
+    if (playingMessageId) {
+      stopAIPlayback();
+    }
+
+    setPlayingMessageId(message.id);
+    console.log('🎙️ Playing message audio with <500ms latency:', message.content.substring(0, 50) + '...');
+    
+    try {
+      await playAIText(message.content);
+    } catch (error) {
+      console.error('🚨 Failed to play message audio:', error);
+      setPlayingMessageId(null);
+    }
+  }, [playingMessageId, playAIText, stopAIPlayback]);
+
+  const toggleAutoPlay = useCallback(() => {
+    setAutoPlayEnabled(!autoPlayEnabled);
+    toast({
+      title: autoPlayEnabled ? "Auto-play Disabled" : "Auto-play Enabled",
+      description: autoPlayEnabled 
+        ? "AI responses will no longer auto-play" 
+        : "AI responses will auto-play with voice",
+      variant: "default"
+    });
+  }, [autoPlayEnabled, toast]);
 
   // Load Messages
   const { data: messages = [], isLoading: messagesLoading } = useQuery<ChatMessage[]>({
@@ -170,13 +213,18 @@ export function VoiceFirstChatInterface({
       // Invalidate query to refresh messages
       await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
       
-      // Auto-play the AI response with ElevenLabs
-      if (data.content && settings.voiceEnabled) {
-        console.log('🎙️ Auto-playing AI response:', data.content.substring(0, 50) + '...');
+      // Auto-play the AI response with ElevenLabs if enabled
+      if (data.content && autoPlayEnabled && settings.voiceEnabled) {
+        console.log('🎙️ Auto-playing AI response with <500ms latency:', data.content.substring(0, 50) + '...');
+        setPlayingMessageId(data.id);
+        setVoiceState('responding');
         try {
           await playAIText(data.content);
+          setPlayingMessageId(null);
+          setVoiceState('idle');
         } catch (error) {
           console.error('🚨 Failed to play AI response:', error);
+          setPlayingMessageId(null);
           setVoiceState('idle');
         }
       } else {
@@ -329,7 +377,7 @@ export function VoiceFirstChatInterface({
     recognitionRef.current = recognition;
     
     // Initialize audio context
-    if (navigator.mediaDevices?.getUserMedia) {
+    if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
       initializeAudioContext();
     }
     
@@ -457,6 +505,20 @@ export function VoiceFirstChatInterface({
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Auto-play Toggle */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleAutoPlay}
+            className={cn(
+              "text-xs px-2 h-7",
+              autoPlayEnabled ? "text-teal-600 border-teal-300 bg-teal-50" : "text-gray-600 border-gray-300"
+            )}
+            title={autoPlayEnabled ? "Disable auto-play" : "Enable auto-play"}
+          >
+            {autoPlayEnabled ? "Auto-play ON" : "Auto-play OFF"}
+          </Button>
+          
           {isAIPlaying && (
             <Button
               variant="outline"
@@ -496,9 +558,10 @@ export function VoiceFirstChatInterface({
               <div
                 key={message.id}
                 className={cn(
-                  "flex gap-3 mb-4",
+                  "flex gap-3 mb-4 transition-all duration-200 ease-in-out",
                   message.type === 'user' ? "flex-row-reverse" : "flex-row"
                 )}
+                style={{ animation: `fadeIn 200ms ease-in-out` }}
               >
                 {/* Avatar */}
                 <div className={cn(
@@ -514,21 +577,55 @@ export function VoiceFirstChatInterface({
                   )}
                 </div>
                 
-                {/* Message Bubble */}
+                {/* Enhanced Message Bubble */}
                 <div className={cn(
                   "flex-1 max-w-[80%]",
-                  message.type === 'user' ? "flex flex-col items-end" : "flex flex-col items-start"
+                  message.type === 'user' 
+                    ? "flex flex-col items-end" 
+                    : "flex flex-col items-end" // AI messages right-aligned per requirements
                 )}>
                   <div className={cn(
-                    "px-4 py-3 rounded-2xl shadow-sm transition-all duration-200",
-                    "border border-transparent",
+                    "relative px-4 py-3 rounded-2xl shadow-sm transition-all duration-200 group",
                     message.type === 'user' 
-                      ? "bg-gray-100 text-gray-800 rounded-br-md"
-                      : "bg-white text-gray-800 border-gray-200 rounded-bl-md hover:border-teal-200"
+                      ? "bg-gray-100 text-gray-800 rounded-br-md border border-gray-200"
+                      : "bg-white text-gray-800 border border-gray-200 rounded-bl-md hover:border-teal-200" // White with 1px gray border
                   )}>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    <p className={cn(
+                      "text-sm leading-relaxed whitespace-pre-wrap",
+                      message.type === 'ai' ? "pr-8" : "" // Space for controls
+                    )}>
                       {message.content}
                     </p>
+                    
+                    {/* AI Message Audio Controls */}
+                    {message.type === 'ai' && (
+                      <div className="absolute top-2 right-2 flex items-center gap-1">
+                        {/* Pulsing Teal Orb During Playback (24px) */}
+                        {playingMessageId === message.id && (
+                          <div className="w-6 h-6 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full animate-pulse flex items-center justify-center mr-1">
+                            <div className="w-3 h-3 bg-white rounded-full animate-bounce" />
+                          </div>
+                        )}
+                        
+                        {/* Speaker Toggle Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => playMessageAudio(message)}
+                          className={cn(
+                            "w-6 h-6 p-0 opacity-70 hover:opacity-100 transition-opacity duration-200",
+                            playingMessageId === message.id ? "text-teal-600" : "text-gray-500 hover:text-teal-600"
+                          )}
+                          title={playingMessageId === message.id ? "Stop audio" : "Play audio"}
+                        >
+                          {playingMessageId === message.id ? (
+                            <Square className="w-3 h-3" />
+                          ) : (
+                            <Volume2 className="w-3 h-3" />
+                          )}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
