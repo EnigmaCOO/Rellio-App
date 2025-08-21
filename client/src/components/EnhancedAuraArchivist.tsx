@@ -785,83 +785,78 @@ export function EnhancedAuraArchivist({
         </div>
       </div>
 
-      {/* SINGLE WORKING VOICE INTERFACE */}
-      <div className="p-6 border-t border-gray-200 bg-white">
-        <div className="max-w-md mx-auto space-y-4">
-          
-          {/* Voice Input Section - Exactly like your screenshot */}
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <h3 className="text-lg font-semibold mb-2 text-gray-900">Voice Input</h3>
-            <p className="text-sm text-gray-600 mb-4">Click microphone to start</p>
-            
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('🎤🎤🎤 VOICE BUTTON CLICKED!');
-                alert('🎤 Voice button clicked! Starting speech recognition...');
+      {/* EMERGENCY WORKING VOICE - BYPASSING REACT */}
+      <div 
+        className="p-6 border-t border-gray-200 bg-yellow-100"
+        dangerouslySetInnerHTML={{
+          __html: `
+            <div style="max-width: 400px; margin: 0 auto;">
+              <div style="background: #f5f5f5; border-radius: 8px; padding: 20px; border: 1px solid #ddd;">
+                <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">🔥 EMERGENCY VOICE TEST</h3>
+                <p style="font-size: 14px; color: #666; margin-bottom: 20px;">This bypasses React - should work!</p>
                 
-                try {
-                  const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-                  
-                  if (!SpeechRecognition) {
-                    alert('❌ Speech recognition not supported. Please use Chrome, Edge, or Safari.');
-                    console.log('❌ No speech recognition support');
-                    return;
-                  }
-                  
-                  const recognition = new SpeechRecognition();
-                  recognition.continuous = false;
-                  recognition.interimResults = true;
-                  recognition.lang = 'en-US';
-                  
-                  recognition.onstart = () => {
-                    console.log('✅ Speech recognition started - listening now!');
-                    alert('🎧 Listening... Say your question now!');
-                  };
-                  
-                  recognition.onresult = (event: any) => {
-                    let finalTranscript = '';
-                    for (let i = 0; i < event.results.length; i++) {
-                      if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
-                      }
-                    }
+                <button 
+                  onclick="
+                    alert('🚨 RAW HTML BUTTON CLICKED!');
+                    console.log('🚨🚨🚨 RAW HTML BUTTON WORKS!');
                     
-                    if (finalTranscript) {
-                      console.log('🎯 Final transcript:', finalTranscript);
-                      alert(`You said: "${finalTranscript}"`);
-                      handleSendMessage(finalTranscript.trim());
+                    try {
+                      const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+                      if (!SpeechRecognition) {
+                        alert('❌ No speech support - use Chrome/Edge');
+                        return;
+                      }
+                      
+                      const recognition = new SpeechRecognition();
+                      recognition.continuous = false;
+                      recognition.interimResults = false;
+                      recognition.lang = 'en-US';
+                      
+                      recognition.onstart = () => {
+                        alert('🎤 LISTENING - SAY SOMETHING NOW!');
+                        console.log('✅ Speech recognition started');
+                      };
+                      
+                      recognition.onresult = (event) => {
+                        const transcript = event.results[0][0].transcript;
+                        alert('You said: ' + transcript);
+                        console.log('🎯 Transcript:', transcript);
+                        
+                        // Send message via global function
+                        if (window.sendVoiceMessage) {
+                          window.sendVoiceMessage(transcript);
+                        }
+                      };
+                      
+                      recognition.onerror = (event) => {
+                        alert('Speech error: ' + event.error);
+                        console.error('❌ Speech error:', event.error);
+                      };
+                      
+                      recognition.start();
+                    } catch (error) {
+                      alert('Error: ' + error);
+                      console.error('❌ Error:', error);
                     }
-                  };
-                  
-                  recognition.onerror = (event: any) => {
-                    console.error('❌ Speech recognition error:', event.error);
-                    alert(`Speech error: ${event.error}`);
-                  };
-                  
-                  recognition.onend = () => {
-                    console.log('🛑 Speech recognition ended');
-                  };
-                  
-                  console.log('🚀 Starting speech recognition...');
-                  recognition.start();
-                  
-                } catch (error) {
-                  console.error('❌ Error in speech recognition:', error);
-                  alert(`Error: ${error}`);
-                }
-              }}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors cursor-pointer"
-              type="button"
-            >
-              <Mic className="w-4 h-4" />
-              Speak
-            </button>
-          </div>
-
-        </div>
-      </div>
+                  "
+                  style="
+                    background: #3b82f6; 
+                    color: white; 
+                    border: none; 
+                    padding: 12px 24px; 
+                    border-radius: 8px; 
+                    font-size: 16px; 
+                    cursor: pointer;
+                    font-weight: bold;
+                  "
+                >
+                  🎤 RAW HTML VOICE
+                </button>
+              </div>
+            </div>
+          `
+        }}
+      />
 
       {/* Text Input Fallback */}
       {!voiceMode && (
