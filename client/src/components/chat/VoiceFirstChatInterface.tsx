@@ -103,6 +103,7 @@ export function VoiceFirstChatInterface({
     autoSendDelay: 1500,
     confidenceThreshold: 0.8,
     voiceEnabled: true,
+    autoPlayAI: true, // Enable auto-play by default
     interruptionSensitivity: 0.3,
     volume: 0.8
   });
@@ -656,17 +657,32 @@ export function VoiceFirstChatInterface({
 
   // Auto-play new AI messages
   useEffect(() => {
-    if (lastAIMessage && settings.autoPlayAI && messages.length > 0) {
+    console.log('🔊 Auto-play check:', { 
+      lastAIMessage: lastAIMessage?.substring(0, 50), 
+      autoPlayAI: settings.autoPlayAI, 
+      messagesCount: messages.length,
+      isTalkingBack 
+    });
+    
+    if (lastAIMessage && settings.autoPlayAI && messages.length > 0 && !isTalkingBack) {
       const lastMessage = messages[messages.length - 1];
       if (lastMessage?.type === 'ai' && lastMessage.content === lastAIMessage) {
         console.log('🔊 Auto-playing AI response...');
         // Small delay to ensure message is rendered
-        setTimeout(() => {
-          speakMessage(lastAIMessage);
+        setTimeout(async () => {
+          console.log('🔊 Calling playAIText with:', lastAIMessage.substring(0, 50) + '...');
+          setIsTalkingBack(true);
+          try {
+            await playAIText(lastAIMessage);
+          } catch (error) {
+            console.error('🚨 Auto-play failed:', error);
+          } finally {
+            setIsTalkingBack(false);
+          }
         }, 1000);
       }
     }
-  }, [lastAIMessage, settings.autoPlayAI, messages, speakMessage]);
+  }, [lastAIMessage, settings.autoPlayAI, messages, speakMessage, isTalkingBack]);
 
   // Update last AI message when new messages arrive
   useEffect(() => {
