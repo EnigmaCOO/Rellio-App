@@ -52,27 +52,29 @@ export function GrokStyleVoiceInterface({
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
 
-  // Initialize voice recognition with fallbacks
+  // Initialize voice recognition with enhanced error handling
   const initializeRecognition = useCallback(() => {
+    console.log('🔧 Initializing speech recognition...');
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     
     if (!SpeechRecognition) {
-      toast({
-        title: "Voice Not Supported",
-        description: "Your browser doesn't support voice recognition",
-        variant: "destructive"
-      });
+      console.error('❌ No SpeechRecognition API available');
       return null;
     }
 
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      recognition.maxAlternatives = 1;
+      
+      console.log('✅ Speech recognition configured');
 
-    recognition.onstart = () => {
-      setState(prev => ({ ...prev, isListening: true }));
-    };
+      recognition.onstart = () => {
+        console.log('🎙️ Speech recognition started');
+        setState(prev => ({ ...prev, isListening: true }));
+      };
 
     recognition.onresult = (event: any) => {
       let finalTranscript = '';
@@ -104,24 +106,54 @@ export function GrokStyleVoiceInterface({
       scheduleAutoSend();
     };
 
-    recognition.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
-      setState(prev => ({ ...prev, isListening: false }));
-      
-      if (event.error === 'no-speech') {
+      recognition.onerror = (event: any) => {
+        console.error('❌ Speech recognition error:', event.error, event);
+        setState(prev => ({ ...prev, isListening: false }));
+        
+        let title = "Voice Error";
+        let description = "Unknown error occurred";
+        
+        switch(event.error) {
+          case 'no-speech':
+            title = "No Speech Detected";
+            description = "Try speaking closer to your microphone";
+            break;
+          case 'audio-capture':
+            title = "Microphone Error";
+            description = "Unable to access microphone. Check your settings.";
+            break;
+          case 'not-allowed':
+            title = "Microphone Permission Denied";
+            description = "Please allow microphone access and try again";
+            break;
+          case 'network':
+            title = "Network Error";
+            description = "Speech recognition requires internet connection";
+            break;
+          case 'service-not-allowed':
+            title = "Service Not Available";
+            description = "Speech recognition service is not available";
+            break;
+        }
+        
         toast({
-          title: "No Speech Detected",
-          description: "Try speaking closer to your microphone",
-          variant: "default"
+          title,
+          description,
+          variant: "destructive"
         });
-      }
-    };
+      };
 
-    recognition.onend = () => {
-      setState(prev => ({ ...prev, isListening: false }));
-    };
+      recognition.onend = () => {
+        console.log('🛑 Speech recognition ended');
+        setState(prev => ({ ...prev, isListening: false }));
+      };
 
-    return recognition;
+      console.log('✅ Speech recognition fully initialized');
+      return recognition;
+    } catch (error) {
+      console.error('❌ Error creating speech recognition:', error);
+      return null;
+    }
   }, [toast]);
 
   // Schedule auto-send after pause
@@ -141,13 +173,42 @@ export function GrokStyleVoiceInterface({
     }, state.autoSendDelay);
   }, [state.transcript, state.confidence, state.autoSendDelay, onSendMessage]);
 
-  // Start listening
+  // Start listening with enhanced debugging
   const startListening = useCallback(async () => {
+    console.log('🎤 Starting voice recognition...');
+    
+    // Check browser support first
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.error('❌ Speech Recognition not supported in this browser');
+      toast({
+        title: "Voice Not Supported",
+        description: "Your browser doesn't support voice recognition. Try Chrome or Edge.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const recognition = initializeRecognition();
-    if (!recognition) return;
+    if (!recognition) {
+      console.error('❌ Failed to initialize recognition');
+      return;
+    }
 
     recognitionRef.current = recognition;
-    recognition.start();
+    
+    try {
+      console.log('🚀 Starting speech recognition...');
+      recognition.start();
+    } catch (error) {
+      console.error('❌ Error starting recognition:', error);
+      toast({
+        title: "Voice Error",
+        description: "Failed to start voice recognition. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     // Initialize audio monitoring for levels
     try {
@@ -286,9 +347,19 @@ export function GrokStyleVoiceInterface({
 
       {/* Main Voice Interface */}
       <div className="flex items-center gap-4">
-        {/* Grok-style Orb Button */}
+        {/* Grok-style Orb Button with Enhanced Click Handling */}
         <Button
-          onClick={state.isListening ? stopListening : startListening}
+          onClick={(e) => {
+            console.log('🔘 Voice button clicked, current state:', { isListening: state.isListening, isLoading });
+            e.preventDefault();
+            if (state.isListening) {
+              console.log('🛑 Stopping listening...');
+              stopListening();
+            } else {
+              console.log('🎙️ Starting listening...');
+              startListening();
+            }
+          }}
           disabled={isLoading}
           className={cn(
             "w-12 h-12 rounded-full transition-all duration-300 shadow-lg border-2",

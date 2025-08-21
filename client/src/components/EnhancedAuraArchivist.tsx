@@ -263,6 +263,7 @@ export function EnhancedAuraArchivist({
   const [currentSessionId, setCurrentSessionId] = useState(sessionId);
   const [isStreaming, setIsStreaming] = useState(false);
   const [orbState, setOrbState] = useState<'idle' | 'listening' | 'processing' | 'responding' | 'interrupted'>('idle');
+  const [voiceMode, setVoiceMode] = useState(true); // Enable voice mode by default
   const [voiceTranscript, setVoiceTranscript] = useState("");
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [customPersona, setCustomPersona] = useState<Partial<ScholarPersona> | null>(null);
