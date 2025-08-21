@@ -14,12 +14,14 @@ import {
   User,
   Settings,
   Headphones,
-  AlertTriangle
+  AlertTriangle,
+  BookOpen
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useElevenLabsStreaming } from '@/hooks/useElevenLabsStreaming';
 import { GrokStyleOrb } from './GrokStyleOrb';
 import { AudioWaveform } from './AudioWaveform';
+import { VoiceTalkBackHandler } from './VoiceTalkBackHandler';
 import type { Religion, ChatMessage } from '@shared/schema';
 import type { ScholarPersona } from './ScholarPersonas';
 

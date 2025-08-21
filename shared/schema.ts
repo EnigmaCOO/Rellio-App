@@ -42,6 +42,11 @@ export const chatMessages = pgTable("chat_messages", {
   type: text("type").notNull(), // 'user' or 'ai'
   content: text("content").notNull(),
   context: json("context"), // scripture context
+  verseReference: json("verse_reference"), // linked verse for context recall
+  interruptionData: json("interruption_data"), // interruption context and timing
+  voiceData: json("voice_data"), // voice persona, tone, playback info
+  isInterrupted: integer("is_interrupted").default(0), // 0 = false, 1 = true
+  responseLatency: integer("response_latency"), // latency in milliseconds
   timestamp: timestamp("timestamp").defaultNow(),
 });
 

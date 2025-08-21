@@ -1,6 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer } from 'ws';
 import { storage } from "./storage";
+import { VoiceWebSocketHandler } from "./websockets/voiceHandler";
 import { generateScriptureResponse } from "./services/openai";
 import { generatePersonaResponse, generateMultiReligiousPerspective, explainVerse } from "./services/xai";
 import { getReligionConfig, getAvailableReligions } from "./services/scripture";
@@ -626,6 +628,83 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
     }
   });
 
+  // API endpoint for voice data storage
+  app.post("/api/chat/voice-data", async (req, res) => {
+    try {
+      const { sessionId, voiceData, verseReference, context } = req.body;
+      
+      if (!sessionId || !voiceData) {
+        return res.status(400).json({ error: "Session ID and voice data are required" });
+      }
+
+      await storage.updateChatMessageWithVoiceData(sessionId, voiceData, verseReference, context);
+      res.json({ success: true });
+
+    } catch (error) {
+      console.error("Error saving voice data:", error);
+      res.status(500).json({ error: "Failed to save voice data" });
+    }
+  });
+
+  // API endpoint for interruption data storage
+  app.post("/api/chat/interruption", async (req, res) => {
+    try {
+      const { sessionId, interruptionData, isInterrupted, context } = req.body;
+      
+      if (!sessionId || !interruptionData) {
+        return res.status(400).json({ error: "Session ID and interruption data are required" });
+      }
+
+      await storage.saveInterruptionData(sessionId, interruptionData, isInterrupted, context);
+      res.json({ success: true });
+
+    } catch (error) {
+      console.error("Error saving interruption data:", error);
+      res.status(500).json({ error: "Failed to save interruption data" });
+    }
+  });
+
+  // ElevenLabs streaming endpoint
+  app.post("/api/elevenlabs/stream", async (req, res) => {
+    try {
+      if (!elevenLabsService) {
+        return res.status(503).json({ error: "ElevenLabs service not available" });
+      }
+
+      const { text, voice_id, model_id, voice_settings, output_format } = req.body;
+      
+      if (!text || !voice_id) {
+        return res.status(400).json({ error: "Text and voice_id are required" });
+      }
+
+      console.log('🔊 ElevenLabs streaming request:', { textLength: text.length, voice_id, model_id });
+
+      const audioBuffer = await elevenLabsService.generateSpeech(text, voice_id, {
+        model_id: model_id || 'eleven_turbo_v2_5',
+        voice_settings: voice_settings || {
+          stability: 0.75,
+          similarity_boost: 0.8,
+          style: 0.2,
+          use_speaker_boost: true
+        }
+      });
+      
+      console.log('🔊 Generated streaming audio:', audioBuffer.length, 'bytes');
+      
+      res.set({
+        'Content-Type': 'audio/mpeg',
+        'Content-Length': audioBuffer.length,
+        'Cache-Control': 'no-cache',
+        'Accept-Ranges': 'bytes'
+      });
+      
+      res.send(audioBuffer);
+    } catch (error) {
+      console.error("Error streaming ElevenLabs audio:", error);
+      res.status(500).json({ error: "Failed to stream audio", details: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
   // Generate speech using ElevenLabs
   app.post("/api/elevenlabs/speak", async (req, res) => {
     try {
@@ -660,5 +739,10 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
   });
 
   const httpServer = createServer(app);
+  
+  // Initialize Voice WebSocket Handler for real-time streaming
+  const voiceHandler = new VoiceWebSocketHandler(httpServer);
+  console.log('🎤 Voice WebSocket handler initialized');
+  
   return httpServer;
 }

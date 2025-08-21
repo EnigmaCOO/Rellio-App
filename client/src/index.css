@@ -663,3 +663,66 @@
 .border-neon-blue { border-color: var(--neon-blue); }
 .border-neon-cyan { border-color: var(--neon-cyan); }
 .border-neon-purple { border-color: var(--neon-purple); }
+
+/* Enhanced Voice Talk-Back Animations */
+@keyframes voice-orb-pulse {
+  0%, 100% { 
+    transform: scale(1); 
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); 
+  }
+  50% { 
+    transform: scale(1.05); 
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.6); 
+  }
+}
+
+@keyframes flash-interruption {
+  0%, 100% { background-color: transparent; }
+  50% { 
+    background-color: rgba(239, 68, 68, 0.2); 
+    transform: scale(1.02); 
+  }
+}
+
+@keyframes voice-listening {
+  0%, 100% { 
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.3); 
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.7); 
+  }
+}
+
+@keyframes voice-speaking {
+  0%, 100% { 
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); 
+  }
+  50% { 
+    box-shadow: 0 0 35px rgba(59, 130, 246, 0.8); 
+  }
+}
+
+/* Voice Control Classes */
+.voice-orb {
+  @apply relative rounded-full transition-all duration-300;
+}
+
+.voice-orb.listening {
+  animation: voice-listening 2s infinite ease-in-out;
+}
+
+.voice-orb.speaking {
+  animation: voice-speaking 2s infinite ease-in-out;
+}
+
+.voice-orb.flash-interruption {
+  animation: flash-interruption 0.5s ease-out;
+}
+
+.chat-message.ai-speaking {
+  @apply bg-blue-50 border-l-4 border-blue-400;
+}
+
+.chat-message.interrupted {
+  @apply bg-red-50 border-l-4 border-red-400;
+}

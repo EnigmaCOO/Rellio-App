@@ -26,6 +26,10 @@ export interface IStorage {
   getChatMessages(sessionId: string): Promise<ChatMessage[]>;
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   
+  // Voice integration methods
+  updateChatMessageWithVoiceData(sessionId: string, voiceData: any, verseReference?: any, context?: any): Promise<void>;
+  saveInterruptionData(sessionId: string, interruptionData: any, isInterrupted: boolean, context?: any): Promise<void>;
+  
   getUserReadings(userId: number): Promise<UserReading[]>;
   createUserReading(reading: InsertUserReading): Promise<UserReading>;
 }
@@ -216,6 +220,32 @@ export class MemStorage implements IStorage {
     
     this.chatMessages.get(insertMessage.sessionId)!.push(message);
     return message;
+  }
+
+  async updateChatMessageWithVoiceData(sessionId: string, voiceData: any, verseReference?: any, context?: any): Promise<void> {
+    const sessionMessages = this.chatMessages.get(sessionId);
+    if (sessionMessages && sessionMessages.length > 0) {
+      const lastMessage = sessionMessages[sessionMessages.length - 1];
+      (lastMessage as any).voiceData = voiceData;
+      (lastMessage as any).verseReference = verseReference;
+      if (context) {
+        lastMessage.context = context;
+      }
+    }
+    console.log('Updating chat message with voice data:', { sessionId, voiceData, verseReference });
+  }
+
+  async saveInterruptionData(sessionId: string, interruptionData: any, isInterrupted: boolean, context?: any): Promise<void> {
+    const sessionMessages = this.chatMessages.get(sessionId);
+    if (sessionMessages && sessionMessages.length > 0) {
+      const lastMessage = sessionMessages[sessionMessages.length - 1];
+      (lastMessage as any).interruptionData = interruptionData;
+      (lastMessage as any).isInterrupted = isInterrupted ? 1 : 0;
+      if (context) {
+        lastMessage.context = context;
+      }
+    }
+    console.log('Saving interruption data:', { sessionId, interruptionData, isInterrupted });
   }
 
   async getUserReadings(userId: string): Promise<UserReading[]> {
