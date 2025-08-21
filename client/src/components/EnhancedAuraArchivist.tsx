@@ -786,42 +786,76 @@ export function EnhancedAuraArchivist({
 
       {/* Enhanced Input Area with Voice-First Design */}
       <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white p-2 flex-shrink-0">
-        {/* Simple Working Voice Interface */}
+        {/* Super Simple Working Interface */}
         <div className="space-y-3">
-          {/* Debug Test Buttons */}
-          <div className="flex gap-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+          {/* Basic Click Test */}
+          <div className="p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+            <h3 className="font-bold text-lg mb-2">CLICK TEST</h3>
             <button 
               onClick={() => {
-                console.log('🧪 Test Send button clicked');
-                handleSendMessage('Test message - can you see this?');
+                alert('Button clicked! Check console.');
+                console.log('🚨 BASIC BUTTON CLICKED - This proves buttons work');
+                handleSendMessage('Hello from basic button test');
               }}
-              className="px-2 py-1 bg-blue-500 text-white rounded text-xs"
+              className="px-4 py-2 bg-red-500 text-white rounded font-bold hover:bg-red-600"
             >
-              Test Send
+              CLICK ME FIRST
             </button>
+          </div>
+          
+          {/* Simple Voice Test */}
+          <div className="p-4 bg-green-50 border-2 border-green-300 rounded-lg">
+            <h3 className="font-bold text-lg mb-2">VOICE TEST</h3>
             <button 
               onClick={() => {
-                console.log('🧪 Test Speech button clicked');
-                const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-                if (SpeechRecognition) {
-                  console.log('✅ Speech Recognition available');
+                alert('Voice button clicked! Starting speech recognition...');
+                console.log('🎤 VOICE BUTTON CLICKED');
+                
+                try {
+                  const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+                  
+                  if (!SpeechRecognition) {
+                    alert('Speech recognition not supported in this browser. Please use Chrome or Edge.');
+                    return;
+                  }
+                  
                   const recognition = new SpeechRecognition();
-                  recognition.onstart = () => console.log('🎤 Recognition started');
+                  recognition.lang = 'en-US';
+                  recognition.continuous = false;
+                  recognition.interimResults = false;
+                  
+                  recognition.onstart = () => {
+                    console.log('🎤 Speech recognition started - say something!');
+                    alert('Listening... Say something now!');
+                  };
+                  
                   recognition.onresult = (event: any) => {
                     const transcript = event.results[0][0].transcript;
-                    console.log('🎯 Speech detected:', transcript);
+                    console.log('🎯 You said:', transcript);
+                    alert(`You said: "${transcript}"`);
                     handleSendMessage(transcript);
                   };
-                  recognition.onerror = (event: any) => console.error('❌ Speech error:', event.error);
+                  
+                  recognition.onerror = (event: any) => {
+                    console.error('❌ Speech error:', event.error);
+                    alert(`Speech error: ${event.error}`);
+                  };
+                  
+                  recognition.onend = () => {
+                    console.log('🛑 Speech recognition ended');
+                  };
+                  
+                  console.log('🚀 Starting speech recognition...');
                   recognition.start();
-                } else {
-                  console.log('❌ No speech recognition support');
-                  alert('Speech recognition not supported in this browser. Try Chrome or Edge.');
+                  
+                } catch (error) {
+                  console.error('❌ Error setting up speech recognition:', error);
+                  alert('Error setting up speech recognition: ' + error);
                 }
               }}
-              className="px-2 py-1 bg-green-500 text-white rounded text-xs"
+              className="px-4 py-2 bg-green-500 text-white rounded font-bold hover:bg-green-600"
             >
-              Test Speech
+              🎤 SPEAK NOW
             </button>
           </div>
           
