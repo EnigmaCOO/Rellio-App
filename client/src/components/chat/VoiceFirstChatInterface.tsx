@@ -85,6 +85,8 @@ export function VoiceFirstChatInterface({
   const [showTextInput, setShowTextInput] = useState(false);
   const [textInputValue, setTextInputValue] = useState('');
   const [inputIsolated, setInputIsolated] = useState(false);
+  const [isTalkingBack, setIsTalkingBack] = useState(false);
+  const [interruptedQuery, setInterruptedQuery] = useState<string>('');
   
   // Speech Recognition Setup
   const recognitionRef = useRef<any>(null);
