@@ -684,6 +684,15 @@ export function VoiceFirstChatInterface({
     }
   }, [lastAIMessage, settings.autoPlayAI, messages, speakMessage, isTalkingBack]);
 
+  // Clean text function to remove HTML/XML tags and perspective markers from display
+  const cleanTextForDisplay = useCallback((text: string): string => {
+    return text
+      .replace(/<perspective>[^<]*<\/perspective>/gi, '') // Remove perspective tags and content completely
+      .replace(/<[^>]*>/g, '') // Remove any remaining HTML/XML tags
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
+  }, []);
+
   // Update last AI message when new messages arrive
   useEffect(() => {
     if (messages.length > 0) {
@@ -854,7 +863,7 @@ export function VoiceFirstChatInterface({
                       "text-sm leading-relaxed whitespace-pre-wrap",
                       message.type === 'ai' ? "pr-8" : "" // Space for controls
                     )}>
-                      {message.content}
+                      {message.type === 'ai' ? cleanTextForDisplay(message.content) : message.content}
                     </p>
                     
                     {/* AI Message Audio Controls */}

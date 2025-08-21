@@ -249,6 +249,15 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
     }
   }, [volume, autoPlay, onStart, onEnd, onError]);
 
+  // Clean text function to remove HTML/XML tags and perspective markers
+  const cleanTextForSpeech = useCallback((text: string): string => {
+    return text
+      .replace(/<perspective>[^<]*<\/perspective>/gi, '') // Remove perspective tags and content
+      .replace(/<[^>]*>/g, '') // Remove any remaining HTML/XML tags
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
+  }, []);
+
   // Main function to convert text to speech and play with enhanced error handling
   const playText = useCallback(async (text: string): Promise<void> => {
     if (!isSupported) {
@@ -261,9 +270,17 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       return;
     }
 
+    // Clean text first to remove perspective tags and HTML
+    const cleanedText = cleanTextForSpeech(text);
+    
+    if (!cleanedText.trim()) {
+      console.log('🔊 No readable text after cleaning');
+      return;
+    }
+
     // Limit text length for faster voice synthesis and better interruption
     const maxLength = 600; // Shorter responses for faster synthesis and easier interruption
-    const textToSpeak = text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    const textToSpeak = cleanedText.length > maxLength ? cleanedText.substring(0, maxLength) + '...' : cleanedText;
     
     if (text.length > maxLength) {
       console.log('🔊 Text optimized from', text.length, 'to', textToSpeak.length, 'characters for smooth playback');
@@ -340,18 +357,56 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       }
 
     } catch (error) {
-      console.log('🔊 TTS request failed (non-critical):', error);
+      console.log('🔊 ElevenLabs failed, falling back to browser speech:', error);
       setIsLoading(false);
       
-      // Don't show errors to user - voice failures are common and non-critical
-      // The text response is still available and functional
-      console.log('🔊 Continuing without voice - text response available');
+      // Fall back to browser speech synthesis when ElevenLabs fails
+      try {
+        if ('speechSynthesis' in window) {
+          console.log('🔊 Using browser speech synthesis fallback');
+          
+          // Stop any existing speech
+          window.speechSynthesis.cancel();
+          
+          const utterance = new SpeechSynthesisUtterance(textToSpeak);
+          utterance.volume = volume;
+          utterance.rate = 1.0;
+          utterance.pitch = 1.0;
+          
+          utterance.onstart = () => {
+            console.log('🔊 Browser speech started');
+            setIsPlaying(true);
+            onStart?.();
+          };
+          
+          utterance.onend = () => {
+            console.log('🔊 Browser speech completed');
+            setIsPlaying(false);
+            setCurrentAudio(null);
+            onEnd?.();
+          };
+          
+          utterance.onerror = (event) => {
+            console.log('🔊 Browser speech error:', event.error);
+            setIsPlaying(false);
+            setCurrentAudio(null);
+          };
+          
+          if (!isInterruptedRef.current) {
+            window.speechSynthesis.speak(utterance);
+          }
+        } else {
+          console.log('🔊 No speech synthesis available');
+        }
+      } catch (fallbackError) {
+        console.log('🔊 Browser speech synthesis also failed:', fallbackError);
+      }
     }
-  }, [isSupported, voiceId, createAudioElement, onError]);
+  }, [isSupported, voiceId, createAudioElement, onError, volume, onStart, onEnd, cleanTextForSpeech]);
 
   // Enhanced stop playback with immediate response
   const stopPlayback = useCallback(() => {
-    console.log('🔊 Interruption detected - stopping Grok immediately');
+    console.log('🔊 Interruption detected - stopping all audio immediately');
     isInterruptedRef.current = true;
     
     // Immediate state updates for responsive feel
@@ -359,6 +414,7 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
     setIsLoading(false);
     setCurrentAudio(null);
     
+    // Stop ElevenLabs audio
     if (audioRef.current) {
       try {
         audioRef.current.pause();
@@ -372,6 +428,16 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
         }
       } catch (error) {
         console.warn('🔊 Audio cleanup error (non-critical):', error);
+      }
+    }
+    
+    // Stop browser speech synthesis
+    if ('speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+        console.log('🔊 Browser speech synthesis stopped');
+      } catch (error) {
+        console.warn('🔊 Browser speech stop error:', error);
       }
     }
     
