@@ -87,6 +87,7 @@ export function VoiceFirstChatInterface({
   const [inputIsolated, setInputIsolated] = useState(false);
   const [isTalkingBack, setIsTalkingBack] = useState(false);
   const [interruptedQuery, setInterruptedQuery] = useState<string>('');
+  const [lastAIMessage, setLastAIMessage] = useState<string>('');
   
   // Speech Recognition Setup
   const recognitionRef = useRef<any>(null);
@@ -666,6 +667,16 @@ export function VoiceFirstChatInterface({
       }
     }
   }, [lastAIMessage, settings.autoPlayAI, messages, speakMessage]);
+
+  // Update last AI message when new messages arrive
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage?.type === 'ai' && lastMessage.content !== lastAIMessage) {
+        setLastAIMessage(lastMessage.content);
+      }
+    }
+  }, [messages, lastAIMessage]);
 
   return (
     <Card className={cn("flex flex-col h-full bg-white shadow-lg", className)}>
