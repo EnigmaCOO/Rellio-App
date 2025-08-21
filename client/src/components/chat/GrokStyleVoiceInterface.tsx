@@ -351,6 +351,11 @@ export function GrokStyleVoiceInterface({
         <Button
           onClick={(e) => {
             console.log('🔘 Voice button clicked, current state:', { isListening: state.isListening, isLoading });
+            console.log('🔘 Browser support check:', { 
+              SpeechRecognition: !!(window as any).SpeechRecognition,
+              webkitSpeechRecognition: !!(window as any).webkitSpeechRecognition,
+              navigator: !!navigator.mediaDevices
+            });
             e.preventDefault();
             if (state.isListening) {
               console.log('🛑 Stopping listening...');

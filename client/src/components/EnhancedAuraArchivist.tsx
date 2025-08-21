@@ -272,7 +272,7 @@ export function EnhancedAuraArchivist({
   const [bannerTimeout, setBannerTimeout] = useState<NodeJS.Timeout | null>(null);
   const [conversationHistory, setConversationHistory] = useState<Array<{id: string, content: string, type: 'user' | 'ai', timestamp: number}>>([]);
   const [audioState, setAudioState] = useState<'idle' | 'listening' | 'processing' | 'responding' | 'interrupted'>('idle');
-  const [voiceMode, setVoiceMode] = useState(true); // Default to voice-first
+  // Removed duplicate voiceMode declaration
 
   // Load saved persona and custom settings from localStorage
   useEffect(() => {
@@ -614,7 +614,7 @@ export function EnhancedAuraArchivist({
               ) : orbState === 'responding' ? (
                 <Volume2 className="h-3 w-3 text-white" />
               ) : orbState === 'interrupted' ? (
-                <AlertCircle className="h-3 w-3 text-white" />
+                <X className="h-3 w-3 text-white" />
               ) : (
                 <Brain className="h-3 w-3 text-white" />
               )}
