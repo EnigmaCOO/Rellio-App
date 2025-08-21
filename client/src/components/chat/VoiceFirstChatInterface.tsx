@@ -1,0 +1,650 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  Mic, 
+  MicOff, 
+  Square, 
+  Volume2, 
+  VolumeX,
+  Bot, 
+  User,
+  Settings,
+  Headphones,
+  AlertTriangle
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useElevenLabsStreaming } from '@/hooks/useElevenLabsStreaming';
+import { GrokStyleOrb } from './GrokStyleOrb';
+import { AudioWaveform } from './AudioWaveform';
+import type { Religion, ChatMessage } from '@shared/schema';
+import type { ScholarPersona } from './ScholarPersonas';
+
+// Enhanced Voice State Management
+export type VoiceFirstState = 'idle' | 'listening' | 'processing' | 'responding' | 'interrupted';
+
+interface VoiceFirstChatInterfaceProps {
+  sessionId: string;
+  context: {
+    religion: Religion | null;
+    book: string;
+    chapter: number;
+  };
+  selectedPersona?: ScholarPersona | null;
+  onNavigateToVerse?: (religion: Religion, book: string, chapter: number, verse?: number) => void;
+  className?: string;
+}
+
+// Voice Recognition Types
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message?: string;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
+
+export function VoiceFirstChatInterface({
+  sessionId,
+  context,
+  selectedPersona,
+  onNavigateToVerse,
+  className = ""
+}: VoiceFirstChatInterfaceProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Voice State Management
+  const [voiceState, setVoiceState] = useState<VoiceFirstState>('idle');
+  const [currentTranscript, setCurrentTranscript] = useState('');
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [confidence, setConfidence] = useState(0);
+  const [isSupported, setIsSupported] = useState(false);
+  const [hasPermission, setHasPermission] = useState(false);
+  
+  // Speech Recognition Setup
+  const recognitionRef = useRef<any>(null);
+  const autoSendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  
+  // Settings
+  const [settings, setSettings] = useState({
+    autoSendDelay: 1500,
+    confidenceThreshold: 0.8,
+    voiceEnabled: true,
+    interruptionSensitivity: 0.3,
+    volume: 0.8
+  });
+
+  // Enhanced ElevenLabs Integration with Interruption Support
+  const {
+    isPlaying: isAIPlaying,
+    isLoading: isAILoading,
+    playText: playAIText,
+    stopPlayback: stopAIPlayback,
+    volume: aiVolume,
+    setVolume: setAIVolume
+  } = useElevenLabsStreaming({
+    voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV', // Default Grok voice
+    autoPlay: true,
+    onStart: () => {
+      console.log('🔊 AI started speaking');
+      setVoiceState('responding');
+    },
+    onEnd: () => {
+      console.log('🔊 AI finished speaking');
+      if (voiceState === 'responding') {
+        setVoiceState('idle');
+      }
+    },
+    onInterrupted: () => {
+      console.log('🚨 AI speech interrupted by user');
+      setVoiceState('interrupted');
+      toast({
+        title: "Response Interrupted",
+        description: "You can continue the conversation",
+        variant: "default"
+      });
+    },
+    onError: (error) => {
+      console.error('🚨 ElevenLabs error:', error);
+      setVoiceState('idle');
+      toast({
+        title: "Audio Error",
+        description: "Voice playback encountered an issue",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Load Messages
+  const { data: messages = [], isLoading: messagesLoading } = useQuery<ChatMessage[]>({
+    queryKey: ['/api/chat', sessionId],
+    queryFn: async () => {
+      const response = await fetch(`/api/chat/${sessionId}`);
+      if (!response.ok) throw new Error('Failed to fetch messages');
+      return response.json();
+    },
+    enabled: !!sessionId
+  });
+
+  // Send Message with Enhanced Voice Integration
+  const sendMessageMutation = useMutation({
+    mutationFn: async (message: string) => {
+      setVoiceState('processing');
+      
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          message,
+          context: {
+            religion: context.religion,
+            book: context.book,
+            chapter: context.chapter,
+            persona: selectedPersona?.name || null
+          }
+        })
+      });
+      
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      return await response.json();
+    },
+    onSuccess: async (data) => {
+      // Invalidate query to refresh messages
+      await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
+      
+      // Auto-play the AI response with ElevenLabs
+      if (data.content && settings.voiceEnabled) {
+        console.log('🎙️ Auto-playing AI response:', data.content.substring(0, 50) + '...');
+        try {
+          await playAIText(data.content);
+        } catch (error) {
+          console.error('🚨 Failed to play AI response:', error);
+          setVoiceState('idle');
+        }
+      } else {
+        setVoiceState('idle');
+      }
+      
+      // Clear transcript after successful send
+      setCurrentTranscript('');
+    },
+    onError: (error: any) => {
+      console.error('🚨 Send message error:', error);
+      setVoiceState('idle');
+      toast({
+        title: "Send Error",
+        description: error.message || "Failed to send message",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Initialize Speech Recognition with Enhanced Features
+  const initializeRecognition = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      setIsSupported(false);
+      return null;
+    }
+
+    setIsSupported(true);
+    
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+    recognition.maxAlternatives = 3;
+
+    recognition.onstart = () => {
+      console.log('🎤 Speech recognition started');
+      setVoiceState('listening');
+    };
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let finalTranscript = '';
+      let interimTranscript = '';
+      let maxConfidence = 0;
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        const currentConfidence = event.results[i][0].confidence || 0;
+
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+          maxConfidence = Math.max(maxConfidence, currentConfidence);
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+
+      const fullTranscript = finalTranscript || interimTranscript;
+      setCurrentTranscript(fullTranscript);
+      setConfidence(maxConfidence);
+
+      // Auto-send logic with confidence threshold
+      if (finalTranscript && maxConfidence > settings.confidenceThreshold) {
+        // Clear existing timeout
+        if (autoSendTimeoutRef.current) {
+          clearTimeout(autoSendTimeoutRef.current);
+        }
+
+        // Set new timeout for auto-send
+        autoSendTimeoutRef.current = setTimeout(() => {
+          console.log('🚀 Auto-sending message:', finalTranscript);
+          handleSendMessage(finalTranscript.trim());
+          stopListening();
+        }, settings.autoSendDelay);
+      }
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error('🚨 Speech recognition error:', event.error);
+      setVoiceState('idle');
+      
+      if (event.error === 'not-allowed') {
+        setHasPermission(false);
+        toast({
+          title: "Microphone Access Denied",
+          description: "Please allow microphone access for voice input",
+          variant: "destructive"
+        });
+      }
+    };
+
+    recognition.onend = () => {
+      console.log('🎤 Speech recognition ended');
+      if (voiceState === 'listening') {
+        setVoiceState('idle');
+      }
+    };
+
+    return recognition;
+  }, [voiceState, settings.confidenceThreshold, settings.autoSendDelay]);
+
+  // Initialize Audio Context for Level Detection
+  const initializeAudioContext = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      setHasPermission(true);
+
+      const audioContext = new AudioContext();
+      const analyser = audioContext.createAnalyser();
+      const microphone = audioContext.createMediaStreamSource(stream);
+      
+      analyser.fftSize = 256;
+      microphone.connect(analyser);
+      
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+
+      // Start audio level monitoring
+      const monitorAudioLevel = () => {
+        if (analyserRef.current) {
+          const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+          analyserRef.current.getByteFrequencyData(dataArray);
+          
+          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+          setAudioLevel(average / 255);
+          
+          // Check for interruption during AI response
+          if (voiceState === 'responding' && average > (settings.interruptionSensitivity * 255)) {
+            console.log('🚨 User interruption detected during AI response');
+            handleInterruption();
+          }
+        }
+        
+        requestAnimationFrame(monitorAudioLevel);
+      };
+      
+      monitorAudioLevel();
+    } catch (error) {
+      console.error('🚨 Audio context initialization error:', error);
+      setHasPermission(false);
+    }
+  }, [voiceState, settings.interruptionSensitivity]);
+
+  // Check Support and Initialize
+  useEffect(() => {
+    const recognition = initializeRecognition();
+    recognitionRef.current = recognition;
+    
+    // Initialize audio context
+    if (navigator.mediaDevices?.getUserMedia) {
+      initializeAudioContext();
+    }
+    
+    return () => {
+      // Cleanup
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      if (autoSendTimeoutRef.current) {
+        clearTimeout(autoSendTimeoutRef.current);
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
+  }, [initializeRecognition, initializeAudioContext]);
+
+  // Voice Control Functions
+  const startListening = useCallback(async () => {
+    if (!recognitionRef.current || !isSupported || !hasPermission) return;
+    
+    try {
+      // Stop any ongoing AI speech before listening
+      if (isAIPlaying) {
+        stopAIPlayback();
+      }
+      
+      setCurrentTranscript('');
+      setVoiceState('listening');
+      recognitionRef.current.start();
+      
+      console.log('🎤 Started listening...');
+    } catch (error) {
+      console.error('🚨 Failed to start listening:', error);
+      setVoiceState('idle');
+    }
+  }, [isSupported, hasPermission, isAIPlaying, stopAIPlayback]);
+
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setVoiceState('idle');
+    console.log('🛑 Stopped listening');
+  }, []);
+
+  const handleInterruption = useCallback(() => {
+    console.log('🚨 Handling user interruption');
+    
+    // Stop AI playback immediately
+    if (isAIPlaying) {
+      stopAIPlayback();
+    }
+    
+    // Set interrupted state
+    setVoiceState('interrupted');
+    
+    // Show feedback
+    toast({
+      title: "Response Interrupted",
+      description: "You can ask a new question or continue the conversation",
+      variant: "default"
+    });
+    
+    // Auto-start listening for new input
+    setTimeout(() => {
+      if (hasPermission && isSupported) {
+        startListening();
+      } else {
+        setVoiceState('idle');
+      }
+    }, 500);
+  }, [isAIPlaying, stopAIPlayback, hasPermission, isSupported, startListening]);
+
+  const handleSendMessage = useCallback((message: string) => {
+    if (!message.trim()) return;
+    
+    console.log('📤 Sending message:', message);
+    sendMessageMutation.mutate(message);
+  }, [sendMessageMutation]);
+
+  const toggleVoiceInput = useCallback(() => {
+    if (voiceState === 'listening') {
+      stopListening();
+    } else if (voiceState === 'responding' && isAIPlaying) {
+      handleInterruption();
+    } else {
+      startListening();
+    }
+  }, [voiceState, isAIPlaying, stopListening, startListening, handleInterruption]);
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Update AI volume
+  useEffect(() => {
+    setAIVolume(settings.volume);
+  }, [settings.volume, setAIVolume]);
+
+  return (
+    <Card className={cn("flex flex-col h-full bg-white shadow-lg", className)}>
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div className="flex items-center gap-3">
+          <GrokStyleOrb 
+            state={voiceState === 'responding' ? 'responding' : 
+                   voiceState === 'processing' ? 'processing' :
+                   voiceState === 'listening' ? 'listening' :
+                   voiceState === 'interrupted' ? 'interrupted' : 'idle'} 
+            size="md" 
+          />
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Voice-First Spiritual Guide
+            </h3>
+            <p className="text-xs text-gray-500">
+              {selectedPersona ? `Speaking with ${selectedPersona.name}` : 'Universal Wisdom Explorer'}
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {isAIPlaying && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={stopAIPlayback}
+              className="text-red-600 border-red-300 hover:bg-red-50"
+            >
+              <Square className="w-4 h-4 mr-1" />
+              Stop
+            </Button>
+          )}
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSettings(prev => ({ ...prev, voiceEnabled: !prev.voiceEnabled }))}
+            className={settings.voiceEnabled ? "text-teal-600" : "text-gray-600"}
+          >
+            {settings.voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </Button>
+        </div>
+      </div>
+
+      {/* Messages Area */}
+      <ScrollArea className="flex-1 p-4">
+        <div className="space-y-4">
+          {messagesLoading ? (
+            <div className="text-center text-gray-500">Loading conversation...</div>
+          ) : messages.length === 0 ? (
+            <div className="text-center text-gray-500 py-8">
+              <Bot className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+              <h4 className="text-lg font-medium mb-2">Start a Voice Conversation</h4>
+              <p className="text-sm">Click the microphone to ask about spiritual wisdom</p>
+            </div>
+          ) : (
+            messages.map((message) => (
+              <div
+                key={message.id}
+                className={cn(
+                  "flex gap-3 mb-4",
+                  message.type === 'user' ? "flex-row-reverse" : "flex-row"
+                )}
+              >
+                {/* Avatar */}
+                <div className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
+                  message.type === 'user' 
+                    ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white"
+                    : "bg-gradient-to-br from-teal-500 to-teal-600 text-white"
+                )}>
+                  {message.type === 'user' ? (
+                    <User className="w-4 h-4" />
+                  ) : (
+                    <Bot className="w-4 h-4" />
+                  )}
+                </div>
+                
+                {/* Message Bubble */}
+                <div className={cn(
+                  "flex-1 max-w-[80%]",
+                  message.type === 'user' ? "flex flex-col items-end" : "flex flex-col items-start"
+                )}>
+                  <div className={cn(
+                    "px-4 py-3 rounded-2xl shadow-sm transition-all duration-200",
+                    "border border-transparent",
+                    message.type === 'user' 
+                      ? "bg-gray-100 text-gray-800 rounded-br-md"
+                      : "bg-white text-gray-800 border-gray-200 rounded-bl-md hover:border-teal-200"
+                  )}>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                      {message.content}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      </ScrollArea>
+
+      {/* Voice Input Area */}
+      <div className="border-t border-gray-200 p-4">
+        {/* Browser Support Warning */}
+        {!isSupported && (
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-yellow-600" />
+            <p className="text-sm text-yellow-800">
+              Voice input not supported in this browser. Please use Chrome or Edge.
+            </p>
+          </div>
+        )}
+
+        {/* Permission Warning */}
+        {isSupported && !hasPermission && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+            <Headphones className="w-4 h-4 text-red-600" />
+            <p className="text-sm text-red-800">
+              Microphone access required for voice input. Please allow access and refresh.
+            </p>
+          </div>
+        )}
+
+        {/* Voice Controls */}
+        <div className="flex items-center justify-center gap-4">
+          {/* Main Voice Button */}
+          <div className="flex flex-col items-center">
+            <Button
+              onClick={toggleVoiceInput}
+              disabled={!isSupported || !hasPermission || sendMessageMutation.isPending}
+              className={cn(
+                "w-16 h-16 rounded-full transition-all duration-300",
+                voiceState === 'listening' 
+                  ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 animate-pulse"
+                  : voiceState === 'processing'
+                  ? "bg-gradient-to-br from-purple-500 to-purple-600 animate-spin"
+                  : voiceState === 'responding'
+                  ? "bg-gradient-to-br from-yellow-500 to-orange-600 animate-pulse"
+                  : voiceState === 'interrupted'
+                  ? "bg-gradient-to-br from-red-400 to-rose-500 animate-bounce"
+                  : "bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700"
+              )}
+            >
+              {voiceState === 'processing' ? (
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : voiceState === 'listening' ? (
+                <Square className="w-6 h-6 text-white" />
+              ) : voiceState === 'responding' ? (
+                <Volume2 className="w-6 h-6 text-white" />
+              ) : (
+                <Mic className="w-6 h-6 text-white" />
+              )}
+            </Button>
+            
+            {/* Status Text */}
+            <div className="mt-2 text-center">
+              {voiceState === 'listening' && (
+                <div className="text-xs text-red-600 font-medium animate-pulse">
+                  Listening...
+                </div>
+              )}
+              {voiceState === 'processing' && (
+                <div className="text-xs text-purple-600 font-medium">
+                  Processing...
+                </div>
+              )}
+              {voiceState === 'responding' && (
+                <div className="text-xs text-yellow-600 font-medium animate-pulse">
+                  AI Speaking...
+                </div>
+              )}
+              {voiceState === 'interrupted' && (
+                <div className="text-xs text-red-600 font-medium">
+                  Interrupted
+                </div>
+              )}
+              {voiceState === 'idle' && isSupported && hasPermission && (
+                <div className="text-xs text-gray-500">
+                  Click to speak
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Audio Waveform */}
+          {voiceState === 'listening' && (
+            <AudioWaveform 
+              isActive={true}
+              audioLevel={audioLevel}
+              size="md"
+              color="teal"
+            />
+          )}
+        </div>
+
+        {/* Current Transcript Display */}
+        {currentTranscript && (
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="text-xs text-gray-500 mb-1">Current transcript:</div>
+            <p className="text-sm text-gray-800">"{currentTranscript}"</p>
+            {confidence > 0 && (
+              <div className="text-xs text-gray-500 mt-1">
+                Confidence: {Math.round(confidence * 100)}%
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}

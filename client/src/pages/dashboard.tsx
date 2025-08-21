@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { NavigationPanel } from "@/components/NavigationPanel";
 import { VerseSpotlight } from "@/components/VerseSpotlight";
 import { VerseList } from "@/components/IlluminVerse/VerseList";
-import { InsightChat } from "@/components/chat/InsightChat";
+import { VoiceFirstChatInterface } from "@/components/chat/VoiceFirstChatInterface";
+import { type ScholarPersona, getPersonaForReligion } from "@/components/chat/ScholarPersonas";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Settings, BookOpen, Menu, X, ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
 import rellioLogo from "@assets/image_1751817332000.png";
@@ -23,6 +24,7 @@ export default function Dashboard() {
   const [externalMessage, setExternalMessage] = useState<string>('');
   const [isCopyOperation, setIsCopyOperation] = useState<boolean>(false);
   const [highlightedVerse, setHighlightedVerse] = useState<number | undefined>(undefined);
+  const [selectedPersona, setSelectedPersona] = useState<ScholarPersona | null>(null);
   const { toast } = useToast();
 
   // Debug panel visibility state
@@ -101,6 +103,27 @@ export default function Dashboard() {
       });
     }
   }, [scripturesError, toast]);
+
+  // Auto-select religion-specific persona
+  useEffect(() => {
+    if (selectedReligion) {
+      const persona = getPersonaForReligion(selectedReligion);
+      if (persona && (!selectedPersona || selectedPersona.primaryReligion !== selectedReligion)) {
+        setSelectedPersona(persona);
+        console.log(`🎭 Persona activated: ${persona.name} for ${selectedReligion}`);
+        toast({
+          title: `${persona.name} Activated`,
+          description: `Your ${persona.title} is now guiding your spiritual journey`,
+          variant: "default"
+        });
+      }
+    } else {
+      if (selectedPersona && selectedPersona.primaryReligion) {
+        setSelectedPersona(null);
+        console.log('🎭 Persona reset to universal');
+      }
+    }
+  }, [selectedReligion, selectedPersona, toast]);
 
   const handleReligionChange = (religion: Religion) => {
     setSelectedReligion(religion);
@@ -427,13 +450,12 @@ export default function Dashboard() {
                 </div>
               </div>
               
-              {/* Chat Content - Full Height */}
+              {/* Enhanced Voice-First Chat - Full Height */}
               <div className="flex-1 min-h-0">
-                <InsightChat
+                <VoiceFirstChatInterface
                   sessionId={chatSessionId}
                   context={currentContext}
-                  externalMessage={externalMessage}
-                  onExternalMessageProcessed={handleExternalMessageProcessed}
+                  selectedPersona={selectedPersona}
                   onNavigateToVerse={handleNavigateToVerse}
                   className="h-full"
                 />
