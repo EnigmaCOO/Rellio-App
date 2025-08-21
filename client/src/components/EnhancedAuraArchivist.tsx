@@ -786,6 +786,66 @@ export function EnhancedAuraArchivist({
 
       {/* Enhanced Input Area with Voice-First Design */}
       <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white p-2 flex-shrink-0">
+        
+        {/* EMERGENCY TEST - Remove when working */}
+        <div style={{backgroundColor: 'red', padding: '20px', margin: '10px', fontSize: '20px', color: 'white', textAlign: 'center'}}>
+          <p><strong>EMERGENCY TEST - CAN YOU SEE THIS RED BOX?</strong></p>
+          <button 
+            style={{backgroundColor: 'blue', color: 'white', padding: '15px', fontSize: '18px', border: 'none', margin: '10px'}}
+            onClick={() => {
+              window.alert('BUTTON WORKS! Console log coming...');
+              console.log('🚨🚨🚨 EMERGENCY BUTTON CLICKED - THIS PROVES BUTTONS WORK');
+              // Test handleSendMessage directly
+              handleSendMessage('Emergency test message - voice interface debugging');
+            }}
+          >
+            EMERGENCY TEST BUTTON
+          </button>
+          <br />
+          <button 
+            style={{backgroundColor: 'green', color: 'white', padding: '15px', fontSize: '18px', border: 'none', margin: '10px'}}
+            onClick={() => {
+              window.alert('Starting EMERGENCY voice test...');
+              console.log('🎤🚨 EMERGENCY VOICE TEST STARTING');
+              
+              // Ultra simple speech recognition test
+              if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+                const recognition = new SpeechRecognition();
+                
+                recognition.onstart = () => {
+                  window.alert('LISTENING NOW - SAY SOMETHING!');
+                  console.log('🎤 Emergency speech recognition started');
+                };
+                
+                recognition.onresult = (event: any) => {
+                  const transcript = event.results[0][0].transcript;
+                  window.alert(`YOU SAID: "${transcript}"`);
+                  console.log('🎯 Emergency speech result:', transcript);
+                  handleSendMessage(transcript);
+                };
+                
+                recognition.onerror = (event: any) => {
+                  window.alert(`SPEECH ERROR: ${event.error}`);
+                  console.error('❌ Emergency speech error:', event.error);
+                };
+                
+                try {
+                  recognition.start();
+                } catch (error) {
+                  window.alert(`ERROR STARTING: ${error}`);
+                  console.error('❌ Error starting emergency speech:', error);
+                }
+              } else {
+                window.alert('NO SPEECH RECOGNITION SUPPORT - TRY CHROME OR EDGE');
+                console.log('❌ No speech recognition support');
+              }
+            }}
+          >
+            EMERGENCY VOICE TEST
+          </button>
+        </div>
+        
         {/* Super Simple Working Interface */}
         <div className="space-y-3">
           {/* Basic Click Test */}
