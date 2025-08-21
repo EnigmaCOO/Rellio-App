@@ -103,7 +103,7 @@ export function VoiceFirstChatInterface({
     autoSendDelay: 1500,
     confidenceThreshold: 0.8,
     voiceEnabled: true,
-    autoPlayAI: true, // Enable auto-play by default
+    autoPlayAI: false, // DISABLE auto-play by default to prevent feedback loops
     interruptionSensitivity: 0.3,
     volume: 0.8
   });
@@ -673,14 +673,22 @@ export function VoiceFirstChatInterface({
     }
   }, [settings.volume, selectedPersona]);
 
-  // Auto-play new AI messages
+  // Auto-play new AI messages (DISABLED during voice input to prevent feedback loops)
   useEffect(() => {
     console.log('🔊 Auto-play check:', { 
       lastAIMessage: lastAIMessage?.substring(0, 50), 
       autoPlayAI: settings.autoPlayAI, 
       messagesCount: messages.length,
-      isTalkingBack 
+      isTalkingBack,
+      voiceState,
+      inputIsolated
     });
+    
+    // CRITICAL: Never auto-play during voice input or when microphone is active
+    if (voiceState === 'listening' || voiceState === 'processing' || inputIsolated) {
+      console.log('🚫 Auto-play BLOCKED - Voice input active, preventing feedback loop');
+      return;
+    }
     
     if (lastAIMessage && settings.autoPlayAI && messages.length > 0 && !isTalkingBack) {
       const lastMessage = messages[messages.length - 1];
@@ -688,6 +696,12 @@ export function VoiceFirstChatInterface({
         console.log('🔊 Auto-playing AI response...');
         // Small delay to ensure message is rendered
         setTimeout(async () => {
+          // Double-check voice state hasn't changed
+          if (voiceState === 'listening' || voiceState === 'processing' || inputIsolated) {
+            console.log('🚫 Auto-play CANCELLED - Voice became active during delay');
+            return;
+          }
+          
           console.log('🔊 Calling playAIText with:', lastAIMessage.substring(0, 50) + '...');
           setIsTalkingBack(true);
           try {
@@ -700,7 +714,7 @@ export function VoiceFirstChatInterface({
         }, 1000);
       }
     }
-  }, [lastAIMessage, settings.autoPlayAI, messages, speakMessage, isTalkingBack]);
+  }, [lastAIMessage, settings.autoPlayAI, messages, speakMessage, isTalkingBack, voiceState, inputIsolated]);
 
   // Clean text function to remove HTML/XML tags and perspective markers from display
   const cleanTextForDisplay = useCallback((text: string): string => {
@@ -778,18 +792,18 @@ export function VoiceFirstChatInterface({
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Auto-play Toggle */}
+          {/* Auto-play Toggle with Warning */}
           <Button
             variant="outline"
             size="sm"
             onClick={toggleAutoPlay}
             className={cn(
               "text-xs px-2 h-7",
-              autoPlayEnabled ? "text-teal-600 border-teal-300 bg-teal-50" : "text-gray-600 border-gray-300"
+              autoPlayEnabled ? "text-orange-600 border-orange-300 bg-orange-50" : "text-gray-600 border-gray-300"
             )}
-            title={autoPlayEnabled ? "Disable auto-play" : "Enable auto-play"}
+            title={autoPlayEnabled ? "Auto-play ON (May cause feedback with voice input)" : "Enable auto-play"}
           >
-            {autoPlayEnabled ? "Auto-play ON" : "Auto-play OFF"}
+            {autoPlayEnabled ? "⚠️ Auto-play ON" : "Auto-play OFF"}
           </Button>
           
           {/* Text Input Toggle */}
