@@ -34,6 +34,7 @@ interface VoiceFirstChatInterfaceProps {
     chapter: number;
   };
   selectedPersona?: ScholarPersona | null;
+  isInsideBook?: boolean;
   onNavigateToVerse?: (religion: Religion, book: string, chapter: number, verse?: number) => void;
   className?: string;
 }
@@ -60,6 +61,7 @@ export function VoiceFirstChatInterface({
   sessionId,
   context,
   selectedPersona,
+  isInsideBook = false,
   onNavigateToVerse,
   className = ""
 }: VoiceFirstChatInterfaceProps) {
@@ -109,7 +111,7 @@ export function VoiceFirstChatInterface({
     volume: aiVolume,
     setVolume: setAIVolume
   } = useElevenLabsStreaming({
-    voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV', // Default Grok voice
+    voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV', // Dynamic voice based on persona
     autoPlay: true,
     onStart: () => {
       console.log('🔊 AI started speaking - Activating input isolation');
@@ -522,25 +524,69 @@ export function VoiceFirstChatInterface({
   useEffect(() => {
     setAIVolume(settings.volume);
   }, [settings.volume, setAIVolume]);
+  
+  // Log persona voice changes for debugging
+  useEffect(() => {
+    if (selectedPersona) {
+      const contextType = isInsideBook ? "Inside Book" : "Outside Books";
+      console.log(`🎭 ${contextType} - Persona Voice: ${selectedPersona.name} (${selectedPersona.elevenLabsVoice})`);
+      console.log(`🎤 Voice Tone: ${selectedPersona.voiceTone}`);
+      console.log(`📖 Context: ${context.religion ? `${context.religion} - ${context.book}` : 'Universal Wisdom'}`);
+    }
+  }, [selectedPersona, isInsideBook, context]);
 
   return (
     <Card className={cn("flex flex-col h-full bg-white shadow-lg", className)}>
-      {/* Header */}
+      {/* Enhanced Header with Dynamic Persona Display */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center gap-3">
-          <GrokStyleOrb 
-            state={voiceState === 'responding' ? 'responding' : 
-                   voiceState === 'processing' ? 'processing' :
-                   voiceState === 'listening' ? 'listening' :
-                   voiceState === 'interrupted' ? 'interrupted' : 'idle'} 
-            size="md" 
-          />
+          {/* Dynamic Persona Avatar with Glowing Book Icon */}
+          <div className="relative">
+            {selectedPersona && isInsideBook ? (
+              <div className={cn(
+                "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300",
+                selectedPersona.bgColor,
+                "animate-pulse shadow-lg"
+              )}>
+                <selectedPersona.icon className={cn("w-6 h-6", selectedPersona.iconColor)} />
+                {/* Glowing book icon overlay */}
+                <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center animate-bounce shadow-md">
+                  <BookOpen className="w-3 h-3 text-white" />
+                </div>
+              </div>
+            ) : (
+              <GrokStyleOrb 
+                state={voiceState === 'responding' ? 'responding' : 
+                       voiceState === 'processing' ? 'processing' :
+                       voiceState === 'listening' ? 'listening' :
+                       voiceState === 'interrupted' ? 'interrupted' : 'idle'} 
+                size="md" 
+              />
+            )}
+          </div>
+          
+          {/* Dynamic Persona Information */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">
-              Voice-First Spiritual Guide
+            <h3 className={cn(
+              "text-lg font-semibold transition-colors duration-300",
+              selectedPersona && isInsideBook ? selectedPersona.textColor : "text-gray-900"
+            )}>
+              {selectedPersona?.name || 'Voice-First Spiritual Guide'}
             </h3>
-            <p className="text-xs text-gray-500">
-              {selectedPersona ? `Speaking with ${selectedPersona.name}` : 'Universal Wisdom Explorer'}
+            <p className="text-xs text-gray-500 flex items-center gap-1">
+              {isInsideBook && context.religion && context.book ? (
+                <>
+                  <span className="text-teal-600 font-medium">📖 Inside {context.book}</span>
+                  <span>•</span>
+                  <span>{selectedPersona?.title || 'Spiritual Guide'}</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-gray-600">🌍 Universal Wisdom</span>
+                  <span>•</span>
+                  <span>{selectedPersona?.title || 'Interfaith Guide'}</span>
+                </>
+              )}
             </p>
           </div>
         </div>

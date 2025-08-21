@@ -104,26 +104,33 @@ export default function Dashboard() {
     }
   }, [scripturesError, toast]);
 
-  // Auto-select religion-specific persona
+  // Enhanced auto-select persona with book context
   useEffect(() => {
-    if (selectedReligion) {
-      const persona = getPersonaForReligion(selectedReligion);
-      if (persona && (!selectedPersona || selectedPersona.primaryReligion !== selectedReligion)) {
-        setSelectedPersona(persona);
-        console.log(`🎭 Persona activated: ${persona.name} for ${selectedReligion}`);
+    const persona = getPersonaForReligion(selectedReligion, selectedBook);
+    
+    // Only update if persona actually changed
+    if (!selectedPersona || selectedPersona.id !== persona.id) {
+      setSelectedPersona(persona);
+      
+      if (selectedReligion && selectedBook) {
+        console.log(`🎭 Inside books - Persona activated: ${persona.name} for ${selectedReligion} - ${selectedBook}`);
         toast({
           title: `${persona.name} Activated`,
-          description: `Your ${persona.title} is now guiding your spiritual journey`,
+          description: `Your ${persona.title} is now guiding your ${selectedBook} study`,
           variant: "default"
         });
-      }
-    } else {
-      if (selectedPersona && selectedPersona.primaryReligion) {
-        setSelectedPersona(null);
-        console.log('🎭 Persona reset to universal');
+      } else {
+        console.log(`🎭 Outside books - Universal Scholar activated`);
+        if (persona.id === 'universal-scholar') {
+          toast({
+            title: `${persona.name} Activated`,
+            description: "Your wise interfaith guide for universal spiritual insights",
+            variant: "default"
+          });
+        }
       }
     }
-  }, [selectedReligion, selectedPersona, toast]);
+  }, [selectedReligion, selectedBook, selectedPersona, toast]);
 
   const handleReligionChange = (religion: Religion) => {
     setSelectedReligion(religion);
@@ -456,6 +463,7 @@ export default function Dashboard() {
                   sessionId={chatSessionId}
                   context={currentContext}
                   selectedPersona={selectedPersona}
+                  isInsideBook={!!(selectedReligion && selectedBook)}
                   onNavigateToVerse={handleNavigateToVerse}
                   className="h-full"
                 />

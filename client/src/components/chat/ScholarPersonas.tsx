@@ -43,6 +43,26 @@ export interface ScholarPersona {
   avatarAnimation: string;
 }
 
+// Universal Scholar for outside religious texts (default neutral personality)
+export const universalScholar: ScholarPersona = {
+  id: "universal-scholar",
+  name: "Universal Scholar",
+  title: "Interfaith Wisdom Guide",
+  expertise: ["Comparative Religion", "Spiritual Philosophy", "Interfaith Dialogue", "Universal Wisdom"],
+  primaryReligion: "universal" as any, // Special type for universal context
+  systemPrompt: "You are a Universal Scholar, a wise interfaith guide with deep knowledge across multiple religious traditions. You speak with neutral wisdom and scholarly insight, providing balanced perspectives from various spiritual paths. Your responses are thoughtful, inclusive, and respectful of all faith traditions while offering profound spiritual guidance. You excel at finding common spiritual themes and universal truths that transcend religious boundaries.",
+  voiceTone: "neutral and wise",
+  elevenLabsVoice: "ErXwobaYiN019PkySvjV", // Antoni voice - the default Grok voice
+  conversationalStyle: "Neutral wisdom with interfaith balance and universal insights",
+  responseStructure: "Universal principle → multi-traditional examples → practical wisdom",
+  avatarAnimation: "gentle_book_glow",
+  icon: BookOpen,
+  bgColor: "bg-gradient-to-br from-gray-100 to-slate-100",
+  textColor: "text-gray-900",
+  iconColor: "text-gray-600",
+  description: "Wise universal guide offering interfaith wisdom and spiritual insights."
+};
+
 // Religion-specific spiritual guides that only appear within their respective sacred texts
 export const religionSpecificPersonas: ScholarPersona[] = [
   {
@@ -155,21 +175,26 @@ export const religionSpecificPersonas: ScholarPersona[] = [
   }
 ];
 
-// Get persona for specific religion
-export function getPersonaForReligion(religion: Religion | null, book?: string): ScholarPersona | null {
-  if (!religion) return null;
+// Enhanced persona selection with automatic switching based on context
+export function getPersonaForReligion(religion: Religion | null, book?: string): ScholarPersona {
+  // Outside books: Return Universal Scholar (default neutral personality)
+  if (!religion) {
+    return universalScholar;
+  }
   
+  // Inside books: Auto-switch based on religion
   // For Islam, choose between Islamic Mufti and Hadith Scholar based on the book
   if (religion === 'islam' && book) {
     const hadithCollectionNames = ['Sahih al-Bukhari', 'Sahih Muslim', 'Sunan Abu Dawud', 'Jami\' at-Tirmidhi', 'Sunan an-Nasa\'i', 'Sunan Ibn Majah'];
     if (hadithCollectionNames.includes(book)) {
-      return religionSpecificPersonas.find(persona => persona.id === 'hadith-scholar') || null;
+      return religionSpecificPersonas.find(persona => persona.id === 'hadith-scholar') || universalScholar;
     } else {
-      return religionSpecificPersonas.find(persona => persona.id === 'islamic-mufti') || null;
+      return religionSpecificPersonas.find(persona => persona.id === 'islamic-mufti') || universalScholar;
     }
   }
   
-  return religionSpecificPersonas.find(persona => persona.primaryReligion === religion) || null;
+  // Return religion-specific persona or fallback to universal scholar
+  return religionSpecificPersonas.find(persona => persona.primaryReligion === religion) || universalScholar;
 }
 
 // Enhanced Avatar Component with Animations
