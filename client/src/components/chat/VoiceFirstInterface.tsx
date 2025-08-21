@@ -108,8 +108,17 @@ export function VoiceFirstInterface({
   };
 
   const handleVoiceToggle = async () => {
-    console.log('🎤 Voice toggle clicked');
-    await toggleListening();
+    console.log('🎤🎤🎤 VOICE TOGGLE BUTTON CLICKED - THIS SHOULD SHOW!');
+    console.log('🎤 Current listening state:', isListening);
+    console.log('🎤 Voice supported:', isSupported);
+    console.log('🎤 Has permission:', hasPermission);
+    
+    try {
+      await toggleListening();
+      console.log('✅ toggleListening completed successfully');
+    } catch (error) {
+      console.error('❌ Error in toggleListening:', error);
+    }
   };
 
   const handleManualInterrupt = () => {

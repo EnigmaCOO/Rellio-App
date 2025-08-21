@@ -841,7 +841,7 @@ export function EnhancedAuraArchivist({
                   console.error('❌ Error starting emergency speech:', error);
                 }
               } else {
-                window.alert('NO SPEECH RECOGNITION SUPPORT - TRY CHROME OR EDGE');
+                alert('NO SPEECH RECOGNITION SUPPORT - TRY CHROME OR EDGE');
                 console.log('❌ No speech recognition support');
               }
             }}
