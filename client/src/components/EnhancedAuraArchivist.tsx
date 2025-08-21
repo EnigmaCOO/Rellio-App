@@ -48,6 +48,7 @@ import { ChatHistoryManager } from "@/components/chat/ChatHistoryManager";
 import { VoiceFirstInterface } from "@/components/chat/VoiceFirstInterface";
 import { GrokStyleOrb } from "@/components/chat/GrokStyleOrb";
 import { MandalaOverlay } from "@/components/chat/MandalaOverlay";
+import { SimpleVoiceTest } from "./SimpleVoiceTest";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -784,6 +785,9 @@ export function EnhancedAuraArchivist({
         </div>
       </div>
 
+      {/* WORKING VOICE INTERFACE */}
+      <SimpleVoiceTest onSendMessage={handleSendMessage} />
+      
       {/* Enhanced Input Area with Voice-First Design */}
       <div className="border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white p-2 flex-shrink-0">
         
