@@ -97,7 +97,7 @@ export function VoiceFirstInterface({
             if (finalTranscript.trim()) {
               handleVoiceSubmit(finalTranscript.trim());
             }
-          }, 2000);
+          }, 1500);
         } else {
           setVoiceTranscript(interimTranscript);
         }
@@ -172,21 +172,24 @@ export function VoiceFirstInterface({
             const transcript = event.results[i][0].transcript.trim().toLowerCase();
             detectedText += transcript + ' ';
             
-            // IMMEDIATE interruption - respond to ANY voice input (like Grok)
-            if (transcript.length >= 1 && 
-                event.results[i][0].confidence > 0.3) { // Very low threshold for instant response
+            // Smooth interruption - respond to clear voice input
+            if (transcript.length >= 3 && 
+                event.results[i][0].confidence > 0.7) { // Higher confidence for reliable detection
               
-              // Minimal filtering - only filter out obvious repeated AI words
-              const isObviousAIEcho = transcript === 'perspective' ||
-                                    transcript === 'christianity' ||
-                                    transcript === 'islam' ||
-                                    transcript === 'judaism' ||
-                                    transcript === 'hinduism' ||
-                                    transcript === 'buddhism';
+              // Filter out AI voice feedback more effectively
+              const containsAIWords = transcript.includes('perspective') ||
+                                    transcript.includes('christian') ||
+                                    transcript.includes('islam') ||
+                                    transcript.includes('jewish') ||
+                                    transcript.includes('hindu') ||
+                                    transcript.includes('buddha') ||
+                                    transcript.includes('creator') ||
+                                    transcript.includes('divine') ||
+                                    transcript.includes('sacred');
               
-              if (!isObviousAIEcho) {
+              if (!containsAIWords) {
                 hasValidUserInput = true;
-                console.log('🎤 INSTANT interruption triggered by voice:', transcript);
+                console.log('🎤 Clean user interruption detected:', transcript);
                 break;
               }
             }
@@ -259,7 +262,7 @@ export function VoiceFirstInterface({
             }
           }
         }
-      }, 100); // Very quick start for instant interruption detection
+      }, 300); // Balanced timing to avoid audio conflicts
       
       return () => clearTimeout(startBackgroundTimer);
     } else if (!isAIResponding && isBackgroundListening) {

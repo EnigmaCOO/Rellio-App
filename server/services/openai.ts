@@ -47,7 +47,7 @@ User's question: "${userMessage}"`;
           { role: "system", content: multiReligiousPrompt },
           { role: "user", content: userMessage }
         ],
-        max_tokens: 600, // Shorter responses for faster generation
+        max_tokens: 400, // Very short responses for smooth conversation flow
         temperature: 0.7,
       });
 
@@ -140,7 +140,7 @@ User's question: "${userMessage}"`;
               { role: "system", content: multiReligiousPrompt },
               { role: "user", content: userMessage }
             ],
-            max_tokens: 600, // Shorter responses for faster generation and voice
+            max_tokens: 400, // Very short responses for smooth conversation flow and voice
             temperature: 0.7,
           });
 

@@ -95,13 +95,18 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       audio.volume = Math.max(0.3, Math.min(volume, 1.0)); // Higher minimum volume for clarity
       audio.crossOrigin = 'anonymous';
       
-      // Critical: Set audio to use speakers only, not microphone input
+      // Enhanced audio setup for smooth playback
+      audio.autoplay = false; // Prevent autoplay conflicts
+      audio.muted = false;
+      audio.defaultMuted = false;
+      
+      // Set audio to use speakers only, not microphone input
       if ('setSinkId' in audio) {
         try {
           (audio as any).setSinkId('default');
-          console.log('🔊 Audio set to default output device for Grok-style isolation');
+          console.log('🔊 Audio configured for smooth playback');
         } catch (error) {
-          console.log('🔊 Using default audio output');
+          console.log('🔊 Using default audio configuration');
         }
       }
       
