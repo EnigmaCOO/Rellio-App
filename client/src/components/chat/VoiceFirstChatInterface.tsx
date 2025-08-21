@@ -120,9 +120,19 @@ export function VoiceFirstChatInterface({
     voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV', // Dynamic voice based on persona
     autoPlay: true,
     onStart: () => {
-      console.log('🔊 AI started speaking - Activating input isolation');
+      console.log('🔊 AI started speaking - Activating input isolation and stopping recognition');
       setVoiceState('responding');
       setInputIsolated(true); // Enable input isolation during AI speech
+      
+      // CRITICAL: Stop speech recognition completely to prevent feedback loop
+      if (recognitionRef.current && recognitionRef.current.abort) {
+        try {
+          recognitionRef.current.abort();
+          console.log('🎤 Speech recognition STOPPED to prevent feedback');
+        } catch (error) {
+          console.warn('🎤 Error stopping recognition:', error);
+        }
+      }
     },
     onEnd: () => {
       console.log('🔊 AI finished speaking - Releasing input isolation');
@@ -131,6 +141,14 @@ export function VoiceFirstChatInterface({
       }
       setPlayingMessageId(null);
       setInputIsolated(false); // Disable input isolation when AI stops
+      
+      // Re-enable speech recognition after AI finishes
+      setTimeout(() => {
+        if (hasPermission && isSupported && !inputIsolated) {
+          console.log('🎤 Re-enabling speech recognition after AI speech');
+          // The recognition will be restarted by the main speech system
+        }
+      }, 1000); // 1 second delay to ensure clean audio separation
     },
     onInterrupted: () => {
       console.log('🚨 AI speech interrupted by user - Releasing input isolation');

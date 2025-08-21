@@ -376,6 +376,7 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
           utterance.onstart = () => {
             console.log('🔊 Browser speech started');
             setIsPlaying(true);
+            setIsLoading(false);
             onStart?.();
           };
           
@@ -389,10 +390,14 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
           utterance.onerror = (event) => {
             console.log('🔊 Browser speech error:', event.error);
             setIsPlaying(false);
+            setIsLoading(false);
             setCurrentAudio(null);
+            onEnd?.();
           };
           
           if (!isInterruptedRef.current) {
+            setIsPlaying(true);
+            setIsLoading(true);
             window.speechSynthesis.speak(utterance);
           }
         } else {
