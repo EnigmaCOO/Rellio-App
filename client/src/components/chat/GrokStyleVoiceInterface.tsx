@@ -36,6 +36,12 @@ export function GrokStyleVoiceInterface({
 }: GrokStyleVoiceInterfaceProps) {
   const { toast } = useToast();
   
+  console.log('🎤 GrokStyleVoiceInterface rendered with props:', { 
+    isLoading, 
+    selectedPersona: selectedPersona?.name, 
+    isStreaming 
+  });
+  
   const [state, setState] = useState<VoiceState>({
     isListening: false,
     transcript: '',
@@ -335,8 +341,45 @@ export function GrokStyleVoiceInterface({
 
   const orbState = getOrbState();
 
+  // Test function to debug handleSendMessage
+  const testSendMessage = () => {
+    console.log('🧪 Testing send message function...');
+    onSendMessage('Test message from voice interface');
+  };
+
   return (
     <div className="space-y-3">
+      {/* Debug Section - Remove when working */}
+      <div className="flex gap-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+        <button 
+          onClick={testSendMessage}
+          className="px-2 py-1 bg-blue-500 text-white rounded text-xs"
+        >
+          Test Send
+        </button>
+        <button 
+          onClick={() => {
+            console.log('🧪 Testing basic speech recognition...');
+            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+            if (SpeechRecognition) {
+              const recognition = new SpeechRecognition();
+              recognition.onresult = (event: any) => {
+                const transcript = event.results[0][0].transcript;
+                console.log('🎯 Speech detected:', transcript);
+                onSendMessage(transcript);
+              };
+              recognition.start();
+              console.log('🎤 Basic recognition started');
+            } else {
+              console.log('❌ No speech recognition support');
+            }
+          }}
+          className="px-2 py-1 bg-green-500 text-white rounded text-xs"
+        >
+          Test Speech
+        </button>
+      </div>
+      
       {/* Echo cancellation warning */}
       {showEchoWarning && (
         <div className="flex items-center gap-2 p-2 bg-orange-50 border border-orange-200 rounded-lg text-orange-800 text-xs">

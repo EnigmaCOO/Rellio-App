@@ -438,7 +438,14 @@ export function EnhancedAuraArchivist({
 
   const handleSendMessage = (messageOverride?: string) => {
     const messageToSend = messageOverride || currentMessage || voiceTranscript;
-    if (!messageToSend.trim()) return;
+    console.log('📤 handleSendMessage called with:', { messageOverride, currentMessage, voiceTranscript, messageToSend });
+    
+    if (!messageToSend.trim()) {
+      console.log('❌ No message to send - empty or whitespace only');
+      return;
+    }
+    
+    console.log('✅ Sending message:', messageToSend);
     
     // Update conversation history for context retention
     const newUserMessage = {
