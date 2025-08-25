@@ -17,7 +17,13 @@ import {
   Volume2,
   Eye,
   BookOpen,
-  User
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Twitter,
+  Facebook,
+  Instagram
 } from "lucide-react";
 import rellioLogo from "@assets/Rellio logo_1756158287035.png";
 
@@ -412,6 +418,151 @@ export default function LandingPage() {
           </Button>
         </div>
       </section>
+
+      {/* Contact Us Section */}
+      <section id="contact" className="py-24 px-6 bg-slate-900/50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-8">
+              Contact Us
+            </h2>
+          </div>
+          
+          <div className="grid lg:grid-cols-2 gap-12">
+            {/* Get in Touch */}
+            <div>
+              <h3 className="text-2xl font-bold text-white mb-8">Get in Touch</h3>
+              
+              <div className="space-y-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-slate-800/50 border border-cyan-500/30 rounded-xl flex items-center justify-center">
+                    <Mail className="w-6 h-6 text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-white font-medium">hello@rellio.app</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-slate-800/50 border border-cyan-500/30 rounded-xl flex items-center justify-center">
+                    <Phone className="w-6 h-6 text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-white font-medium">+1 (555) RELLIO-1</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-slate-800/50 border border-cyan-500/30 rounded-xl flex items-center justify-center">
+                    <MapPin className="w-6 h-6 text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-white font-medium">Digital Platform - Serving Globally</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-12">
+                <h4 className="text-lg font-semibold text-white mb-4">Follow Us</h4>
+                <div className="flex space-x-4">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center hover:bg-slate-100 transition-colors cursor-pointer">
+                    <Twitter className="w-6 h-6 text-slate-800" />
+                  </div>
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center hover:bg-slate-100 transition-colors cursor-pointer">
+                    <Facebook className="w-6 h-6 text-slate-800" />
+                  </div>
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center hover:bg-slate-100 transition-colors cursor-pointer">
+                    <Instagram className="w-6 h-6 text-slate-800" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Send us a Message */}
+            <div>
+              <Card className="bg-slate-800/40 border border-cyan-500/20 backdrop-blur-md">
+                <CardHeader>
+                  <CardTitle className="text-white text-xl">Send us a Message</CardTitle>
+                  <p className="text-white/70">We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Input
+                    placeholder="Your Name"
+                    className="bg-slate-900/50 border-cyan-500/30 text-white placeholder:text-white/50"
+                  />
+                  <Input
+                    placeholder="Email Address"
+                    type="email"
+                    className="bg-slate-900/50 border-cyan-500/30 text-white placeholder:text-white/50"
+                  />
+                  <textarea
+                    placeholder="Your Message"
+                    rows={4}
+                    className="w-full px-3 py-2 bg-slate-900/50 border border-cyan-500/30 rounded-md text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400/50"
+                  />
+                  <Button className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-semibold py-2 rounded-xl transition-all duration-300">
+                    Send Message
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 py-16 px-6 border-t border-slate-700">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Rellio Brand */}
+            <div>
+              <div className="flex items-center space-x-3 mb-4">
+                <img src={rellioLogo} alt="Rellio" className="w-8 h-8 object-contain" />
+                <h3 className="text-xl font-bold text-white">Rellio</h3>
+              </div>
+              <p className="text-white/70 text-sm leading-relaxed">
+                Bridging wisdom across religious traditions through AI-powered spiritual guidance.
+              </p>
+            </div>
+            
+            {/* Explore */}
+            <div>
+              <h4 className="text-white font-semibold mb-4">Explore</h4>
+              <div className="space-y-2">
+                <a href="#about" className="block text-white/70 hover:text-amber-400 transition-colors text-sm">About</a>
+                <a href="#how-it-works" className="block text-white/70 hover:text-amber-400 transition-colors text-sm">How It Works</a>
+                <a href="#features" className="block text-white/70 hover:text-amber-400 transition-colors text-sm">Features</a>
+              </div>
+            </div>
+            
+            {/* Support */}
+            <div>
+              <h4 className="text-white font-semibold mb-4">Support</h4>
+              <div className="space-y-2">
+                <a href="#faq" className="block text-white/70 hover:text-amber-400 transition-colors text-sm">FAQ</a>
+                <a href="#contact" className="block text-white/70 hover:text-amber-400 transition-colors text-sm">Contact</a>
+                <a href="#" className="block text-white/70 hover:text-amber-400 transition-colors text-sm">Help Center</a>
+              </div>
+            </div>
+            
+            {/* Legal */}
+            <div>
+              <h4 className="text-white font-semibold mb-4">Legal</h4>
+              <div className="space-y-2">
+                <a href="#" className="block text-white/70 hover:text-amber-400 transition-colors text-sm">Privacy Policy</a>
+                <a href="#" className="block text-white/70 hover:text-amber-400 transition-colors text-sm">Terms of Service</a>
+                <a href="#" className="block text-white/70 hover:text-amber-400 transition-colors text-sm">Cookie Policy</a>
+              </div>
+            </div>
+          </div>
+          
+          <div className="border-t border-slate-700 mt-12 pt-8 text-center">
+            <p className="text-white/60 text-sm">
+              © 2025 Rellio. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
