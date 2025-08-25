@@ -132,6 +132,10 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       audio.onloadstart = () => {
         console.log('🔊 Audio loading started');
       };
+      
+      audio.oncanplaythrough = () => {
+        console.log('🔊 Audio can play through');
+      };
 
       audio.oncanplay = () => {
         console.log('🔊 Audio can start playing');
@@ -388,7 +392,7 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
             }
             
             utterance.onstart = () => {
-              console.log('🔊 Browser speech started successfully');
+              console.log('🔊 Browser speech started successfully - triggering voice state change');
               setIsPlaying(true);
               setIsLoading(false);
               onStart?.();
@@ -413,6 +417,8 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
               console.log('🔊 Starting browser speech synthesis...');
               setIsPlaying(true);
               setIsLoading(false);
+              // Call onStart immediately to set voice state to 'responding'
+              onStart?.();
               window.speechSynthesis.speak(utterance);
             }
           };
@@ -466,11 +472,12 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       }
     }
     
-    // Stop browser speech synthesis
+    // Stop browser speech synthesis immediately
     if ('speechSynthesis' in window) {
       try {
         window.speechSynthesis.cancel();
-        console.log('🔊 Browser speech synthesis stopped');
+        window.speechSynthesis.resume(); // Ensure it's not paused before canceling
+        console.log('🔊 Browser speech synthesis stopped immediately');
       } catch (error) {
         console.warn('🔊 Browser speech stop error:', error);
       }
