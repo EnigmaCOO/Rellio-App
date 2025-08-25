@@ -19,7 +19,7 @@ import {
   BookOpen,
   User
 } from "lucide-react";
-import rellioLogo from "@assets/image_1751817332000.png";
+import rellioLogo from "@assets/Rellio logo_1756158287035.png";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -32,26 +32,26 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   return (
     <div className="fixed inset-0 z-50 md:hidden">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-full w-64 bg-cosmic-navy border-l border-cosmic-purple/30 p-6">
+      <div className="fixed right-0 top-0 h-full w-64 bg-slate-900/95 border-l border-cyan-500/20 p-6 backdrop-blur-md">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-lg font-semibold text-white">Menu</h2>
           <Button
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="text-white hover:bg-cosmic-purple/20"
+            className="text-white hover:bg-slate-800/50"
           >
             <X className="w-5 h-5" />
           </Button>
         </div>
         <nav className="space-y-4">
-          <a href="#about" className="block text-white hover:text-cosmic-gold transition-colors" onClick={onClose}>
+          <a href="#about" className="block text-white hover:text-amber-400 transition-colors" onClick={onClose}>
             About
           </a>
-          <a href="#features" className="block text-white hover:text-cosmic-gold transition-colors" onClick={onClose}>
+          <a href="#features" className="block text-white hover:text-amber-400 transition-colors" onClick={onClose}>
             Features
           </a>
-          <a href="#faq" className="block text-white hover:text-cosmic-gold transition-colors" onClick={onClose}>
+          <a href="#faq" className="block text-white hover:text-amber-400 transition-colors" onClick={onClose}>
             FAQ
           </a>
         </nav>
@@ -81,12 +81,13 @@ export default function LandingPage() {
 
   return (
     <div 
-      className="min-h-screen bg-cosmic-navy"
+      className="min-h-screen"
       style={{
-        backgroundImage: `
-          radial-gradient(ellipse at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-          radial-gradient(ellipse at 80% 20%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
-          radial-gradient(ellipse at 40% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%)
+        background: `
+          linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #0c4a6e 50%, #164e63 75%, #134e4a 100%),
+          radial-gradient(ellipse at 20% 50%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+          radial-gradient(ellipse at 80% 20%, rgba(251, 191, 36, 0.1) 0%, transparent 50%),
+          radial-gradient(ellipse at 40% 80%, rgba(14, 165, 233, 0.08) 0%, transparent 50%)
         `
       }}
     >
@@ -100,16 +101,16 @@ export default function LandingPage() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#about" className="text-white/80 hover:text-cosmic-gold transition-colors">About</a>
-            <a href="#features" className="text-white/80 hover:text-cosmic-gold transition-colors">Features</a>
-            <a href="#faq" className="text-white/80 hover:text-cosmic-gold transition-colors">FAQ</a>
+            <a href="#about" className="text-white/70 hover:text-amber-400 transition-colors">About</a>
+            <a href="#features" className="text-white/70 hover:text-amber-400 transition-colors">Features</a>
+            <a href="#faq" className="text-white/70 hover:text-amber-400 transition-colors">FAQ</a>
           </div>
 
           {/* Mobile Menu Button */}
           <Button
             variant="ghost"
             size="sm"
-            className="md:hidden text-white hover:bg-cosmic-purple/20"
+            className="md:hidden text-white hover:bg-slate-800/50"
             onClick={() => setMobileMenuOpen(true)}
           >
             <Menu className="w-5 h-5" />
@@ -127,7 +128,7 @@ export default function LandingPage() {
           {Array.from({ length: 20 }, (_, i) => (
             <div
               key={i}
-              className="absolute w-1 h-1 bg-cosmic-gold/30 rounded-full animate-pulse"
+              className="absolute w-1 h-1 bg-amber-400/20 rounded-full animate-pulse"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
@@ -140,30 +141,20 @@ export default function LandingPage() {
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
           {/* Main Logo */}
-          <div className="mb-8">
+          <div className="mb-16">
             <img 
               src={rellioLogo} 
               alt="Rellio Compass" 
-              className="w-48 h-48 mx-auto object-contain filter drop-shadow-[0_0_30px_rgba(255,215,0,0.3)]" 
+              className="w-80 h-80 mx-auto object-contain filter drop-shadow-[0_0_40px_rgba(251,191,36,0.4)]" 
             />
           </div>
-          
-          {/* RELLIO Title */}
-          <h1 
-            className="text-6xl md:text-8xl font-bold text-cosmic-gold mb-16 tracking-widest"
-            style={{
-              textShadow: '0 0 30px rgba(255, 215, 0, 0.5), 0 0 60px rgba(255, 215, 0, 0.3)'
-            }}
-          >
-            RELLIO
-          </h1>
         </div>
       </section>
 
       {/* About Rellio Section */}
       <section id="about" className="py-24 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-cosmic-gold mb-8 tracking-wider">
+          <h2 className="text-4xl md:text-5xl font-bold text-amber-400 mb-8 tracking-wider">
             ABOUT RELLIO
           </h2>
           <p className="text-lg md:text-xl text-white/80 leading-relaxed mb-12 max-w-3xl mx-auto">
@@ -178,9 +169,9 @@ export default function LandingPage() {
       {/* AI Chat Demo Section */}
       <section className="py-16 px-6">
         <div className="max-w-3xl mx-auto">
-          <Card className="bg-black/40 border border-cosmic-purple/30 backdrop-blur-md">
+          <Card className="bg-slate-900/40 border border-cyan-500/20 backdrop-blur-md">
             <CardHeader>
-              <CardTitle className="text-cosmic-gold flex items-center justify-center space-x-2 text-xl">
+              <CardTitle className="text-amber-400 flex items-center justify-center space-x-2 text-xl">
                 <MessageCircle className="w-6 h-6" />
                 <span>Ask Our AI Guide</span>
               </CardTitle>
@@ -189,17 +180,17 @@ export default function LandingPage() {
               <Input
                 value={sampleQuery}
                 onChange={(e) => setSampleQuery(e.target.value)}
-                className="bg-black/20 border-cosmic-purple/30 text-white placeholder:text-white/50 backdrop-blur-sm text-lg py-3"
+                className="bg-slate-800/30 border-cyan-500/20 text-white placeholder:text-white/50 backdrop-blur-sm text-lg py-3"
                 placeholder="What is the meaning of life?"
               />
               {sampleResponse && (
-                <div className="bg-black/30 rounded-xl p-6 text-white/90 text-left border border-cosmic-purple/20 backdrop-blur-sm">
+                <div className="bg-slate-800/30 rounded-xl p-6 text-white/90 text-left border border-cyan-500/20 backdrop-blur-sm">
                   <p className="leading-relaxed">{sampleResponse}</p>
                 </div>
               )}
               <Button
                 onClick={handleGetStarted}
-                className="w-full bg-cosmic-gold hover:bg-cosmic-gold/90 text-black font-semibold py-3 text-lg rounded-xl transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,215,0,0.3)]"
+                className="w-full bg-amber-400 hover:bg-amber-500 text-black font-semibold py-3 text-lg rounded-xl transition-all duration-300 hover:shadow-[0_0_20px_rgba(251,191,36,0.5)]"
               >
                 Start exploring now
               </Button>
@@ -223,15 +214,15 @@ export default function LandingPage() {
       {/* Features Section */}
       <section id="features" className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-cosmic-gold mb-16 text-center tracking-wider">
+          <h2 className="text-4xl md:text-5xl font-bold text-amber-400 mb-16 text-center tracking-wider">
             FEATURES
           </h2>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Select Text */}
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-black/40 border border-cosmic-purple/30 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                <BookOpen className="w-8 h-8 text-cosmic-gold" />
+              <div className="w-16 h-16 mx-auto mb-4 bg-slate-800/40 border border-cyan-500/30 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                <BookOpen className="w-8 h-8 text-amber-400" />
               </div>
               <h4 className="text-xl font-semibold text-white mb-3">Select Text</h4>
               <p className="text-white/70 text-sm leading-relaxed">
@@ -241,8 +232,8 @@ export default function LandingPage() {
 
             {/* Navigate */}
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-black/40 border border-cosmic-purple/30 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                <Book className="w-8 h-8 text-cosmic-gold" />
+              <div className="w-16 h-16 mx-auto mb-4 bg-slate-800/40 border border-cyan-500/30 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                <Book className="w-8 h-8 text-amber-400" />
               </div>
               <h4 className="text-xl font-semibold text-white mb-3">Navigate</h4>
               <p className="text-white/70 text-sm leading-relaxed">
@@ -252,8 +243,8 @@ export default function LandingPage() {
 
             {/* Ask AI */}
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-black/40 border border-cosmic-purple/30 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                <MessageCircle className="w-8 h-8 text-cosmic-gold" />
+              <div className="w-16 h-16 mx-auto mb-4 bg-slate-800/40 border border-cyan-500/30 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                <MessageCircle className="w-8 h-8 text-amber-400" />
               </div>
               <h4 className="text-xl font-semibold text-white mb-3">Ask AI</h4>
               <p className="text-white/70 text-sm leading-relaxed">
@@ -263,8 +254,8 @@ export default function LandingPage() {
 
             {/* Discuss */}
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-black/40 border border-cosmic-purple/30 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                <Users className="w-8 h-8 text-cosmic-gold" />
+              <div className="w-16 h-16 mx-auto mb-4 bg-slate-800/40 border border-cyan-500/30 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                <Users className="w-8 h-8 text-amber-400" />
               </div>
               <h4 className="text-xl font-semibold text-white mb-3">Discuss</h4>
               <p className="text-white/70 text-sm leading-relaxed">
@@ -274,8 +265,8 @@ export default function LandingPage() {
 
             {/* Voice Playback */}
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-black/40 border border-cosmic-purple/30 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                <Volume2 className="w-8 h-8 text-cosmic-gold" />
+              <div className="w-16 h-16 mx-auto mb-4 bg-slate-800/40 border border-cyan-500/30 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                <Volume2 className="w-8 h-8 text-amber-400" />
               </div>
               <h4 className="text-xl font-semibold text-white mb-3">Voice Playback</h4>
               <p className="text-white/70 text-sm leading-relaxed">
@@ -285,8 +276,8 @@ export default function LandingPage() {
 
             {/* Smart Search */}
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-black/40 border border-cosmic-purple/30 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                <Search className="w-8 h-8 text-cosmic-gold" />
+              <div className="w-16 h-16 mx-auto mb-4 bg-slate-800/40 border border-cyan-500/30 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                <Search className="w-8 h-8 text-amber-400" />
               </div>
               <h4 className="text-xl font-semibold text-white mb-3">Smart Search</h4>
               <p className="text-white/70 text-sm leading-relaxed">
@@ -296,8 +287,8 @@ export default function LandingPage() {
 
             {/* Personal Progress */}
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-black/40 border border-cosmic-purple/30 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                <User className="w-8 h-8 text-cosmic-gold" />
+              <div className="w-16 h-16 mx-auto mb-4 bg-slate-800/40 border border-cyan-500/30 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                <User className="w-8 h-8 text-amber-400" />
               </div>
               <h4 className="text-xl font-semibold text-white mb-3">Personal Progress</h4>
               <p className="text-white/70 text-sm leading-relaxed">
@@ -307,8 +298,8 @@ export default function LandingPage() {
 
             {/* Multi-Perspective */}
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-black/40 border border-cosmic-purple/30 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                <Eye className="w-8 h-8 text-cosmic-gold" />
+              <div className="w-16 h-16 mx-auto mb-4 bg-slate-800/40 border border-cyan-500/30 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                <Eye className="w-8 h-8 text-amber-400" />
               </div>
               <h4 className="text-xl font-semibold text-white mb-3">Multi-Perspective</h4>
               <p className="text-white/70 text-sm leading-relaxed">
@@ -323,7 +314,7 @@ export default function LandingPage() {
       <section id="faq" className="py-24 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-cosmic-gold mb-8 tracking-wider">
+            <h2 className="text-4xl md:text-5xl font-bold text-amber-400 mb-8 tracking-wider">
               Frequently Asked Questions
             </h2>
             <p className="text-xl text-white/80">
@@ -334,9 +325,9 @@ export default function LandingPage() {
           <Accordion type="single" collapsible className="space-y-6">
             <AccordionItem 
               value="item-1" 
-              className="bg-black/40 border border-cosmic-purple/30 rounded-xl overflow-hidden backdrop-blur-md"
+              className="bg-slate-900/40 border border-cyan-500/20 rounded-xl overflow-hidden backdrop-blur-md"
             >
-              <AccordionTrigger className="px-6 py-4 text-white hover:text-cosmic-gold transition-colors">
+              <AccordionTrigger className="px-6 py-4 text-white hover:text-amber-400 transition-colors">
                 What religious texts are available on Rellio?
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 text-white/80">
@@ -347,9 +338,9 @@ export default function LandingPage() {
 
             <AccordionItem 
               value="item-2" 
-              className="bg-black/40 border border-cosmic-purple/30 rounded-xl overflow-hidden backdrop-blur-md"
+              className="bg-slate-900/40 border border-cyan-500/20 rounded-xl overflow-hidden backdrop-blur-md"
             >
-              <AccordionTrigger className="px-6 py-4 text-white hover:text-cosmic-gold transition-colors">
+              <AccordionTrigger className="px-6 py-4 text-white hover:text-amber-400 transition-colors">
                 How does the AI guidance work?
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 text-white/80">
@@ -361,9 +352,9 @@ export default function LandingPage() {
 
             <AccordionItem 
               value="item-3" 
-              className="bg-black/40 border border-cosmic-purple/30 rounded-xl overflow-hidden backdrop-blur-md"
+              className="bg-slate-900/40 border border-cyan-500/20 rounded-xl overflow-hidden backdrop-blur-md"
             >
-              <AccordionTrigger className="px-6 py-4 text-white hover:text-cosmic-gold transition-colors">
+              <AccordionTrigger className="px-6 py-4 text-white hover:text-amber-400 transition-colors">
                 Is Rellio suitable for people of all faiths?
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 text-white/80">
@@ -375,9 +366,9 @@ export default function LandingPage() {
 
             <AccordionItem 
               value="item-4" 
-              className="bg-black/40 border border-cosmic-purple/30 rounded-xl overflow-hidden backdrop-blur-md"
+              className="bg-slate-900/40 border border-cyan-500/20 rounded-xl overflow-hidden backdrop-blur-md"
             >
-              <AccordionTrigger className="px-6 py-4 text-white hover:text-cosmic-gold transition-colors">
+              <AccordionTrigger className="px-6 py-4 text-white hover:text-amber-400 transition-colors">
                 Can I track my reading progress?
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 text-white/80">
@@ -389,9 +380,9 @@ export default function LandingPage() {
 
             <AccordionItem 
               value="item-5" 
-              className="bg-black/40 border border-cosmic-purple/30 rounded-xl overflow-hidden backdrop-blur-md"
+              className="bg-slate-900/40 border border-cyan-500/20 rounded-xl overflow-hidden backdrop-blur-md"
             >
-              <AccordionTrigger className="px-6 py-4 text-white hover:text-cosmic-gold transition-colors">
+              <AccordionTrigger className="px-6 py-4 text-white hover:text-amber-400 transition-colors">
                 Does Rellio support voice interaction?
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 text-white/80">
@@ -415,7 +406,7 @@ export default function LandingPage() {
           </p>
           <Button
             onClick={handleGetStarted}
-            className="bg-cosmic-gold hover:bg-cosmic-gold/90 text-black font-bold py-4 px-8 text-xl rounded-xl transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,215,0,0.4)]"
+            className="bg-amber-400 hover:bg-amber-500 text-black font-bold py-4 px-8 text-xl rounded-xl transition-all duration-300 hover:shadow-[0_0_30px_rgba(251,191,36,0.5)]"
           >
             Start Exploring Now
           </Button>
