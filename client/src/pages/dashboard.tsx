@@ -309,42 +309,7 @@ export default function Dashboard() {
       <header className="bg-white shadow-sm border-b border-scripture-200">
         <div className="max-w-full px-4 lg:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 lg:space-x-3">
-              {/* Panel Toggle Buttons */}
-              <div className="flex items-center space-x-1">
-                {/* View Toggle Buttons */}
-                <Button
-                  variant={currentView === 'scripture' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setCurrentView('scripture')}
-                  className={cn(
-                    "h-8 px-3 text-xs transition-all duration-200",
-                    currentView === 'scripture' 
-                      ? "bg-cosmic-purple/20 text-cosmic-purple border border-cosmic-purple/30 hover:bg-cosmic-purple/30" 
-                      : "text-white hover:bg-cosmic-purple/10 hover:text-cosmic-purple"
-                  )}
-                >
-                  <BookOpen className="w-3 h-3 mr-1" />
-                  Scripture
-                </Button>
-                <Button
-                  variant={currentView === 'progress' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setCurrentView('progress')}
-                  className={cn(
-                    "h-8 px-3 text-xs transition-all duration-200",
-                    currentView === 'progress' 
-                      ? "bg-cosmic-gold/20 text-cosmic-gold border border-cosmic-gold/30 hover:bg-cosmic-gold/30" 
-                      : "text-white hover:bg-cosmic-gold/10 hover:text-cosmic-gold"
-                  )}
-                >
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  Progress
-                </Button>
-                
-              </div>
-            </div>
-            {/* Header Actions - Hamburger, Chat, and Logo grouped together */}
+            {/* Header Actions - Hamburger, Chat, and Logo grouped together on left */}
             <div className="flex items-center space-x-2">
               <Button
                 variant="ghost"
@@ -378,6 +343,24 @@ export default function Dashboard() {
                 alt="Rellio" 
                 className="w-10 h-10 object-contain" 
               />
+            </div>
+
+            {/* View Toggle Button - Only Progress */}
+            <div className="flex items-center space-x-2">
+              <Button
+                variant={currentView === 'progress' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setCurrentView('progress')}
+                className={cn(
+                  "h-8 px-3 text-xs transition-all duration-200",
+                  currentView === 'progress' 
+                    ? "bg-cosmic-gold/20 text-cosmic-gold border border-cosmic-gold/30 hover:bg-cosmic-gold/30" 
+                    : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                )}
+              >
+                <TrendingUp className="w-3 h-3 mr-1" />
+                Progress
+              </Button>
             </div>
           </div>
         </div>
