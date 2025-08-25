@@ -125,6 +125,7 @@ export function VoiceFirstChatInterface({
       console.log('🔊 AI started speaking - Activating input isolation and stopping recognition');
       setVoiceState('responding');
       setInputIsolated(true); // Enable input isolation during AI speech
+      setIsAISpeaking(true); // Track AI speaking state for interruption detection
       
       // CRITICAL: Stop speech recognition completely to prevent feedback loop
       if (recognitionRef.current && recognitionRef.current.abort) {
@@ -143,6 +144,7 @@ export function VoiceFirstChatInterface({
       }
       setPlayingMessageId(null);
       setInputIsolated(false); // Disable input isolation when AI stops
+      setIsAISpeaking(false); // Clear AI speaking state
       
       // Re-enable speech recognition after AI finishes
       setTimeout(() => {
@@ -407,10 +409,11 @@ export function VoiceFirstChatInterface({
           const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
           setAudioLevel(average / 255);
           
-          // Check for interruption during AI response
-          if (voiceState === 'responding' && average > (settings.interruptionSensitivity * 255)) {
+          // Check for interruption during AI response - use isAISpeaking for more reliable detection
+          if ((voiceState === 'responding' || isAISpeaking) && average > (settings.interruptionSensitivity * 255)) {
             console.log('🚨 User interruption detected during AI response');
             console.log(`🔊 Audio level: ${average}, Threshold: ${settings.interruptionSensitivity * 255}`);
+            console.log(`🔊 Voice state: ${voiceState}, AI speaking: ${isAISpeaking}`);
             handleInterruption();
           }
         }
@@ -423,7 +426,7 @@ export function VoiceFirstChatInterface({
       console.error('🚨 Audio context initialization error:', error);
       setHasPermission(false);
     }
-  }, [voiceState, settings.interruptionSensitivity]);
+  }, [voiceState, settings.interruptionSensitivity, isAISpeaking]);
 
   // Check Support and Initialize
   useEffect(() => {
@@ -488,15 +491,23 @@ export function VoiceFirstChatInterface({
   }, []);
 
   const handleInterruption = useCallback(() => {
-    console.log('🚨 Handling user interruption');
+    console.log('🚨 Handling user interruption - stopping all AI speech');
     
     // Stop AI playback immediately
     if (isAIPlaying) {
       stopAIPlayback();
     }
     
-    // Set interrupted state
+    // Stop browser speech synthesis immediately if it's running
+    if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      console.log('🚨 Browser speech synthesis interrupted and stopped');
+    }
+    
+    // Clear AI speaking states
+    setIsAISpeaking(false);
     setVoiceState('interrupted');
+    setInputIsolated(false);
     
     // Show feedback
     toast({
@@ -716,7 +727,7 @@ export function VoiceFirstChatInterface({
         // Small delay to ensure message is rendered
         setTimeout(async () => {
           // Double-check voice state hasn't changed
-          if (voiceState === 'listening' || inputIsolated) {
+          if (voiceState === 'listening' || voiceState === 'processing' || inputIsolated) {
             console.log('🚫 Auto-play CANCELLED - Voice became active during delay');
             return;
           }
