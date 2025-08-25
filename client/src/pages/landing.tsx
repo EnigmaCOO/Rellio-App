@@ -24,6 +24,7 @@ import {
   Twitter,
   Facebook,
   Instagram,
+  Linkedin,
   Sparkles
 } from "lucide-react";
 import rellioLogo from "@assets/Rellio logo_1756158287035.png";
@@ -580,6 +581,18 @@ export default function LandingPage() {
                     }}
                   >
                     <Instagram className="w-6 h-6 text-gold" />
+                  </a>
+                  <a 
+                    href="https://www.linkedin.com/company/rellioapp/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 hover:shadow-glow-gold"
+                    style={{
+                      background: 'rgba(212, 175, 55, 0.1)',
+                      border: '1px solid rgba(212, 175, 55, 0.3)'
+                    }}
+                  >
+                    <Linkedin className="w-6 h-6 text-gold" />
                   </a>
                 </div>
               </div>
