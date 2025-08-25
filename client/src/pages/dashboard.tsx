@@ -425,8 +425,8 @@ export default function Dashboard() {
           className={`${getContentWidth()} transition-all duration-300 ease-in-out relative overflow-hidden order-2`}
         >
           {currentView === 'progress' ? (
-            <div className="h-full bg-cosmic-navy overflow-y-auto">
-              <ProgressDashboard />
+            <div className="h-full bg-white overflow-y-auto">
+              <ProgressDashboard onClose={() => setCurrentView('scripture')} />
             </div>
           ) : selectedReligion ? (
             <div className="h-full bg-white flex flex-col p-4">

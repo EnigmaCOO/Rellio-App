@@ -15,10 +15,15 @@ import {
   Calendar,
   Star,
   Flame,
-  Award
+  Award,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
+
+interface ProgressDashboardProps {
+  onClose?: () => void;
+}
 
 interface SpiritualJourney {
   id: number;
@@ -70,7 +75,7 @@ interface ReadingSession {
   createdAt: string;
 }
 
-export function ProgressDashboard() {
+export function ProgressDashboard({ onClose }: ProgressDashboardProps = {}) {
   const [selectedTimeframe, setSelectedTimeframe] = useState<'week' | 'month' | 'all'>('week');
   const queryClient = useQueryClient();
 
@@ -179,12 +184,25 @@ export function ProgressDashboard() {
   return (
     <div className="space-y-6 p-4 lg:p-6 bg-white min-h-full">
       {/* Header */}
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center justify-center gap-2">
-          <Trophy className="w-8 h-8 text-amber-500" />
-          Spiritual Journey Progress
-        </h1>
-        <p className="text-gray-600">Track your spiritual growth and reading milestones</p>
+      <div className="relative">
+        {onClose && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="absolute top-0 right-0 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+            title="Close Progress Dashboard"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        )}
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center justify-center gap-2">
+            <Trophy className="w-8 h-8 text-amber-500" />
+            Spiritual Journey Progress
+          </h1>
+          <p className="text-gray-600">Track your spiritual growth and reading milestones</p>
+        </div>
       </div>
 
       {/* Key Metrics Cards */}
