@@ -55,6 +55,16 @@ export default {
         'rellio-white': '#FFFFFF',
         'rellio-dark-gray': '#1F2937',
         'rellio-accent-teal': '#00D5FF',
+        
+        // Majestic Compass + Cosmos Theme
+        'bg-deep': '#060a1a',
+        'bg-indigo': '#0A0F29',
+        'gold': '#D4AF37',
+        'teal': '#00D5FF',
+        'text-primary': '#F2F5FA',
+        'text-muted': '#B8C0D6',
+        'glass-card': 'rgba(255,255,255,0.04)',
+        'card-border': 'rgba(212,175,55,0.18)',
         sidebar: {
           DEFAULT: "var(--sidebar-background)",
           foreground: "var(--sidebar-foreground)",
@@ -66,7 +76,46 @@ export default {
           ring: "var(--sidebar-ring)",
         },
       },
+      fontFamily: {
+        'display': ['Inter', 'ui-sans-serif', 'system-ui'],
+        'serif': ['Cormorant Garamond', 'ui-serif', 'Georgia'],
+      },
+      boxShadow: {
+        'glow-gold': '0 0 24px rgba(212,175,55,0.35)',
+        'glow-teal': '0 0 18px rgba(0,213,255,0.30)',
+        'card-shadow': '0 10px 30px rgba(0,0,0,0.35)',
+      },
+      borderRadius: {
+        'lg': '16px',
+        'xl': '20px',
+        '2xl': '24px',
+      },
       keyframes: {
+        'spin-once': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
+        },
+        'pulse-glow-gold': {
+          '0%, 100%': { boxShadow: '0 0 24px rgba(212,175,55,0.35)' },
+          '50%': { boxShadow: '0 0 36px rgba(212,175,55,0.55)' },
+        },
+        'float-up': {
+          '0%': { 
+            opacity: '0',
+            transform: 'translateY(10px)' 
+          },
+          '100%': { 
+            opacity: '1',
+            transform: 'translateY(0)' 
+          },
+        },
+        'dust-drift': {
+          '0%': { transform: 'translateX(0) translateY(0)' },
+          '25%': { transform: 'translateX(20px) translateY(-15px)' },
+          '50%': { transform: 'translateX(-10px) translateY(-30px)' },
+          '75%': { transform: 'translateX(15px) translateY(-20px)' },
+          '100%': { transform: 'translateX(0) translateY(0)' },
+        },
         "accordion-down": {
           from: {
             height: "0",
@@ -87,6 +136,10 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        'spin-once': 'spin-once 1.2s ease-out forwards',
+        'pulse-glow-gold': 'pulse-glow-gold 2.4s ease-in-out infinite',
+        'float-up': 'float-up 0.5s ease-out',
+        'dust-drift': 'dust-drift 15s ease-in-out infinite alternate',
       },
     },
   },

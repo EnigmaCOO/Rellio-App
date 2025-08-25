@@ -1,0 +1,220 @@
+Awesome—let’s give your Replit AI agent a crystal-clear brief so it can re-skin the existing landing without breaking functionality. Below is a drop-in, high-level prompt you can paste into your agent (followed by acceptance criteria, design tokens, and a checklist the agent can run through).
+
+⸻
+
+SYSTEM / GUARDRAILS (paste first)
+
+You are a senior front-end engineer tasked with visually transforming an existing landing page into a majestic, luxury, spiritual design without changing business logic.
+	•	Do not break routing, APIs, state, or IDs used by analytics/tests.
+	•	Keep all existing component props and exported names.
+	•	Only touch styles, markup structure, and purely presentational code.
+	•	If you add files, keep imports relative and tree-shakable.
+	•	Write accessible, responsive, and performant code.
+	•	Prefer Tailwind CSS (or the project’s existing CSS approach).
+	•	Use semantic HTML and ARIA where relevant.
+	•	Produce a single PR with clear commits.
+
+⸻
+
+TASK BRIEF (paste after system block)
+
+Goal: Elevate the current Rellio landing page to a heroic, luxury “compass + cosmos” aesthetic with an animated loading screen, while preserving existing functionality and content structure.
+
+1) Design Language
+
+Use these design tokens (create a tokens file or Tailwind theme extension):
+
+// design-tokens.js (if not Tailwind, adapt to CSS variables)
+export const colors = {
+  bgDeep: "#060a1a",           // near-black indigo
+  bgIndigo: "#0A0F29",
+  gold: "#D4AF37",
+  teal: "#00D5FF",
+  text: "#F2F5FA",
+  textMuted: "#B8C0D6",
+  card: "rgba(255,255,255,0.04)",
+  cardBorder: "rgba(212,175,55,0.18)",
+};
+export const radii = { lg: "16px", xl: "20px", "2xl": "24px" };
+export const shadows = {
+  glowGold: "0 0 24px rgba(212,175,55,0.35)",
+  glowTeal: "0 0 18px rgba(0,213,255,0.30)",
+  card: "0 10px 30px rgba(0,0,0,0.35)",
+};
+export const fonts = { display: "Inter, ui-sans-serif", serif: "Cormorant Garamond, ui-serif" };
+
+If Tailwind is present, extend the theme with the above (colors, boxShadow, borderRadius, fontFamily). Also add CSS variables to :root for runtime theming.
+
+2) Loading Screen (non-blocking, removable once app mounts)
+	•	Create component: components/LoadingSplash.tsx
+	•	Behavior:
+	•	Full-screen overlay on first paint.
+	•	Centered gold compass logo (use /public/logo-rellio-compass.svg or existing asset) that rotates 360° once (1.2s) then softly pulses glow until page ready.
+	•	Tagline fades in under logo: “Guiding You Through Sacred Wisdom”.
+	•	Background: indigo→black radial gradient, faint drifting gold dust particles (CSS keyframes; 20 lightweight absolutely-positioned dots).
+	•	Mount logic:
+	•	Show until window.onload OR a provided isAppReady flag from existing boot logic.
+	•	No state shape changes—wrap existing <App/> root or page component with this overlay.
+
+3) Hero (Above the Fold)
+	•	Keep existing headline/CTAs, but restyle:
+	•	Headline split styling:
+	•	“Explore Sacred” → white
+	•	“Scriptures” → gold with subtle outer glow
+	•	Subheading stays; improve line length (max-width ~60ch).
+	•	CTA group:
+	•	Primary: “✨ Start Exploring” (gold gradient, glow on hover).
+	•	Secondary: “Watch Demo” (transparent bg, gold border, hover glow).
+	•	Background:
+	•	Cosmic gradient (deep indigo → black).
+	•	Very faint mandala line art (SVG as background with opacity 0.07).
+	•	Parallax gold dust (same system as loading but fewer particles).
+	•	Optional watermark: very large compass at 5–10% opacity behind headline.
+
+4) Sections (keep IDs and content order; upgrade visuals)
+	•	About: two-column layout; left = symbolic illustration (book/scroll within halo), right = mission copy in serif (gold small caps section title).
+	•	How It Works: switch to 4 step cards (Select Text, Navigate Chapters, Ask AI, Discuss). Each card:
+	•	gold+teal line icon
+	•	glass card (backdrop-filter blur, card bg)
+	•	hover: lift + gold border glow
+	•	Features: 6-card grid; identical card system; concise copy; icons aligned to compass geometry.
+	•	FAQ: glass accordion with gold border + focus rings; ensure keyboard nav; expand/collapse aria attributes.
+	•	Contact: form with labeled inputs, visible errors, gold submit; social icons with gold outline glow.
+	•	Footer: darker band, faint compass watermark, legal links, contrast AA.
+
+5) Animations (CSS only—no heavy libs)
+
+Create a tiny animations file (or Tailwind plugin):
+	•	spinOnce: 0→360deg (1.2s ease-out, forwards)
+	•	pulseGlowGold: box-shadow keyframe loop (2.4s)
+	•	floatUp: translateY(10px→0, 500ms) with opacity fade
+	•	dustDrift: slow random movement (10–20s, infinite, alternate)
+
+Ensure “prefers-reduced-motion: reduce” disables all nonessential motion.
+
+6) Accessibility & SEO
+	•	Preserve all existing IDs, aria-labels, data-attrs.
+	•	Ensure headings are hierarchical (h1→h2…).
+	•	Sufficient contrast; focus-visible rings in teal/gold.
+	•	Add meta/OG tags if missing; include alt for decorative images as empty alt="".
+	•	LCP target < 2.5s on desktop: optimize hero image/SVG; avoid large video autoplay.
+
+7) Performance
+	•	Use SVG for logo, mandala, small icons; lazy-load non-critical images.
+	•	Combine subtle particles with CSS gradients; avoid canvas/webGL.
+	•	Purge unused Tailwind styles; preconnect to fonts; font-display: swap.
+
+8) File Plan (adjust to actual project)
+	•	components/LoadingSplash.tsx (new)
+	•	components/Hero.tsx (refactor markup only; keep props/IDs)
+	•	components/Section.tsx (generic wrapper with title/desc)
+	•	components/HowItWorks.tsx, components/Features.tsx, components/FAQ.tsx, components/Contact.tsx (style-only updates)
+	•	styles/animations.css or Tailwind plugin
+	•	public/motifs/mandala.svg, public/logo-rellio-compass.svg (if not present)
+
+Important: If components already exist with different names, update those in place (do not rename exports).
+
+9) Concrete Acceptance Criteria
+	•	All existing links, routes, and buttons still work.
+	•	Lighthouse (desktop) after build:
+	•	Performance ≥ 90
+	•	Accessibility ≥ 95
+	•	Best Practices ≥ 95
+	•	SEO ≥ 95
+	•	CLS < 0.1; no layout jump on splash removal.
+	•	prefers-reduced-motion: reduce verified.
+	•	aria-expanded toggles correctly for FAQ.
+	•	No console errors/warnings.
+
+10) Implementation Steps (agent checklist)
+	1.	Detect stack (React/Vite/Next). Do not change SSR/CSR mode.
+	2.	Add/extend Tailwind or current CSS variables with tokens.
+	3.	Create LoadingSplash.tsx; wire to root without altering app state shape.
+	4.	Refactor Hero markup:
+	•	wrap keywords for gold styling (<span className="text-gold glow">Scriptures</span>)
+	•	add background layers (gradient, mandala SVG, sparse particles)
+	•	restyle CTAs
+	5.	Update section components’ classNames to new motif (glass cards, icons, hover).
+	6.	Add animations and prefers-reduced-motion guard.
+	7.	Add/optimize SVG assets; compress images.
+	8.	Run build + Lighthouse; iterate until criteria pass.
+	9.	Commit with clear message:
+	•	feat(ui): majestic landing + loading splash (no logic changes)
+	•	style(theme): add gold/indigo tokens and glow shadows
+	•	perf: lazy-load noncritical assets, reduce motion support
+
+11) Example Snippets (adapt class names to project)
+
+Hero inner:
+
+<h1 className="font-display text-5xl sm:text-6xl md:text-7xl leading-tight text-white drop-shadow">
+  Explore Sacred <span className="text-[var(--gold)] [text-shadow:0_0_18px_rgba(212,175,55,.45)]">Scriptures</span>
+</h1>
+
+<p className="mt-4 max-w-2xl text-[var(--textMuted)]">
+  Discover insights from multiple religious texts. Ask questions and receive guidance on spiritual topics.
+</p>
+
+<div className="mt-8 flex items-center gap-4">
+  <a href="#get-started" className="rounded-2xl px-6 py-3 bg-[var(--gold)] text-black font-semibold shadow-[var(--glowGold)] hover:brightness-110 transition">
+    ✨ Start Exploring
+  </a>
+  <a href="#demo" className="rounded-2xl px-6 py-3 border border-[var(--gold)] text-[var(--text)] hover:shadow-[var(--glowGold)] transition">
+    Watch Demo
+  </a>
+</div>
+
+Loading splash:
+
+export default function LoadingSplash({ show }: { show: boolean }) {
+  if (!show) return null;
+  return (
+    <div role="status" aria-live="polite"
+      className="fixed inset-0 z-[9999] grid place-items-center bg-gradient-to-b from-[#0A0F29] to-[#060a1a]">
+      <div className="flex flex-col items-center gap-4 animate-[floatUp_.5s_ease-out]">
+        <img
+          src="/logo-rellio-compass.svg"
+          alt="Rellio"
+          className="w-28 h-28 motion-safe:animate-[spinOnce_1.2s_ease-out_forwards]"
+        />
+        <p className="text-[var(--text)]/90">Guiding You Through Sacred Wisdom</p>
+      </div>
+      {/* decorative particles */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        {/* create 12–20 absolutely positioned <span> dots with dustDrift class */}
+      </div>
+    </div>
+  );
+}
+
+FAQ accordion a11y:
+
+<button
+  className="w-full text-left py-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--teal)]"
+  aria-expanded={open}
+  aria-controls={`faq-panel-${id}`}
+  id={`faq-control-${id}`}
+>
+  {q}
+</button>
+<div id={`faq-panel-${id}`} role="region" aria-labelledby={`faq-control-${id}`} hidden={!open}>
+  {a}
+</div>
+
+
+⸻
+
+12) Fallback Notes (if no Tailwind)
+	•	Create styles/theme.css with CSS variables from tokens.
+	•	Use utility classes via @apply-like pattern or BEM.
+	•	Keep animation keyframes and prefers-reduced-motion names identical.
+
+⸻
+
+Final Instruction to Agent
+
+Implement the above visual transformation precisely, preserving all logic, and submit a PR that passes the acceptance criteria and lint/build checks. Do not rename or remove existing exported components, props, or IDs. Add only presentational components/assets and theme extensions.
+
+⸻
+
+If you want, I can tailor this to your exact file tree (e.g., Next.js pages vs. React routes) and produce the Tailwind theme.extend block and a ready-to-paste LoadingSplash.tsx file.

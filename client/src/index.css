@@ -37,6 +37,19 @@
   --holographic-green: hsl(160, 100%, 60%);
   --cosmic-gold: hsl(45, 100%, 65%);
   
+  /* Majestic Compass + Cosmos Design Tokens */
+  --bg-deep: #060a1a;
+  --bg-indigo: #0A0F29;
+  --gold: #D4AF37;
+  --teal: #00D5FF;
+  --text: #F2F5FA;
+  --text-muted: #B8C0D6;
+  --card: rgba(255,255,255,0.04);
+  --card-border: rgba(212,175,55,0.18);
+  --glow-gold: 0 0 24px rgba(212,175,55,0.35);
+  --glow-teal: 0 0 18px rgba(0,213,255,0.30);
+  --card-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  
   /* Aura Archivist teal accent colors */
   --teal-50: hsl(166, 76%, 97%);
   --teal-100: hsl(167, 85%, 89%);
@@ -60,6 +73,47 @@
   --scripture-700: hsl(215, 25%, 27%);
   --scripture-800: hsl(217, 33%, 17%);
   --scripture-900: hsl(222, 47%, 11%);
+}
+
+/* Cosmic Compass Animations with Motion Preferences */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes spin-once {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  @keyframes pulse-glow-gold {
+    0%, 100% { box-shadow: var(--glow-gold); }
+    50% { box-shadow: 0 0 36px rgba(212,175,55,0.55); }
+  }
+  
+  @keyframes float-up {
+    0% { 
+      opacity: 0;
+      transform: translateY(10px); 
+    }
+    100% { 
+      opacity: 1;
+      transform: translateY(0); 
+    }
+  }
+  
+  @keyframes dust-drift {
+    0% { transform: translateX(0) translateY(0); }
+    25% { transform: translateX(20px) translateY(-15px); }
+    50% { transform: translateX(-10px) translateY(-30px); }
+    75% { transform: translateX(15px) translateY(-20px); }
+    100% { transform: translateX(0) translateY(0); }
+  }
+}
+
+/* Fallback for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Custom animations for smooth transitions */
