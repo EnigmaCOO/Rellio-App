@@ -7,7 +7,7 @@ import { ProgressDashboard } from "@/components/progress/ProgressDashboard";
 import { type ScholarPersona, getPersonaForReligion } from "@/components/chat/ScholarPersonas";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Settings, BookOpen, Menu, X, ChevronLeft, ChevronRight, MessageCircle, TrendingUp } from "lucide-react";
-import rellioLogo from "@assets/Rellio logo_1756158287035.png";
+import rellioLogo from "@assets/image_1756158906598.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
