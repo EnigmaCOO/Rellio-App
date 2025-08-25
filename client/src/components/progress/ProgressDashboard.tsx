@@ -160,12 +160,12 @@ export function ProgressDashboard() {
 
   if (journeyLoading || summaryLoading) {
     return (
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-6 bg-white min-h-full">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => (
-            <Card key={i} className="glass-card border-cosmic-purple/30">
+            <Card key={i} className="bg-white border-amber-200 shadow-md">
               <CardContent className="p-6">
-                <div className="h-16 bg-cosmic-purple/10 rounded animate-pulse"></div>
+                <div className="h-16 bg-amber-100 rounded animate-pulse"></div>
               </CardContent>
             </Card>
           ))}
@@ -177,71 +177,71 @@ export function ProgressDashboard() {
   const weeklyProgress = calculateWeeklyProgress();
 
   return (
-    <div className="space-y-6 p-4 lg:p-6">
+    <div className="space-y-6 p-4 lg:p-6 bg-white min-h-full">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-white flex items-center justify-center gap-2">
-          <Trophy className="w-8 h-8 text-cosmic-gold" />
+        <h1 className="text-3xl font-bold text-gray-900 flex items-center justify-center gap-2">
+          <Trophy className="w-8 h-8 text-amber-500" />
           Spiritual Journey Progress
         </h1>
-        <p className="text-slate-300">Track your spiritual growth and reading milestones</p>
+        <p className="text-gray-600">Track your spiritual growth and reading milestones</p>
       </div>
 
       {/* Key Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Sessions */}
-        <Card className="glass-card border-cosmic-purple/30 hover:border-cosmic-purple/50 transition-all duration-300">
+        <Card className="bg-white border-amber-200 hover:border-amber-300 shadow-md hover:shadow-lg transition-all duration-300">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-300">Total Sessions</p>
-                <p className="text-2xl font-bold text-white">{summary?.totalSessions || 0}</p>
+                <p className="text-sm font-medium text-gray-600">Total Sessions</p>
+                <p className="text-2xl font-bold text-gray-900">{summary?.totalSessions || 0}</p>
               </div>
-              <BookOpen className="w-8 h-8 text-cosmic-purple" />
+              <BookOpen className="w-8 h-8 text-amber-500" />
             </div>
           </CardContent>
         </Card>
 
         {/* Total Time */}
-        <Card className="glass-card border-cosmic-blue/30 hover:border-cosmic-blue/50 transition-all duration-300">
+        <Card className="bg-white border-amber-200 hover:border-amber-300 shadow-md hover:shadow-lg transition-all duration-300">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-300">Time Spent</p>
-                <p className="text-2xl font-bold text-white">{formatDuration(summary?.totalMinutes || 0)}</p>
+                <p className="text-sm font-medium text-gray-600">Time Spent</p>
+                <p className="text-2xl font-bold text-gray-900">{formatDuration(summary?.totalMinutes || 0)}</p>
               </div>
-              <Clock className="w-8 h-8 text-cosmic-blue" />
+              <Clock className="w-8 h-8 text-amber-600" />
             </div>
           </CardContent>
         </Card>
 
         {/* Current Streak */}
-        <Card className="glass-card border-cosmic-gold/30 hover:border-cosmic-gold/50 transition-all duration-300">
+        <Card className="bg-amber-50 border-amber-300 hover:border-amber-400 shadow-md hover:shadow-lg transition-all duration-300">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-300">Current Streak</p>
-                <p className="text-2xl font-bold text-white flex items-center gap-1">
+                <p className="text-sm font-medium text-gray-700">Current Streak</p>
+                <p className="text-2xl font-bold text-gray-900 flex items-center gap-1">
                   {summary?.currentStreak || 0}
                   <span className="text-lg">{getStreakEmoji(summary?.currentStreak || 0)}</span>
                 </p>
               </div>
-              <Flame className="w-8 h-8 text-cosmic-gold" />
+              <Flame className="w-8 h-8 text-amber-600" />
             </div>
           </CardContent>
         </Card>
 
         {/* Weekly Goal Progress */}
-        <Card className="glass-card border-neon-cyan/30 hover:border-neon-cyan/50 transition-all duration-300">
+        <Card className="bg-white border-amber-200 hover:border-amber-300 shadow-md hover:shadow-lg transition-all duration-300">
           <CardContent className="p-6">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-slate-300">Weekly Goal</p>
-                <Target className="w-8 h-8 text-neon-cyan" />
+                <p className="text-sm font-medium text-gray-600">Weekly Goal</p>
+                <Target className="w-8 h-8 text-amber-600" />
               </div>
               <div className="space-y-2">
-                <Progress value={Math.min(weeklyProgress, 100)} className="h-2" />
-                <p className="text-xs text-slate-400">
+                <Progress value={Math.min(weeklyProgress, 100)} className="h-3 bg-gray-200" />
+                <p className="text-xs text-gray-500">
                   {Math.round(weeklyProgress)}% of {formatDuration(journey?.readingGoal || 0)} goal
                 </p>
               </div>
@@ -252,10 +252,10 @@ export function ProgressDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Activity */}
-        <Card className="lg:col-span-2 glass-card border-cosmic-purple/30">
+        <Card className="lg:col-span-2 bg-white border-amber-200 shadow-md">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
+            <CardTitle className="text-gray-900 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-amber-600" />
               Recent Reading Sessions
             </CardTitle>
           </CardHeader>
@@ -263,32 +263,32 @@ export function ProgressDashboard() {
             <ScrollArea className="h-64">
               <div className="space-y-3">
                 {sessions?.slice(0, 10).map((session, index) => (
-                  <div key={session.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                  <div key={session.id} className="flex items-center justify-between p-3 rounded-lg bg-amber-50 border border-amber-200">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="border-cosmic-purple/50 text-cosmic-purple">
+                        <Badge variant="outline" className="border-amber-400 text-amber-700 bg-amber-100">
                           {religionDisplayNames[session.religion] || session.religion}
                         </Badge>
-                        <span className="text-sm text-slate-300">{session.book} Ch.{session.chapter}</span>
+                        <span className="text-sm text-gray-700">{session.book} Ch.{session.chapter}</span>
                       </div>
-                      <p className="text-xs text-slate-400 mt-1">
+                      <p className="text-xs text-gray-500 mt-1">
                         {formatDate(session.startTime)} • {formatDuration(session.durationMinutes)}
                         {session.completedChapter === 1 && <span className="ml-2">✅ Completed</span>}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-white">{session.versesRead} verses</p>
+                      <p className="text-sm text-gray-900">{session.versesRead} verses</p>
                       {session.chatMessages > 0 && (
-                        <p className="text-xs text-slate-400">{session.chatMessages} chat messages</p>
+                        <p className="text-xs text-gray-500">{session.chatMessages} chat messages</p>
                       )}
                     </div>
                   </div>
                 ))}
                 {(!sessions || sessions.length === 0) && (
-                  <div className="text-center py-8 text-slate-400">
-                    <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>No reading sessions yet</p>
-                    <p className="text-sm">Start reading to see your progress here</p>
+                  <div className="text-center py-8 text-gray-500">
+                    <BookOpen className="w-12 h-12 mx-auto mb-3 text-amber-300" />
+                    <p className="text-gray-600">No reading sessions yet</p>
+                    <p className="text-sm text-gray-500">Start reading to see your progress here</p>
                   </div>
                 )}
               </div>
@@ -299,10 +299,10 @@ export function ProgressDashboard() {
         {/* Achievements & Stats */}
         <div className="space-y-6">
           {/* Religions Explored */}
-          <Card className="glass-card border-cosmic-gold/30">
+          <Card className="bg-white border-amber-200 shadow-md">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Star className="w-5 h-5" />
+              <CardTitle className="text-gray-900 flex items-center gap-2">
+                <Star className="w-5 h-5 text-amber-600" />
                 Religions Explored
               </CardTitle>
             </CardHeader>
@@ -313,23 +313,23 @@ export function ProgressDashboard() {
                     <Badge 
                       key={religion} 
                       variant="outline" 
-                      className="border-cosmic-gold/50 text-cosmic-gold mr-2 mb-2"
+                      className="border-amber-400 text-amber-700 bg-amber-100 mr-2 mb-2"
                     >
                       {religionDisplayNames[religion] || religion}
                     </Badge>
                   ))
                 ) : (
-                  <p className="text-slate-400 text-sm">Start reading to explore different traditions</p>
+                  <p className="text-gray-500 text-sm">Start reading to explore different traditions</p>
                 )}
               </div>
             </CardContent>
           </Card>
 
           {/* Recent Milestones */}
-          <Card className="glass-card border-neon-cyan/30">
+          <Card className="bg-white border-amber-200 shadow-md">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Award className="w-5 h-5" />
+              <CardTitle className="text-gray-900 flex items-center gap-2">
+                <Award className="w-5 h-5 text-amber-600" />
                 Recent Achievements
               </CardTitle>
             </CardHeader>
@@ -337,20 +337,20 @@ export function ProgressDashboard() {
               <ScrollArea className="h-48">
                 <div className="space-y-3">
                   {summary?.recentMilestones?.map((milestone) => (
-                    <div key={milestone.id} className="flex items-center gap-3 p-2 rounded-lg bg-slate-800/30 border border-slate-700/30">
+                    <div key={milestone.id} className="flex items-center gap-3 p-2 rounded-lg bg-amber-50 border border-amber-200">
                       <span className="text-2xl">{milestone.badge}</span>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-white">{milestone.title}</p>
-                        <p className="text-xs text-slate-400">{milestone.description}</p>
-                        <p className="text-xs text-slate-500">{formatDate(milestone.achievedAt)}</p>
+                        <p className="text-sm font-medium text-gray-900">{milestone.title}</p>
+                        <p className="text-xs text-gray-600">{milestone.description}</p>
+                        <p className="text-xs text-gray-500">{formatDate(milestone.achievedAt)}</p>
                       </div>
                     </div>
                   ))}
                   {(!summary?.recentMilestones || summary.recentMilestones.length === 0) && (
-                    <div className="text-center py-6 text-slate-400">
-                      <Trophy className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No achievements yet</p>
-                      <p className="text-xs">Keep reading to unlock milestones</p>
+                    <div className="text-center py-6 text-gray-500">
+                      <Trophy className="w-8 h-8 mx-auto mb-2 text-amber-300" />
+                      <p className="text-sm text-gray-600">No achievements yet</p>
+                      <p className="text-xs text-gray-500">Keep reading to unlock milestones</p>
                     </div>
                   )}
                 </div>
@@ -359,39 +359,39 @@ export function ProgressDashboard() {
           </Card>
 
           {/* Quick Stats */}
-          <Card className="glass-card border-cosmic-purple/30">
+          <Card className="bg-white border-amber-200 shadow-md">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
+              <CardTitle className="text-gray-900 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-amber-600" />
                 Journey Stats
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-sm text-slate-300">Journey Started</span>
-                <span className="text-sm text-white">{journey?.startDate ? formatDate(journey.startDate) : 'N/A'}</span>
+                <span className="text-sm text-gray-600">Journey Started</span>
+                <span className="text-sm text-gray-900">{journey?.startDate ? formatDate(journey.startDate) : 'N/A'}</span>
               </div>
-              <Separator className="bg-slate-700" />
+              <Separator className="bg-amber-200" />
               <div className="flex justify-between">
-                <span className="text-sm text-slate-300">Longest Streak</span>
-                <span className="text-sm text-white">{summary?.longestStreak || 0} days</span>
+                <span className="text-sm text-gray-600">Longest Streak</span>
+                <span className="text-sm text-gray-900">{summary?.longestStreak || 0} days</span>
               </div>
-              <Separator className="bg-slate-700" />
+              <Separator className="bg-amber-200" />
               <div className="flex justify-between">
-                <span className="text-sm text-slate-300">Favorite Tradition</span>
-                <span className="text-sm text-white">
+                <span className="text-sm text-gray-600">Favorite Tradition</span>
+                <span className="text-sm text-gray-900">
                   {journey?.favoriteReligion ? 
                     religionDisplayNames[journey.favoriteReligion] || journey.favoriteReligion : 
                     'Exploring'}
                 </span>
               </div>
-              <Separator className="bg-slate-700" />
+              <Separator className="bg-amber-200" />
               <div className="flex justify-between">
-                <span className="text-sm text-slate-300">Weekly Goal</span>
+                <span className="text-sm text-gray-600">Weekly Goal</span>
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="h-auto p-1 text-neon-cyan hover:text-neon-cyan hover:bg-neon-cyan/10"
+                  className="h-auto p-1 text-amber-600 hover:text-amber-700 hover:bg-amber-100"
                   onClick={() => {
                     const newGoal = prompt('Set weekly reading goal (minutes):', journey?.readingGoal?.toString());
                     if (newGoal && !isNaN(parseInt(newGoal))) {
