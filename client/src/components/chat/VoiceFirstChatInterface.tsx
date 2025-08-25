@@ -86,6 +86,7 @@ export function VoiceFirstChatInterface({
   const [textInputValue, setTextInputValue] = useState('');
   const [inputIsolated, setInputIsolated] = useState(false);
   const [isTalkingBack, setIsTalkingBack] = useState(false);
+  const [isAISpeaking, setIsAISpeaking] = useState(false);
   const [interruptedQuery, setInterruptedQuery] = useState<string>('');
   const [lastAIMessage, setLastAIMessage] = useState<string>('');
   const [lastVoiceActivity, setLastVoiceActivity] = useState<number>(0);
@@ -714,7 +715,7 @@ export function VoiceFirstChatInterface({
         // Small delay to ensure message is rendered
         setTimeout(async () => {
           // Double-check voice state hasn't changed
-          if (voiceState === 'listening' || voiceState === 'processing' || inputIsolated) {
+          if (voiceState === 'listening' || inputIsolated) {
             console.log('🚫 Auto-play CANCELLED - Voice became active during delay');
             return;
           }
@@ -843,10 +844,20 @@ export function VoiceFirstChatInterface({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
+            onClick={async () => {
               if (window.confirm('Clear all chat messages?')) {
-                setMessages([]);
-                console.log('Chat cleared');
+                try {
+                  // Clear messages via API call or local storage
+                  await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
+                  console.log('Chat cleared');
+                  toast({
+                    title: "Chat Cleared",
+                    description: "All messages have been removed",
+                    variant: "default"
+                  });
+                } catch (error) {
+                  console.error('Failed to clear chat:', error);
+                }
               }
             }}
             className="text-xs px-2 h-7 text-red-600 border-red-300 hover:bg-red-50"

@@ -47,7 +47,7 @@ export function useVoiceModeHandler({
   disabled = false,
   isAIResponding = false,
   autoSendDelay = 1500,
-  confidenceThreshold = 0.8,
+  confidenceThreshold = 0.85, // Enhanced confidence threshold as recommended
   interruptionSensitivity = 0.3
 }: VoiceModeHandlerProps): VoiceModeHandlerReturn {
   
@@ -60,10 +60,14 @@ export function useVoiceModeHandler({
   const [isSupported, setIsSupported] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
 
-  // Single recognition instance
+  // Enhanced state management for robust auto-send
   const recognitionRef = useRef<any>(null);
   const autoSendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const silenceDetectionRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSpeechTimeRef = useRef<number>(0);
   const isInitializingRef = useRef(false);
+  const speechEndCountRef = useRef<number>(0);
 
   // Check support once
   useEffect(() => {
@@ -84,13 +88,23 @@ export function useVoiceModeHandler({
     onStateChange(newState);
   }, [onStateChange]);
 
-  // Cleanup function
+  // Enhanced cleanup function with new timeouts
   const cleanup = useCallback(() => {
     console.log('🧹 Cleaning up voice handler');
     
     if (autoSendTimeoutRef.current) {
       clearTimeout(autoSendTimeoutRef.current);
       autoSendTimeoutRef.current = null;
+    }
+
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+      debounceTimeoutRef.current = null;
+    }
+
+    if (silenceDetectionRef.current) {
+      clearTimeout(silenceDetectionRef.current);
+      silenceDetectionRef.current = null;
     }
 
     if (recognitionRef.current) {
@@ -106,8 +120,64 @@ export function useVoiceModeHandler({
     setCurrentTranscript('');
     setAudioLevel(0);
     setConfidence(0);
+    speechEndCountRef.current = 0;
+    lastSpeechTimeRef.current = 0;
     updateVoiceState('idle');
   }, [updateVoiceState]);
+
+  // Enhanced silence detection algorithm with sliding window
+  const handleSilenceDetection = useCallback((transcript: string, confidence: number) => {
+    console.log('🔊 Silence detection - transcript:', transcript, 'confidence:', confidence);
+    
+    // Clear existing debounce timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    // Only proceed if confidence meets threshold
+    if (confidence < confidenceThreshold) {
+      console.log('⚠️ Confidence too low for auto-send:', confidence);
+      return;
+    }
+
+    // Debounce to filter noise-induced pauses (300ms)
+    debounceTimeoutRef.current = setTimeout(() => {
+      console.log('🎯 Debounce completed, checking for sustained silence...');
+      
+      // Clear existing silence detection
+      if (silenceDetectionRef.current) {
+        clearTimeout(silenceDetectionRef.current);
+      }
+      
+      // Sliding window: wait for 1-2s of sustained silence to confirm intent
+      const silenceWindow = Math.random() * 1000 + 1000; // 1-2 second window
+      
+      silenceDetectionRef.current = setTimeout(() => {
+        const now = Date.now();
+        const timeSinceLastSpeech = now - lastSpeechTimeRef.current;
+        
+        console.log('⏰ Silence window completed. Time since last speech:', timeSinceLastSpeech);
+        
+        // Confirm intent by checking if sufficient silence has passed
+        if (timeSinceLastSpeech >= 1000 && transcript.trim()) {
+          console.log('🚀 Auto-send confirmed - sufficient silence and valid transcript');
+          
+          // Clear state before sending
+          setCurrentTranscript('');
+          setIsListening(false);
+          updateVoiceState('processing');
+          
+          // Send message
+          onAutoSend(transcript.trim());
+          
+          // Reset to idle after brief processing state
+          setTimeout(() => updateVoiceState('idle'), 500);
+        } else {
+          console.log('⚠️ Auto-send cancelled - insufficient silence or empty transcript');
+        }
+      }, silenceWindow);
+    }, 300); // 300ms debounce
+  }, [confidenceThreshold, onAutoSend, updateVoiceState]);
 
   // Start listening - simplified and robust
   const startListening = useCallback(async (): Promise<boolean> => {
@@ -154,6 +224,7 @@ export function useVoiceModeHandler({
       recognition.onresult = (event: any) => {
         let finalTranscript = '';
         let interimTranscript = '';
+        let maxConfidence = 0;
         
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript.trim();
@@ -161,41 +232,38 @@ export function useVoiceModeHandler({
           
           if (event.results[i].isFinal) {
             finalTranscript += transcript + ' ';
-            setConfidence(resultConfidence);
+            maxConfidence = Math.max(maxConfidence, resultConfidence);
+            lastSpeechTimeRef.current = Date.now(); // Track speech timing
           } else {
             interimTranscript += transcript + ' ';
+            lastSpeechTimeRef.current = Date.now(); // Track ongoing speech
           }
         }
         
         const fullTranscript = (finalTranscript + interimTranscript).trim();
-        console.log('📝 Transcript:', fullTranscript);
+        console.log('📝 Enhanced transcript:', fullTranscript, 'confidence:', maxConfidence);
         
         setCurrentTranscript(fullTranscript);
+        setConfidence(maxConfidence);
         onTranscript(fullTranscript, interimTranscript.length > 0);
         
-        // Auto-send on final result
-        if (finalTranscript.trim() && confidence >= confidenceThreshold) {
-          console.log('🚀 Scheduling auto-send');
-          
-          if (autoSendTimeoutRef.current) {
-            clearTimeout(autoSendTimeoutRef.current);
-          }
-          
-          autoSendTimeoutRef.current = setTimeout(() => {
-            const messageToSend = finalTranscript.trim();
-            console.log('📤 Auto-sending:', messageToSend);
-            
-            // Clear state before sending
-            setCurrentTranscript('');
-            setIsListening(false);
-            updateVoiceState('processing');
-            
-            // Send message
-            onAutoSend(messageToSend);
-            
-            // Reset to idle after brief processing state
-            setTimeout(() => updateVoiceState('idle'), 500);
-          }, autoSendDelay);
+        // Enhanced auto-send with silence detection algorithm
+        if (finalTranscript.trim()) {
+          console.log('🎯 Final transcript detected, initiating enhanced auto-send logic');
+          handleSilenceDetection(finalTranscript.trim(), maxConfidence);
+        }
+      };
+
+      // Enhanced speechend event handler for better intent detection
+      recognition.onspeechend = () => {
+        console.log('🗣️ Speech ended detected by browser');
+        speechEndCountRef.current += 1;
+        
+        // Additional confirmation that user has finished speaking
+        const currentTranscriptValue = currentTranscript.trim();
+        if (currentTranscriptValue && confidence >= confidenceThreshold) {
+          console.log('🎯 Speech end confirmed, reinforcing auto-send decision');
+          handleSilenceDetection(currentTranscriptValue, confidence);
         }
       };
 

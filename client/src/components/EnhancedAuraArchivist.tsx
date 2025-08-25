@@ -61,15 +61,21 @@ function ScriptureContent({
   onNavigateToVerse?: (religion: Religion, book: string, chapter: number, verse?: number) => void;
 }) {
   const parseScriptureReferences = (text: string) => {
+    // Enhanced scripture reference patterns with variants and multi-part support
     const patterns = [
-      // Bible references
+      // Bible references with abbreviations and variants
       { 
-        regex: /\b(Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|1 Samuel|2 Samuel|1 Kings|2 Kings|1 Chronicles|2 Chronicles|Ezra|Nehemiah|Esther|Job|Psalms|Proverbs|Ecclesiastes|Song of Songs|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi|Matthew|Mark|Luke|John|Acts|Romans|1 Corinthians|2 Corinthians|Galatians|Ephesians|Philippians|Colossians|1 Thessalonians|2 Thessalonians|1 Timothy|2 Timothy|Titus|Philemon|Hebrews|James|1 Peter|2 Peter|1 John|2 John|3 John|Jude|Revelation)\s+(\d+):(\d+)(?:-\d+)?/gi, 
+        regex: /\b(Genesis|Gen\.?|Exodus|Ex\.?|Exod\.?|Leviticus|Lev\.?|Numbers|Num\.?|Deuteronomy|Deut\.?|Joshua|Josh\.?|Judges|Judg\.?|Ruth|1\s?Samuel|1\s?Sam\.?|2\s?Samuel|2\s?Sam\.?|1\s?Kings|1\s?Kgs\.?|2\s?Kings|2\s?Kgs\.?|1\s?Chronicles|1\s?Chr\.?|2\s?Chronicles|2\s?Chr\.?|Ezra|Nehemiah|Neh\.?|Esther|Esth\.?|Job|Psalms?|Pss?\.?|Proverbs|Prov\.?|Ecclesiastes|Eccl\.?|Song of Songs|Song|Isaiah|Isa\.?|Jeremiah|Jer\.?|Lamentations|Lam\.?|Ezekiel|Ezek\.?|Daniel|Dan\.?|Hosea|Hos\.?|Joel|Amos|Obadiah|Obad\.?|Jonah|Micah|Mic\.?|Nahum|Nah\.?|Habakkuk|Hab\.?|Zephaniah|Zeph\.?|Haggai|Hag\.?|Zechariah|Zech\.?|Malachi|Mal\.?|Matthew|Matt\.?|Mark|Luke|John|Acts|Romans|Rom\.?|1\s?Corinthians|1\s?Cor\.?|2\s?Corinthians|2\s?Cor\.?|Galatians|Gal\.?|Ephesians|Eph\.?|Philippians|Phil\.?|Colossians|Col\.?|1\s?Thessalonians|1\s?Thess\.?|2\s?Thessalonians|2\s?Thess\.?|1\s?Timothy|1\s?Tim\.?|2\s?Timothy|2\s?Tim\.?|Titus|Tit\.?|Philemon|Phlm\.?|Hebrews|Heb\.?|James|Jas\.?|1\s?Peter|1\s?Pet\.?|2\s?Peter|2\s?Pet\.?|1\s?John|2\s?John|3\s?John|Jude|Revelation|Rev\.?)\s+(\d+):(\d+)(?:[-–](\d+))?/gi, 
         religion: 'bible' as Religion 
       },
-      // Quran references - comprehensive patterns
+      // Quran references with comprehensive variants and multi-verse support
       { 
-        regex: /\b(?:Quran|Qur'an|Qur'ān|Surah)\s+(?:Al-)?([A-Za-z-\s]+)\s*(?:\([\w\s]+\))?\s*(\d+):(\d+)(?:-\d+)?/gi, 
+        regex: /\b(?:Quran|Qur'an|Qur'ān|Koran|Al-Quran|Al-Qur'an)\s+(\d+):(\d+)(?:[-–](\d+))?/gi, 
+        religion: 'quran' as Religion 
+      },
+      // Surah references with name and number variations
+      { 
+        regex: /\b(?:Surah|Sura)\s+(?:Al-)?([A-Za-z-\s']+)\s*(?:\([\w\s]+\))?\s*(\d+):(\d+)(?:[-–](\d+))?/gi, 
         religion: 'quran' as Religion 
       },
       { 

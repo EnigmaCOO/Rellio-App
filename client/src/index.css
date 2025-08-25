@@ -702,6 +702,63 @@
   }
 }
 
+/* Enhanced voice system state animations */
+@keyframes fade-in-scale {
+  from { 
+    opacity: 0; 
+    transform: scale(0.8);
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-up {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0);
+  }
+}
+
+@keyframes thinking-dots {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes color-shift {
+  0% { filter: hue-rotate(0deg); }
+  50% { filter: hue-rotate(180deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+/* Enhanced animation utility classes */
+.animate-fade-in-scale {
+  animation: fade-in-scale 300ms ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up 400ms ease-out forwards;
+}
+
+.animate-thinking-dots {
+  animation: thinking-dots 1.4s ease-in-out infinite;
+}
+
+.animate-color-shift {
+  animation: color-shift 3s linear infinite;
+}
+
 /* Voice Control Classes */
 .voice-orb {
   @apply relative rounded-full transition-all duration-300;
