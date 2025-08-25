@@ -410,6 +410,7 @@ export function VoiceFirstChatInterface({
           // Check for interruption during AI response
           if (voiceState === 'responding' && average > (settings.interruptionSensitivity * 255)) {
             console.log('🚨 User interruption detected during AI response');
+            console.log(`🔊 Audio level: ${average}, Threshold: ${settings.interruptionSensitivity * 255}`);
             handleInterruption();
           }
         }
