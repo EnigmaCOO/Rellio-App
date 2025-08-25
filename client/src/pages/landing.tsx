@@ -23,7 +23,7 @@ import {
   Phone,
   MapPin
 } from "lucide-react";
-import rellioLogo from "@assets/image_1751817332000.png";
+import rellioLogo from "@assets/Rellio logo_1756155085148.png";
 import { useQuery } from "@tanstack/react-query";
 
 // Religious symbol components
@@ -144,7 +144,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <Flame className="w-8 h-8 text-neon-blue animate-neon-pulse" />
+              <img src={rellioLogo} alt="Rellio" className="w-12 h-12 object-contain animate-neon-pulse" />
               <div className="absolute -top-1 -right-1 w-3 h-3 border border-cosmic-gold rounded-full animate-pulse"></div>
             </div>
             <h1 className="text-2xl font-bold text-white">Rellio</h1>
@@ -503,7 +503,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center space-x-3 mb-4">
-                <Flame className="w-8 h-8 text-neon-blue" />
+                <img src={rellioLogo} alt="Rellio" className="w-10 h-10 object-contain" />
                 <h3 className="text-xl font-bold text-white">Rellio</h3>
               </div>
               <p className="text-gray-400">

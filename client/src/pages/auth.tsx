@@ -11,6 +11,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Flame, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import rellioLogo from "@assets/Rellio logo_1756155085148.png";
 import { loginSchema, signupSchema } from "@shared/schema";
 import type { z } from "zod";
 
@@ -139,7 +140,7 @@ export default function AuthPage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-3 mb-4">
             <div className="relative">
-              <Flame className="w-12 h-12 text-neon-blue animate-neon-pulse" />
+              <img src={rellioLogo} alt="Rellio" className="w-16 h-16 object-contain animate-neon-pulse" />
               <div className="absolute -top-1 -right-1 w-4 h-4 border border-cosmic-gold rounded-full animate-pulse"></div>
             </div>
             <h1 className="text-3xl font-bold text-white">Rellio</h1>
