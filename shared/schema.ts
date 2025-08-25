@@ -59,17 +59,91 @@ export const userReadings = pgTable("user_readings", {
   timestamp: timestamp("timestamp").defaultNow(),
 });
 
+// Enhanced spiritual journey tracking
+export const spiritualJourneys = pgTable("spiritual_journeys", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  startDate: timestamp("start_date").defaultNow(),
+  totalReadingSessions: integer("total_reading_sessions").default(0),
+  totalTimeMinutes: integer("total_time_minutes").default(0),
+  currentStreak: integer("current_streak").default(0),
+  longestStreak: integer("longest_streak").default(0),
+  lastActiveDate: timestamp("last_active_date"),
+  favoriteReligion: text("favorite_religion"),
+  readingGoal: integer("reading_goal").default(0), // minutes per week
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const readingSessions = pgTable("reading_sessions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  journeyId: integer("journey_id").notNull(),
+  religion: text("religion").notNull(),
+  book: text("book").notNull(),
+  chapter: integer("chapter").notNull(),
+  startTime: timestamp("start_time").defaultNow(),
+  endTime: timestamp("end_time"),
+  durationMinutes: integer("duration_minutes").default(0),
+  versesRead: integer("verses_read").default(0),
+  chatMessages: integer("chat_messages").default(0),
+  completedChapter: integer("completed_chapter").default(0), // 0 = partial, 1 = completed
+  mood: text("mood"), // optional mood tracking
+  notes: text("notes"), // optional personal notes
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const journeyMilestones = pgTable("journey_milestones", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  journeyId: integer("journey_id").notNull(),
+  type: text("type").notNull(), // 'streak', 'chapters_read', 'time_spent', 'multi_religion', 'daily_goal'
+  title: text("title").notNull(),
+  description: text("description"),
+  achievedAt: timestamp("achieved_at").defaultNow(),
+  value: integer("value"), // the milestone number achieved
+  badge: text("badge"), // badge icon/name
+  isSpecial: integer("is_special").default(0), // 0 = regular, 1 = special milestone
+});
+
+export const weeklyProgress = pgTable("weekly_progress", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  journeyId: integer("journey_id").notNull(),
+  weekStart: timestamp("week_start").notNull(),
+  weekEnd: timestamp("week_end").notNull(),
+  totalMinutes: integer("total_minutes").default(0),
+  sessionsCount: integer("sessions_count").default(0),
+  chaptersCompleted: integer("chapters_completed").default(0),
+  goalAchieved: integer("goal_achieved").default(0), // 0 = not achieved, 1 = achieved
+  religionsExplored: json("religions_explored"), // array of religions explored this week
+  streakMaintained: integer("streak_maintained").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertScriptureSchema = createInsertSchema(scriptures);
 export const insertChatMessageSchema = createInsertSchema(chatMessages);
 export const insertUserReadingSchema = createInsertSchema(userReadings);
+export const insertSpiritualJourneySchema = createInsertSchema(spiritualJourneys);
+export const insertReadingSessionSchema = createInsertSchema(readingSessions);
+export const insertJourneyMilestoneSchema = createInsertSchema(journeyMilestones);
+export const insertWeeklyProgressSchema = createInsertSchema(weeklyProgress);
 
 export type InsertScripture = z.infer<typeof insertScriptureSchema>;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type InsertUserReading = z.infer<typeof insertUserReadingSchema>;
+export type InsertSpiritualJourney = z.infer<typeof insertSpiritualJourneySchema>;
+export type InsertReadingSession = z.infer<typeof insertReadingSessionSchema>;
+export type InsertJourneyMilestone = z.infer<typeof insertJourneyMilestoneSchema>;
+export type InsertWeeklyProgress = z.infer<typeof insertWeeklyProgressSchema>;
 
 export type Scripture = typeof scriptures.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type UserReading = typeof userReadings.$inferSelect;
+export type SpiritualJourney = typeof spiritualJourneys.$inferSelect;
+export type ReadingSession = typeof readingSessions.$inferSelect;
+export type JourneyMilestone = typeof journeyMilestones.$inferSelect;
+export type WeeklyProgress = typeof weeklyProgress.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
@@ -116,4 +190,26 @@ export const chatRequestSchema = z.object({
     multiReligiousPerspective: z.boolean().optional(),
     persona: z.string().nullable().optional(),
   }).optional(),
+});
+
+// Progress tracking schemas
+export const startReadingSessionSchema = z.object({
+  religion: religionSchema,
+  book: z.string(),
+  chapter: z.number().min(1),
+});
+
+export const updateReadingSessionSchema = z.object({
+  sessionId: z.number(),
+  endTime: z.string().optional(),
+  durationMinutes: z.number().min(0).optional(),
+  versesRead: z.number().min(0).optional(),
+  chatMessages: z.number().min(0).optional(),
+  completedChapter: z.boolean().optional(),
+  mood: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export const updateJourneyGoalSchema = z.object({
+  readingGoal: z.number().min(0).max(10080), // max 1 week in minutes
 });

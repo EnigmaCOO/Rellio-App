@@ -3,14 +3,16 @@ import { NavigationPanel } from "@/components/NavigationPanel";
 import { VerseSpotlight } from "@/components/VerseSpotlight";
 import { VerseList } from "@/components/IlluminVerse/VerseList";
 import { VoiceFirstChatInterface } from "@/components/chat/VoiceFirstChatInterface";
+import { ProgressDashboard } from "@/components/progress/ProgressDashboard";
 import { type ScholarPersona, getPersonaForReligion } from "@/components/chat/ScholarPersonas";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Settings, BookOpen, Menu, X, ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
+import { Search, Settings, BookOpen, Menu, X, ChevronLeft, ChevronRight, MessageCircle, TrendingUp } from "lucide-react";
 import rellioLogo from "@assets/image_1751817332000.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useSwipeable } from "react-swipeable";
+import { cn } from "@/lib/utils";
 import type { Religion, Scripture } from "@shared/schema";
 
 export default function Dashboard() {
@@ -25,6 +27,7 @@ export default function Dashboard() {
   const [isCopyOperation, setIsCopyOperation] = useState<boolean>(false);
   const [highlightedVerse, setHighlightedVerse] = useState<number | undefined>(undefined);
   const [selectedPersona, setSelectedPersona] = useState<ScholarPersona | null>(null);
+  const [currentView, setCurrentView] = useState<'scripture' | 'progress'>('scripture');
   const { toast } = useToast();
 
   // Debug panel visibility state
@@ -309,6 +312,36 @@ export default function Dashboard() {
             <div className="flex items-center space-x-2 lg:space-x-3">
               {/* Panel Toggle Buttons */}
               <div className="flex items-center space-x-1">
+                {/* View Toggle Buttons */}
+                <Button
+                  variant={currentView === 'scripture' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setCurrentView('scripture')}
+                  className={cn(
+                    "h-8 px-3 text-xs transition-all duration-200",
+                    currentView === 'scripture' 
+                      ? "bg-cosmic-purple/20 text-cosmic-purple border border-cosmic-purple/30 hover:bg-cosmic-purple/30" 
+                      : "text-white hover:bg-cosmic-purple/10 hover:text-cosmic-purple"
+                  )}
+                >
+                  <BookOpen className="w-3 h-3 mr-1" />
+                  Scripture
+                </Button>
+                <Button
+                  variant={currentView === 'progress' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setCurrentView('progress')}
+                  className={cn(
+                    "h-8 px-3 text-xs transition-all duration-200",
+                    currentView === 'progress' 
+                      ? "bg-cosmic-gold/20 text-cosmic-gold border border-cosmic-gold/30 hover:bg-cosmic-gold/30" 
+                      : "text-white hover:bg-cosmic-gold/10 hover:text-cosmic-gold"
+                  )}
+                >
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  Progress
+                </Button>
+                
                 <Button
                   variant="ghost"
                   size="sm"
@@ -350,12 +383,12 @@ export default function Dashboard() {
       {/* Three-Column Responsive Layout */}
       <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)] relative overflow-hidden">
         
-        {/* Left Column - Navigation Panel */}
+        {/* Left Column - Navigation Panel (only for scripture view) */}
         <div
           {...navigationSwipeHandlers}
-          className={`${getNavigationClasses()} transition-all duration-300 ease-in-out overflow-hidden relative border-r border-gray-200`}
+          className={`${currentView === 'scripture' ? getNavigationClasses() : 'w-0'} transition-all duration-300 ease-in-out overflow-hidden relative border-r border-gray-200`}
         >
-          {navigationVisible && (
+          {navigationVisible && currentView === 'scripture' && (
             <>
               <NavigationPanel
                 selectedReligion={selectedReligion}
@@ -378,12 +411,16 @@ export default function Dashboard() {
           )}
         </div>
         
-        {/* Center Column - Verse Content */}
+        {/* Center Column - Verse Content or Progress Dashboard */}
         <div
           {...contentSwipeHandlers}
           className={`${getContentWidth()} transition-all duration-300 ease-in-out relative overflow-hidden order-2`}
         >
-          {selectedReligion ? (
+          {currentView === 'progress' ? (
+            <div className="h-full bg-cosmic-navy overflow-y-auto">
+              <ProgressDashboard />
+            </div>
+          ) : selectedReligion ? (
             <div className="h-full bg-gray-50 flex flex-col p-4">
               {/* Verse List - Full height without chat */}
               <VerseList
@@ -410,7 +447,7 @@ export default function Dashboard() {
           )}
           
           {/* Hidden panel indicators */}
-          {!navigationVisible && (
+          {!navigationVisible && currentView === 'scripture' && (
             <Button
               variant="ghost"
               size="sm"

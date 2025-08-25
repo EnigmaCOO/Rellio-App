@@ -13,9 +13,16 @@ import {
   chatRequestSchema, 
   insertChatMessageSchema,
   insertUserReadingSchema,
+  startReadingSessionSchema,
+  updateReadingSessionSchema,
+  updateJourneyGoalSchema,
   religionSchema,
   loginSchema,
-  signupSchema
+  signupSchema,
+  type Religion,
+  type InsertChatMessage,
+  type InsertSpiritualJourney,
+  type InsertReadingSession
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -737,6 +744,279 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
       res.status(500).json({ error: "Failed to generate speech", details: error instanceof Error ? error.message : String(error) });
     }
   });
+
+  // ===== SPIRITUAL JOURNEY PROGRESS TRACKING API =====
+  
+  // Get user's spiritual journey overview
+  app.get("/api/progress/journey", async (req: any, res) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const userId = req.session.userId;
+      let journey = await storage.getSpiritualJourney(userId);
+      
+      // Create journey if it doesn't exist
+      if (!journey) {
+        journey = await storage.createSpiritualJourney({
+          userId,
+          totalReadingSessions: 0,
+          totalTimeMinutes: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          readingGoal: 60 // default 1 hour per week
+        });
+      }
+      
+      res.json(journey);
+    } catch (error) {
+      console.error("Get journey error:", error);
+      res.status(500).json({ error: "Failed to get spiritual journey" });
+    }
+  });
+
+  // Update reading goal
+  app.patch("/api/progress/journey/goal", async (req: any, res) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const { readingGoal } = updateJourneyGoalSchema.parse(req.body);
+      const userId = req.session.userId;
+      
+      const journey = await storage.updateSpiritualJourney(userId, { readingGoal });
+      res.json(journey);
+    } catch (error) {
+      console.error("Update reading goal error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update reading goal" });
+    }
+  });
+
+  // Start a reading session
+  app.post("/api/progress/session/start", async (req: any, res) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const sessionData = startReadingSessionSchema.parse(req.body);
+      const userId = req.session.userId;
+      
+      // Check if there's an active session and end it first
+      const activeSession = await storage.getActiveReadingSession(userId);
+      if (activeSession) {
+        await storage.endReadingSession(activeSession.id, {
+          durationMinutes: Math.round((Date.now() - activeSession.startTime.getTime()) / 60000)
+        });
+      }
+      
+      // Get or create journey
+      let journey = await storage.getSpiritualJourney(userId);
+      if (!journey) {
+        journey = await storage.createSpiritualJourney({
+          userId,
+          totalReadingSessions: 0,
+          totalTimeMinutes: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          readingGoal: 60
+        });
+      }
+      
+      // Start new session
+      const session = await storage.startReadingSession({
+        userId,
+        journeyId: journey.id,
+        ...sessionData
+      });
+      
+      res.json(session);
+    } catch (error) {
+      console.error("Start reading session error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to start reading session" });
+    }
+  });
+
+  // End a reading session
+  app.patch("/api/progress/session/:sessionId/end", async (req: any, res) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const sessionId = parseInt(req.params.sessionId);
+      const updates = updateReadingSessionSchema.parse(req.body);
+      const userId = req.session.userId;
+      
+      // End the session
+      const session = await storage.endReadingSession(sessionId, updates);
+      
+      // Update journey statistics
+      const journey = await storage.getSpiritualJourney(userId);
+      if (journey) {
+        const newTotalSessions = journey.totalReadingSessions + 1;
+        const newTotalMinutes = journey.totalTimeMinutes + (updates.durationMinutes || 0);
+        
+        // Check for milestones
+        await checkAndCreateMilestones(userId, journey.id, {
+          totalSessions: newTotalSessions,
+          totalMinutes: newTotalMinutes,
+          completedChapter: updates.completedChapter || false,
+          religion: session.religion
+        });
+        
+        await storage.updateSpiritualJourney(userId, {
+          totalReadingSessions: newTotalSessions,
+          totalTimeMinutes: newTotalMinutes,
+          lastActiveDate: new Date(),
+          favoriteReligion: await calculateFavoriteReligion(userId)
+        });
+      }
+      
+      res.json(session);
+    } catch (error) {
+      console.error("End reading session error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to end reading session" });
+    }
+  });
+
+  // Get progress summary
+  app.get("/api/progress/summary", async (req: any, res) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const userId = req.session.userId;
+      const summary = await storage.getUserProgressSummary(userId);
+      res.json(summary);
+    } catch (error) {
+      console.error("Get progress summary error:", error);
+      res.status(500).json({ error: "Failed to get progress summary" });
+    }
+  });
+
+  // Get user milestones
+  app.get("/api/progress/milestones", async (req: any, res) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const userId = req.session.userId;
+      const milestones = await storage.getUserMilestones(userId);
+      res.json(milestones);
+    } catch (error) {
+      console.error("Get milestones error:", error);
+      res.status(500).json({ error: "Failed to get milestones" });
+    }
+  });
+
+  // Get reading sessions history
+  app.get("/api/progress/sessions", async (req: any, res) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const userId = req.session.userId;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      const sessions = await storage.getUserReadingSessions(userId, limit);
+      res.json(sessions);
+    } catch (error) {
+      console.error("Get reading sessions error:", error);
+      res.status(500).json({ error: "Failed to get reading sessions" });
+    }
+  });
+
+  // Helper function to check and create milestones
+  async function checkAndCreateMilestones(userId: string, journeyId: number, stats: {
+    totalSessions: number;
+    totalMinutes: number;
+    completedChapter: boolean;
+    religion: string;
+  }) {
+    const milestones = [
+      { type: 'first_session', threshold: 1, title: 'First Steps', description: 'Started your spiritual journey' },
+      { type: 'sessions_milestone', threshold: 5, title: 'Dedicated Reader', description: 'Completed 5 reading sessions' },
+      { type: 'sessions_milestone', threshold: 10, title: 'Spiritual Explorer', description: 'Completed 10 reading sessions' },
+      { type: 'sessions_milestone', threshold: 25, title: 'Wisdom Seeker', description: 'Completed 25 reading sessions' },
+      { type: 'sessions_milestone', threshold: 50, title: 'Devoted Student', description: 'Completed 50 reading sessions' },
+      { type: 'time_milestone', threshold: 60, title: 'One Hour Journey', description: 'Spent 1 hour in spiritual study' },
+      { type: 'time_milestone', threshold: 300, title: '5 Hours Wisdom', description: 'Spent 5 hours in spiritual study' },
+      { type: 'time_milestone', threshold: 600, title: '10 Hours Devotion', description: 'Spent 10 hours in spiritual study' },
+    ];
+
+    for (const milestone of milestones) {
+      const value = milestone.type === 'sessions_milestone' ? stats.totalSessions : stats.totalMinutes;
+      
+      if (value >= milestone.threshold) {
+        // Check if milestone already exists
+        const existing = await storage.getUserMilestones(userId);
+        const hasThisMilestone = existing.some(m => 
+          m.type === milestone.type && m.value === milestone.threshold
+        );
+        
+        if (!hasThisMilestone) {
+          await storage.createJourneyMilestone({
+            userId,
+            journeyId,
+            type: milestone.type,
+            title: milestone.title,
+            description: milestone.description,
+            value: milestone.threshold,
+            badge: milestone.type === 'sessions_milestone' ? '📚' : '⏰'
+          });
+        }
+      }
+    }
+
+    // Chapter completion milestone
+    if (stats.completedChapter) {
+      await storage.createJourneyMilestone({
+        userId,
+        journeyId,
+        type: 'chapter_complete',
+        title: 'Chapter Complete',
+        description: `Completed a chapter in ${stats.religion}`,
+        value: 1,
+        badge: '✅'
+      });
+    }
+  }
+
+  // Helper function to calculate favorite religion
+  async function calculateFavoriteReligion(userId: string): Promise<string | null> {
+    const sessions = await storage.getUserReadingSessions(userId);
+    if (sessions.length === 0) return null;
+    
+    const religionCounts: { [key: string]: number } = {};
+    sessions.forEach(session => {
+      religionCounts[session.religion] = (religionCounts[session.religion] || 0) + 1;
+    });
+    
+    let maxReligion = null;
+    let maxCount = 0;
+    for (const [religion, count] of Object.entries(religionCounts)) {
+      if (count > maxCount) {
+        maxCount = count;
+        maxReligion = religion;
+      }
+    }
+    
+    return maxReligion;
+  }
 
   const httpServer = createServer(app);
   

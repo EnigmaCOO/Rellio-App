@@ -235,7 +235,9 @@ export function NavigationPanel({
   return (
     <div className="h-full bg-white shadow-md border-r border-scripture-200 overflow-y-auto">
       <div className="p-4 lg:p-6">
-        <h2 className="text-lg font-semibold text-scripture-800 mb-4">Scripture Navigation</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-white">Scripture Navigation</h2>
+        </div>
         
         {/* Religious Symbols Selector */}
         <div className="mb-6">
