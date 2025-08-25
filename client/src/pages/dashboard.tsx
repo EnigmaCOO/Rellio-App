@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useSwipeable } from "react-swipeable";
+import { useReadingSession } from "@/hooks/useReadingSession";
 import { cn } from "@/lib/utils";
 import type { Religion, Scripture } from "@shared/schema";
 
@@ -26,6 +27,9 @@ export default function Dashboard() {
   const [externalMessage, setExternalMessage] = useState<string>('');
   const [isCopyOperation, setIsCopyOperation] = useState<boolean>(false);
   const [highlightedVerse, setHighlightedVerse] = useState<number | undefined>(undefined);
+  
+  // Reading session tracking
+  const readingSession = useReadingSession();
   const [selectedPersona, setSelectedPersona] = useState<ScholarPersona | null>(null);
   const [currentView, setCurrentView] = useState<'scripture' | 'progress'>('scripture');
   const { toast } = useToast();
@@ -140,15 +144,33 @@ export default function Dashboard() {
     setSelectedChapter(1);
     // Reset book selection to let the effect handle it
     setSelectedBook('');
+    
+    // End current reading session when switching religions
+    if (readingSession.isSessionActive()) {
+      readingSession.endSession();
+    }
   };
 
   const handleBookChange = (book: string) => {
     setSelectedBook(book);
     setSelectedChapter(1);
+    
+    // Start or restart reading session for new book
+    if (selectedReligion && book) {
+      readingSession.startSession(selectedReligion, book, 1);
+    }
   };
 
   const handleChapterChange = (chapter: number) => {
     setSelectedChapter(chapter);
+    
+    // Update chapter in reading session and track progress
+    if (readingSession.isSessionActive()) {
+      readingSession.updateChapter(chapter);
+    } else if (selectedReligion && selectedBook) {
+      // Start session if not already active
+      readingSession.startSession(selectedReligion, selectedBook, chapter);
+    }
   };
 
   // Panel toggle functions
@@ -421,6 +443,8 @@ export default function Dashboard() {
                 onCopyVerse={handleCopyVerse}
                 highlightedVerse={highlightedVerse}
                 maxChapters={bookInfo?.chapters || 10}
+                onVerseRead={() => readingSession.incrementVersesRead()}
+                readingSession={readingSession}
               />
             </div>
           ) : (
@@ -489,6 +513,7 @@ export default function Dashboard() {
                   isInsideBook={!!(selectedReligion && selectedBook)}
                   onNavigateToVerse={handleNavigateToVerse}
                   className="h-full"
+                  onMessageSent={() => readingSession.incrementChatMessages()}
                 />
               </div>
             </div>

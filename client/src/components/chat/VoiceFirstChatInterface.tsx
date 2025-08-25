@@ -39,6 +39,7 @@ interface VoiceFirstChatInterfaceProps {
   isInsideBook?: boolean;
   onNavigateToVerse?: (religion: Religion, book: string, chapter: number, verse?: number) => void;
   className?: string;
+  onMessageSent?: () => void;
 }
 
 // Voice Recognition Types
@@ -65,7 +66,8 @@ export function VoiceFirstChatInterface({
   selectedPersona,
   isInsideBook = false,
   onNavigateToVerse,
-  className = ""
+  className = "",
+  onMessageSent
 }: VoiceFirstChatInterfaceProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -249,6 +251,9 @@ export function VoiceFirstChatInterface({
       return await response.json();
     },
     onSuccess: async (data) => {
+      // Track message sent for progress tracking
+      onMessageSent?.();
+      
       // Invalidate query to refresh messages
       await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
       

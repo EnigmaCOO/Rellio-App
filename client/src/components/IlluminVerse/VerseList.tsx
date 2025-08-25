@@ -20,6 +20,8 @@ interface VerseListProps {
   onCopyVerse?: (verseText: string) => void;
   highlightedVerse?: number;
   maxChapters?: number;
+  onVerseRead?: () => void;
+  readingSession?: any;
 }
 
 export function VerseList({
@@ -33,7 +35,9 @@ export function VerseList({
   onChapterChange,
   onCopyVerse,
   highlightedVerse,
-  maxChapters = 10
+  maxChapters = 10,
+  onVerseRead,
+  readingSession
 }: VerseListProps) {
   const { toast } = useToast();
   const [speakingStates, setSpeakingStates] = useState<Record<number, boolean>>({});
@@ -43,6 +47,9 @@ export function VerseList({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
+  
+  // Track verses as they are read
+  const [versesTracked, setVersesTracked] = useState(new Set<number>());
   const [availableVoices, setAvailableVoices] = useState<any[]>([]);
   const [selectedVoiceIndex, setSelectedVoiceIndex] = useState(0);
   const [speed, setSpeed] = useState(1);
@@ -72,6 +79,11 @@ export function VerseList({
     };
     loadVoices();
   }, []);
+
+  // Reset verse tracking when chapter changes
+  useEffect(() => {
+    setVersesTracked(new Set());
+  }, [selectedChapter, selectedBook]);
   
   // Clean up current audio
   const cleanupCurrentAudio = () => {
@@ -411,7 +423,7 @@ export function VerseList({
             {religionName} — {selectedBook}
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            {selectedReligion === 'quran' ? 'Surah' : 'Chapter'} {selectedChapter} of {maxChapters}
+            {selectedReligion === 'islam' ? 'Surah' : 'Chapter'} {selectedChapter} of {maxChapters}
           </p>
         </div>
 
@@ -483,7 +495,14 @@ export function VerseList({
                       }`}
                     >
                       <div className="flex justify-between items-start gap-4">
-                        <div className="flex-1">
+                        <div className="flex-1"
+                             onMouseEnter={() => {
+                               // Track verse as read when user hovers/focuses on it
+                               if (!versesTracked.has(scripture.verse)) {
+                                 setVersesTracked(prev => new Set([...Array.from(prev), scripture.verse]));
+                                 onVerseRead?.();
+                               }
+                             }}>
                           <div className="flex items-start gap-3">
                             <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
                               {scripture.verse}
