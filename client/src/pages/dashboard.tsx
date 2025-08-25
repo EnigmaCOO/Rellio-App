@@ -7,7 +7,7 @@ import { ProgressDashboard } from "@/components/progress/ProgressDashboard";
 import { type ScholarPersona, getPersonaForReligion } from "@/components/chat/ScholarPersonas";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Settings, BookOpen, Menu, X, ChevronLeft, ChevronRight, MessageCircle, TrendingUp } from "lucide-react";
-import rellioLogo from "@assets/image_1751817332000.png";
+import rellioLogo from "@assets/Rellio logo_1756158287035.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -342,39 +342,42 @@ export default function Dashboard() {
                   Progress
                 </Button>
                 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleNavigation}
-                  className={`transition-colors ${
-                    navigationVisible 
-                      ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
-                      : 'text-gray-400 hover:text-gray-600'
-                  }`}
-                  title={navigationVisible ? 'Hide Navigation' : 'Show Navigation'}
-                >
-                  <Menu className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleChat}
-                  className={`transition-colors ${
-                    chatVisible 
-                      ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
-                      : 'text-gray-400 hover:text-gray-600'
-                  }`}
-                  title={chatVisible ? 'Hide Chat' : 'Show Chat'}
-                >
-                  <MessageCircle className="h-4 w-4" />
-                </Button>
               </div>
-              <img src={rellioLogo} alt="Rellio Logo" className="h-10 w-10 lg:h-15 lg:w-15" />
             </div>
-            <div className="flex items-center space-x-2 lg:space-x-4">
-              <Button variant="ghost" size="sm">
-                <Settings className="h-4 w-4" />
+            {/* Header Actions - Hamburger, Chat, and Logo grouped together */}
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleNavigation}
+                className={`transition-colors h-8 w-8 ${
+                  navigationVisible 
+                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
+                    : 'text-gray-400 hover:text-gray-600'
+                }`}
+                title={navigationVisible ? 'Hide Navigation' : 'Show Navigation'}
+              >
+                <Menu className="h-4 w-4" />
               </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleChat}
+                className={`transition-colors h-8 w-8 ${
+                  chatVisible 
+                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
+                    : 'text-gray-400 hover:text-gray-600'
+                }`}
+                title={chatVisible ? 'Hide AI Chat' : 'Show AI Chat'}
+              >
+                <MessageCircle className="h-4 w-4" />
+              </Button>
+              <div className="w-px h-6 bg-gray-300 mx-2"></div>
+              <img 
+                src={rellioLogo} 
+                alt="Rellio" 
+                className="w-10 h-10 object-contain" 
+              />
             </div>
           </div>
         </div>
