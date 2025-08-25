@@ -1,0 +1,79 @@
+task is to transform the existing Rellio landing page into a luxury, majestic, launch-ready design while keeping all current functionality, routing, APIs, and logic intact. Only modify presentation (HTML/CSS/JSX structure, Tailwind classes, theme, and animations). Do not remove or rename existing IDs, component exports, or props.
+
+Goals
+	•	Elevate design to match Rellio’s gold compass branding.
+	•	Deliver a heroic, immersive first impression (animated logo, sacred typography, glowing CTAs).
+	•	Apply a cosmic + spiritual design language across all sections.
+	•	Improve typography, visuals, motion, and consistency.
+	•	Ensure accessibility, performance, and responsiveness.
+
+⸻
+
+Required Changes
+
+1. Hero Section
+	•	Replace the centered black square with:
+	•	Large faint compass watermark (SVG, 5–10% opacity) in background.
+	•	Subtle mandala line art overlay at low opacity.
+	•	Headline: “Explore Sacred Scriptures” where “Scriptures” is gold #D4AF37 with a glowing text-shadow.
+	•	Subheading: “Discover insights across traditions. Ask, compare, and learn with scholar-grade AI.”
+	•	Two CTAs:
+	•	Primary: “✨ Start Exploring” (gold gradient, glow on hover).
+	•	Secondary: “Watch Demo” (transparent bg, gold border, hover glow).
+	•	Background: deep indigo → black gradient with sparse golden star dust.
+	•	Micro-motion: compass rotates once on load, then soft pulse glow; parallax dust drifts slowly.
+
+2. Branding Consistency
+	•	Use one gold (#D4AF37) for all highlights and CTAs.
+	•	Use one teal accent (#00D5FF) sparingly for secondary highlights (e.g. focus outlines).
+	•	Eliminate current yellow/orange mismatched buttons.
+
+3. Typography
+	•	Headings: elegant serif font (e.g., Cormorant Garamond or Playfair).
+	•	Body: Inter/system font.
+	•	Section headers styled in small caps gold with subtle shadow.
+
+4. Sections
+	•	About: Two-column layout → left = sacred illustration (book/scroll glowing halo), right = mission text in serif.
+	•	Features / How It Works: Convert feature cards into glassmorphism:
+	•	bg-white/5, backdrop-blur-md, border border-gold/20, shadow-card.
+	•	Gold + teal line icons with hover glow.
+	•	FAQ: Glass accordions with golden focus ring, small compass icon left of each question.
+	•	CTA Strip before footer: darker vignette background, centered heading, big gold glowing button.
+	•	Contact Section: Form fields inside glass panel, gold glowing submit button, social icons outlined in gold.
+	•	Footer: Dark black band with faint compass watermark background; unify links in gold/white.
+
+5. Loading Screen
+	•	Full-screen gradient background.
+	•	Centered compass logo that spins once (1.2s) then pulses glow.
+	•	Tagline: “Guiding You Through Sacred Wisdom.”
+	•	Fades out smoothly once app is ready without layout shift.
+
+6. Motion & Animations
+	•	Add scroll reveal animations (fade + translateY) on section load.
+	•	Ensure all animations respect prefers-reduced-motion.
+	•	Keep motion light, CSS-only (no heavy libraries).
+
+⸻
+
+Implementation Notes
+	•	Extend Tailwind theme (or CSS vars) with tokens:
+	•	Gold: #D4AF37, Teal: #00D5FF, Background: #060A1A–#0A0F29.
+	•	Shadows: gold/teal glows.
+	•	Fonts: serif for display, Inter/system for body.
+	•	Optimize all assets (use SVG for compass/mandala/icons).
+	•	Ensure Lighthouse: Performance ≥ 90, Accessibility ≥ 95, SEO ≥ 95.
+	•	CLS < 0.1 (no layout shift on splash removal).
+	•	Keep all functionality (FAQ toggles, navigation links, forms, AI input box, etc.) working exactly as before.
+
+⸻
+
+Deliverables
+	•	Updated landing page styled to these requirements.
+	•	New files only for assets/components (e.g., LoadingSplash.tsx, motifs/mandala.svg).
+	•	Do not alter API calls, state management, or exported component names.
+	•	Submit a single PR with clear commit messages.
+
+⸻
+
+⚡ Instruction: Implement this transformation now while preserving all current logic and structure. Focus only on presentation, design, and motion.

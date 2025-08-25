@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import rellioLogo from "@assets/Rellio logo_1756155085148.png";
+import rellioLogo from "@assets/Rellio logo_1756158287035.png";
 
 interface LoadingSplashProps {
   show: boolean;

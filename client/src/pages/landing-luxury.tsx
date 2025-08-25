@@ -87,29 +87,6 @@ export default function LandingPage() {
     }, 2000);
   }, [sampleQuery]);
 
-  useEffect(() => {
-    // Scroll reveal animation observer
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -100px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('animate-float-up');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, observerOptions);
-
-    // Observe all sections for scroll reveal
-    const sections = document.querySelectorAll('section[data-scroll-reveal]');
-    sections.forEach((section) => observer.observe(section));
-
-    return () => observer.disconnect();
-  }, []);
-
   const handleGetStarted = () => {
     setLocation('/dashboard');
   };
@@ -250,7 +227,7 @@ export default function LandingPage() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-24 px-6" data-scroll-reveal>
+      <section id="about" className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left: Sacred Illustration */}
@@ -299,7 +276,7 @@ export default function LandingPage() {
       </section>
 
       {/* AI Chat Demo Section */}
-      <section className="py-16 px-6" data-scroll-reveal>
+      <section className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-sm font-serif text-gold uppercase tracking-[0.3em] mb-4 opacity-90">
@@ -367,7 +344,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section with Glassmorphism */}
-      <section id="features" className="py-24 px-6" data-scroll-reveal>
+      <section id="features" className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-sm font-serif text-gold uppercase tracking-[0.3em] mb-4 opacity-90">
@@ -410,7 +387,7 @@ export default function LandingPage() {
       </section>
 
       {/* FAQ Section with Glassmorphism */}
-      <section id="faq" className="py-24 px-6" data-scroll-reveal>
+      <section id="faq" className="py-24 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-sm font-serif text-gold uppercase tracking-[0.3em] mb-4 opacity-90">
@@ -508,7 +485,7 @@ export default function LandingPage() {
       </section>
 
       {/* Contact Section with Glass Panel */}
-      <section id="contact" className="py-24 px-6" data-scroll-reveal>
+      <section id="contact" className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-sm font-serif text-gold uppercase tracking-[0.3em] mb-4 opacity-90">
