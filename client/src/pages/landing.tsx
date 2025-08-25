@@ -548,18 +548,36 @@ export default function LandingPage() {
               <div className="mt-12">
                 <h5 className="text-lg font-serif text-text-primary mb-4 font-light">Follow Our Journey</h5>
                 <div className="flex space-x-4">
-                  {[Twitter, Facebook, Instagram].map((Icon, index) => (
-                    <div 
-                      key={index}
-                      className="w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 hover:shadow-glow-gold"
-                      style={{
-                        background: 'rgba(212, 175, 55, 0.1)',
-                        border: '1px solid rgba(212, 175, 55, 0.3)'
-                      }}
-                    >
-                      <Icon className="w-6 h-6 text-gold" />
-                    </div>
-                  ))}
+                  <div 
+                    className="w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 hover:shadow-glow-gold"
+                    style={{
+                      background: 'rgba(212, 175, 55, 0.1)',
+                      border: '1px solid rgba(212, 175, 55, 0.3)'
+                    }}
+                  >
+                    <Twitter className="w-6 h-6 text-gold" />
+                  </div>
+                  <div 
+                    className="w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 hover:shadow-glow-gold"
+                    style={{
+                      background: 'rgba(212, 175, 55, 0.1)',
+                      border: '1px solid rgba(212, 175, 55, 0.3)'
+                    }}
+                  >
+                    <Facebook className="w-6 h-6 text-gold" />
+                  </div>
+                  <a 
+                    href="https://www.instagram.com/rellioapp?igsh=MXRremNtOGZka3pq&utm_source=qr"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 hover:shadow-glow-gold"
+                    style={{
+                      background: 'rgba(212, 175, 55, 0.1)',
+                      border: '1px solid rgba(212, 175, 55, 0.3)'
+                    }}
+                  >
+                    <Instagram className="w-6 h-6 text-gold" />
+                  </a>
                 </div>
               </div>
             </div>
