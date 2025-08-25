@@ -782,34 +782,19 @@ export function VoiceFirstChatInterface({
             )}
           </div>
           
-          {/* Dynamic Persona Information */}
+          {/* Simplified Persona Name */}
           <div>
             <h3 className={cn(
               "text-lg font-semibold transition-colors duration-300",
               selectedPersona && isInsideBook ? selectedPersona.textColor : "text-gray-900"
             )}>
-              {selectedPersona?.name || 'Voice-First Spiritual Guide'}
+              {selectedPersona?.name || 'Universal Scholar'}
             </h3>
-            <p className="text-xs text-gray-500 flex items-center gap-1">
-              {isInsideBook && context.religion && context.book ? (
-                <>
-                  <span className="text-teal-600 font-medium">📖 Inside {context.book}</span>
-                  <span>•</span>
-                  <span>{selectedPersona?.title || 'Spiritual Guide'}</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-gray-600">🌍 Universal Wisdom</span>
-                  <span>•</span>
-                  <span>{selectedPersona?.title || 'Interfaith Guide'}</span>
-                </>
-              )}
-            </p>
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
-          {/* Auto-play Toggle with Smart Protection and Warning */}
+        <div className="flex items-center gap-1 flex-wrap">
+          {/* Auto-play Toggle */}
           <Button
             variant="outline"
             size="sm"
@@ -818,12 +803,12 @@ export function VoiceFirstChatInterface({
               "text-xs px-2 h-7 relative",
               autoPlayEnabled ? "text-teal-600 border-teal-300 bg-teal-100" : "text-gray-600 border-gray-300"
             )}
-            title={autoPlayEnabled ? "⚠️ Auto-Play Active - Use headphones to avoid loops" : "Enable voice auto-play"}
+            title={autoPlayEnabled ? "Auto-Play ON" : "Auto-Play OFF"}
           >
             {autoPlayEnabled && (
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-teal-500 rounded-full animate-pulse" />
             )}
-            {autoPlayEnabled ? "⚠️ Auto-play" : "Auto-play OFF"}
+            Auto-play
           </Button>
           
           {/* Text Input Toggle */}
@@ -835,30 +820,39 @@ export function VoiceFirstChatInterface({
               "text-xs px-2 h-7",
               showTextInput ? "text-blue-600 border-blue-300 bg-blue-50" : "text-gray-600 border-gray-300"
             )}
-            title={showTextInput ? "Hide text input" : "Show text input"}
+            title={showTextInput ? "Text ON" : "Text OFF"}
           >
-            {showTextInput ? "Text Input ON" : "Text Input OFF"}
+            Text
           </Button>
           
-          {isAIPlaying && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={stopAIPlayback}
-              className="text-red-600 border-red-300 hover:bg-red-50"
-            >
-              <Square className="w-4 h-4 mr-1" />
-              Stop
-            </Button>
-          )}
-          
+          {/* History Button */}
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setSettings(prev => ({ ...prev, voiceEnabled: !prev.voiceEnabled }))}
-            className={settings.voiceEnabled ? "text-teal-600" : "text-gray-600"}
+            onClick={() => {
+              // Toggle chat history view or implement history functionality
+              console.log('History clicked');
+            }}
+            className="text-xs px-2 h-7 text-gray-600 border-gray-300"
+            title="View chat history"
           >
-            {settings.voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            History
+          </Button>
+          
+          {/* Clear Chat Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (window.confirm('Clear all chat messages?')) {
+                setMessages([]);
+                console.log('Chat cleared');
+              }
+            }}
+            className="text-xs px-2 h-7 text-red-600 border-red-300 hover:bg-red-50"
+            title="Clear all messages"
+          >
+            Clear
           </Button>
         </div>
       </div>
