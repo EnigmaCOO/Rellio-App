@@ -557,7 +557,10 @@ export default function LandingPage() {
                   >
                     <Twitter className="w-6 h-6 text-gold" />
                   </div>
-                  <div 
+                  <a 
+                    href="https://www.facebook.com/share/161TMqcuiT/?mibextid=wwXIfr"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 hover:shadow-glow-gold"
                     style={{
                       background: 'rgba(212, 175, 55, 0.1)',
@@ -565,7 +568,7 @@ export default function LandingPage() {
                     }}
                   >
                     <Facebook className="w-6 h-6 text-gold" />
-                  </div>
+                  </a>
                   <a 
                     href="https://www.instagram.com/rellioapp?igsh=MXRremNtOGZka3pq&utm_source=qr"
                     target="_blank"
