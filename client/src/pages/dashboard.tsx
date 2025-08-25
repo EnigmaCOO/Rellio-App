@@ -304,9 +304,9 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-scripture-50">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-scripture-200">
+      <header className="bg-white shadow-sm border-b border-amber-200">
         <div className="max-w-full px-4 lg:px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Header Actions - Hamburger, Chat, and Logo grouped together on left */}
@@ -317,8 +317,8 @@ export default function Dashboard() {
                 onClick={toggleNavigation}
                 className={`transition-colors h-8 w-8 ${
                   navigationVisible 
-                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' 
+                    : 'text-gray-500 hover:text-amber-600'
                 }`}
                 title={navigationVisible ? 'Hide Navigation' : 'Show Navigation'}
               >
@@ -330,14 +330,14 @@ export default function Dashboard() {
                 onClick={toggleChat}
                 className={`transition-colors h-8 w-8 ${
                   chatVisible 
-                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' 
+                    : 'text-gray-500 hover:text-amber-600'
                 }`}
                 title={chatVisible ? 'Hide AI Chat' : 'Show AI Chat'}
               >
                 <MessageCircle className="h-4 w-4" />
               </Button>
-              <div className="w-px h-6 bg-gray-300 mx-2"></div>
+              <div className="w-px h-6 bg-amber-300 mx-2"></div>
               <img 
                 src={rellioLogo} 
                 alt="Rellio" 
@@ -354,8 +354,8 @@ export default function Dashboard() {
                 className={cn(
                   "h-8 px-3 text-xs transition-all duration-200",
                   currentView === 'progress' 
-                    ? "bg-cosmic-gold/20 text-cosmic-gold border border-cosmic-gold/30 hover:bg-cosmic-gold/30" 
-                    : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                    ? "bg-amber-100 text-amber-700 border border-amber-300 hover:bg-amber-200" 
+                    : "text-gray-600 hover:bg-amber-50 hover:text-amber-700"
                 )}
               >
                 <TrendingUp className="w-3 h-3 mr-1" />
@@ -372,7 +372,7 @@ export default function Dashboard() {
         {/* Left Column - Navigation Panel (only for scripture view) */}
         <div
           {...navigationSwipeHandlers}
-          className={`${currentView === 'scripture' ? getNavigationClasses() : 'w-0'} transition-all duration-300 ease-in-out overflow-hidden relative border-r border-gray-200`}
+          className={`${currentView === 'scripture' ? getNavigationClasses() : 'w-0'} transition-all duration-300 ease-in-out overflow-hidden relative border-r border-amber-200`}
         >
           {navigationVisible && currentView === 'scripture' && (
             <>
@@ -407,7 +407,7 @@ export default function Dashboard() {
               <ProgressDashboard />
             </div>
           ) : selectedReligion ? (
-            <div className="h-full bg-gray-50 flex flex-col p-4">
+            <div className="h-full bg-white flex flex-col p-4">
               {/* Verse List - Full height without chat */}
               <VerseList
                 selectedReligion={selectedReligion}
