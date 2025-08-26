@@ -82,6 +82,7 @@ export function VoiceFirstChatInterface({
   const [hasPermission, setHasPermission] = useState(false);
   const [playingMessageId, setPlayingMessageId] = useState<number | null>(null);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
+  const [wasLastMessageVoice, setWasLastMessageVoice] = useState(false);
   
   // Input Isolation State
   const [showTextInput, setShowTextInput] = useState(false);
@@ -257,9 +258,9 @@ export function VoiceFirstChatInterface({
       // Invalidate query to refresh messages
       await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
       
-      // Auto-play the AI response with ElevenLabs if enabled
-      if (data.content && autoPlayEnabled && settings.voiceEnabled) {
-        console.log('🎙️ Auto-playing AI response with <500ms latency:', data.content.substring(0, 50) + '...');
+      // Auto-play the AI response with ElevenLabs ONLY if the user used voice input
+      if (data.content && autoPlayEnabled && settings.voiceEnabled && wasLastMessageVoice) {
+        console.log('🎙️ Auto-playing AI response (voice mode):', data.content.substring(0, 50) + '...');
         setPlayingMessageId(data.id);
         setVoiceState('responding');
         try {
@@ -272,8 +273,12 @@ export function VoiceFirstChatInterface({
           setVoiceState('idle');
         }
       } else {
+        console.log('🔇 Skipping AI voice response (text mode or voice disabled)');
         setVoiceState('idle');
       }
+      
+      // Reset voice message flag
+      setWasLastMessageVoice(false);
       
       // Clear transcript after successful send
       setCurrentTranscript('');
@@ -345,6 +350,7 @@ export function VoiceFirstChatInterface({
         // Set new timeout for auto-send
         autoSendTimeoutRef.current = setTimeout(() => {
           console.log('🚀 Auto-sending message:', finalTranscript);
+          setWasLastMessageVoice(true); // Mark this as a voice-initiated message
           handleSendMessage(finalTranscript.trim());
           stopListening();
         }, settings.autoSendDelay);
@@ -548,6 +554,7 @@ export function VoiceFirstChatInterface({
     e.preventDefault();
     if (inputIsolated) return; // Prevent submission during AI speech
     
+    setWasLastMessageVoice(false); // Mark this as a text-initiated message
     handleSendMessage(textInputValue);
   }, [textInputValue, inputIsolated, handleSendMessage]);
 
@@ -557,6 +564,7 @@ export function VoiceFirstChatInterface({
     } else if (voiceState === 'responding' && isAIPlaying) {
       handleInterruption();
     } else {
+      setWasLastMessageVoice(true); // Pre-mark as voice mode when starting to listen
       startListening();
     }
   }, [voiceState, isAIPlaying, stopListening, startListening, handleInterruption]);
