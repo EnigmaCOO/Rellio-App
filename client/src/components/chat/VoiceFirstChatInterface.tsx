@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Mic, 
@@ -19,7 +20,8 @@ import {
   BookOpen,
   History as HistoryIcon,
   BarChart3,
-  MessageCircle
+  MessageCircle,
+  ExternalLink
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useElevenLabsStreaming } from '@/hooks/useElevenLabsStreaming';
@@ -767,13 +769,154 @@ export function VoiceFirstChatInterface({
     }
   }, [lastAIMessage, settings.autoPlayAI, messages, speakMessage, isTalkingBack, voiceState, inputIsolated, lastVoiceActivity]);
 
-  // Clean text function to remove HTML/XML tags and perspective markers from display
-  const cleanTextForDisplay = useCallback((text: string): string => {
-    return text
-      .replace(/<perspective>[^<]*<\/perspective>/gi, '') // Remove perspective tags and content completely
-      .replace(/<[^>]*>/g, '') // Remove any remaining HTML/XML tags
-      .replace(/\s+/g, ' ') // Normalize whitespace
-      .trim();
+  // Enhanced message parsing for multi-perspective responses with colors and clickable references
+  const parseMessageContent = useCallback((content: string) => {
+    const parts = [];
+    const perspectiveRegex = /<perspective>([^<]*)<\/perspective>\s*(.*?)(?=<perspective>|$)/gs;
+    let lastIndex = 0;
+    let match;
+
+    // Define unique colors for each religious perspective
+    const perspectiveColors = {
+      'Christianity': {
+        border: 'border-blue-200',
+        bg: 'bg-blue-50',
+        badge: 'bg-blue-100 text-blue-800 border-blue-200',
+        accent: 'text-blue-600'
+      },
+      'Islam': {
+        border: 'border-green-200',
+        bg: 'bg-green-50',
+        badge: 'bg-green-100 text-green-800 border-green-200',
+        accent: 'text-green-600'
+      },
+      'Judaism': {
+        border: 'border-purple-200',
+        bg: 'bg-purple-50',
+        badge: 'bg-purple-100 text-purple-800 border-purple-200',
+        accent: 'text-purple-600'
+      },
+      'Hinduism': {
+        border: 'border-orange-200',
+        bg: 'bg-orange-50',
+        badge: 'bg-orange-100 text-orange-800 border-orange-200',
+        accent: 'text-orange-600'
+      },
+      'Buddhism': {
+        border: 'border-yellow-200',
+        bg: 'bg-yellow-50',
+        badge: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        accent: 'text-yellow-600'
+      }
+    };
+
+    while ((match = perspectiveRegex.exec(content)) !== null) {
+      // Add any content before this perspective
+      if (match.index > lastIndex) {
+        const beforeContent = content.slice(lastIndex, match.index).trim();
+        if (beforeContent) {
+          parts.push({ type: 'text', content: beforeContent });
+        }
+      }
+
+      const religion = match[1].trim();
+      const perspectiveContent = match[2].trim();
+      
+      parts.push({
+        type: 'perspective',
+        religion,
+        content: perspectiveContent,
+        colors: perspectiveColors[religion] || perspectiveColors['Christianity']
+      });
+
+      lastIndex = perspectiveRegex.lastIndex;
+    }
+
+    // Add any remaining content
+    if (lastIndex < content.length) {
+      const remainingContent = content.slice(lastIndex).trim();
+      if (remainingContent) {
+        parts.push({ type: 'text', content: remainingContent });
+      }
+    }
+
+    return parts;
+  }, []);
+
+  // Make scripture references clickable
+  const renderTextWithClickableReferences = useCallback((text: string) => {
+    // Scripture reference patterns for different religions
+    const patterns = [
+      // Bible: John 3:16, 1 John 4:8, Matthew 28:19
+      /(\d?\s?\w+\s+\d+:\d+(?:-\d+)?)/g,
+      // Quran: Surah Al-Baqarah 2:256, Quran 112:1-4
+      /((?:Surah\s+)?[\w\s-]+\s+\d+:\d+(?:-\d+)?)/g,
+      // General book references: Deuteronomy 6:4, Exodus 34:6-7
+      /(\w+\s+\d+:\d+(?:-\d+)?)/g
+    ];
+
+    let result = text;
+    let parts = [];
+    let currentIndex = 0;
+
+    // Find all scripture references
+    const allMatches = [];
+    patterns.forEach(pattern => {
+      let match;
+      while ((match = pattern.exec(text)) !== null) {
+        allMatches.push({
+          text: match[1],
+          start: match.index,
+          end: match.index + match[1].length
+        });
+      }
+    });
+
+    // Sort matches by position
+    allMatches.sort((a, b) => a.start - b.start);
+
+    // Remove overlapping matches (keep the first one)
+    const filteredMatches = [];
+    let lastEnd = -1;
+    allMatches.forEach(match => {
+      if (match.start >= lastEnd) {
+        filteredMatches.push(match);
+        lastEnd = match.end;
+      }
+    });
+
+    // Build parts with clickable references
+    filteredMatches.forEach((match, index) => {
+      // Add text before this match
+      if (match.start > currentIndex) {
+        parts.push(text.slice(currentIndex, match.start));
+      }
+
+      // Add clickable reference
+      parts.push(
+        <button
+          key={`ref-${index}`}
+          onClick={() => {
+            // Handle scripture reference click
+            console.log('Scripture reference clicked:', match.text);
+            // You can implement navigation to the specific verse here
+          }}
+          className="inline-flex items-center gap-1 px-1 py-0.5 rounded text-xs bg-teal-100 text-teal-700 hover:bg-teal-200 transition-colors duration-200 border border-teal-200 hover:border-teal-300"
+        >
+          {match.text}
+          <ExternalLink className="w-2 h-2" />
+        </button>
+      );
+
+      currentIndex = match.end;
+    });
+
+    // Add remaining text
+    if (currentIndex < text.length) {
+      parts.push(text.slice(currentIndex));
+    }
+
+    return parts.length > 0 ? parts : [text];
   }, []);
 
   // Update last AI message when new messages arrive
@@ -950,12 +1093,41 @@ export function VoiceFirstChatInterface({
                       ? "bg-gray-100 text-gray-800 rounded-br-md border border-gray-200"
                       : "bg-white text-gray-800 border border-gray-200 rounded-bl-md hover:border-teal-200" // White with 1px gray border
                   )}>
-                    <p className={cn(
-                      "text-sm leading-relaxed whitespace-pre-wrap",
-                      message.type === 'ai' ? "pr-8" : "" // Space for controls
-                    )}>
-                      {message.type === 'ai' ? cleanTextForDisplay(message.content) : message.content}
-                    </p>
+                    {message.type === 'ai' ? (
+                      <div className="pr-8 space-y-3">
+                        {parseMessageContent(message.content).map((part, index) => (
+                          <div key={index}>
+                            {part.type === 'perspective' ? (
+                              <div className={cn(
+                                "border-l-4 pl-4 py-3 rounded-r-lg space-y-2 transition-all duration-200 hover:shadow-sm",
+                                part.colors.border,
+                                part.colors.bg
+                              )}>
+                                <div className="flex items-center gap-2">
+                                  <Badge 
+                                    variant="outline" 
+                                    className={cn("text-xs font-medium", part.colors.badge)}
+                                  >
+                                    {part.religion}
+                                  </Badge>
+                                </div>
+                                <div className="text-sm leading-relaxed">
+                                  {renderTextWithClickableReferences(part.content)}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-sm leading-relaxed">
+                                {renderTextWithClickableReferences(part.content)}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {message.content}
+                      </p>
+                    )}
                     
                     {/* AI Message Audio Controls */}
                     {message.type === 'ai' && (
