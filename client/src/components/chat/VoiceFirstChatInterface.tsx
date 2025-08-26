@@ -733,7 +733,7 @@ export function VoiceFirstChatInterface({
       return;
     }
     
-    if (lastAIMessage && settings.autoPlayAI && messages.length > 0 && !isTalkingBack) {
+    if (lastAIMessage && settings.autoPlayAI && messages.length > 0 && !isTalkingBack && wasLastMessageVoice) {
       const lastMessage = messages[messages.length - 1];
       if (lastMessage?.type === 'ai' && lastMessage.content === lastAIMessage) {
         console.log('🔊 Auto-playing AI response...');
