@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Mic, 
@@ -15,13 +16,18 @@ import {
   Settings,
   Headphones,
   AlertTriangle,
-  BookOpen
+  BookOpen,
+  History as HistoryIcon,
+  BarChart3,
+  MessageCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useElevenLabsStreaming } from '@/hooks/useElevenLabsStreaming';
 import { GrokStyleOrb } from './GrokStyleOrb';
 import { AudioWaveform } from './AudioWaveform';
 import { VoiceTalkBackHandler } from './VoiceTalkBackHandler';
+import { ChatHistoryManager } from './ChatHistoryManager';
+import { ProgressDashboard } from '@/components/progress/ProgressDashboard';
 import type { Religion, ChatMessage } from '@shared/schema';
 import type { ScholarPersona } from './ScholarPersonas';
 
@@ -83,6 +89,8 @@ export function VoiceFirstChatInterface({
   const [playingMessageId, setPlayingMessageId] = useState<number | null>(null);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
   const [wasLastMessageVoice, setWasLastMessageVoice] = useState(false);
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+  const [historyView, setHistoryView] = useState<'chat' | 'progress'>('chat');
   
   // Input Isolation State
   const [showTextInput, setShowTextInput] = useState(false);
@@ -855,13 +863,14 @@ export function VoiceFirstChatInterface({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              // Toggle chat history view or implement history functionality
-              console.log('History clicked');
-            }}
-            className="text-xs px-2 h-7 text-gray-600 border-gray-300"
-            title="View chat history"
+            onClick={() => setShowHistoryPanel(!showHistoryPanel)}
+            className={cn(
+              "text-xs px-2 h-7",
+              showHistoryPanel ? "text-teal-600 border-teal-300 bg-teal-50" : "text-gray-600 border-gray-300"
+            )}
+            title="View history & progress"
           >
+            <HistoryIcon className="w-3 h-3 mr-1" />
             History
           </Button>
           
@@ -1141,6 +1150,68 @@ export function VoiceFirstChatInterface({
           </div>
         )}
       </div>
+
+      {/* Enhanced History Panel with Chat History and Progress Dashboard */}
+      {showHistoryPanel && (
+        <div className="fixed inset-y-0 right-0 w-96 bg-white border-l border-gray-200 shadow-xl z-50 animate-in slide-in-from-right duration-300">
+          <Tabs value={historyView} onValueChange={(value) => setHistoryView(value as 'chat' | 'progress')} className="h-full flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-teal-50 to-cyan-50">
+              <div className="flex items-center gap-2">
+                <HistoryIcon className="h-5 w-5 text-teal-600" />
+                <h2 className="font-semibold text-gray-900">History & Progress</h2>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowHistoryPanel(false)}>
+                <User className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Tab Navigation */}
+            <TabsList className="grid w-full grid-cols-2 m-4 mb-0">
+              <TabsTrigger value="chat" className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4" />
+                Chat History
+              </TabsTrigger>
+              <TabsTrigger value="progress" className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4" />
+                Progress
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Tab Content */}
+            <div className="flex-1 overflow-hidden">
+              <TabsContent value="chat" className="h-full m-0 p-0">
+                <ChatHistoryManager
+                  isOpen={true}
+                  onClose={() => setShowHistoryPanel(false)}
+                  currentSessionId={sessionId}
+                  currentMessages={messages}
+                  currentPersona={selectedPersona}
+                  currentContext={context}
+                  onLoadSession={(entry) => {
+                    // Handle loading a previous chat session
+                    console.log('Loading chat session:', entry.sessionId);
+                    // You might want to emit an event or call a prop function here
+                    // to switch to the selected conversation
+                  }}
+                  onHighlightVerse={(religion, book, chapter) => {
+                    if (onNavigateToVerse) {
+                      onNavigateToVerse(religion, book, chapter);
+                    }
+                    setShowHistoryPanel(false);
+                  }}
+                />
+              </TabsContent>
+
+              <TabsContent value="progress" className="h-full m-0 p-0 overflow-auto">
+                <div className="p-4">
+                  <ProgressDashboard onClose={() => setShowHistoryPanel(false)} />
+                </div>
+              </TabsContent>
+            </div>
+          </Tabs>
+        </div>
+      )}
     </Card>
   );
 }
