@@ -772,12 +772,12 @@ export function VoiceFirstChatInterface({
   // Enhanced message parsing for multi-perspective responses with colors and clickable references
   const parseMessageContent = useCallback((content: string) => {
     const parts = [];
-    const perspectiveRegex = /<perspective>([^<]*)<\/perspective>\s*(.*?)(?=<perspective>|$)/gs;
+    const perspectiveRegex = /<perspective>([^<]*)<\/perspective>\s*(.*?)(?=<perspective>|$)/g;
     let lastIndex = 0;
     let match;
 
     // Define unique colors for each religious perspective
-    const perspectiveColors = {
+    const perspectiveColors: Record<string, any> = {
       'Christianity': {
         border: 'border-blue-200',
         bg: 'bg-blue-50',
@@ -843,15 +843,64 @@ export function VoiceFirstChatInterface({
     return parts;
   }, []);
 
+  // Parse scripture reference to extract religion, book, and chapter info
+  const parseScriptureReference = useCallback((reference: string) => {
+    // Remove extra whitespace and normalize
+    const ref = reference.trim();
+
+    // Quran/Islam patterns
+    if (ref.includes('Surah') || ref.includes('Al-') || ref.includes('Quran')) {
+      let book = 'Quran';
+      let chapter = 1;
+      let verse = null;
+      
+      // Extract chapter number
+      const chapterMatch = ref.match(/(\d+):(\d+)/);
+      if (chapterMatch) {
+        chapter = parseInt(chapterMatch[1]);
+        verse = parseInt(chapterMatch[2]);
+      }
+      
+      return { religion: 'islam' as Religion, book, chapter, verse };
+    }
+
+    // Torah/Judaism patterns
+    const torahBooks = ['Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy', 'Bereshit', 'Shemot', 'Vayikra', 'Bamidbar', 'Devarim'];
+    for (const torahBook of torahBooks) {
+      if (ref.includes(torahBook)) {
+        const chapterMatch = ref.match(/(\d+):(\d+)/);
+        let chapter = 1;
+        let verse = null;
+        if (chapterMatch) {
+          chapter = parseInt(chapterMatch[1]);
+          verse = parseInt(chapterMatch[2]);
+        }
+        return { religion: 'judaism' as Religion, book: 'Torah', chapter, verse };
+      }
+    }
+
+    // Bible/Christianity patterns (default for most book references)
+    const bibleBooks = ['Matthew', 'Mark', 'Luke', 'John', 'Acts', 'Romans', 'Corinthians', 'Galatians', 'Ephesians', 'Philippians', 'Colossians', 'Thessalonians', 'Timothy', 'Titus', 'Philemon', 'Hebrews', 'James', 'Peter', 'Jude', 'Revelation'];
+    const chapterMatch = ref.match(/(\d+):(\d+)/);
+    let chapter = 1;
+    let verse = null;
+    if (chapterMatch) {
+      chapter = parseInt(chapterMatch[1]);
+      verse = parseInt(chapterMatch[2]);
+    }
+    
+    return { religion: 'christianity' as Religion, book: 'Bible', chapter, verse };
+  }, []);
+
   // Make scripture references clickable
   const renderTextWithClickableReferences = useCallback((text: string) => {
-    // Scripture reference patterns for different religions
+    // Enhanced scripture reference patterns
     const patterns = [
+      // Quran: Surah Al-Baqarah 2:256, Quran 112:1-4
+      /((?:Surah\s+)?(?:Al-)?[\w\s-]+\s+\d+:\d+(?:-\d+)?)/g,
       // Bible: John 3:16, 1 John 4:8, Matthew 28:19
       /(\d?\s?\w+\s+\d+:\d+(?:-\d+)?)/g,
-      // Quran: Surah Al-Baqarah 2:256, Quran 112:1-4
-      /((?:Surah\s+)?[\w\s-]+\s+\d+:\d+(?:-\d+)?)/g,
-      // General book references: Deuteronomy 6:4, Exodus 34:6-7
+      // Torah: Deuteronomy 6:4, Exodus 34:6-7
       /(\w+\s+\d+:\d+(?:-\d+)?)/g
     ];
 
@@ -860,7 +909,7 @@ export function VoiceFirstChatInterface({
     let currentIndex = 0;
 
     // Find all scripture references
-    const allMatches = [];
+    const allMatches: Array<{text: string, start: number, end: number}> = [];
     patterns.forEach(pattern => {
       let match;
       while ((match = pattern.exec(text)) !== null) {
@@ -876,7 +925,7 @@ export function VoiceFirstChatInterface({
     allMatches.sort((a, b) => a.start - b.start);
 
     // Remove overlapping matches (keep the first one)
-    const filteredMatches = [];
+    const filteredMatches: Array<{text: string, start: number, end: number}> = [];
     let lastEnd = -1;
     allMatches.forEach(match => {
       if (match.start >= lastEnd) {
@@ -897,11 +946,16 @@ export function VoiceFirstChatInterface({
         <button
           key={`ref-${index}`}
           onClick={() => {
-            // Handle scripture reference click
-            console.log('Scripture reference clicked:', match.text);
-            // You can implement navigation to the specific verse here
+            const parsed = parseScriptureReference(match.text);
+            console.log('Scripture reference clicked:', match.text, 'Parsed:', parsed);
+            
+            if (onNavigateToVerse && parsed) {
+              // Navigate to the scripture location
+              onNavigateToVerse(parsed.religion, parsed.book, parsed.chapter, parsed.verse);
+            }
           }}
-          className="inline-flex items-center gap-1 px-1 py-0.5 rounded text-xs bg-teal-100 text-teal-700 hover:bg-teal-200 transition-colors duration-200 border border-teal-200 hover:border-teal-300"
+          className="inline-flex items-center gap-1 px-1 py-0.5 rounded text-xs bg-teal-100 text-teal-700 hover:bg-teal-200 transition-colors duration-200 border border-teal-200 hover:border-teal-300 cursor-pointer"
+          title={`Go to ${match.text}`}
         >
           {match.text}
           <ExternalLink className="w-2 h-2" />
@@ -917,7 +971,7 @@ export function VoiceFirstChatInterface({
     }
 
     return parts.length > 0 ? parts : [text];
-  }, []);
+  }, [parseScriptureReference, onNavigateToVerse]);
 
   // Update last AI message when new messages arrive
   useEffect(() => {
