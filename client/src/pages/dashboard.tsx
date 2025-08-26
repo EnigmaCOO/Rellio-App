@@ -210,26 +210,26 @@ export default function Dashboard() {
 
   // Calculate content panel width based on visible panels
   const getContentWidth = () => {
-    // Mobile: full width (columns stack vertically)
+    // Mobile: always full width when visible, hide panels below
     // Desktop: responsive based on visible panels
     if (!navigationVisible && !chatVisible) return 'w-full';
-    if (!navigationVisible && chatVisible) return 'lg:w-3/4';
-    if (navigationVisible && !chatVisible) return 'lg:w-3/4';
-    return 'lg:w-1/2'; // Both panels visible
+    if (!navigationVisible && chatVisible) return 'w-full lg:w-3/4';
+    if (navigationVisible && !chatVisible) return 'w-full lg:w-3/4';
+    return 'w-full lg:w-1/2'; // Both panels visible
   };
 
   // Calculate chat panel classes for responsive layout
   const getChatClasses = () => {
     return chatVisible 
-      ? 'w-full lg:w-1/4 order-3' 
-      : 'w-0 order-3';
+      ? 'w-full lg:w-1/4 order-3 lg:relative fixed inset-0 lg:inset-auto z-50 lg:z-auto bg-white lg:bg-transparent' 
+      : 'w-0 order-3 hidden lg:block';
   };
 
   // Calculate navigation panel classes for responsive layout
   const getNavigationClasses = () => {
     return navigationVisible 
-      ? 'w-full lg:w-1/4 order-1' 
-      : 'w-0 order-1';
+      ? 'w-full lg:w-1/4 order-1 lg:relative fixed inset-0 lg:inset-auto z-40 lg:z-auto bg-white lg:bg-transparent' 
+      : 'w-0 order-1 hidden lg:block';
   };
 
   // Handle copy verse functionality
@@ -389,31 +389,44 @@ export default function Dashboard() {
       </header>
 
       {/* Three-Column Responsive Layout */}
-      <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)] relative overflow-hidden">
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)] relative overflow-hidden bg-gray-50">
         
         {/* Left Column - Navigation Panel (only for scripture view) */}
         <div
           {...navigationSwipeHandlers}
-          className={`${currentView === 'scripture' ? getNavigationClasses() : 'w-0'} transition-all duration-300 ease-in-out overflow-hidden relative border-r border-amber-200`}
+          className={`${currentView === 'scripture' ? getNavigationClasses() : 'w-0 hidden'} transition-all duration-300 ease-in-out overflow-hidden border-r border-amber-200`}
         >
           {navigationVisible && currentView === 'scripture' && (
             <>
-              <NavigationPanel
-                selectedReligion={selectedReligion}
-                selectedBook={selectedBook}
-                selectedChapter={selectedChapter}
-                religions={religions}
-                books={filteredBooks}
-                maxChapters={bookInfo?.chapters || 10}
-                onReligionChange={handleReligionChange}
-                onBookChange={handleBookChange}
-                onChapterChange={handleChapterChange}
-                isLoading={religionsLoading}
-                searchTerm={searchTerm}
-              />
-              {/* Swipe indicator for navigation panel */}
-              <div className="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-400 pointer-events-none lg:hidden">
-                <ChevronLeft className="h-4 w-4" />
+              {/* Mobile overlay background */}
+              <div className="lg:hidden absolute inset-0 bg-black bg-opacity-50" onClick={() => setNavigationVisible(false)}></div>
+              
+              {/* Navigation content */}
+              <div className="lg:static absolute inset-y-0 left-0 w-4/5 max-w-sm lg:w-full lg:max-w-none bg-white shadow-xl lg:shadow-none">
+                <NavigationPanel
+                  selectedReligion={selectedReligion}
+                  selectedBook={selectedBook}
+                  selectedChapter={selectedChapter}
+                  religions={religions}
+                  books={filteredBooks}
+                  maxChapters={bookInfo?.chapters || 10}
+                  onReligionChange={handleReligionChange}
+                  onBookChange={handleBookChange}
+                  onChapterChange={handleChapterChange}
+                  isLoading={religionsLoading}
+                  searchTerm={searchTerm}
+                />
+                
+                {/* Mobile close button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setNavigationVisible(false)}
+                  className="lg:hidden absolute top-4 right-4 z-10"
+                  title="Close Navigation"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
             </>
           )}
@@ -462,7 +475,7 @@ export default function Dashboard() {
               variant="ghost"
               size="sm"
               onClick={toggleNavigation}
-              className="absolute top-4 left-4 z-10 bg-white shadow-md hover:bg-gray-50 transition-opacity"
+              className="lg:hidden absolute top-4 left-4 z-10 bg-white shadow-md hover:bg-gray-50 transition-opacity rounded-full p-2"
               title="Show Navigation Panel"
             >
               <Menu className="h-4 w-4" />
@@ -474,7 +487,7 @@ export default function Dashboard() {
               variant="ghost"
               size="sm"
               onClick={toggleChat}
-              className="absolute top-4 right-4 z-10 bg-white shadow-md hover:bg-gray-50 transition-opacity"
+              className="lg:hidden absolute top-4 right-4 z-10 bg-white shadow-md hover:bg-gray-50 transition-opacity rounded-full p-2"
               title="Show Chat Panel"
             >
               <MessageCircle className="h-4 w-4" />
@@ -484,39 +497,45 @@ export default function Dashboard() {
 
         {/* Right Column - Chat Panel */}
         <div
-          className={`${getChatClasses()} transition-all duration-300 ease-in-out overflow-hidden relative border-l border-gray-200 h-full`}
+          className={`${getChatClasses()} transition-all duration-300 ease-in-out overflow-hidden border-l border-gray-200 h-full`}
         >
           {chatVisible && (
-            <div className="h-full bg-white rounded-l-lg lg:rounded-none shadow-lg lg:shadow-none flex flex-col">
-              {/* Chat Header with Controls */}
-              <div className="flex-shrink-0 bg-white border-b border-gray-200 p-4 rounded-t-lg lg:rounded-none">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Universal Wisdom Explorer</h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={toggleChat}
-                    className="lg:hidden"
-                    title="Hide Chat"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+            <>
+              {/* Mobile overlay background */}
+              <div className="lg:hidden absolute inset-0 bg-black bg-opacity-50" onClick={() => setChatVisible(false)}></div>
+              
+              {/* Chat content */}
+              <div className="lg:static absolute inset-y-0 right-0 w-4/5 max-w-sm lg:w-full lg:max-w-none h-full bg-white shadow-xl lg:shadow-none flex flex-col">
+                {/* Chat Header with Controls */}
+                <div className="flex-shrink-0 bg-white border-b border-gray-200 p-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900">Universal Wisdom Explorer</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={toggleChat}
+                      className="lg:hidden"
+                      title="Hide Chat"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Enhanced Voice-First Chat - Full Height */}
+                <div className="flex-1 min-h-0">
+                  <VoiceFirstChatInterface
+                    sessionId={chatSessionId}
+                    context={currentContext}
+                    selectedPersona={selectedPersona}
+                    isInsideBook={!!(selectedReligion && selectedBook)}
+                    onNavigateToVerse={handleNavigateToVerse}
+                    className="h-full"
+                    onMessageSent={() => readingSession.incrementChatMessages()}
+                  />
                 </div>
               </div>
-              
-              {/* Enhanced Voice-First Chat - Full Height */}
-              <div className="flex-1 min-h-0">
-                <VoiceFirstChatInterface
-                  sessionId={chatSessionId}
-                  context={currentContext}
-                  selectedPersona={selectedPersona}
-                  isInsideBook={!!(selectedReligion && selectedBook)}
-                  onNavigateToVerse={handleNavigateToVerse}
-                  className="h-full"
-                  onMessageSent={() => readingSession.incrementChatMessages()}
-                />
-              </div>
-            </div>
+            </>
           )}
         </div>
 
