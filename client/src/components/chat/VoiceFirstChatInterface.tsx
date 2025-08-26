@@ -771,10 +771,8 @@ export function VoiceFirstChatInterface({
 
   // Enhanced message parsing for multi-perspective responses with colors and clickable references
   const parseMessageContent = useCallback((content: string) => {
+    console.log('🔍 Parsing message content:', content);
     const parts = [];
-    const perspectiveRegex = /<perspective>([^<]*)<\/perspective>\s*(.*?)(?=<perspective>|$)/g;
-    let lastIndex = 0;
-    let match;
 
     // Define unique colors for each religious perspective
     const perspectiveColors: Record<string, any> = {
@@ -810,37 +808,42 @@ export function VoiceFirstChatInterface({
       }
     };
 
-    while ((match = perspectiveRegex.exec(content)) !== null) {
-      // Add any content before this perspective
-      if (match.index > lastIndex) {
-        const beforeContent = content.slice(lastIndex, match.index).trim();
-        if (beforeContent) {
-          parts.push({ type: 'text', content: beforeContent });
+    // Split content by perspective tags - simpler and more reliable approach
+    const sections = content.split(/(<perspective>.*?<\/perspective>)/);
+    console.log('📝 Split sections:', sections);
+
+    for (let i = 0; i < sections.length; i++) {
+      const section = sections[i].trim();
+      if (!section) continue;
+
+      // Check if this section is a perspective tag
+      const perspectiveMatch = section.match(/<perspective>(.*?)<\/perspective>/);
+      if (perspectiveMatch) {
+        // This is a perspective tag, the next section should be its content
+        const religion = perspectiveMatch[1].trim();
+        const nextSection = sections[i + 1];
+        if (nextSection) {
+          const perspectiveContent = nextSection.trim();
+          if (perspectiveContent) {
+            parts.push({
+              type: 'perspective',
+              religion,
+              content: perspectiveContent,
+              colors: perspectiveColors[religion] || perspectiveColors['Christianity']
+            });
+            console.log('✅ Added perspective:', religion, 'Content:', perspectiveContent.substring(0, 50) + '...');
+          }
+          i++; // Skip the next section since we just processed it
         }
-      }
-
-      const religion = match[1].trim();
-      const perspectiveContent = match[2].trim();
-      
-      parts.push({
-        type: 'perspective',
-        religion,
-        content: perspectiveContent,
-        colors: perspectiveColors[religion] || perspectiveColors['Christianity']
-      });
-
-      lastIndex = perspectiveRegex.lastIndex;
-    }
-
-    // Add any remaining content
-    if (lastIndex < content.length) {
-      const remainingContent = content.slice(lastIndex).trim();
-      if (remainingContent) {
-        parts.push({ type: 'text', content: remainingContent });
+      } else if (!perspectiveMatch && section && !section.includes('<perspective>')) {
+        // This is regular text content
+        parts.push({ type: 'text', content: section });
+        console.log('📄 Added text content:', section.substring(0, 50) + '...');
       }
     }
 
-    return parts;
+    console.log('🎯 Final parsed parts:', parts.length, 'parts');
+    return parts.length > 0 ? parts : [{ type: 'text', content }];
   }, []);
 
   // Parse scripture reference to extract religion, book, and chapter info
