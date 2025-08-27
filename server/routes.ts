@@ -380,13 +380,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/google/callback", async (req: any, res) => {
     try {
-      const { code } = req.query;
+      console.log('🔍 Google OAuth callback started');
+      const { code, error } = req.query;
+      
+      if (error) {
+        console.log('❌ OAuth error from Google:', error);
+        return res.redirect('/?error=auth_cancelled');
+      }
       
       if (!code) {
+        console.log('❌ No authorization code received');
         return res.redirect('/?error=auth_cancelled');
       }
 
+      console.log('✅ Authorization code received, exchanging for tokens...');
+
       // Exchange code for tokens
+      const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${req.protocol}://${req.get('host')}/api/auth/google/callback`;
+      console.log('🔗 Using redirect URI:', redirectUri);
+      
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: {
@@ -397,15 +409,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           client_secret: process.env.GOOGLE_CLIENT_SECRET || '',
           code: code as string,
           grant_type: 'authorization_code',
-          redirect_uri: process.env.GOOGLE_REDIRECT_URI || `${req.protocol}://${req.get('host')}/api/auth/google/callback`,
+          redirect_uri: redirectUri,
         }),
       });
 
       const tokens = await tokenResponse.json();
+      console.log('🎫 Token response status:', tokenResponse.status);
       
-      if (!tokens.access_token) {
+      if (!tokenResponse.ok || !tokens.access_token) {
+        console.error('❌ Token exchange failed:', tokens);
         return res.redirect('/?error=auth_failed');
       }
+
+      console.log('✅ Tokens received, fetching user info...');
 
       // Get user info from Google
       const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
@@ -414,13 +430,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
 
+      if (!userResponse.ok) {
+        console.error('❌ Failed to fetch user info from Google');
+        return res.redirect('/?error=auth_failed');
+      }
+
       const googleUser = await userResponse.json();
+      console.log('👤 Google user info received:', { email: googleUser.email, name: googleUser.name });
       
       // Check if user exists
       let user = await storage.getUserByEmail(googleUser.email);
+      console.log('🔍 Existing user found:', !!user);
       
       if (!user) {
         // Create new user
+        console.log('➕ Creating new user...');
         const newUserData = {
           email: googleUser.email,
           username: googleUser.email.split('@')[0] + '_' + Date.now(),
@@ -432,9 +456,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
         
         user = await storage.createUser(newUserData);
+        console.log('✅ New user created:', user.id);
       } else {
         // Update profile picture if changed
         if (googleUser.picture && user.profileImageUrl !== googleUser.picture) {
+          console.log('🖼️ Updating profile picture...');
           user = await storage.updateUser(user.id, { 
             profileImageUrl: googleUser.picture,
             socialProvider: 'google'
@@ -442,18 +468,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Create auth tokens
-      const authTokens = await authService.createAuthTokens(user);
-      
       // Set session
       req.session.userId = user.id;
       req.session.isGuest = false;
+      console.log('🔐 Session set for user:', user.id);
 
       // Redirect to dashboard with success
+      console.log('✅ Redirecting to dashboard...');
       res.redirect('/?auth=success');
       
     } catch (error) {
-      console.error('Google OAuth error:', error);
+      console.error('❌ Google OAuth error:', error);
       res.redirect('/?error=auth_failed');
     }
   });
