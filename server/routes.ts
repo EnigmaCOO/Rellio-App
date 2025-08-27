@@ -380,7 +380,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `client_id=${process.env.GOOGLE_CLIENT_ID}&` +
       `redirect_uri=${encodeURIComponent(redirectUri)}&` +
       `response_type=code&` +
-      `scope=${encodeURIComponent('openid profile email')}`;
+      `scope=${encodeURIComponent('openid profile email')}&` +
+      `access_type=offline&` +
+      `prompt=consent`;
     
     console.log('🚀 Full Google OAuth URL:', googleAuthUrl.substring(0, 100) + '...');
     res.redirect(googleAuthUrl);
