@@ -21,7 +21,19 @@ import {
   History as HistoryIcon,
   BarChart3,
   MessageCircle,
-  ExternalLink
+  ExternalLink,
+  Scale,
+  Heart,
+  Brain,
+  Star,
+  Sparkles,
+  Flame,
+  Eye,
+  Crown,
+  Compass,
+  X,
+  ChevronRight,
+  Bookmark
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useElevenLabsStreaming } from '@/hooks/useElevenLabsStreaming';
@@ -30,8 +42,30 @@ import { AudioWaveform } from './AudioWaveform';
 import { VoiceTalkBackHandler } from './VoiceTalkBackHandler';
 import { ChatHistoryManager } from './ChatHistoryManager';
 import { ProgressDashboard } from '@/components/progress/ProgressDashboard';
+import { AudioPlaybackButton } from './AudioPlaybackButton';
+import { Input } from '@/components/ui/input';
+import { apiRequest } from '@/lib/queryClient';
 import type { Religion, ChatMessage } from '@shared/schema';
 import type { ScholarPersona } from './ScholarPersonas';
+
+// Compare Mode interfaces
+interface ComparisonVerse {
+  religion: Religion;
+  book: string;
+  chapter: number;
+  verse: number;
+  text: string;
+  translation?: string;
+  reference: string;
+}
+
+interface ComparisonResult {
+  theme: string;
+  aiSummary: string;
+  verses: {
+    [religion: string]: ComparisonVerse[];
+  };
+}
 
 // Enhanced Voice State Management
 export type VoiceFirstState = 'idle' | 'listening' | 'processing' | 'responding' | 'interrupted';
@@ -103,6 +137,27 @@ export function VoiceFirstChatInterface({
   const [interruptedQuery, setInterruptedQuery] = useState<string>('');
   const [lastAIMessage, setLastAIMessage] = useState<string>('');
   const [lastVoiceActivity, setLastVoiceActivity] = useState<number>(0);
+  
+  // Compare Mode state
+  const [isCompareMode, setIsCompareMode] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState("");
+  const [customTheme, setCustomTheme] = useState("");
+  const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null);
+  const [isLoadingComparison, setIsLoadingComparison] = useState(false);
+
+  // Predefined themes for Compare Mode
+  const PREDEFINED_THEMES = [
+    { id: 'love', label: 'Love', icon: Heart, color: 'bg-red-100 text-red-700 border-red-200' },
+    { id: 'compassion', label: 'Compassion', icon: Heart, color: 'bg-pink-100 text-pink-700 border-pink-200' },
+    { id: 'wisdom', label: 'Wisdom', icon: Brain, color: 'bg-purple-100 text-purple-700 border-purple-200' },
+    { id: 'faith', label: 'Faith', icon: Star, color: 'bg-blue-100 text-blue-700 border-blue-200' },
+    { id: 'hope', label: 'Hope', icon: Sparkles, color: 'bg-green-100 text-green-700 border-green-200' },
+    { id: 'justice', label: 'Justice', icon: Scale, color: 'bg-gray-100 text-gray-700 border-gray-200' },
+    { id: 'redemption', label: 'Redemption', icon: Flame, color: 'bg-orange-100 text-orange-700 border-orange-200' },
+    { id: 'soul', label: 'Soul', icon: Eye, color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+    { id: 'afterlife', label: 'Afterlife', icon: Crown, color: 'bg-violet-100 text-violet-700 border-violet-200' },
+    { id: 'meaning of life', label: 'Meaning of Life', icon: Compass, color: 'bg-cyan-100 text-cyan-700 border-cyan-200' }
+  ];
   
   // Speech Recognition Setup
   const recognitionRef = useRef<any>(null);
@@ -294,6 +349,66 @@ export function VoiceFirstChatInterface({
     },
     enabled: !!sessionId
   });
+
+  // Compare Mode mutation
+  const compareMutation = useMutation({
+    mutationFn: async ({ theme }: { theme: string }) => {
+      return apiRequest('/api/chat/compare', {
+        method: 'POST',
+        body: JSON.stringify({
+          theme,
+          sessionId,
+          maxVersesPerReligion: 5
+        })
+      });
+    },
+    onSuccess: (data: ComparisonResult) => {
+      setComparisonResult(data);
+      setIsLoadingComparison(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
+      toast({
+        title: "Comparison Complete",
+        description: `Found verses about "${data.theme}" from multiple religious traditions`,
+        variant: "default"
+      });
+    },
+    onError: (error) => {
+      console.error('Compare Mode error:', error);
+      setIsLoadingComparison(false);
+      toast({
+        title: "Comparison Failed",
+        description: "Unable to fetch comparison verses. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Compare Mode handlers
+  const handleCompareToggle = () => {
+    setIsCompareMode(!isCompareMode);
+    if (!isCompareMode) {
+      setComparisonResult(null);
+      setSelectedTheme("");
+      setCustomTheme("");
+    }
+  };
+
+  const handleThemeSelect = (theme: string) => {
+    setSelectedTheme(theme);
+    setCustomTheme("");
+    handleCompareSubmit(theme);
+  };
+
+  const handleCustomThemeSubmit = () => {
+    if (customTheme.trim()) {
+      handleCompareSubmit(customTheme.trim());
+    }
+  };
+
+  const handleCompareSubmit = (theme: string) => {
+    setIsLoadingComparison(true);
+    compareMutation.mutate({ theme });
+  };
 
   // Send Message with Enhanced Voice Integration
   const sendMessageMutation = useMutation({
@@ -1085,6 +1200,21 @@ export function VoiceFirstChatInterface({
         </div>
         
         <div className="flex items-center gap-1 flex-wrap">
+          {/* Compare Mode Toggle */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCompareToggle}
+            className={cn(
+              "text-xs px-2 h-7 relative",
+              isCompareMode ? "text-teal-600 border-teal-300 bg-teal-100" : "text-gray-600 border-gray-300"
+            )}
+            title="Compare verses across religions"
+          >
+            <Scale className="w-3 h-3 mr-1" />
+            Compare
+          </Button>
+          
           {/* Auto-play Toggle */}
           <Button
             variant="outline"
@@ -1147,6 +1277,120 @@ export function VoiceFirstChatInterface({
           </Button>
         </div>
       </div>
+
+      {/* Compare Mode Panel */}
+      {isCompareMode && (
+        <div className="border-b border-gray-200 bg-white p-4 max-h-80 overflow-y-auto">
+          {!comparisonResult ? (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Scale className="w-5 h-5 text-teal-600" />
+                Choose a spiritual theme to compare across traditions
+              </h3>
+              
+              {/* Predefined Themes */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                {PREDEFINED_THEMES.map((theme) => {
+                  const IconComponent = theme.icon;
+                  return (
+                    <Button
+                      key={theme.id}
+                      variant="outline"
+                      onClick={() => handleThemeSelect(theme.label.toLowerCase())}
+                      disabled={isLoadingComparison}
+                      className={cn(
+                        "h-auto py-3 px-3 flex flex-col items-center gap-2 border-2 transition-all duration-200",
+                        theme.color,
+                        "hover:scale-105 hover:shadow-md"
+                      )}
+                    >
+                      <IconComponent className="w-5 h-5" />
+                      <span className="text-xs font-medium text-center leading-tight">
+                        {theme.label}
+                      </span>
+                    </Button>
+                  );
+                })}
+              </div>
+              
+              {/* Custom Theme Input */}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Or enter your own theme (e.g., forgiveness, death, marriage)"
+                  value={customTheme}
+                  onChange={(e) => setCustomTheme(e.target.value)}
+                  disabled={isLoadingComparison}
+                  className="flex-1"
+                  onKeyPress={(e) => e.key === 'Enter' && handleCustomThemeSubmit()}
+                />
+                <Button
+                  onClick={handleCustomThemeSubmit}
+                  disabled={!customTheme.trim() || isLoadingComparison}
+                  className="bg-teal-600 hover:bg-teal-700 text-white"
+                >
+                  {isLoadingComparison ? "Loading..." : "Compare"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            // Comparison Results Display
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Scale className="w-5 h-5 text-teal-600" />
+                  Verses about "{comparisonResult.theme}"
+                </h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setComparisonResult(null)}
+                  className="text-gray-600"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  New Search
+                </Button>
+              </div>
+              
+              {/* AI Summary */}
+              <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-lg p-4">
+                <h4 className="font-semibold text-teal-800 mb-2 flex items-center gap-2">
+                  <Brain className="w-4 h-4" />
+                  Cross-Traditional Insights
+                </h4>
+                <p className="text-teal-700 text-sm leading-relaxed">
+                  {comparisonResult.aiSummary}
+                </p>
+              </div>
+              
+              {/* Verses by Religion */}
+              <div className="grid gap-4 lg:grid-cols-2">
+                {Object.entries(comparisonResult.verses).map(([religion, verses]) => (
+                  <Card key={religion} className="border border-gray-200 shadow-sm">
+                    <div className="p-4">
+                      <h5 className="font-semibold text-gray-900 mb-3 capitalize flex items-center gap-2">
+                        <BookOpen className="w-4 h-4" />
+                        {religion}
+                      </h5>
+                      <div className="space-y-3">
+                        {verses.map((verse, index) => (
+                          <div key={index} className="border-l-4 border-teal-200 pl-3">
+                            <p className="text-sm text-gray-700 mb-1 leading-relaxed">
+                              "{verse.text}"
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {verse.reference}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Messages Area */}
       <ScrollArea className="flex-1 p-4">
