@@ -509,7 +509,9 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
               {/* Terms of service */}
               <p className="text-xs text-gray-500 text-center mt-6">
                 By continuing, you agree to our{" "}
-                <span className="text-amber-600 underline cursor-pointer">Terms of Service</span>
+                <a href="/terms" className="text-amber-600 underline cursor-pointer hover:text-amber-700">Terms of Service</a>
+                {" "}and{" "}
+                <a href="/privacy" className="text-amber-600 underline cursor-pointer hover:text-amber-700">Privacy Policy</a>
               </p>
             </CardContent>
           </Card>

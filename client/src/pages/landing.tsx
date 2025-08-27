@@ -733,7 +733,7 @@ export default function LandingPage() {
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <a href="/privacy" className="text-text-muted hover:text-gold transition-colors text-sm font-light">Privacy</a>
-              <a href="#" className="text-text-muted hover:text-gold transition-colors text-sm font-light">Terms</a>
+              <a href="/terms" className="text-text-muted hover:text-gold transition-colors text-sm font-light">Terms</a>
               <a href="#" className="text-text-muted hover:text-gold transition-colors text-sm font-light">Ethics</a>
             </div>
           </div>

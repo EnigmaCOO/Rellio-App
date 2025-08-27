@@ -1,0 +1,110 @@
+High-Level Prompt for Replit AI Agent
+SYSTEM / GUARDRAILS (paste first)
+You are a senior full-stack engineer tasked with adding a Terms of Service page for Rellio, linked from the home page and authentication flow, to meet Google OAuth verification requirements. Implement content moderation features to promote positive interactions, without breaking existing functionality or logic.
+
+Do not break routing, APIs, state, or IDs used by analytics/tests.
+Keep all existing component props and exported names.
+Only add new components/pages, styles, and moderation logic where necessary.
+If you add files, keep imports relative and tree-shakable.
+Write accessible, responsive, and performant code.
+Prefer Tailwind CSS (or the project’s existing CSS approach).
+Use semantic HTML and ARIA where relevant.
+Produce a single PR with clear commits.
+For moderation, ensure it's fair, unbiased, and promotes unity—focus on preventing hate speech without censoring legitimate discussions.
+
+TASK BRIEF (paste after system block)
+Goal: Add a dedicated Terms of Service page linked from the home page (client/src/pages/landing.tsx) and authentication flow (client/src/pages/auth.tsx), using the provided content to meet Google OAuth verification requirements. Implement content moderation in the chat system to ban offensive words, prevent hate speech, and detect bias against religions, fostering a unified spiritual community where users explore without hatred.
+
+Terms of Service Page
+
+
+Create a new page: client/src/pages/terms.tsx
+Content: Render the following Terms of Service as JSX (e.g.,  with Markdown-like structure) inside a centered card (max-w-4xl, p-8, bg-white, rounded-2xl, shadow-md) with teal #00D5FF accents and a faint purple-to-gold gradient overlay (#4B0082 to #D4AF37, 10% opacity) for consistency:
+text**Rellio Terms of Service**
+
+**Last Updated: August 26, 2025**
+
+Welcome to Rellio, a platform dedicated to exploring sacred scriptures and fostering spiritual growth through AI-driven insights. These Terms of Service ("Terms") govern your use of the Rellio app and website (collectively, the "Service"). By accessing or using Rellio, you agree to be bound by these Terms. If you do not agree, please refrain from using the Service.
+
+#### 1. Acceptance of Terms
+By creating an account (via email, phone, Google, Facebook, X, Instagram) or using Rellio, you accept these Terms and our [Privacy Policy](https://rellio.com/privacy), which is incorporated herein. We may update these Terms periodically; we will notify you via the app or email, and continued use constitutes acceptance.
+
+#### 2. Eligibility
+You must be at least 13 years old (or 16 in regions with stricter laws) to use Rellio. By using the Service, you represent that you meet this age requirement and have the legal capacity to enter into these Terms.
+
+#### 3. Account Registration and Security
+- **Registration**: You may sign up using email, phone number, or social media accounts. You must provide accurate information and update it as needed.
+- **Verification**: We use OTP codes (via email/SMS) or social login to verify your identity. You are responsible for maintaining the confidentiality of your account credentials.
+- **Security**: Notify us immediately at [support@rellio.com] of any unauthorized use. We are not liable for losses due to compromised accounts.
+
+#### 4. Use of the Service
+Rellio provides AI-guided exploration of scriptures (e.g., Bible, Quran, Torah, Bhagavad Gita, Vedas) with features like voice chat, Compare Mode (themes like love, compassion), and scholar personas (e.g., Christian Priest, Islamic Mufti). You agree to:
+- Use the Service only for lawful, personal, non-commercial purposes.
+- Not engage in hate speech, offensive language, or bias against any religion—our goal is to unite through understanding.
+- Respect intellectual property (e.g., copyrighted texts) and avoid scraping or redistributing content.
+
+#### 5. Content and Moderation
+- **User Content**: You retain ownership of chat inputs, but grant Rellio a license to process and store them for service delivery (see Privacy Policy).
+- **Moderation**: We ban offensive words and hate speech (e.g., slurs, religious attacks) using automated filters and AI (OpenAI/XAI). Violations may result in warnings, bans, or content removal.
+- **Rellio Content**: Scriptures and AI responses are licensed for personal use only.
+
+#### 6. Subscription and Payments
+- Rellio offers free access with limits; premium features (e.g., higher quotas) may require payment. Details are in our [Pricing Policy] (to be added).
+- All transactions are final; contact support for refunds within 7 days.
+
+#### 7. Intellectual Property
+Rellio and its content (design, logos, code) are owned by us or licensors. You may not copy, modify, or distribute without permission.
+
+#### 8. Disclaimers and Limitations
+- The Service is provided "as is" without warranties of accuracy or uninterrupted use. AI responses reflect interpretations, not definitive doctrine.
+- Liability is limited to the maximum extent permitted by law.
+
+#### 9. Termination
+We may suspend or terminate your account for violations (e.g., hate speech, fraud). You may delete your account via settings, subject to data retention policies.
+
+#### 10. Governing Law and Dispute Resolution
+These Terms are governed by U.S. law. Disputes will be resolved through binding arbitration (e.g., AAA rules) unless prohibited, with a 30-day negotiation period.
+
+#### 11. Contact Us
+For questions or concerns: [support@rellio.com] or [app address]. We’re here to guide your spiritual journey.
+
+By using Rellio, you agree to these Terms. For legal advice, consult a professional—this is not exhaustive.
+
+Link from home page (client/src/pages/landing.tsx) and auth page (client/src/pages/auth.tsx): Update "Terms" footer/link to route to /terms (use React Router <link to="/terms">Terms).
+
+
+Content Moderation for Positive Interactions
+
+
+In chat components (client/src/components/RightColumnChat.tsx, client/src/components/EnhancedAuraArchivist.tsx), add client-side filtering for user input (before sending to /api/chat/*): Use a library like bad-words for offensive terms; flag hate speech/bias with OpenAI moderation API (server/services/openai.ts).
+Backend Validation (server/routes.ts /api/chat/*): Scan messages for hate/bias (e.g., keywords like slurs, religious attacks) using regex or AI; block/reject if detected, log for review, respond with "Message blocked to promote unity—please rephrase."
+Banned Words List: Create a configurable list in server/services/moderation.ts (e.g., offensive words, biased terms like "superior religion"); extend for themes (prevent targeting, e.g., "hate [religion]").
+User Reporting: Add "Report" button on messages; store in new flaggedMessages table (shared/schema.ts).
+Notification System: Warn users on violations; ban repeat offenders (update users table with banned: boolean).
+
+
+UI and Integration
+
+
+Terms Page: Scrollable content in a centered card (max-w-4xl, p-8, bg-white, rounded-2xl, shadow-md), with back link to home (<link to="/">Back to Home).
+Moderation Feedback: In chat, show toast warnings (e.g., "Message moderated for positivity—let's focus on unity!") using a library like react-toastify.
+Responsiveness: Ensure terms page is mobile-friendly (stack sections); moderation checks don’t slow chat (async).
+
+
+Security and Compliance
+
+
+Moderation logs in flaggedMessages for audits; comply with GDPR/CCPA by allowing data export/deletion.
+Test: Simulate offensive input to verify blocking; ensure ToS acceptance is logged in users table.
+
+Deliverables:
+
+New client/src/pages/terms.tsx: With provided ToS content.
+Updated client/src/pages/landing.tsx, auth.tsx: Add links to /terms.
+New server/services/moderation.ts: For filtering/bias detection.
+Updated server/routes.ts /api/chat/*: Add moderation middleware.
+Extend shared/schema.ts: Add flaggedMessages table.
+Tailwind/CSS: Style terms card (bg-white p-8 rounded-2xl shadow-md), moderation toast (bg-teal-100).
+State/Hooks: useState for termsAccepted in auth form, moderationWarnings in chat; useEffect for routing guard, moderation checks.
+
+Provide React/TypeScript/Express code with Tailwind classes, and describe any new state or effects needed. Ensure a secure, user-friendly ToS page for Google auth verification and a unifying chat experience free from hate speech, promoting spiritual understanding.
