@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Eye, EyeOff, Mail, Phone, User, Lock, CheckCircle, Send, ArrowLeft } from "lucide-react";
 import { signupSchema, loginSchema, verifyOtpSchema } from "@shared/schema";
+import rellioLogo from "@assets/image_1756254355766.png";
 import type { z } from "zod";
 
 type SignupFormData = z.infer<typeof signupSchema>;
@@ -236,13 +237,13 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-amber-50 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-yellow-50 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           {/* Back button */}
           <Button
             variant="ghost"
             onClick={onBack}
-            className="mb-6 text-gray-600 hover:text-[#00D5FF] hover:bg-white/80 rounded-xl"
+            className="mb-6 text-gray-600 hover:text-amber-600 hover:bg-white/80 rounded-xl"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
@@ -250,12 +251,16 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
 
           {/* Main auth card */}
           <Card className="bg-white/95 backdrop-blur-sm shadow-2xl border-0 rounded-3xl overflow-hidden">
-            <div className="h-2 bg-gradient-to-r from-purple-400 via-[#00D5FF] to-amber-400"></div>
+            <div className="h-2 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600"></div>
             
             <CardHeader className="text-center pb-6">
-              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-amber-600 bg-clip-text text-transparent">
-                🔮 Rellio
-              </CardTitle>
+              <div className="flex flex-col items-center mb-4">
+                <img 
+                  src={rellioLogo} 
+                  alt="Rellio" 
+                  className="w-24 h-24 object-contain mb-2" 
+                />
+              </div>
               <CardDescription className="text-gray-600 text-base">
                 Join the spiritual exploration community
               </CardDescription>
@@ -263,16 +268,16 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
 
             <CardContent className="p-8">
               <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-8 bg-gray-50 rounded-xl p-1">
+                <TabsList className="grid w-full grid-cols-2 mb-8 bg-amber-50 rounded-xl p-1">
                   <TabsTrigger 
                     value="login" 
-                    className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#00D5FF]"
+                    className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-amber-600"
                   >
                     Sign In
                   </TabsTrigger>
                   <TabsTrigger 
                     value="signup"
-                    className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#00D5FF]"
+                    className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-amber-600"
                   >
                     Sign Up
                   </TabsTrigger>
@@ -284,14 +289,14 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                       
                       {/* Login type toggle */}
                       <div className="flex items-center justify-center mb-4">
-                        <div className="bg-gray-50 rounded-xl p-1 flex">
+                        <div className="bg-amber-50 rounded-xl p-1 flex">
                           <button
                             type="button"
                             onClick={() => setUsePhone(false)}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                               !usePhone 
-                                ? 'bg-white shadow-sm text-[#00D5FF]' 
-                                : 'text-gray-600 hover:text-[#00D5FF]'
+                                ? 'bg-white shadow-sm text-amber-600' 
+                                : 'text-gray-600 hover:text-amber-600'
                             }`}
                           >
                             <Mail className="w-4 h-4 inline mr-2" />
@@ -302,8 +307,8 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                             onClick={() => setUsePhone(true)}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                               usePhone 
-                                ? 'bg-white shadow-sm text-[#00D5FF]' 
-                                : 'text-gray-600 hover:text-[#00D5FF]'
+                                ? 'bg-white shadow-sm text-amber-600' 
+                                : 'text-gray-600 hover:text-amber-600'
                             }`}
                           >
                             <Phone className="w-4 h-4 inline mr-2" />
@@ -327,7 +332,7 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                                     {...field}
                                     type="tel"
                                     placeholder="+1 (555) 123-4567"
-                                    className="pl-11 bg-gray-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-[#00D5FF]/20"
+                                    className="pl-11 bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
                                   />
                                 </div>
                               </FormControl>
@@ -349,7 +354,7 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                                     {...field}
                                     type="email"
                                     placeholder="your@email.com"
-                                    className="pl-11 bg-gray-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-[#00D5FF]/20"
+                                    className="pl-11 bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
                                   />
                                 </div>
                               </FormControl>
@@ -373,12 +378,12 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                                   {...field}
                                   type={showLoginPassword ? "text" : "password"}
                                   placeholder="Enter your password"
-                                  className="pl-11 pr-11 bg-gray-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-[#00D5FF]/20"
+                                  className="pl-11 pr-11 bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
                                 />
                                 <button
                                   type="button"
                                   onClick={() => setShowLoginPassword(!showLoginPassword)}
-                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#00D5FF] transition-colors"
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-600 transition-colors"
                                 >
                                   {showLoginPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                 </button>
@@ -391,7 +396,7 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
 
                       <Button 
                         type="submit" 
-                        className="w-full bg-gradient-to-r from-[#00D5FF] to-blue-500 hover:from-[#00D5FF]/90 hover:to-blue-600 text-white font-semibold h-12 rounded-xl shadow-lg transition-all duration-200"
+                        className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white font-semibold h-12 rounded-xl shadow-lg transition-all duration-200"
                         disabled={loginMutation.isPending}
                       >
                         {loginMutation.isPending ? (
@@ -423,7 +428,7 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                                 <Input
                                   {...field}
                                   placeholder="John"
-                                  className="bg-gray-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-[#00D5FF]/20"
+                                  className="bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -440,7 +445,7 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                                 <Input
                                   {...field}
                                   placeholder="Doe"
-                                  className="bg-gray-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-[#00D5FF]/20"
+                                  className="bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -451,14 +456,14 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
 
                       {/* Signup type toggle */}
                       <div className="flex items-center justify-center">
-                        <div className="bg-gray-50 rounded-xl p-1 flex">
+                        <div className="bg-amber-50 rounded-xl p-1 flex">
                           <button
                             type="button"
                             onClick={() => setUsePhone(false)}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                               !usePhone 
-                                ? 'bg-white shadow-sm text-[#00D5FF]' 
-                                : 'text-gray-600 hover:text-[#00D5FF]'
+                                ? 'bg-white shadow-sm text-amber-600' 
+                                : 'text-gray-600 hover:text-amber-600'
                             }`}
                           >
                             <Mail className="w-4 h-4 inline mr-2" />
@@ -469,8 +474,8 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                             onClick={() => setUsePhone(true)}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                               usePhone 
-                                ? 'bg-white shadow-sm text-[#00D5FF]' 
-                                : 'text-gray-600 hover:text-[#00D5FF]'
+                                ? 'bg-white shadow-sm text-amber-600' 
+                                : 'text-gray-600 hover:text-amber-600'
                             }`}
                           >
                             <Phone className="w-4 h-4 inline mr-2" />
@@ -494,7 +499,7 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                                     {...field}
                                     type="tel"
                                     placeholder="+1 (555) 123-4567"
-                                    className="pl-11 bg-gray-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-[#00D5FF]/20"
+                                    className="pl-11 bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
                                   />
                                 </div>
                               </FormControl>
@@ -516,7 +521,7 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                                     {...field}
                                     type="email"
                                     placeholder="your@email.com"
-                                    className="pl-11 bg-gray-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-[#00D5FF]/20"
+                                    className="pl-11 bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
                                   />
                                 </div>
                               </FormControl>
@@ -539,7 +544,7 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                                 <Input
                                   {...field}
                                   placeholder="username"
-                                  className="pl-11 bg-gray-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-[#00D5FF]/20"
+                                  className="pl-11 bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
                                 />
                               </div>
                             </FormControl>
@@ -562,12 +567,12 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                                   {...field}
                                   type={showSignupPassword ? "text" : "password"}
                                   placeholder="Create a password"
-                                  className="pl-11 pr-11 bg-gray-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-[#00D5FF]/20"
+                                  className="pl-11 pr-11 bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
                                 />
                                 <button
                                   type="button"
                                   onClick={() => setShowSignupPassword(!showSignupPassword)}
-                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#00D5FF] transition-colors"
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-600 transition-colors"
                                 >
                                   {showSignupPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                 </button>
@@ -580,7 +585,7 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
 
                       <Button 
                         type="submit" 
-                        className="w-full bg-gradient-to-r from-purple-500 to-amber-500 hover:from-purple-600 hover:to-amber-600 text-white font-semibold h-12 rounded-xl shadow-lg transition-all duration-200"
+                        className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white font-semibold h-12 rounded-xl shadow-lg transition-all duration-200"
                         disabled={signupMutation.isPending}
                       >
                         {signupMutation.isPending ? (
@@ -612,7 +617,7 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                   <Button 
                     variant="outline"
                     onClick={() => handleSocialLogin('Google')}
-                    className="h-12 rounded-xl border-gray-200 hover:bg-gray-50"
+                    className="h-12 rounded-xl border-amber-200 hover:bg-amber-50"
                   >
                     <span className="text-xl mr-2">🔍</span>
                     Google
@@ -620,7 +625,7 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                   <Button 
                     variant="outline"
                     onClick={() => handleSocialLogin('Facebook')}
-                    className="h-12 rounded-xl border-gray-200 hover:bg-gray-50"
+                    className="h-12 rounded-xl border-amber-200 hover:bg-amber-50"
                   >
                     <span className="text-xl mr-2">📘</span>
                     Facebook
@@ -631,12 +636,12 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                 <Button 
                   onClick={() => guestMutation.mutate()}
                   variant="outline"
-                  className="w-full h-12 rounded-xl border-[#00D5FF] text-[#00D5FF] hover:bg-[#00D5FF]/5"
+                  className="w-full h-12 rounded-xl border-amber-500 text-amber-600 hover:bg-amber-50"
                   disabled={guestMutation.isPending}
                 >
                   {guestMutation.isPending ? (
                     <>
-                      <div className="w-4 h-4 mr-2 border-2 border-[#00D5FF]/30 border-t-[#00D5FF] rounded-full animate-spin" />
+                      <div className="w-4 h-4 mr-2 border-2 border-amber-600/30 border-t-amber-600 rounded-full animate-spin" />
                       Accessing...
                     </>
                   ) : (
@@ -658,7 +663,7 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
         <DialogContent className="bg-white rounded-2xl border-0 shadow-2xl max-w-md">
           <DialogHeader>
             <DialogTitle className="text-center text-2xl font-bold text-gray-800">
-              <CheckCircle className="w-8 h-8 text-[#00D5FF] mx-auto mb-2" />
+              <CheckCircle className="w-8 h-8 text-amber-600 mx-auto mb-2" />
               Verify Your Account
             </DialogTitle>
             <DialogDescription className="text-center text-gray-600">
@@ -680,12 +685,12 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                       <div className="flex justify-center">
                         <InputOTP maxLength={6} {...field}>
                           <InputOTPGroup>
-                            <InputOTPSlot index={0} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-[#00D5FF]" />
-                            <InputOTPSlot index={1} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-[#00D5FF]" />
-                            <InputOTPSlot index={2} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-[#00D5FF]" />
-                            <InputOTPSlot index={3} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-[#00D5FF]" />
-                            <InputOTPSlot index={4} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-[#00D5FF]" />
-                            <InputOTPSlot index={5} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-[#00D5FF]" />
+                            <InputOTPSlot index={0} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" />
+                            <InputOTPSlot index={1} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" />
+                            <InputOTPSlot index={2} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" />
+                            <InputOTPSlot index={3} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" />
+                            <InputOTPSlot index={4} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" />
+                            <InputOTPSlot index={5} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" />
                           </InputOTPGroup>
                         </InputOTP>
                       </div>
@@ -698,7 +703,7 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
               <div className="space-y-3">
                 <Button 
                   type="submit" 
-                  className="w-full bg-gradient-to-r from-[#00D5FF] to-blue-500 hover:from-[#00D5FF]/90 hover:to-blue-600 text-white font-semibold h-12 rounded-xl"
+                  className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white font-semibold h-12 rounded-xl"
                   disabled={otpMutation.isPending}
                 >
                   {otpMutation.isPending ? (
@@ -717,7 +722,7 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                 <Button 
                   type="button"
                   variant="ghost"
-                  className="w-full text-gray-600 hover:text-[#00D5FF]"
+                  className="w-full text-gray-600 hover:text-amber-600"
                   onClick={() => setShowOtpModal(false)}
                 >
                   Cancel
