@@ -1,0 +1,47 @@
+Implement secure authentication for Rellio in the React/TypeScript frontend and Node.js/Express backend, matching the clean white-themed UI (#FFFFFF background, rounded corners 12px, shadow-md, teal #00D5FF accents, purple-to-gold gradient overlay). Add verification via OTP code system for email/phone, and enable sign-up/login with Google, Facebook, X (Twitter), Instagram, phone number, and email. Store user data in PostgreSQL (extend users table from shared/schema.ts) for future notifications (e.g., app updates via email/SMS). Use Passport.js for social auth, Nodemailer/Twilio for verification, and ensure seamless integration without breaking existing routes or components. Maintain accessibility (ARIA labels) and security (JWT tokens, bcrypt hashing).
+Key Features and Goals:
+
+Authentication Routes and Logic (Backend - server/services/auth.ts, server/routes.ts):
+
+Add routes: /api/auth/signup, /api/auth/login, /api/auth/verify-otp, /api/auth/social/:provider (callback).
+Email/Phone Sign-Up: Hash passwords (bcrypt), generate/send OTP (4-6 digits, expires 5min) via Nodemailer (email) or Twilio (SMS from process.env.TWILIO_SID).
+Social Logins: Use Passport.js strategies for Google, Facebook, X (Twitter OAuth2), Instagram—configure client IDs/secrets from process.env.
+JWT: Issue access/refresh tokens on success (jsonwebtoken); store sessions in PostgreSQL.
+Verification: On sign-up, send OTP; require verification before full access (e.g., set verified: boolean in users table).
+
+
+User Data Storage and Notifications (server/services/notification.ts, shared/schema.ts):
+
+Extend users table: Add columns for email, phone, verified (boolean), socialProvider (string), notificationPreferences (JSON: {email: bool, sms: bool}).
+Notification System: Create routes /api/notifications/send-update; use Nodemailer/Twilio to batch-send updates (e.g., "New feature alert!") to opted-in users. Use PostgreSQL LISTEN/NOTIFY for real-time (e.g., trigger on app updates).
+Store Info: On sign-up, save email/phone/social data; query users for notifications via Drizzle ORM.
+
+
+Frontend Integration (client/src/pages/auth.tsx, client/src/components/RightColumnChat.tsx):
+
+Auth Forms: Style sign-up/login as white cards with teal buttons; include social icons (Google, Facebook, X, Instagram) as buttons redirecting to backend OAuth.
+OTP Verification: Modal/form for code input (6 fields, auto-focus); match app's gradient/mandala for spiritual feel.
+Protected Routes: Use React Router guards; redirect unauth to auth.tsx.
+Notifications: Add user profile section (dashboard.tsx) for preferences; display in-chat notifications if real-time (Socket.io from backend).
+
+
+Security and UX Best Practices:
+
+Validation: Zod for schemas; rate-limit routes (express-rate-limit).
+Error Handling: Graceful messages (e.g., "OTP sent—check your email!").
+Responsiveness: Mobile-friendly forms (stack vertically).
+Testing: Add unit tests for routes (Jest/Supertest).
+
+
+
+Deliverables:
+
+New <AuthForm.tsx>: For sign-up/login UI.
+Updated shared/schema.ts: Extend users table.
+server/services/auth.ts, notification.ts: New services.
+server/routes.ts: Add auth/notify routes.
+Passport config in server/app.ts.
+Tailwind/CSS: Extend for auth cards (bg-white, border-teal).
+State/Hooks: useAuth hook for JWT/context.
+
+Provide React/TypeScript/Express code with Tailwind classes, and describe state/effects. Ensure a mesmerizing experience where auth feels spiritual and secure, leading to personalized notifications.
