@@ -48,6 +48,7 @@
     "@types/node-fetch": "^2.6.12",
     "@types/nodemailer": "^7.0.1",
     "@types/passport-google-oauth20": "^2.0.16",
+    "@types/react-helmet": "^6.1.11",
     "bad-words": "^4.0.0",
     "bcrypt": "^6.0.0",
     "class-variance-authority": "^0.7.1",
