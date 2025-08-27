@@ -415,10 +415,13 @@ export function EnhancedAuraArchivist({
   // Compare Mode mutation
   const compareMutation = useMutation({
     mutationFn: async ({ theme }: { theme: string }) => {
-      return apiRequest('/api/chat/compare', 'POST', {
-        theme,
-        sessionId: currentSessionId,
-        maxVersesPerReligion: 5
+      return apiRequest('/api/chat/compare', {
+        method: 'POST',
+        body: JSON.stringify({
+          theme,
+          sessionId: currentSessionId,
+          maxVersesPerReligion: 5
+        })
       });
     },
     onSuccess: (data: ComparisonResult) => {

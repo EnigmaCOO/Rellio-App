@@ -6,11 +6,19 @@ import { VoiceFirstChatInterface } from "@/components/chat/VoiceFirstChatInterfa
 import { ProgressDashboard } from "@/components/progress/ProgressDashboard";
 import { type ScholarPersona, getPersonaForReligion } from "@/components/chat/ScholarPersonas";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Settings, BookOpen, Menu, X, ChevronLeft, ChevronRight, MessageCircle, TrendingUp } from "lucide-react";
+import { Search, Settings, BookOpen, Menu, X, ChevronLeft, ChevronRight, MessageCircle, TrendingUp, User, LogOut } from "lucide-react";
 import rellioLogo from "@assets/image_1756158906598.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
 import { useSwipeable } from "react-swipeable";
 import { useReadingSession } from "@/hooks/useReadingSession";
 import { cn } from "@/lib/utils";
@@ -33,6 +41,7 @@ export default function Dashboard() {
   const [selectedPersona, setSelectedPersona] = useState<ScholarPersona | null>(null);
   const [currentView, setCurrentView] = useState<'scripture' | 'progress'>('scripture');
   const { toast } = useToast();
+  const { user, isGuest, logout } = useAuth();
 
   // Debug panel visibility state
   useEffect(() => {
@@ -367,7 +376,7 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* View Toggle Button - Only Progress */}
+            {/* Right Side - Progress and Profile */}
             <div className="flex items-center space-x-2">
               <Button
                 variant={currentView === 'progress' ? 'default' : 'ghost'}
@@ -383,6 +392,58 @@ export default function Dashboard() {
                 <TrendingUp className="w-3 h-3 mr-1" />
                 Progress
               </Button>
+              
+              {/* User Profile Section */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 hover:bg-amber-50 transition-colors"
+                  >
+                    <User className="w-4 h-4 mr-1" />
+                    <span className="text-xs hidden sm:inline">
+                      {isGuest ? 'Guest' : user?.email?.split('@')[0] || 'User'}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-white border border-amber-200 shadow-lg">
+                  <div className="px-2 py-1.5 text-sm">
+                    <div className="font-medium">{isGuest ? 'Guest User' : user?.email}</div>
+                    <div className="text-xs text-gray-500">
+                      {isGuest ? 'Sign up for full access' : 'Rellio Premium Member'}
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  {!isGuest && (
+                    <>
+                      <DropdownMenuItem onClick={() => window.location.href = '/profile'}>
+                        <User className="w-4 h-4 mr-2" />
+                        View Profile
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Settings className="w-4 h-4 mr-2" />
+                        Settings
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  {isGuest ? (
+                    <DropdownMenuItem onClick={() => window.location.href = '/auth'}>
+                      <User className="w-4 h-4 mr-2" />
+                      Sign Up / Login
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem 
+                      onClick={logout}
+                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
