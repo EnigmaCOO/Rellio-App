@@ -126,8 +126,8 @@ export default function LandingPage() {
         {/* Open Graph Meta Tags */}
         <meta property="og:title" content="Rellio - Explore Sacred Wisdom with AI" />
         <meta property="og:description" content="Dive into a transformative journey with Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more. Engage with voice chats, scholar personas, and theme-based verse comparisons—enlighten your soul today!" />
-        <meta property="og:image" content="https://rellio.co/images/og-image.jpg" />
-        <meta property="og:image:alt" content="Rellio - A captivating spiritual interface showcasing the app's essence" />
+        <meta property="og:image" content="https://rellio.co/images/og-image.png" />
+        <meta property="og:image:alt" content="Rellio - Golden compass star symbol on dark navy background with 'Guiding Wisdom. Eternal Connection.' tagline" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:url" content="https://rellio.co/" />
@@ -137,7 +137,7 @@ export default function LandingPage() {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Rellio - Explore Sacred Wisdom with AI" />
         <meta name="twitter:description" content="Dive into a transformative journey with Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more. Engage with voice chats, scholar personas, and theme-based verse comparisons—enlighten your soul today!" />
-        <meta name="twitter:image" content="https://rellio.co/images/og-image.jpg" />
+        <meta name="twitter:image" content="https://rellio.co/images/og-image.png" />
       </Helmet>
       
       <div 
