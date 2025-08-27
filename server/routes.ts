@@ -367,24 +367,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Social authentication placeholder routes (to be implemented with Passport.js)
-  app.get("/api/auth/social/:provider", (req: any, res) => {
-    const { provider } = req.params;
-    // This would redirect to the OAuth provider
-    res.status(501).json({ 
-      error: "Social authentication not yet implemented",
-      provider,
-      message: "Please use email/phone signup for now"
-    });
+  // Google OAuth routes
+  app.get("/api/auth/google", (req: any, res) => {
+    const googleAuthUrl = `https://accounts.google.com/oauth/authorize?` +
+      `client_id=${process.env.GOOGLE_CLIENT_ID}&` +
+      `redirect_uri=${encodeURIComponent(process.env.GOOGLE_REDIRECT_URI || `${req.protocol}://${req.get('host')}/api/auth/google/callback`)}&` +
+      `response_type=code&` +
+      `scope=${encodeURIComponent('openid profile email')}`;
+    
+    res.redirect(googleAuthUrl);
   });
 
-  app.get("/api/auth/social/:provider/callback", (req: any, res) => {
-    const { provider } = req.params;
-    // This would handle the OAuth callback
-    res.status(501).json({ 
-      error: "Social authentication not yet implemented",
-      provider 
-    });
+  app.get("/api/auth/google/callback", async (req: any, res) => {
+    try {
+      const { code } = req.query;
+      
+      if (!code) {
+        return res.redirect('/?error=auth_cancelled');
+      }
+
+      // Exchange code for tokens
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: process.env.GOOGLE_CLIENT_ID || '',
+          client_secret: process.env.GOOGLE_CLIENT_SECRET || '',
+          code: code as string,
+          grant_type: 'authorization_code',
+          redirect_uri: process.env.GOOGLE_REDIRECT_URI || `${req.protocol}://${req.get('host')}/api/auth/google/callback`,
+        }),
+      });
+
+      const tokens = await tokenResponse.json();
+      
+      if (!tokens.access_token) {
+        return res.redirect('/?error=auth_failed');
+      }
+
+      // Get user info from Google
+      const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: {
+          Authorization: `Bearer ${tokens.access_token}`,
+        },
+      });
+
+      const googleUser = await userResponse.json();
+      
+      // Check if user exists
+      let user = await storage.getUserByEmail(googleUser.email);
+      
+      if (!user) {
+        // Create new user
+        const newUserData = {
+          email: googleUser.email,
+          username: googleUser.email.split('@')[0] + '_' + Date.now(),
+          firstName: googleUser.given_name,
+          lastName: googleUser.family_name,
+          profileImageUrl: googleUser.picture,
+          verified: 1, // Google users are pre-verified
+          socialProvider: 'google',
+        };
+        
+        user = await storage.createUser(newUserData);
+      } else {
+        // Update profile picture if changed
+        if (googleUser.picture && user.profileImageUrl !== googleUser.picture) {
+          user = await storage.updateUser(user.id, { 
+            profileImageUrl: googleUser.picture,
+            socialProvider: 'google'
+          });
+        }
+      }
+
+      // Create auth tokens
+      const authTokens = await authService.createAuthTokens(user);
+      
+      // Set session
+      req.session.userId = user.id;
+      req.session.isGuest = false;
+
+      // Redirect to dashboard with success
+      res.redirect('/?auth=success');
+      
+    } catch (error) {
+      console.error('Google OAuth error:', error);
+      res.redirect('/?error=auth_failed');
+    }
   });
 
   // Update notification preferences
