@@ -37,7 +37,11 @@ import {
   Scroll,
   Flame,
   Compass,
-  X
+  X,
+  Scale,
+  Link,
+  Check,
+  ChevronRight
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Religion, ChatMessage } from "@shared/schema";
@@ -53,6 +57,25 @@ import { MandalaOverlay } from "@/components/chat/MandalaOverlay";
 import { SimpleVoiceTest } from "./SimpleVoiceTest";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+
+// Compare Mode interfaces
+interface ComparisonVerse {
+  religion: Religion;
+  book: string;
+  chapter: number;
+  verse: number;
+  text: string;
+  translation?: string;
+  reference: string;
+}
+
+interface ComparisonResult {
+  theme: string;
+  aiSummary: string;
+  verses: {
+    [religion: string]: ComparisonVerse[];
+  };
+}
 
 // Scripture Content Component with Clickable References
 function ScriptureContent({ 
@@ -281,7 +304,27 @@ export function EnhancedAuraArchivist({
   const [bannerTimeout, setBannerTimeout] = useState<NodeJS.Timeout | null>(null);
   const [conversationHistory, setConversationHistory] = useState<Array<{id: string, content: string, type: 'user' | 'ai', timestamp: number}>>([]);
   const [audioState, setAudioState] = useState<'idle' | 'listening' | 'processing' | 'responding' | 'interrupted'>('idle');
-  // Removed duplicate voiceMode declaration
+  
+  // Compare Mode state
+  const [isCompareMode, setIsCompareMode] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState("");
+  const [customTheme, setCustomTheme] = useState("");
+  const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null);
+  const [isLoadingComparison, setIsLoadingComparison] = useState(false);
+
+  // Predefined themes for Compare Mode
+  const PREDEFINED_THEMES = [
+    { id: 'love', label: 'Love', icon: Heart, color: 'bg-red-100 text-red-700 border-red-200' },
+    { id: 'compassion', label: 'Compassion', icon: Heart, color: 'bg-pink-100 text-pink-700 border-pink-200' },
+    { id: 'wisdom', label: 'Wisdom', icon: Brain, color: 'bg-purple-100 text-purple-700 border-purple-200' },
+    { id: 'faith', label: 'Faith', icon: Star, color: 'bg-blue-100 text-blue-700 border-blue-200' },
+    { id: 'hope', label: 'Hope', icon: Sparkles, color: 'bg-green-100 text-green-700 border-green-200' },
+    { id: 'justice', label: 'Justice', icon: Scale, color: 'bg-gray-100 text-gray-700 border-gray-200' },
+    { id: 'redemption', label: 'Redemption', icon: Flame, color: 'bg-orange-100 text-orange-700 border-orange-200' },
+    { id: 'soul', label: 'Soul', icon: Eye, color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+    { id: 'afterlife', label: 'Afterlife', icon: Crown, color: 'bg-violet-100 text-violet-700 border-violet-200' },
+    { id: 'meaning of life', label: 'Meaning of Life', icon: Compass, color: 'bg-cyan-100 text-cyan-700 border-cyan-200' }
+  ];
 
   // Load saved persona and custom settings from localStorage
   useEffect(() => {
@@ -368,6 +411,63 @@ export function EnhancedAuraArchivist({
     },
     enabled: !!currentSessionId
   });
+
+  // Compare Mode mutation
+  const compareMutation = useMutation({
+    mutationFn: async ({ theme }: { theme: string }) => {
+      return apiRequest('/api/chat/compare', 'POST', {
+        theme,
+        sessionId: currentSessionId,
+        maxVersesPerReligion: 5
+      });
+    },
+    onSuccess: (data: ComparisonResult) => {
+      setComparisonResult(data);
+      setIsLoadingComparison(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/chat', currentSessionId] });
+      toast({
+        title: "Comparison Complete",
+        description: `Found verses about "${data.theme}" from multiple religious traditions`,
+        variant: "default"
+      });
+    },
+    onError: (error) => {
+      console.error('Compare Mode error:', error);
+      setIsLoadingComparison(false);
+      toast({
+        title: "Comparison Failed",
+        description: "Unable to fetch comparison verses. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Compare Mode handlers
+  const handleCompareToggle = () => {
+    setIsCompareMode(!isCompareMode);
+    if (!isCompareMode) {
+      setComparisonResult(null);
+      setSelectedTheme("");
+      setCustomTheme("");
+    }
+  };
+
+  const handleThemeSelect = (theme: string) => {
+    setSelectedTheme(theme);
+    setCustomTheme("");
+    handleCompareSubmit(theme);
+  };
+
+  const handleCustomThemeSubmit = () => {
+    if (customTheme.trim()) {
+      handleCompareSubmit(customTheme.trim());
+    }
+  };
+
+  const handleCompareSubmit = (theme: string) => {
+    setIsLoadingComparison(true);
+    compareMutation.mutate({ theme });
+  };
 
   // Guest access tracking
   const { isGuest, user } = useAuth();
@@ -676,6 +776,22 @@ export function EnhancedAuraArchivist({
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Compare Mode Toggle */}
+            <Button
+              variant={isCompareMode ? "default" : "ghost"}
+              size="sm"
+              onClick={handleCompareToggle}
+              className={cn(
+                "text-xs h-7 px-2",
+                isCompareMode 
+                  ? "bg-teal-600 hover:bg-teal-700 text-white shadow-lg animate-pulse" 
+                  : "text-gray-500 hover:text-teal-600 hover:bg-teal-50"
+              )}
+            >
+              <Scale className="h-3 w-3 mr-1" />
+              Compare
+            </Button>
+            
             {/* Voice Mode Indicator */}
             <Badge 
               variant={voiceMode ? "default" : "secondary"} 
@@ -746,6 +862,140 @@ export function EnhancedAuraArchivist({
             <p className="text-xs text-gray-600 text-center">
               Select a religious text to access your dedicated spiritual guide
             </p>
+          </div>
+        )}
+
+        {/* Compare Mode Panel */}
+        {isCompareMode && (
+          <div className="mt-2 p-3 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg border border-teal-200 animate-in fade-in duration-300">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Scale className="h-4 w-4 text-teal-600" />
+                <h3 className="font-semibold text-sm text-gray-900">Compare Religious Perspectives</h3>
+              </div>
+              
+              {!comparisonResult ? (
+                <div className="space-y-3">
+                  <p className="text-xs text-gray-600">Select a spiritual theme to explore how different religions approach it:</p>
+                  
+                  {/* Predefined Theme Pills */}
+                  <div className="flex flex-wrap gap-2">
+                    {PREDEFINED_THEMES.map((theme) => (
+                      <Button
+                        key={theme.id}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleThemeSelect(theme.id)}
+                        disabled={isLoadingComparison}
+                        className={cn(
+                          "text-xs h-7 px-3 transition-all border",
+                          theme.color,
+                          "hover:shadow-sm hover:scale-105"
+                        )}
+                      >
+                        <theme.icon className="h-3 w-3 mr-1" />
+                        {theme.label}
+                      </Button>
+                    ))}
+                  </div>
+                  
+                  {/* Custom Theme Input */}
+                  <div className="flex gap-2">
+                    <Input
+                      value={customTheme}
+                      onChange={(e) => setCustomTheme(e.target.value)}
+                      placeholder="Or enter your own theme..."
+                      className="flex-1 h-8 text-xs"
+                      disabled={isLoadingComparison}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleCustomThemeSubmit();
+                        }
+                      }}
+                    />
+                    <Button
+                      onClick={handleCustomThemeSubmit}
+                      disabled={!customTheme.trim() || isLoadingComparison}
+                      size="sm"
+                      className="h-8 px-3 bg-teal-600 hover:bg-teal-700"
+                    >
+                      <ChevronRight className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  
+                  {isLoadingComparison && (
+                    <div className="flex items-center gap-2 text-xs text-teal-600">
+                      <div className="w-3 h-3 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" />
+                      Gathering wisdom from sacred texts...
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-sm text-gray-900">Verses about "{comparisonResult.theme}"</h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setComparisonResult(null)}
+                      className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  
+                  {comparisonResult.aiSummary && (
+                    <div className="p-2 bg-white rounded border border-teal-200">
+                      <p className="text-xs text-gray-700 leading-relaxed">{comparisonResult.aiSummary}</p>
+                    </div>
+                  )}
+                  
+                  {/* Verses Grid */}
+                  <div className="grid gap-3">
+                    {Object.entries(comparisonResult.verses).map(([religion, verses]) => (
+                      <div key={religion} className="space-y-2">
+                        <h5 className="font-medium text-xs text-gray-800 flex items-center gap-1">
+                          <BookOpen className="h-3 w-3" />
+                          {religion.charAt(0).toUpperCase() + religion.slice(1)} Perspective
+                          <Badge variant="secondary" className="text-xs">{verses.length}</Badge>
+                        </h5>
+                        <div className="space-y-2">
+                          {verses.slice(0, 3).map((verse, index) => (
+                            <Card key={index} className="p-2 bg-white border border-teal-100 hover:border-teal-200 transition-colors">
+                              <div className="space-y-1">
+                                <p className="text-xs text-gray-800 leading-relaxed">{verse.text}</p>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-medium text-teal-600">{verse.reference}</span>
+                                  <div className="flex items-center gap-1">
+                                    <AudioPlaybackButton 
+                                      text={verse.text}
+                                      className="h-5 w-5"
+                                    />
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleBookmark(`${verse.reference}: ${verse.text}`)}
+                                      className="h-5 w-5 p-0 text-gray-400 hover:text-teal-600"
+                                    >
+                                      <Bookmark className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </Card>
+                          ))}
+                          {verses.length > 3 && (
+                            <p className="text-xs text-gray-500 text-center">
+                              And {verses.length - 3} more verses...
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

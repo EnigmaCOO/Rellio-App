@@ -9,11 +9,12 @@ import { VoiceWebSocketHandler } from "./websockets/voiceHandler";
 import { generateScriptureResponse } from "./services/openai";
 import { generatePersonaResponse, generateMultiReligiousPerspective, explainVerse } from "./services/xai";
 import { getReligionConfig, getAvailableReligions } from "./services/scripture";
-import { fetchScriptureContent, getRandomHadith } from "./services/externalScripture";
+import { fetchScriptureContent, getRandomHadith, fetchVersesByTheme, type ComparisonResult } from "./services/externalScripture";
 import { ElevenLabsService } from "./services/elevenlabs";
 import { 
   scriptureRequestSchema, 
-  chatRequestSchema, 
+  chatRequestSchema,
+  compareRequestSchema,
   insertChatMessageSchema,
   insertUserReadingSchema,
   startReadingSessionSchema,
@@ -773,6 +774,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         console.error("Chat error:", error);
         res.status(500).json({ error: "Failed to process chat message" });
+      }
+    }
+  });
+
+  // Compare Mode: Get verses by theme across multiple religions
+  app.post("/api/chat/compare", async (req, res) => {
+    try {
+      const { theme, sessionId, maxVersesPerReligion = 5 } = compareRequestSchema.parse(req.body);
+      
+      console.log("Compare Mode request:", { theme, sessionId, maxVersesPerReligion });
+      
+      // Fetch verses for the theme
+      let comparisonResult = await fetchVersesByTheme(theme, maxVersesPerReligion);
+      
+      // Generate AI summary using XAI/OpenAI
+      try {
+        const summaryPrompt = `You are an interfaith scholar analyzing verses about "${theme}" from multiple religious traditions. 
+
+Here are verses from different religions about ${theme}:
+
+${Object.entries(comparisonResult.verses).map(([religion, verses]) => 
+  `${religion.charAt(0).toUpperCase() + religion.slice(1)}:\n${verses.map(v => `• ${v.reference}: "${v.text}"`).join('\n')}`
+).join('\n\n')}
+
+Provide a thoughtful 2-3 sentence summary highlighting the common spiritual themes and any unique perspectives each tradition brings to understanding ${theme}. Be respectful of all traditions and focus on their wisdom.`;
+
+        const aiSummary = await generatePersonaResponse(
+          summaryPrompt,
+          {
+            religion: null,
+            book: "",
+            chapter: 1,
+            persona: null
+          },
+          null,
+          []
+        );
+        
+        comparisonResult.aiSummary = aiSummary;
+      } catch (error) {
+        console.error("Failed to generate AI summary for comparison:", error);
+        comparisonResult.aiSummary = `Explore how different religious traditions approach the theme of ${theme}. Each tradition offers unique wisdom while often sharing common spiritual insights about this fundamental aspect of human experience.`;
+      }
+      
+      // Save the comparison as a chat message for history
+      await storage.createChatMessage({
+        sessionId,
+        type: 'user',
+        content: `Compare verses about: ${theme}`,
+        context: { 
+          religion: null, 
+          book: null, 
+          chapter: null,
+          compareMode: true,
+          theme: theme
+        }
+      });
+
+      await storage.createChatMessage({
+        sessionId,
+        type: 'ai',
+        content: `Comparison of verses about "${theme}" across religious traditions:\n\n${comparisonResult.aiSummary}`,
+        context: {
+          religion: null,
+          book: null, 
+          chapter: null,
+          compareMode: true,
+          theme: theme,
+          comparisonData: comparisonResult.verses
+        }
+      });
+      
+      console.log("Compare Mode response:", { 
+        theme: comparisonResult.theme,
+        verseCount: Object.values(comparisonResult.verses).reduce((sum, verses) => sum + verses.length, 0),
+        religions: Object.keys(comparisonResult.verses)
+      });
+      
+      res.json(comparisonResult);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid compare request", details: error.errors });
+      } else {
+        console.error("Compare Mode error:", error);
+        res.status(500).json({ error: "Failed to process comparison request" });
       }
     }
   });

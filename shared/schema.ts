@@ -259,6 +259,13 @@ export const chatRequestSchema = z.object({
   }).optional(),
 });
 
+// Compare Mode schema for cross-religious verse comparison
+export const compareRequestSchema = z.object({
+  theme: z.string().min(1),
+  sessionId: z.string(),
+  maxVersesPerReligion: z.number().min(1).max(10).default(5),
+});
+
 // Progress tracking schemas
 export const startReadingSessionSchema = z.object({
   religion: religionSchema,
