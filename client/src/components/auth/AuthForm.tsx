@@ -360,28 +360,21 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                       />
                     </div>
 
-                    <FormField
-                      control={signupForm.control}
-                      name="username"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-gray-700 font-medium">Username</FormLabel>
-                          <FormControl>
-                            <Input
-                              value={field.value || ""}
-                              onChange={(e) => field.onChange(e.target.value)}
-                              onBlur={field.onBlur}
-                              name={field.name}
-                              placeholder="Choose a username"
-                              autoComplete="off"
-                              type="text"
-                              className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
+                    <div className="space-y-2">
+                      <label className="text-gray-700 font-medium">Username</label>
+                      <input
+                        type="text"
+                        placeholder="Choose a username"
+                        autoComplete="off"
+                        className="w-full h-12 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 px-4"
+                        onChange={(e) => {
+                          signupForm.setValue('username', e.target.value);
+                        }}
+                      />
+                      {signupForm.formState.errors.username && (
+                        <p className="text-red-500 text-sm">{signupForm.formState.errors.username.message}</p>
                       )}
-                    />
+                    </div>
 
                     <FormField
                       control={signupForm.control}
