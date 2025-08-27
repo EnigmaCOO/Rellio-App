@@ -53,6 +53,7 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
     resolver: zodResolver(signupSchema),
     mode: "onSubmit",
     reValidateMode: "onChange",
+    shouldFocusError: false,
     defaultValues: {
       email: "",
       username: "",
@@ -367,9 +368,13 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                           <FormLabel className="text-gray-700 font-medium">Username</FormLabel>
                           <FormControl>
                             <Input
-                              {...field}
+                              value={field.value || ""}
+                              onChange={(e) => field.onChange(e.target.value)}
+                              onBlur={field.onBlur}
+                              name={field.name}
                               placeholder="Choose a username"
                               autoComplete="off"
+                              type="text"
                               className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                             />
                           </FormControl>
