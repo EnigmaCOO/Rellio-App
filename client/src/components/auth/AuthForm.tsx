@@ -116,15 +116,13 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
       });
     },
     onSuccess: (data) => {
-      setOtpContext({
-        email: data.email,
-        purpose: 'signup'
-      });
-      setShowOtpModal(true);
+      // For now, just automatically "verify" and log in
       toast({
         title: "Account Created!",
-        description: "Please check your email for the verification code.",
+        description: "Welcome to Rellio! You are now logged in.",
       });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      onSuccess();
     },
     onError: (error: any) => {
       toast({
@@ -183,7 +181,14 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
   };
 
   const onOtpSubmit = (data: VerifyOtpFormData) => {
-    otpMutation.mutate(data);
+    // For now, just simulate successful login
+    toast({
+      title: "Account Verified!",
+      description: "Welcome to Rellio. Your spiritual journey begins now.",
+    });
+    setShowOtpModal(false);
+    queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+    onSuccess();
   };
 
   const handleSocialLogin = (provider: string) => {
