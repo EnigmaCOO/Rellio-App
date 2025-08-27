@@ -80,6 +80,9 @@ export default function LandingPage() {
   const [sampleQuery, setSampleQuery] = useState("What is the meaning of peace across religious traditions?");
   const [sampleResponse, setSampleResponse] = useState("");
   const [, setLocation] = useLocation();
+  
+  // Get current URL for Open Graph tags
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
 
   useEffect(() => {
     // Simulate AI response for demo
@@ -126,18 +129,18 @@ export default function LandingPage() {
         {/* Open Graph Meta Tags */}
         <meta property="og:title" content="Rellio - Explore Sacred Wisdom with AI" />
         <meta property="og:description" content="Dive into Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more! Engage with voice chats, scholar personas, and theme-based verse comparisons—enlighten your soul today!" />
-        <meta property="og:image" content="https://rellio.co/images/og-image.png" />
+        <meta property="og:image" content={`${currentOrigin}/images/og-image.png`} />
         <meta property="og:image:alt" content="Rellio - Golden compass star symbol on dark navy background with 'Guiding Wisdom. Eternal Connection.' tagline" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
-        <meta property="og:url" content="https://rellio.co/" />
+        <meta property="og:url" content={currentOrigin} />
         <meta property="og:type" content="website" />
         
         {/* Twitter Card Meta Tags */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Rellio - Explore Sacred Wisdom with AI" />
         <meta name="twitter:description" content="Dive into Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more! Engage with voice chats, scholar personas, and theme-based verse comparisons—enlighten your soul today!" />
-        <meta name="twitter:image" content="https://rellio.co/images/og-image.png" />
+        <meta name="twitter:image" content={`${currentOrigin}/images/og-image.png`} />
       </Helmet>
       
       <div 
