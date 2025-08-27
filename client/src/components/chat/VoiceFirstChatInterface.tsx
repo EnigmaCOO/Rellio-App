@@ -1353,13 +1353,57 @@ export function VoiceFirstChatInterface({
               
               {/* AI Summary */}
               <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-lg p-4">
-                <h4 className="font-semibold text-teal-800 mb-2 flex items-center gap-2">
+                <h4 className="font-semibold text-teal-800 mb-3 flex items-center gap-2">
                   <Brain className="w-4 h-4" />
                   Cross-Traditional Insights
                 </h4>
-                <p className="text-teal-700 text-sm leading-relaxed">
-                  {comparisonResult.aiSummary}
-                </p>
+                <div className="space-y-3">
+                  {(() => {
+                    // Parse the AI summary to extract perspectives
+                    const summary = comparisonResult.aiSummary;
+                    const parts = summary.split(/<perspective>([^<]+)<\/perspective>/);
+                    const perspectives = [];
+                    
+                    // Extract intro text (before first perspective)
+                    if (parts[0] && parts[0].trim()) {
+                      perspectives.push({
+                        type: 'intro',
+                        content: parts[0].trim()
+                      });
+                    }
+                    
+                    // Extract perspective sections
+                    for (let i = 1; i < parts.length; i += 2) {
+                      if (parts[i] && parts[i + 1]) {
+                        perspectives.push({
+                          type: 'perspective',
+                          religion: parts[i].trim(),
+                          content: parts[i + 1].trim()
+                        });
+                      }
+                    }
+                    
+                    return perspectives.map((item, index) => (
+                      <div key={index}>
+                        {item.type === 'intro' ? (
+                          <p className="text-teal-700 text-sm leading-relaxed font-medium">
+                            {item.content}
+                          </p>
+                        ) : (
+                          <div className="border-l-4 border-teal-300 pl-3 py-1">
+                            <h5 className="font-semibold text-teal-800 text-sm mb-1 flex items-center gap-1">
+                              <Sparkles className="w-3 h-3" />
+                              {item.religion}
+                            </h5>
+                            <p className="text-teal-700 text-sm leading-relaxed">
+                              {item.content}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ));
+                  })()}
+                </div>
               </div>
               
               {/* Verses by Religion */}
