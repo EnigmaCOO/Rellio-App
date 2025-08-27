@@ -37,6 +37,7 @@ export interface IStorage {
   
   getChatMessages(sessionId: string): Promise<ChatMessage[]>;
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
+  clearChatMessages(sessionId: string): Promise<void>;
   
   // Voice integration methods
   updateChatMessageWithVoiceData(sessionId: string, voiceData: any, verseReference?: any, context?: any): Promise<void>;
@@ -273,6 +274,11 @@ export class MemStorage implements IStorage {
     
     this.chatMessages.get(insertMessage.sessionId)!.push(message);
     return message;
+  }
+
+  async clearChatMessages(sessionId: string): Promise<void> {
+    this.chatMessages.delete(sessionId);
+    console.log(`✅ Cleared all chat messages for session: ${sessionId}`);
   }
 
   async updateChatMessageWithVoiceData(sessionId: string, voiceData: any, verseReference?: any, context?: any): Promise<void> {

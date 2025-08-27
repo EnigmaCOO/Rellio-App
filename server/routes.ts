@@ -276,6 +276,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Clear chat messages for a session
+  app.delete("/api/chat/:sessionId", async (req, res) => {
+    try {
+      const sessionId = req.params.sessionId;
+      await storage.clearChatMessages(sessionId);
+      console.log(`✅ Chat messages cleared for session: ${sessionId}`);
+      res.json({ success: true, message: "Chat messages cleared" });
+    } catch (error) {
+      console.error(`❌ Failed to clear chat messages for session: ${req.params.sessionId}`, error);
+      res.status(500).json({ error: "Failed to clear chat messages" });
+    }
+  });
+
   // Send a chat message with conversation history context
   app.post("/api/chat", async (req, res) => {
     try {

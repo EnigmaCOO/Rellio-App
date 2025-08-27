@@ -113,7 +113,7 @@ export function VoiceFirstChatInterface({
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const elevenLabsStreamRef = useRef<any>(null);
   
-  // Settings
+  // Settings and persona change tracking
   const [settings, setSettings] = useState({
     autoSendDelay: 1500,
     confidenceThreshold: 0.8,
@@ -122,6 +122,10 @@ export function VoiceFirstChatInterface({
     interruptionSensitivity: 0.3,
     volume: 0.8
   });
+
+  // Track previous persona to detect changes
+  const [previousPersona, setPreviousPersona] = useState<string | null>(null);
+  const [previousContext, setPreviousContext] = useState<{religion: Religion | null, book: string} | null>(null);
 
   // Enhanced ElevenLabs Integration with Interruption Support
   const {
@@ -190,6 +194,59 @@ export function VoiceFirstChatInterface({
       });
     }
   });
+
+  // Clear chat function
+  const clearChat = useCallback(async () => {
+    try {
+      // Call backend API to clear the current session
+      const response = await fetch(`/api/chat/${sessionId}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        // Invalidate queries to refresh the UI
+        await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
+        
+        // Clear local state
+        setCurrentTranscript('');
+        setTextInputValue('');
+        setWasLastMessageVoice(false);
+        setLastAIMessage('');
+        
+        console.log('✅ Chat cleared successfully');
+        toast({
+          title: "Chat Cleared",
+          description: "All messages have been removed",
+          variant: "default"
+        });
+      } else {
+        throw new Error('Failed to clear chat');
+      }
+    } catch (error) {
+      console.error('❌ Failed to clear chat:', error);
+      toast({
+        title: "Clear Failed",
+        description: "Could not clear chat messages",
+        variant: "destructive"
+      });
+    }
+  }, [sessionId, queryClient, toast]);
+
+  // Auto-clear when switching personas
+  useEffect(() => {
+    const currentPersonaKey = selectedPersona?.name || (context.religion ? `${context.religion}-${context.book}` : 'Universal Scholar');
+    const currentContextKey = `${context.religion || 'universal'}-${context.book}`;
+    
+    // If we have a previous persona and it's different from current
+    if (previousPersona && previousPersona !== currentPersonaKey) {
+      console.log('🔄 Persona changed from', previousPersona, 'to', currentPersonaKey, '- Auto-clearing chat');
+      clearChat();
+    }
+    
+    // Update tracking
+    setPreviousPersona(currentPersonaKey);
+    setPreviousContext({ religion: context.religion, book: context.book });
+  }, [selectedPersona, context, previousPersona, clearChat]);
 
   // Individual Message Audio Controls
   const playMessageAudio = useCallback(async (message: ChatMessage) => {
@@ -1079,19 +1136,8 @@ export function VoiceFirstChatInterface({
             variant="outline"
             size="sm"
             onClick={async () => {
-              if (window.confirm('Clear all chat messages?')) {
-                try {
-                  // Clear messages via API call or local storage
-                  await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
-                  console.log('Chat cleared');
-                  toast({
-                    title: "Chat Cleared",
-                    description: "All messages have been removed",
-                    variant: "default"
-                  });
-                } catch (error) {
-                  console.error('Failed to clear chat:', error);
-                }
+              if (window.confirm('Clear all chat messages? This will start a fresh conversation.')) {
+                await clearChat();
               }
             }}
             className="text-xs px-2 h-7 text-red-600 border-red-300 hover:bg-red-50"
