@@ -9,6 +9,8 @@ import {
   weeklyProgress,
   otpCodes,
   refreshTokens,
+  flaggedMessages,
+  moderationLogs,
   type User, 
   type InsertUser,
   type Scripture,
@@ -25,6 +27,10 @@ import {
   type InsertJourneyMilestone,
   type WeeklyProgress,
   type InsertWeeklyProgress,
+  type FlaggedMessage,
+  type InsertFlaggedMessage,
+  type ModerationLog,
+  type InsertModerationLog,
   type OtpCode,
   type InsertOtpCode,
   type RefreshToken,
@@ -88,6 +94,14 @@ export interface IStorage {
     religionsExplored: string[];
     recentMilestones: JourneyMilestone[];
   }>;
+
+  // Moderation operations
+  createFlaggedMessage(flaggedMessage: InsertFlaggedMessage): Promise<FlaggedMessage>;
+  getFlaggedMessages(limit?: number): Promise<FlaggedMessage[]>;
+  updateFlaggedMessage(id: number, updates: Partial<FlaggedMessage>): Promise<FlaggedMessage>;
+  
+  createModerationLog(log: InsertModerationLog): Promise<ModerationLog>;
+  getModerationLogs(userId?: string, limit?: number): Promise<ModerationLog[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -101,6 +115,8 @@ export class MemStorage implements IStorage {
   private weeklyProgress: Map<string, WeeklyProgress[]>;
   private otpCodes: Map<number, OtpCode>;
   private refreshTokens: Map<number, RefreshToken>;
+  private flaggedMessages: Map<number, FlaggedMessage>;
+  private moderationLogs: Map<number, ModerationLog>;
   private currentId: number;
   private currentScriptureId: number;
   private currentChatId: number;
@@ -111,6 +127,8 @@ export class MemStorage implements IStorage {
   private currentProgressId: number;
   private currentOtpId: number;
   private currentRefreshTokenId: number;
+  private currentFlaggedMessageId: number;
+  private currentModerationLogId: number;
 
   constructor() {
     this.users = new Map();
@@ -123,6 +141,8 @@ export class MemStorage implements IStorage {
     this.weeklyProgress = new Map();
     this.otpCodes = new Map();
     this.refreshTokens = new Map();
+    this.flaggedMessages = new Map();
+    this.moderationLogs = new Map();
     this.currentId = 1;
     this.currentScriptureId = 1;
     this.currentChatId = 1;
@@ -133,6 +153,8 @@ export class MemStorage implements IStorage {
     this.currentProgressId = 1;
     this.currentOtpId = 1;
     this.currentRefreshTokenId = 1;
+    this.currentFlaggedMessageId = 1;
+    this.currentModerationLogId = 1;
     this.initializeScriptures();
   }
 
@@ -264,6 +286,10 @@ export class MemStorage implements IStorage {
       verified: insertUser.verified || 0,
       socialProvider: insertUser.socialProvider || null,
       notificationPreferences: insertUser.notificationPreferences || { email: true, sms: false, push: true },
+      banned: 0,
+      banReason: null,
+      banExpiresAt: null,
+      moderationWarnings: 0,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -648,6 +674,70 @@ export class MemStorage implements IStorage {
       religionsExplored,
       recentMilestones
     };
+  }
+
+  // Moderation operations implementation
+  async createFlaggedMessage(insertFlaggedMessage: InsertFlaggedMessage): Promise<FlaggedMessage> {
+    const id = this.currentFlaggedMessageId++;
+    const flaggedMessage: FlaggedMessage = {
+      ...insertFlaggedMessage,
+      id,
+      userId: insertFlaggedMessage.userId || null,
+      moderationAction: insertFlaggedMessage.moderationAction || null,
+      reportedBy: insertFlaggedMessage.reportedBy || null,
+      aiConfidence: insertFlaggedMessage.aiConfidence || null,
+      createdAt: new Date(),
+      reviewedAt: null,
+      moderatorId: insertFlaggedMessage.moderatorId || null
+    };
+    
+    this.flaggedMessages.set(id, flaggedMessage);
+    return flaggedMessage;
+  }
+
+  async getFlaggedMessages(limit = 50): Promise<FlaggedMessage[]> {
+    const messages = Array.from(this.flaggedMessages.values());
+    return messages.slice(-limit).reverse();
+  }
+
+  async updateFlaggedMessage(id: number, updates: Partial<FlaggedMessage>): Promise<FlaggedMessage> {
+    const existing = this.flaggedMessages.get(id);
+    if (!existing) {
+      throw new Error('Flagged message not found');
+    }
+    
+    const updated: FlaggedMessage = {
+      ...existing,
+      ...updates
+    };
+    
+    this.flaggedMessages.set(id, updated);
+    return updated;
+  }
+
+  async createModerationLog(insertLog: InsertModerationLog): Promise<ModerationLog> {
+    const id = this.currentModerationLogId++;
+    const log: ModerationLog = {
+      ...insertLog,
+      id,
+      userId: insertLog.userId || null,
+      moderatorId: insertLog.moderatorId || null,
+      details: insertLog.details || null,
+      createdAt: new Date()
+    };
+    
+    this.moderationLogs.set(id, log);
+    return log;
+  }
+
+  async getModerationLogs(userId?: string, limit = 50): Promise<ModerationLog[]> {
+    let logs = Array.from(this.moderationLogs.values());
+    
+    if (userId) {
+      logs = logs.filter(log => log.userId === userId);
+    }
+    
+    return logs.slice(-limit).reverse();
   }
 }
 

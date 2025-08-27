@@ -51,6 +51,10 @@ export const users = pgTable("users", {
     sms: boolean;
     push: boolean;
   }>().default({ email: true, sms: false, push: true }),
+  banned: integer("banned").default(0), // 0 = false, 1 = true
+  banReason: text("ban_reason"),
+  banExpiresAt: timestamp("ban_expires_at"),
+  moderationWarnings: integer("moderation_warnings").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -150,6 +154,32 @@ export const weeklyProgress = pgTable("weekly_progress", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Flagged messages table for content moderation
+export const flaggedMessages = pgTable("flagged_messages", {
+  id: serial("id").primaryKey(),
+  messageId: integer("message_id").notNull(),
+  sessionId: text("session_id").notNull(),
+  userId: varchar("user_id"),
+  content: text("content").notNull(),
+  flagReason: text("flag_reason").notNull(), // 'hate_speech', 'offensive_language', 'bias', 'user_report'
+  moderationAction: text("moderation_action"), // 'blocked', 'warning', 'reviewed', 'approved'
+  moderatorId: varchar("moderator_id"),
+  reportedBy: varchar("reported_by"), // for user reports
+  aiConfidence: integer("ai_confidence"), // 0-100 for AI-detected issues
+  createdAt: timestamp("created_at").defaultNow(),
+  reviewedAt: timestamp("reviewed_at"),
+});
+
+// Moderation logs table for audit trail
+export const moderationLogs = pgTable("moderation_logs", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id"),
+  action: text("action").notNull(), // 'message_blocked', 'warning_issued', 'user_banned', 'user_unbanned'
+  details: json("details"), // additional context
+  moderatorId: varchar("moderator_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertScriptureSchema = createInsertSchema(scriptures);
 export const insertChatMessageSchema = createInsertSchema(chatMessages);
 export const insertUserReadingSchema = createInsertSchema(userReadings);
@@ -157,6 +187,8 @@ export const insertSpiritualJourneySchema = createInsertSchema(spiritualJourneys
 export const insertReadingSessionSchema = createInsertSchema(readingSessions);
 export const insertJourneyMilestoneSchema = createInsertSchema(journeyMilestones);
 export const insertWeeklyProgressSchema = createInsertSchema(weeklyProgress);
+export const insertFlaggedMessageSchema = createInsertSchema(flaggedMessages);
+export const insertModerationLogSchema = createInsertSchema(moderationLogs);
 
 export type InsertScripture = z.infer<typeof insertScriptureSchema>;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
@@ -165,6 +197,8 @@ export type InsertSpiritualJourney = z.infer<typeof insertSpiritualJourneySchema
 export type InsertReadingSession = z.infer<typeof insertReadingSessionSchema>;
 export type InsertJourneyMilestone = z.infer<typeof insertJourneyMilestoneSchema>;
 export type InsertWeeklyProgress = z.infer<typeof insertWeeklyProgressSchema>;
+export type InsertFlaggedMessage = z.infer<typeof insertFlaggedMessageSchema>;
+export type InsertModerationLog = z.infer<typeof insertModerationLogSchema>;
 
 export type Scripture = typeof scriptures.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;
@@ -173,6 +207,8 @@ export type SpiritualJourney = typeof spiritualJourneys.$inferSelect;
 export type ReadingSession = typeof readingSessions.$inferSelect;
 export type JourneyMilestone = typeof journeyMilestones.$inferSelect;
 export type WeeklyProgress = typeof weeklyProgress.$inferSelect;
+export type FlaggedMessage = typeof flaggedMessages.$inferSelect;
+export type ModerationLog = typeof moderationLogs.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type OtpCode = typeof otpCodes.$inferSelect;
 export type RefreshToken = typeof refreshTokens.$inferSelect;

@@ -10,6 +10,7 @@ import LandingPage from "@/pages/landing";
 import AuthPage from "@/pages/auth";
 import Dashboard from "@/pages/dashboard";
 import ProfilePage from "@/pages/profile";
+import PrivacyPolicyPage from "@/pages/privacy";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/profile" component={ProfilePage} />
+      <Route path="/privacy" component={PrivacyPolicyPage} />
       <Route component={NotFound} />
     </Switch>
   );

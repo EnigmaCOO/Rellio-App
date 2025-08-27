@@ -11,6 +11,7 @@ import { generatePersonaResponse, generateMultiReligiousPerspective, explainVers
 import { getReligionConfig, getAvailableReligions } from "./services/scripture";
 import { fetchScriptureContent, getRandomHadith, fetchVersesByTheme, type ComparisonResult } from "./services/externalScripture";
 import { ElevenLabsService } from "./services/elevenlabs";
+import { moderateMessage, flagMessage } from "./services/moderation";
 import { 
   scriptureRequestSchema, 
   chatRequestSchema,
@@ -726,6 +727,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Chat request payload:", { context });
       console.log("Context multiReligiousPerspective:", context?.multiReligiousPerspective);
       console.log("Context type:", typeof context?.multiReligiousPerspective);
+      
+      // Content moderation check
+      const userId = req.session?.userId;
+      const moderationResult = await moderateMessage(message, userId);
+      
+      if (moderationResult.isBlocked) {
+        // Log the blocked message for audit
+        console.log(`Message blocked for user ${userId}: ${moderationResult.reason}`);
+        
+        // Return moderation response
+        return res.status(400).json({
+          error: "Message blocked to promote unity—please rephrase.",
+          reason: moderationResult.reason,
+          suggestion: moderationResult.suggestion || "Please share your thoughts respectfully across all religious traditions.",
+          flagType: moderationResult.flagType
+        });
+      }
       
       // Retrieve previous conversation history (last 5 messages for context)
       const previousMessages = await storage.getChatMessages(sessionId);

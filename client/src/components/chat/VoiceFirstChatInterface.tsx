@@ -465,9 +465,29 @@ export function VoiceFirstChatInterface({
       // Clear transcript after successful send
       setCurrentTranscript('');
     },
-    onError: (error: any) => {
+    onError: async (error: any) => {
       console.error('🚨 Send message error:', error);
       setVoiceState('idle');
+      
+      // Handle moderation blocks specifically
+      if (error.status === 400) {
+        try {
+          const errorData = typeof error.message === 'string' ? JSON.parse(error.message) : error;
+          if (errorData.error?.includes('Message blocked to promote unity')) {
+            toast({
+              title: "🕊️ Message Moderated",
+              description: errorData.suggestion || "Please share your thoughts respectfully across all religious traditions.",
+              variant: "default",
+              className: "border-amber-200 bg-amber-50 text-amber-800"
+            });
+            return;
+          }
+        } catch (parseError) {
+          // If we can't parse, fall through to general error
+        }
+      }
+      
+      // General error handling
       toast({
         title: "Send Error",
         description: error.message || "Failed to send message",
