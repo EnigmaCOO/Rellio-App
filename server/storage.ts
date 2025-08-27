@@ -7,6 +7,8 @@ import {
   readingSessions,
   journeyMilestones,
   weeklyProgress,
+  otpCodes,
+  refreshTokens,
   type User, 
   type InsertUser,
   type Scripture,
@@ -23,6 +25,10 @@ import {
   type InsertJourneyMilestone,
   type WeeklyProgress,
   type InsertWeeklyProgress,
+  type OtpCode,
+  type InsertOtpCode,
+  type RefreshToken,
+  type InsertRefreshToken,
   type Religion
 } from "@shared/schema";
 
@@ -30,7 +36,19 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByPhone(phone: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, updates: Partial<User>): Promise<User>;
+  
+  // OTP operations
+  createOtpCode(otpData: InsertOtpCode): Promise<OtpCode>;
+  verifyOtpCode(email: string | undefined, phone: string | undefined, code: string, purpose: string): Promise<boolean>;
+  clearUnverifiedOtpCodes(email: string | undefined, phone: string | undefined): Promise<void>;
+  
+  // Refresh token operations
+  createRefreshToken(tokenData: InsertRefreshToken): Promise<RefreshToken>;
+  getRefreshToken(token: string): Promise<RefreshToken | undefined>;
+  deleteRefreshToken(token: string): Promise<void>;
   
   getScriptures(religion: Religion, book: string, chapter: number): Promise<Scripture[]>;
   getScriptureBooks(religion: Religion): Promise<string[]>;
@@ -81,6 +99,8 @@ export class MemStorage implements IStorage {
   private readingSessions: Map<string, ReadingSession[]>;
   private journeyMilestones: Map<string, JourneyMilestone[]>;
   private weeklyProgress: Map<string, WeeklyProgress[]>;
+  private otpCodes: Map<number, OtpCode>;
+  private refreshTokens: Map<number, RefreshToken>;
   private currentId: number;
   private currentScriptureId: number;
   private currentChatId: number;
@@ -89,6 +109,8 @@ export class MemStorage implements IStorage {
   private currentSessionId: number;
   private currentMilestoneId: number;
   private currentProgressId: number;
+  private currentOtpId: number;
+  private currentRefreshTokenId: number;
 
   constructor() {
     this.users = new Map();
@@ -99,6 +121,8 @@ export class MemStorage implements IStorage {
     this.readingSessions = new Map();
     this.journeyMilestones = new Map();
     this.weeklyProgress = new Map();
+    this.otpCodes = new Map();
+    this.refreshTokens = new Map();
     this.currentId = 1;
     this.currentScriptureId = 1;
     this.currentChatId = 1;
@@ -107,6 +131,8 @@ export class MemStorage implements IStorage {
     this.currentSessionId = 1;
     this.currentMilestoneId = 1;
     this.currentProgressId = 1;
+    this.currentOtpId = 1;
+    this.currentRefreshTokenId = 1;
     this.initializeScriptures();
   }
 
@@ -218,16 +244,145 @@ export class MemStorage implements IStorage {
     );
   }
 
+  async getUserByPhone(phone: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.phone === phone,
+    );
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = `user_${this.currentId++}`;
     const user: User = { 
-      ...insertUser, 
       id,
+      email: insertUser.email || null,
+      phone: insertUser.phone || null,
+      username: insertUser.username || null,
+      password: insertUser.password || null,
+      firstName: insertUser.firstName || null,
+      lastName: insertUser.lastName || null,
+      profileImageUrl: insertUser.profileImageUrl || null,
+      verified: insertUser.verified || 0,
+      socialProvider: insertUser.socialProvider || null,
+      notificationPreferences: insertUser.notificationPreferences || { email: true, sms: false, push: true },
       createdAt: new Date(),
       updatedAt: new Date()
     };
     this.users.set(this.currentId - 1, user);
     return user;
+  }
+
+  async updateUser(id: string, updates: Partial<User>): Promise<User> {
+    const existingUser = await this.getUser(id);
+    if (!existingUser) {
+      throw new Error('User not found');
+    }
+
+    const updatedUser: User = {
+      ...existingUser,
+      ...updates,
+      updatedAt: new Date(),
+    };
+
+    // Find and update in the map
+    for (const [key, user] of Array.from(this.users.entries())) {
+      if (user.id === id) {
+        this.users.set(key, updatedUser);
+        break;
+      }
+    }
+
+    return updatedUser;
+  }
+
+  // OTP operations
+  async createOtpCode(otpData: InsertOtpCode): Promise<OtpCode> {
+    const id = this.currentOtpId++;
+    const otpCode: OtpCode = {
+      id,
+      email: otpData.email || null,
+      phone: otpData.phone || null,
+      code: otpData.code,
+      purpose: otpData.purpose,
+      expiresAt: otpData.expiresAt,
+      verified: otpData.verified || 0,
+      createdAt: new Date(),
+    };
+    this.otpCodes.set(id, otpCode);
+    return otpCode;
+  }
+
+  async verifyOtpCode(
+    email: string | undefined,
+    phone: string | undefined,
+    code: string,
+    purpose: string
+  ): Promise<boolean> {
+    const now = new Date();
+    
+    for (const [id, otpCode] of Array.from(this.otpCodes.entries())) {
+      if (
+        otpCode.code === code &&
+        otpCode.purpose === purpose &&
+        otpCode.verified === 0 &&
+        otpCode.expiresAt > now &&
+        ((email && otpCode.email === email) || (phone && otpCode.phone === phone))
+      ) {
+        // Mark as verified
+        otpCode.verified = 1;
+        this.otpCodes.set(id, otpCode);
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  async clearUnverifiedOtpCodes(
+    email: string | undefined,
+    phone: string | undefined
+  ): Promise<void> {
+    const toDelete: number[] = [];
+    
+    for (const [id, otpCode] of Array.from(this.otpCodes.entries())) {
+      if (
+        otpCode.verified === 0 &&
+        ((email && otpCode.email === email) || (phone && otpCode.phone === phone))
+      ) {
+        toDelete.push(id);
+      }
+    }
+    
+    toDelete.forEach(id => this.otpCodes.delete(id));
+  }
+
+  // Refresh token operations
+  async createRefreshToken(tokenData: InsertRefreshToken): Promise<RefreshToken> {
+    const id = this.currentRefreshTokenId++;
+    const refreshToken: RefreshToken = {
+      ...tokenData,
+      id,
+      createdAt: new Date(),
+    };
+    this.refreshTokens.set(id, refreshToken);
+    return refreshToken;
+  }
+
+  async getRefreshToken(token: string): Promise<RefreshToken | undefined> {
+    return Array.from(this.refreshTokens.values()).find(
+      (rt) => rt.token === token && rt.expiresAt > new Date()
+    );
+  }
+
+  async deleteRefreshToken(token: string): Promise<void> {
+    const toDelete: number[] = [];
+    
+    for (const [id, refreshToken] of Array.from(this.refreshTokens.entries())) {
+      if (refreshToken.token === token) {
+        toDelete.push(id);
+      }
+    }
+    
+    toDelete.forEach(id => this.refreshTokens.delete(id));
   }
 
   async getScriptures(religion: Religion, book: string, chapter: number): Promise<Scripture[]> {

@@ -7,20 +7,67 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+export async function apiRequest(endpoint: string, options?: RequestInit): Promise<any> {
+  const url = endpoint.startsWith('http') ? endpoint : endpoint;
+  
+  const config: RequestInit = {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include', // Include cookies for session management
+    ...options,
+  };
+
+  // Add JWT token if available
+  const token = localStorage.getItem('accessToken');
+  if (token) {
+    config.headers = {
+      ...config.headers,
+      'Authorization': `Bearer ${token}`,
+    };
+  }
+
+  const res = await fetch(url, config);
+  
+  // Handle 401 errors by trying to refresh token
+  if (res.status === 401 && token) {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (refreshToken) {
+      try {
+        const refreshResponse = await fetch('/api/auth/refresh', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ refreshToken }),
+        });
+        
+        if (refreshResponse.ok) {
+          const tokens = await refreshResponse.json();
+          localStorage.setItem('accessToken', tokens.accessToken);
+          localStorage.setItem('refreshToken', tokens.refreshToken);
+          
+          // Retry original request with new token
+          config.headers = {
+            ...config.headers,
+            'Authorization': `Bearer ${tokens.accessToken}`,
+          };
+          
+          const retryResponse = await fetch(url, config);
+          if (retryResponse.ok) {
+            return retryResponse.json();
+          }
+        }
+      } catch (error) {
+        // If refresh fails, clear tokens and redirect to auth
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+      }
+    }
+  }
 
   await throwIfResNotOk(res);
-  return res;
+  return res.json();
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

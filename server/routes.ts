@@ -1,7 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer } from 'ws';
+import rateLimit from "express-rate-limit";
 import { storage } from "./storage";
+import { authService } from "./services/auth";
+import { notificationService } from "./services/notification";
 import { VoiceWebSocketHandler } from "./websockets/voiceHandler";
 import { generateScriptureResponse } from "./services/openai";
 import { generatePersonaResponse, generateMultiReligiousPerspective, explainVerse } from "./services/xai";
@@ -19,6 +22,10 @@ import {
   religionSchema,
   loginSchema,
   signupSchema,
+  sendOtpSchema,
+  verifyOtpSchema,
+  socialAuthCallbackSchema,
+  updateNotificationPreferencesSchema,
   type Religion,
   type InsertChatMessage,
   type InsertSpiritualJourney,
@@ -28,16 +35,55 @@ import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
-  // Authentication routes
+  // Rate limiting for authentication endpoints
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // Limit each IP to 5 requests per windowMs
+    message: {
+      error: "Too many authentication attempts, please try again later."
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  const otpLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, // 5 minutes
+    max: 3, // Limit each IP to 3 OTP requests per 5 minutes
+    message: {
+      error: "Too many OTP requests, please try again in 5 minutes."
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  // Enhanced Authentication Routes
+
+  // Get current user (with JWT support)
   app.get("/api/auth/user", async (req: any, res) => {
     try {
+      // Check for JWT token in Authorization header
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      
+      if (token) {
+        const decoded = authService.verifyAccessToken(token);
+        if (decoded) {
+          const user = await storage.getUser(decoded.userId);
+          if (user) {
+            const { password, ...userWithoutPassword } = user;
+            return res.json(userWithoutPassword);
+          }
+        }
+      }
+      
+      // Fallback to session-based authentication
       if (req.session?.userId) {
         if (req.session.isGuest) {
           res.json({ guest: true, id: req.session.userId });
         } else {
           const user = await storage.getUser(req.session.userId);
           if (user) {
-            res.json(user);
+            const { password, ...userWithoutPassword } = user;
+            res.json(userWithoutPassword);
           } else {
             res.status(401).json({ error: "User not found" });
           }
@@ -54,72 +100,203 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/auth/login", async (req: any, res) => {
+  // Send OTP for verification
+  app.post("/api/auth/send-otp", otpLimiter, async (req: any, res) => {
     try {
-      const { email, username, password } = loginSchema.parse(req.body);
+      const { email, phone, purpose } = sendOtpSchema.parse(req.body);
       
-      let user;
-      if (email) {
-        user = await storage.getUserByEmail(email);
-      } else if (username) {
-        user = await storage.getUserByUsername(username);
+      const result = await authService.sendOtp(email, phone, purpose);
+      
+      if (result.success) {
+        res.json({ success: true, message: result.message });
+      } else {
+        res.status(400).json({ error: result.message });
       }
-
-      if (!user || !user.password) {
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-
-      // For demo purposes, we'll use simple password comparison
-      // In production, use bcrypt.compare
-      if (user.password !== password) {
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-
-      req.session.userId = user.id;
-      res.json({ success: true, user: { id: user.id, email: user.email, username: user.username } });
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Send OTP error:", error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: "Invalid input", details: error.errors });
       } else {
-        res.status(500).json({ error: "Server error" });
+        res.status(500).json({ error: "Failed to send OTP" });
       }
     }
   });
 
-  app.post("/api/auth/signup", async (req: any, res) => {
+  // Verify OTP
+  app.post("/api/auth/verify-otp", authLimiter, async (req: any, res) => {
+    try {
+      const { email, phone, code, purpose } = verifyOtpSchema.parse(req.body);
+      
+      const result = await authService.verifyOtp(email, phone, code, purpose);
+      
+      if (result.success) {
+        // Complete verification if it's signup or login
+        if (purpose === 'signup' || purpose === 'login') {
+          const user = await authService.completeVerification(email, phone);
+          if (user) {
+            const tokens = await authService.createAuthTokens(user);
+            res.json({
+              success: true,
+              message: "Verification completed successfully",
+              ...tokens
+            });
+          } else {
+            res.status(400).json({ error: "User not found" });
+          }
+        } else {
+          res.json({ success: true, message: result.message });
+        }
+      } else {
+        res.status(400).json({ error: result.message });
+      }
+    } catch (error) {
+      console.error("Verify OTP error:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid input", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to verify OTP" });
+      }
+    }
+  });
+
+  // Enhanced signup with OTP verification
+  app.post("/api/auth/signup", authLimiter, async (req: any, res) => {
     try {
       const userData = signupSchema.parse(req.body);
       
-      // Check if user already exists
-      const existingEmail = await storage.getUserByEmail(userData.email);
-      if (existingEmail) {
-        return res.status(400).json({ error: "Email already registered" });
-      }
-
-      const existingUsername = await storage.getUserByUsername(userData.username);
-      if (existingUsername) {
-        return res.status(400).json({ error: "Username already taken" });
-      }
-
-      // Create new user (in production, hash the password)
-      const newUser = await storage.createUser(userData);
-      req.session.userId = newUser.id;
+      const result = await authService.registerUser(userData);
       
-      res.json({ success: true, user: { id: newUser.id, email: newUser.email, username: newUser.username } });
+      if (result.success) {
+        if (result.requiresVerification) {
+          res.json({
+            success: true,
+            message: result.message,
+            requiresVerification: true
+          });
+        } else {
+          // If no verification required, create tokens
+          const tokens = await authService.createAuthTokens(result.user!);
+          res.json({
+            success: true,
+            message: "Account created successfully",
+            ...tokens
+          });
+        }
+      } else {
+        res.status(400).json({ error: result.message });
+      }
     } catch (error) {
       console.error("Signup error:", error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: "Invalid input", details: error.errors });
       } else {
-        res.status(500).json({ error: "Server error" });
+        res.status(500).json({ error: "Failed to create account" });
       }
     }
   });
 
+  // Enhanced login with OTP verification for unverified accounts
+  app.post("/api/auth/login", authLimiter, async (req: any, res) => {
+    try {
+      const { email, phone, username, password } = loginSchema.parse(req.body);
+      
+      let type: 'email' | 'phone' | 'username';
+      let identifier: string;
+      
+      if (email) {
+        type = 'email';
+        identifier = email;
+      } else if (phone) {
+        type = 'phone';
+        identifier = phone;
+      } else {
+        type = 'username';
+        identifier = username!;
+      }
+      
+      const result = await authService.authenticateUser(identifier, password, type);
+      
+      if (result.success) {
+        if (result.requiresVerification) {
+          res.json({
+            success: false,
+            message: result.message,
+            requiresVerification: true
+          });
+        } else {
+          // Create JWT tokens
+          const tokens = await authService.createAuthTokens(result.user!);
+          
+          // Also set session for backward compatibility
+          req.session.userId = result.user!.id;
+          
+          res.json({
+            success: true,
+            message: "Login successful",
+            ...tokens
+          });
+        }
+      } else {
+        res.status(401).json({ error: result.message });
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid input", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Login failed" });
+      }
+    }
+  });
+
+  // Refresh JWT token
+  app.post("/api/auth/refresh", async (req: any, res) => {
+    try {
+      const { refreshToken } = req.body;
+      
+      if (!refreshToken) {
+        return res.status(400).json({ error: "Refresh token required" });
+      }
+      
+      const result = await authService.refreshAccessToken(refreshToken);
+      
+      if (result) {
+        res.json(result);
+      } else {
+        res.status(401).json({ error: "Invalid or expired refresh token" });
+      }
+    } catch (error) {
+      console.error("Refresh token error:", error);
+      res.status(500).json({ error: "Failed to refresh token" });
+    }
+  });
+
+  // Enhanced logout with JWT token invalidation
+  app.post("/api/auth/logout", async (req: any, res) => {
+    try {
+      const { refreshToken } = req.body;
+      
+      // Invalidate refresh token if provided
+      if (refreshToken) {
+        await authService.logout(refreshToken);
+      }
+      
+      // Destroy session
+      req.session.destroy((err: any) => {
+        if (err) {
+          console.error("Session destruction error:", err);
+        }
+        res.json({ success: true, message: "Logged out successfully" });
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.status(500).json({ error: "Logout failed" });
+    }
+  });
+
+  // Guest access (unchanged)
   app.post("/api/auth/guest", async (req: any, res) => {
     try {
-      // Create a temporary guest session
       req.session.isGuest = true;
       req.session.userId = `guest_${Date.now()}`;
       res.json({ success: true, guest: true });
@@ -129,17 +306,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/auth/logout", async (req: any, res) => {
+  // Social authentication placeholder routes (to be implemented with Passport.js)
+  app.get("/api/auth/social/:provider", (req: any, res) => {
+    const { provider } = req.params;
+    // This would redirect to the OAuth provider
+    res.status(501).json({ 
+      error: "Social authentication not yet implemented",
+      provider,
+      message: "Please use email/phone signup for now"
+    });
+  });
+
+  app.get("/api/auth/social/:provider/callback", (req: any, res) => {
+    const { provider } = req.params;
+    // This would handle the OAuth callback
+    res.status(501).json({ 
+      error: "Social authentication not yet implemented",
+      provider 
+    });
+  });
+
+  // Update notification preferences
+  app.patch("/api/auth/notifications", async (req: any, res) => {
     try {
-      req.session.destroy((err: any) => {
-        if (err) {
-          return res.status(500).json({ error: "Could not log out" });
-        }
-        res.json({ success: true });
+      // Get user from JWT or session
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      let userId: string | undefined;
+      
+      if (token) {
+        const decoded = authService.verifyAccessToken(token);
+        userId = decoded?.userId;
+      } else if (req.session?.userId && !req.session.isGuest) {
+        userId = req.session.userId;
+      }
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const preferences = updateNotificationPreferencesSchema.parse(req.body);
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const updatedPreferences = {
+        ...user.notificationPreferences,
+        ...preferences
+      };
+      
+      await storage.updateUser(userId, { 
+        notificationPreferences: updatedPreferences 
+      });
+      
+      res.json({ 
+        success: true, 
+        preferences: updatedPreferences 
       });
     } catch (error) {
-      console.error("Logout error:", error);
-      res.status(500).json({ error: "Server error" });
+      console.error("Update preferences error:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid input", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update preferences" });
+      }
+    }
+  });
+
+  // Send notification to all opted-in users (admin endpoint)
+  app.post("/api/notifications/send-update", async (req: any, res) => {
+    try {
+      const { subject, message } = req.body;
+      
+      if (!subject || !message) {
+        return res.status(400).json({ error: "Subject and message are required" });
+      }
+      
+      // Get all users with notification preferences
+      // Note: In a real implementation, you'd want to paginate this
+      // and implement proper admin authentication
+      const users = []; // This would get users from database
+      
+      const result = await notificationService.sendNotificationUpdate(
+        users,
+        subject,
+        message
+      );
+      
+      res.json({
+        success: true,
+        emailsSent: result.emailsSent,
+        smsSent: result.smsSent
+      });
+    } catch (error) {
+      console.error("Send notification error:", error);
+      res.status(500).json({ error: "Failed to send notifications" });
     }
   });
   // Get available religions

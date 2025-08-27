@@ -14,14 +14,43 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
+// OTP verification table
+export const otpCodes = pgTable("otp_codes", {
+  id: serial("id").primaryKey(),
+  email: varchar("email"),
+  phone: varchar("phone"),
+  code: varchar("code", { length: 6 }).notNull(),
+  purpose: varchar("purpose").notNull(), // 'signup', 'login', 'reset'
+  expiresAt: timestamp("expires_at").notNull(),
+  verified: integer("verified").default(0), // 0 = false, 1 = true
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Refresh tokens table for JWT
+export const refreshTokens = pgTable("refresh_tokens", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  token: text("token").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
+  phone: varchar("phone").unique(),
   username: text("username").unique(),
   password: text("password"),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  verified: integer("verified").default(0), // 0 = false, 1 = true
+  socialProvider: varchar("social_provider"), // 'google', 'facebook', 'twitter', 'instagram', null for email/phone
+  notificationPreferences: json("notification_preferences").$type<{
+    email: boolean;
+    sms: boolean;
+    push: boolean;
+  }>().default({ email: true, sms: false, push: true }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -145,30 +174,68 @@ export type ReadingSession = typeof readingSessions.$inferSelect;
 export type JourneyMilestone = typeof journeyMilestones.$inferSelect;
 export type WeeklyProgress = typeof weeklyProgress.$inferSelect;
 export type User = typeof users.$inferSelect;
+export type OtpCode = typeof otpCodes.$inferSelect;
+export type RefreshToken = typeof refreshTokens.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertOtpCode = typeof otpCodes.$inferInsert;
+export type InsertRefreshToken = typeof refreshTokens.$inferInsert;
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  email: true,
-  username: true,
-  password: true,
-  firstName: true,
-  lastName: true,
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const loginSchema = z.object({
   email: z.string().email().optional(),
+  phone: z.string().optional(),
   username: z.string().optional(),
   password: z.string().min(6),
-}).refine(data => data.email || data.username, {
-  message: "Either email or username is required",
+}).refine(data => data.email || data.phone || data.username, {
+  message: "Either email, phone, or username is required",
 });
 
 export const signupSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
   username: z.string().min(3).max(20),
   password: z.string().min(6),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
+}).refine(data => data.email || data.phone, {
+  message: "Either email or phone is required",
+});
+
+// OTP verification schemas
+export const sendOtpSchema = z.object({
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  purpose: z.enum(['signup', 'login', 'reset']),
+}).refine(data => data.email || data.phone, {
+  message: "Either email or phone is required",
+});
+
+export const verifyOtpSchema = z.object({
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  code: z.string().length(6),
+  purpose: z.enum(['signup', 'login', 'reset']),
+}).refine(data => data.email || data.phone, {
+  message: "Either email or phone is required",
+});
+
+// Social auth schema
+export const socialAuthCallbackSchema = z.object({
+  provider: z.enum(['google', 'facebook', 'twitter', 'instagram']),
+  code: z.string(),
+  state: z.string().optional(),
+});
+
+// Notification preferences schema
+export const updateNotificationPreferencesSchema = z.object({
+  email: z.boolean().optional(),
+  sms: z.boolean().optional(),
+  push: z.boolean().optional(),
 });
 
 export const religionSchema = z.enum(['christianity', 'islam', 'judaism', 'hinduism', 'buddhism']);
