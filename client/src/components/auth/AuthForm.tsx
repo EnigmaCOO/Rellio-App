@@ -6,18 +6,18 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Eye, EyeOff, Mail, Phone, User, Lock, CheckCircle, Send, ArrowLeft } from "lucide-react";
-import { signupSchema, loginSchema, verifyOtpSchema } from "@shared/schema";
+import { Eye, EyeOff, CheckCircle, ArrowLeft } from "lucide-react";
+import { loginSchema, signupSchema, verifyOtpSchema } from "@shared/schema";
 import rellioLogo from "@assets/image_1756254355766.png";
 import type { z } from "zod";
 
-type SignupFormData = z.infer<typeof signupSchema>;
 type LoginFormData = z.infer<typeof loginSchema>;
+type SignupFormData = z.infer<typeof signupSchema>;
 type VerifyOtpFormData = z.infer<typeof verifyOtpSchema>;
 
 interface AuthFormProps {
@@ -26,24 +26,31 @@ interface AuthFormProps {
 }
 
 export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
-  const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpContext, setOtpContext] = useState<{
     email?: string;
     phone?: string;
     purpose: 'signup' | 'login';
   } | null>(null);
-  const [usePhone, setUsePhone] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const loginForm = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
   const signupForm = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
       email: "",
-      phone: "",
       username: "",
       password: "",
       firstName: "",
@@ -51,72 +58,10 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
     },
   });
 
-  const loginForm = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      phone: "",
-      username: "",
-      password: "",
-    },
-  });
-
   const otpForm = useForm<VerifyOtpFormData>({
     resolver: zodResolver(verifyOtpSchema),
     defaultValues: {
       code: "",
-    },
-  });
-
-  // Social login handler
-  const handleSocialLogin = (provider: string) => {
-    toast({
-      title: "Coming Soon",
-      description: `${provider} authentication will be available soon. Please use email or phone signup for now.`,
-    });
-  };
-
-  // Signup mutation
-  const signupMutation = useMutation({
-    mutationFn: async (data: SignupFormData) => {
-      return await apiRequest("/api/auth/signup", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
-    },
-    onSuccess: (data) => {
-      if (data.requiresVerification) {
-        const formData = signupForm.getValues();
-        setOtpContext({
-          email: formData.email,
-          phone: formData.phone,
-          purpose: 'signup'
-        });
-        setShowOtpModal(true);
-        toast({
-          title: "Verification Required",
-          description: "Please check your email/phone for the verification code.",
-        });
-      } else {
-        // Store tokens if provided
-        if (data.accessToken) {
-          localStorage.setItem('accessToken', data.accessToken);
-          localStorage.setItem('refreshToken', data.refreshToken);
-        }
-        toast({
-          title: "Account Created!",
-          description: "Welcome to Rellio. You can now explore sacred scriptures.",
-        });
-        queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-        onSuccess();
-      }
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Signup Failed",
-        description: error.message || "Please try again with different credentials.",
-        variant: "destructive",
-      });
     },
   });
 
@@ -130,26 +75,19 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
     },
     onSuccess: (data) => {
       if (data.requiresVerification) {
-        const formData = loginForm.getValues();
         setOtpContext({
-          email: formData.email,
-          phone: formData.phone,
+          email: data.email,
           purpose: 'login'
         });
         setShowOtpModal(true);
         toast({
           title: "Verification Required",
-          description: "Please check your email/phone for the verification code.",
+          description: "Please check your email for the verification code.",
         });
       } else {
-        // Store tokens
-        if (data.accessToken) {
-          localStorage.setItem('accessToken', data.accessToken);
-          localStorage.setItem('refreshToken', data.refreshToken);
-        }
         toast({
           title: "Welcome back!",
-          description: "You have been successfully logged in.",
+          description: "You have been signed in successfully.",
         });
         queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
         onSuccess();
@@ -157,8 +95,36 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
     },
     onError: (error: any) => {
       toast({
-        title: "Login Failed",
-        description: error.message || "Please check your credentials and try again.",
+        title: "Sign In Failed",
+        description: error.message || "Invalid credentials. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Signup mutation
+  const signupMutation = useMutation({
+    mutationFn: async (data: SignupFormData) => {
+      return await apiRequest("/api/auth/signup", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: (data) => {
+      setOtpContext({
+        email: data.email,
+        purpose: 'signup'
+      });
+      setShowOtpModal(true);
+      toast({
+        title: "Account Created!",
+        description: "Please check your email for the verification code.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Sign Up Failed",
+        description: error.message || "Unable to create account. Please try again.",
         variant: "destructive",
       });
     },
@@ -173,72 +139,57 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
           ...data,
           email: otpContext?.email,
           phone: otpContext?.phone,
-          purpose: otpContext?.purpose,
         }),
       });
     },
-    onSuccess: (data) => {
-      // Store tokens
-      if (data.accessToken) {
-        localStorage.setItem('accessToken', data.accessToken);
-        localStorage.setItem('refreshToken', data.refreshToken);
-      }
-      setShowOtpModal(false);
+    onSuccess: () => {
       toast({
-        title: "Verification Successful",
-        description: "Welcome to Rellio!",
+        title: "Account Verified!",
+        description: "Welcome to Rellio. Your spiritual journey begins now.",
       });
+      setShowOtpModal(false);
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       onSuccess();
     },
     onError: (error: any) => {
       toast({
         title: "Verification Failed",
-        description: error.message || "Invalid or expired code. Please try again.",
+        description: error.message || "Invalid verification code. Please try again.",
         variant: "destructive",
       });
     },
   });
-
-  // Guest access mutation
-  const guestMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("/api/auth/guest", {
-        method: "POST",
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Guest Access",
-        description: "You now have limited access to explore Rellio.",
-      });
-      onSuccess();
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Access Failed",
-        description: error.message || "Unable to access as guest. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onSignupSubmit = (data: SignupFormData) => {
-    signupMutation.mutate(data);
-  };
 
   const onLoginSubmit = (data: LoginFormData) => {
     loginMutation.mutate(data);
+  };
+
+  const onSignupSubmit = (data: SignupFormData) => {
+    signupMutation.mutate(data);
   };
 
   const onOtpSubmit = (data: VerifyOtpFormData) => {
     otpMutation.mutate(data);
   };
 
+  const handleSocialLogin = (provider: string) => {
+    toast({
+      title: "Coming Soon",
+      description: `${provider} authentication will be available soon.`,
+    });
+  };
+
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-yellow-50 flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 flex items-center justify-center p-6">
+        <div 
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23D97706' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
+        
+        <div className="w-full max-w-md relative z-10">
           {/* Back button */}
           <Button
             variant="ghost"
@@ -250,357 +201,242 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
           </Button>
 
           {/* Main auth card */}
-          <Card className="bg-white/95 backdrop-blur-sm shadow-2xl border-0 rounded-3xl overflow-hidden">
-            <div className="h-2 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600"></div>
-            
-            <CardHeader className="text-center pb-6">
-              <div className="flex flex-col items-center mb-4">
-                <img 
-                  src={rellioLogo} 
-                  alt="Rellio" 
-                  className="w-24 h-24 object-contain mb-2" 
-                />
+          <Card className="bg-white/90 backdrop-blur-sm shadow-2xl border-0 rounded-3xl overflow-hidden">
+            <CardContent className="p-12">
+              {/* Logo and title */}
+              <div className="text-center mb-10">
+                <div className="flex flex-col items-center mb-6">
+                  <img 
+                    src={rellioLogo} 
+                    alt="Rellio" 
+                    className="w-20 h-20 object-contain mb-4" 
+                  />
+                  <h1 
+                    className="text-4xl font-bold tracking-wider"
+                    style={{
+                      background: 'linear-gradient(135deg, #D97706 0%, #F59E0B 50%, #FCD34D 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                      textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    RELLIO
+                  </h1>
+                </div>
               </div>
-              <CardDescription className="text-gray-600 text-base">
-                Join the spiritual exploration community
-              </CardDescription>
-            </CardHeader>
 
-            <CardContent className="p-8">
-              <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-8 bg-amber-50 rounded-xl p-1">
-                  <TabsTrigger 
-                    value="login" 
-                    className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-amber-600"
-                  >
-                    Sign In
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="signup"
-                    className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-amber-600"
-                  >
-                    Sign Up
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="login" className="space-y-6">
-                  <Form {...loginForm}>
-                    <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-5">
-                      
-                      {/* Login type toggle */}
-                      <div className="flex items-center justify-center mb-4">
-                        <div className="bg-amber-50 rounded-xl p-1 flex">
-                          <button
-                            type="button"
-                            onClick={() => setUsePhone(false)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                              !usePhone 
-                                ? 'bg-white shadow-sm text-amber-600' 
-                                : 'text-gray-600 hover:text-amber-600'
-                            }`}
-                          >
-                            <Mail className="w-4 h-4 inline mr-2" />
-                            Email
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setUsePhone(true)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                              usePhone 
-                                ? 'bg-white shadow-sm text-amber-600' 
-                                : 'text-gray-600 hover:text-amber-600'
-                            }`}
-                          >
-                            <Phone className="w-4 h-4 inline mr-2" />
-                            Phone
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Email or Phone input */}
-                      {usePhone ? (
-                        <FormField
-                          control={loginForm.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-700 font-medium">Phone Number</FormLabel>
-                              <FormControl>
-                                <div className="relative">
-                                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                  <Input
-                                    {...field}
-                                    type="tel"
-                                    placeholder="+1 (555) 123-4567"
-                                    className="pl-11 bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      ) : (
-                        <FormField
-                          control={loginForm.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-700 font-medium">Email</FormLabel>
-                              <FormControl>
-                                <div className="relative">
-                                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                  <Input
-                                    {...field}
-                                    type="email"
-                                    placeholder="your@email.com"
-                                    className="pl-11 bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+              {!isSignUp ? (
+                // Sign In Form
+                <Form {...loginForm}>
+                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-6">
+                    <FormField
+                      control={loginForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-700 font-medium">Email</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="email"
+                              placeholder="Email"
+                              className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
+                    />
 
-                      {/* Password input */}
-                      <FormField
-                        control={loginForm.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-gray-700 font-medium">Password</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <Input
-                                  {...field}
-                                  type={showLoginPassword ? "text" : "password"}
-                                  placeholder="Enter your password"
-                                  className="pl-11 pr-11 bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => setShowLoginPassword(!showLoginPassword)}
-                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-600 transition-colors"
-                                >
-                                  {showLoginPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                </button>
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                    <FormField
+                      control={loginForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-700 font-medium">Password</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                {...field}
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Forgot password?"
+                                className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 pr-11"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-600 transition-colors"
+                              >
+                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                              </button>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                      <Button 
-                        type="submit" 
-                        className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white font-semibold h-12 rounded-xl shadow-lg transition-all duration-200"
-                        disabled={loginMutation.isPending}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="remember" 
+                          checked={rememberMe}
+                          onCheckedChange={(checked) => setRememberMe(checked === true)}
+                          className="border-gray-300 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                        />
+                        <label htmlFor="remember" className="text-sm text-gray-600">
+                          Remember me
+                        </label>
+                      </div>
+                      <button
+                        type="button"
+                        className="text-sm text-amber-600 hover:text-amber-700 font-medium"
                       >
-                        {loginMutation.isPending ? (
-                          <>
-                            <div className="w-4 h-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            Signing In...
-                          </>
-                        ) : (
-                          "Sign In"
-                        )}
-                      </Button>
-                    </form>
-                  </Form>
-                </TabsContent>
+                        Forgot password?
+                      </button>
+                    </div>
 
-                <TabsContent value="signup" className="space-y-6">
-                  <Form {...signupForm}>
-                    <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="space-y-5">
-                      
-                      {/* Name fields */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={signupForm.control}
-                          name="firstName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-700 font-medium">First Name</FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder="John"
-                                  className="bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={signupForm.control}
-                          name="lastName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-700 font-medium">Last Name</FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder="Doe"
-                                  className="bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      {/* Signup type toggle */}
-                      <div className="flex items-center justify-center">
-                        <div className="bg-amber-50 rounded-xl p-1 flex">
-                          <button
-                            type="button"
-                            onClick={() => setUsePhone(false)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                              !usePhone 
-                                ? 'bg-white shadow-sm text-amber-600' 
-                                : 'text-gray-600 hover:text-amber-600'
-                            }`}
-                          >
-                            <Mail className="w-4 h-4 inline mr-2" />
-                            Email
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setUsePhone(true)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                              usePhone 
-                                ? 'bg-white shadow-sm text-amber-600' 
-                                : 'text-gray-600 hover:text-amber-600'
-                            }`}
-                          >
-                            <Phone className="w-4 h-4 inline mr-2" />
-                            Phone
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Email or Phone input */}
-                      {usePhone ? (
-                        <FormField
-                          control={signupForm.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-700 font-medium">Phone Number</FormLabel>
-                              <FormControl>
-                                <div className="relative">
-                                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                  <Input
-                                    {...field}
-                                    type="tel"
-                                    placeholder="+1 (555) 123-4567"
-                                    className="pl-11 bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 rounded-xl font-semibold text-white shadow-lg transition-all duration-200 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700"
+                      disabled={loginMutation.isPending}
+                    >
+                      {loginMutation.isPending ? (
+                        <>
+                          <div className="w-4 h-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Signing in...
+                        </>
                       ) : (
-                        <FormField
-                          control={signupForm.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-700 font-medium">Email</FormLabel>
-                              <FormControl>
-                                <div className="relative">
-                                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                  <Input
-                                    {...field}
-                                    type="email"
-                                    placeholder="your@email.com"
-                                    className="pl-11 bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        "Sign in"
                       )}
-
-                      {/* Username */}
+                    </Button>
+                  </form>
+                </Form>
+              ) : (
+                // Sign Up Form
+                <Form {...signupForm}>
+                  <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={signupForm.control}
-                        name="username"
+                        name="firstName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700 font-medium">Username</FormLabel>
+                            <FormLabel className="text-gray-700 font-medium">First Name</FormLabel>
                             <FormControl>
-                              <div className="relative">
-                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <Input
-                                  {...field}
-                                  placeholder="username"
-                                  className="pl-11 bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
-                                />
-                              </div>
+                              <Input
+                                {...field}
+                                placeholder="John"
+                                className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
 
-                      {/* Password */}
                       <FormField
                         control={signupForm.control}
-                        name="password"
+                        name="lastName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-gray-700 font-medium">Password</FormLabel>
+                            <FormLabel className="text-gray-700 font-medium">Last Name</FormLabel>
                             <FormControl>
-                              <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <Input
-                                  {...field}
-                                  type={showSignupPassword ? "text" : "password"}
-                                  placeholder="Create a password"
-                                  className="pl-11 pr-11 bg-amber-50 border-0 rounded-xl h-12 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => setShowSignupPassword(!showSignupPassword)}
-                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-600 transition-colors"
-                                >
-                                  {showSignupPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                </button>
-                              </div>
+                              <Input
+                                {...field}
+                                placeholder="Doe"
+                                className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+                    </div>
 
-                      <Button 
-                        type="submit" 
-                        className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white font-semibold h-12 rounded-xl shadow-lg transition-all duration-200"
-                        disabled={signupMutation.isPending}
-                      >
-                        {signupMutation.isPending ? (
-                          <>
-                            <div className="w-4 h-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            Creating Account...
-                          </>
-                        ) : (
-                          "Create Account"
-                        )}
-                      </Button>
-                    </form>
-                  </Form>
-                </TabsContent>
-              </Tabs>
+                    <FormField
+                      control={signupForm.control}
+                      name="username"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-700 font-medium">Username</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="johndoe"
+                              className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={signupForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-700 font-medium">Email</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="email"
+                              placeholder="john@example.com"
+                              className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={signupForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-700 font-medium">Password</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                {...field}
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Enter your password"
+                                className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 pr-11"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-600 transition-colors"
+                              >
+                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                              </button>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 rounded-xl font-semibold text-white shadow-lg transition-all duration-200 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700"
+                      disabled={signupMutation.isPending}
+                    >
+                      {signupMutation.isPending ? (
+                        <>
+                          <div className="w-4 h-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Creating Account...
+                        </>
+                      ) : (
+                        "Create Account"
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              )}
 
               {/* Social login section */}
               <div className="mt-8">
@@ -616,43 +452,43 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                 <div className="grid grid-cols-2 gap-3 mb-6">
                   <Button 
                     variant="outline"
-                    onClick={() => handleSocialLogin('Google')}
-                    className="h-12 rounded-xl border-amber-200 hover:bg-amber-50"
+                    onClick={() => handleSocialLogin('Apple')}
+                    className="h-12 rounded-xl border-gray-200 hover:bg-gray-50"
                   >
-                    <span className="text-xl mr-2">🔍</span>
-                    Google
+                    <span className="text-xl mr-2">🍎</span>
+                    Sign in with Apple
                   </Button>
                   <Button 
                     variant="outline"
-                    onClick={() => handleSocialLogin('Facebook')}
-                    className="h-12 rounded-xl border-amber-200 hover:bg-amber-50"
+                    onClick={() => handleSocialLogin('Google')}
+                    className="h-12 rounded-xl border-gray-200 hover:bg-gray-50"
                   >
-                    <span className="text-xl mr-2">📘</span>
-                    Facebook
+                    <span className="text-xl mr-2">🔍</span>
+                    Sign in with Google
                   </Button>
                 </div>
-
-                {/* Guest access */}
-                <Button 
-                  onClick={() => guestMutation.mutate()}
-                  variant="outline"
-                  className="w-full h-12 rounded-xl border-amber-500 text-amber-600 hover:bg-amber-50"
-                  disabled={guestMutation.isPending}
-                >
-                  {guestMutation.isPending ? (
-                    <>
-                      <div className="w-4 h-4 mr-2 border-2 border-amber-600/30 border-t-amber-600 rounded-full animate-spin" />
-                      Accessing...
-                    </>
-                  ) : (
-                    "Continue as Guest"
-                  )}
-                </Button>
-
-                <p className="text-xs text-gray-500 text-center mt-4">
-                  Guest access provides limited features. Sign up for the full experience.
-                </p>
               </div>
+
+              {/* Toggle between login/signup */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="text-sm text-gray-600"
+                >
+                  {isSignUp ? (
+                    <>Already have an account? <span className="text-amber-600 font-medium">Sign in</span></>
+                  ) : (
+                    <>Don't have an account? <span className="text-amber-600 font-medium">Sign up</span></>
+                  )}
+                </button>
+              </div>
+
+              {/* Terms of service */}
+              <p className="text-xs text-gray-500 text-center mt-6">
+                By continuing, you agree to our{" "}
+                <span className="text-amber-600 underline cursor-pointer">Terms of Service</span>
+              </p>
             </CardContent>
           </Card>
         </div>

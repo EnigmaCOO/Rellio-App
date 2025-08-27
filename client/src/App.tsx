@@ -9,6 +9,7 @@ import LoadingSplash from "@/components/LoadingSplash";
 import LandingPage from "@/pages/landing";
 import AuthPage from "@/pages/auth";
 import Dashboard from "@/pages/dashboard";
+import ProfilePage from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/" component={LandingPage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/profile" component={ProfilePage} />
       <Route component={NotFound} />
     </Switch>
   );

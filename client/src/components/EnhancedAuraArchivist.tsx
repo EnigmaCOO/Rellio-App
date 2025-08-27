@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Send, 
   Bot, 
@@ -367,9 +369,31 @@ export function EnhancedAuraArchivist({
     enabled: !!currentSessionId
   });
 
+  // Guest access tracking
+  const { isGuest, user } = useAuth();
+  const [guestQuestionCount, setGuestQuestionCount] = useState(0);
+  const [showSignupPrompt, setShowSignupPrompt] = useState(false);
+  const GUEST_QUESTION_LIMIT = 4;
+
+  // Load guest question count from localStorage
+  useEffect(() => {
+    if (isGuest) {
+      const stored = localStorage.getItem('guestQuestionCount');
+      if (stored) {
+        setGuestQuestionCount(parseInt(stored, 10));
+      }
+    }
+  }, [isGuest]);
+
   // Send message mutation with persona context
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData: { message: string; personaContext?: ScholarPersona }) => {
+      // Check guest limits before sending
+      if (isGuest && guestQuestionCount >= GUEST_QUESTION_LIMIT) {
+        setShowSignupPrompt(true);
+        throw new Error('Guest question limit reached. Please sign up for unlimited access.');
+      }
+
       setIsStreaming(true);
       try {
         // Enhanced prompt with persona context
@@ -403,6 +427,18 @@ export function EnhancedAuraArchivist({
       setCurrentMessage("");
       setVoiceTranscript("");
       setAudioState('responding');
+      
+      // Track guest questions
+      if (isGuest) {
+        const newCount = guestQuestionCount + 1;
+        setGuestQuestionCount(newCount);
+        localStorage.setItem('guestQuestionCount', newCount.toString());
+        
+        // Show signup prompt if approaching limit
+        if (newCount >= GUEST_QUESTION_LIMIT) {
+          setShowSignupPrompt(true);
+        }
+      }
       
       // Add AI response to conversation history
       if (data?.aiMessage) {
@@ -926,11 +962,49 @@ export function EnhancedAuraArchivist({
           toast({
             title: "Session Loaded",
             description: `Restored conversation with ${entry.persona?.name || 'Aura Archivist'}`,
-            variant: "default"
           });
         }}
-        onHighlightVerse={onNavigateToVerse as any}
       />
+
+      {/* Guest Signup Prompt Dialog */}
+      <Dialog open={showSignupPrompt} onOpenChange={setShowSignupPrompt}>
+        <DialogContent className="bg-white rounded-2xl border-0 shadow-2xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl font-bold text-gray-800">
+              <Crown className="w-8 h-8 text-amber-600 mx-auto mb-2" />
+              Unlock Full Access
+            </DialogTitle>
+            <DialogDescription className="text-center text-gray-600">
+              You've reached your free question limit ({GUEST_QUESTION_LIMIT} questions). 
+              Create an account to continue your spiritual journey with unlimited access.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-6">
+            <Button 
+              onClick={() => window.location.href = '/auth'}
+              className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white font-semibold h-12 rounded-xl"
+            >
+              Create Free Account
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => setShowSignupPrompt(false)}
+              className="w-full rounded-xl"
+            >
+              Maybe Later
+            </Button>
+          </div>
+
+          <p className="text-xs text-gray-500 text-center mt-4">
+            Join thousands exploring spiritual wisdom with AI guidance
+          </p>
+        </DialogContent>
+      </Dialog>
     </div>
   );
+}
+
+export default function EnhancedAuraArchivistWrapper(props: any) {
+  return <EnhancedAuraArchivist {...props} />;
 }

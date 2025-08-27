@@ -271,6 +271,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Profile update endpoint
+  app.patch("/api/auth/profile", async (req: any, res) => {
+    try {
+      // Get user from JWT or session
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      let userId: string | undefined;
+      
+      if (token) {
+        const decoded = authService.verifyAccessToken(token);
+        userId = decoded?.userId;
+      } else if (req.session?.userId && !req.session.isGuest) {
+        userId = req.session.userId;
+      }
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const { firstName, lastName, username, email, phone } = req.body;
+
+      // Check if username or email already exists (excluding current user)
+      if (username) {
+        const existingUser = await storage.getUserByUsername(username);
+        if (existingUser && existingUser.id !== userId) {
+          return res.status(400).json({ error: "Username already taken" });
+        }
+      }
+
+      if (email) {
+        const existingUser = await storage.getUserByEmail(email);
+        if (existingUser && existingUser.id !== userId) {
+          return res.status(400).json({ error: "Email already in use" });
+        }
+      }
+
+      const updatedUser = await storage.updateUser(userId, {
+        firstName,
+        lastName,
+        username,
+        email,
+        phone,
+        updatedAt: new Date()
+      });
+
+      res.json({
+        success: true,
+        message: "Profile updated successfully",
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error("Profile update error:", error);
+      res.status(500).json({ error: "Failed to update profile" });
+    }
+  });
+
   // Enhanced logout with JWT token invalidation
   app.post("/api/auth/logout", async (req: any, res) => {
     try {
