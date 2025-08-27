@@ -1,0 +1,139 @@
+You are a senior full-stack engineer tasked with adding a new Privacy Policy page and implementing content moderation features to promote positive interactions, without breaking existing functionality or logic.
+
+Do not break routing, APIs, state, or IDs used by analytics/tests.
+Keep all existing component props and exported names.
+Only add new components/pages, styles, and moderation logic where necessary.
+If you add files, keep imports relative and tree-shakable.
+Write accessible, responsive, and performant code.
+Prefer Tailwind CSS (or the project’s existing CSS approach).
+Use semantic HTML and ARIA where relevant.
+Produce a single PR with clear commits.
+For moderation, ensure it's fair, unbiased, and promotes unity—focus on preventing hate speech without censoring legitimate discussions.
+
+TASK BRIEF (paste after system block)
+Goal: Add a dedicated Privacy Policy page linked from the home page's "Privacy" footer/link, using the provided content. Implement content moderation in the chat system to ban offensive words, prevent hate speech, and detect bias against religions, fostering a unified spiritual community where users explore without hatred.
+
+Privacy Policy Page
+
+
+Create a new page: client/src/pages/privacy.tsx
+Content: Use the following Privacy Policy text (paste verbatim as JSX or Markdown-rendered content in a white-themed card with rounded corners 12px, shadow-md, teal accents, and purple-to-gold gradient overlay at 10% opacity for consistency):
+text**Rellio Privacy Policy**
+
+**Last Updated: August 26, 2025**
+
+At Rellio (the "App" or "Platform"), we are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your data when you use our App, which provides AI-driven exploration of sacred scriptures across multiple religious traditions. By accessing or using Rellio, you agree to the terms of this Policy. If you do not agree, please do not use the App.
+
+We may update this Policy from time to time. We will notify you of significant changes by posting the updated Policy in the App or via email. Your continued use of the App after changes constitutes acceptance of the revised Policy.
+
+#### 1. Information We Collect
+We collect information to provide and improve our services, including personalized spiritual insights, voice interactions, and chat history. The types of information include:
+
+- **Personal Information**: When you sign up or log in (via email, phone number, Google, Facebook, X (Twitter), or Instagram), we collect your name, email address, phone number, profile picture, and any linked social media data. For verification, we may collect OTP codes or device information.
+
+- **Usage Data**: Automatically collected data such as IP address, device type, browser details, operating system, app interactions (e.g., searched verses, chat queries, selected themes like "love" or "compassion"), and timestamps. This helps us understand how you engage with features like Compare Mode or voice chat.
+
+- **Chat and Content Data**: Your chat history, voice transcriptions (via Web Speech API), selected personas (e.g., Christian Priest or Islamic Mufti), and preferences for notifications or themes. We store this to maintain context-aware conversations and enable features like saving discussions.
+
+- **Voice and Audio Data**: When using voice input, we process audio for transcription (not stored unless part of chat history). ElevenLabs integration handles text-to-speech, but no raw audio is retained beyond processing.
+
+- **Notification Preferences**: Your opt-in choices for email/SMS updates on app features or spiritual insights.
+
+We do not collect sensitive religious data beyond what you voluntarily share in chats or preferences.
+
+#### 2. How We Use Your Information
+We use your data to operate and enhance Rellio:
+
+- **Provide Services**: Deliver personalized AI responses, verse comparisons (e.g., verses on "love" from Quran, Bible, Torah, Bhagavad Gita, Vedas), voice chats, and scholar personas based on your selections.
+
+- **Improve the App**: Analyze usage to refine features like real-time interruptions, auto-sending queries, or echo cancellation in voice mode.
+
+- **Notifications**: Send app updates, daily verses, or personalized insights via email/SMS if opted in.
+
+- **Security and Compliance**: Detect fraud, verify accounts (e.g., OTP), and comply with legal obligations.
+
+- **Analytics**: Aggregate anonymous data to understand trends (e.g., popular themes like "meaning of life") without identifying individuals.
+
+We do not sell your data. All processing is for the App's core functionality.
+
+#### 3. Sharing Your Information
+We share data only as necessary:
+
+- **Service Providers**: With trusted partners like Google (for auth), ElevenLabs (for voice synthesis), OpenAI/XAI (for AI responses), and Twilio/Nodemailer (for OTP/notifications). They are bound by confidentiality and process data only on our behalf.
+
+- **Legal Requirements**: If required by law, subpoena, or to protect rights/safety.
+
+- **Business Transfers**: In mergers/acquisitions, your data may transfer but remains subject to this Policy.
+
+No sharing with third parties for marketing without consent.
+
+#### 4. Data Security
+We use industry-standard measures:
+- Encryption (HTTPS, JWT tokens).
+- Secure storage (PostgreSQL with access controls).
+- Regular audits for vulnerabilities.
+- Voice data is processed transiently and not stored long-term.
+
+However, no system is 100% secure—use strong passwords and report issues.
+
+#### 5. Your Rights and Choices
+- **Access/Update/Delete**: View, edit, or delete your data via app settings.
+- **Opt-Out**: Unsubscribe from notifications anytime.
+- **GDPR/CCPA Compliance**: EU/California residents have rights to access, rectify, erase, or port data. Contact us for requests.
+- **Do Not Track**: We honor browser DNT signals for analytics.
+
+#### 6. Children's Privacy
+Rellio is not intended for children under 13 (or 16 in some regions). We do not knowingly collect data from minors. If discovered, we delete it immediately.
+
+#### 7. International Data Transfers
+Data may be processed in the US or other countries with adequate protections (e.g., EU Standard Contractual Clauses).
+
+#### 8. Data Retention
+We retain data as needed for services (e.g., chat history until deleted) or legal reasons, then securely delete it.
+
+#### 9. Changes to This Policy
+We’ll notify you of material changes via app or email.
+
+#### 10. Contact Us
+For questions or requests: [support@rellio.com] or [app address].
+
+By using Rellio, you acknowledge this Policy. For legal advice, consult a professional—this is not exhaustive.
+
+Link from home page (client/src/pages/landing.tsx or dashboard.tsx): Update "Privacy" footer/link to route to /privacy (use React Router <link to="/privacy">Privacy).
+
+
+Content Moderation for Positive Interactions
+
+
+In chat components (client/src/components/RightColumnChat.tsx, client/src/components/EnhancedAuraArchivist.tsx), add client-side filtering for user input (before sending to /api/chat/*): Use a library like bad-words for offensive terms; flag hate speech/bias with OpenAI moderation API (server/services/openai.ts).
+Backend Validation (server/routes.ts /api/chat/*): Scan messages for hate/bias (e.g., keywords like slurs, religious attacks) using regex or AI; block/reject if detected, log for review, respond with "Message blocked to promote unity—please rephrase."
+Banned Words List: Create a configurable list in server/services/moderation.ts (e.g., offensive words, biased terms like "superior religion"); extend for themes (prevent targeting, e.g., "hate [religion]").
+User Reporting: Add "Report" button on messages; store in new flaggedMessages table (shared/schema.ts).
+Notification System: Warn users on violations; ban repeat offenders (update users table with banned: boolean).
+
+
+UI and Integration
+
+
+Privacy Page: Scrollable content in a centered card (max-w-4xl, serif font for readability), with back link to home.
+Moderation Feedback: In chat, show toast warnings (e.g., "Message moderated for positivity—let's focus on unity!").
+Responsiveness: Ensure policy page is mobile-friendly (stack sections); moderation doesn't slow chat (async checks).
+
+
+Security and Compliance
+
+
+Moderation logs in database for audits; comply with GDPR/CCPA by allowing data export/deletion.
+Test: Simulate offensive input to verify blocking.
+
+Deliverables:
+
+New client/src/pages/privacy.tsx: With provided content.
+Updated client/src/pages/landing.tsx: Link to /privacy.
+New server/services/moderation.ts: For filtering/bias detection.
+Updated server/routes.ts /api/chat/*: Add moderation middleware.
+Extend shared/schema.ts: Add flaggedMessages table.
+Tailwind/CSS: Style policy card (bg-white p-8 rounded-2xl shadow-md).
+State/Hooks: useState for moderation warnings in chat components.
+
+Provide React/TypeScript/Express code with Tailwind classes, and describe any new state or effects needed. Ensure a unifying experience where users engage positively, promoting knowledge and understanding across religions.
