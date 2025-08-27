@@ -368,7 +368,8 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                           <FormControl>
                             <Input
                               {...field}
-                              placeholder="johndoe"
+                              placeholder="Choose a username"
+                              autoComplete="off"
                               className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                             />
                           </FormControl>
@@ -477,7 +478,12 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
               <div className="text-center">
                 <button
                   type="button"
-                  onClick={() => setIsSignUp(!isSignUp)}
+                  onClick={() => {
+                    setIsSignUp(!isSignUp);
+                    // Reset forms when switching
+                    loginForm.reset();
+                    signupForm.reset();
+                  }}
                   className="text-sm text-gray-600"
                 >
                   {isSignUp ? (
