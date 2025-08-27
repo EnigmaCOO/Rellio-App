@@ -369,10 +369,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Google OAuth routes
   app.get("/api/auth/google", (req: any, res) => {
-    const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${req.protocol}://${req.get('host')}/api/auth/google/callback`;
+    // Force HTTPS for redirect URI since Google OAuth requires it
+    const redirectUri = process.env.GOOGLE_REDIRECT_URI || `https://${req.get('host')}/api/auth/google/callback`;
     console.log('🔗 Google OAuth - Redirect URI being used:', redirectUri);
     console.log('🌍 Host header:', req.get('host'));
-    console.log('🔒 Protocol:', req.protocol);
+    console.log('🔒 Protocol (forcing HTTPS):', 'https');
     console.log('🔑 Google OAuth - Client ID:', process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...');
     
     const googleAuthUrl = `https://accounts.google.com/oauth/authorize?` +
@@ -402,8 +403,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('✅ Authorization code received, exchanging for tokens...');
 
-      // Exchange code for tokens
-      const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${req.protocol}://${req.get('host')}/api/auth/google/callback`;
+      // Exchange code for tokens - Force HTTPS
+      const redirectUri = process.env.GOOGLE_REDIRECT_URI || `https://${req.get('host')}/api/auth/google/callback`;
       console.log('🔗 Using redirect URI:', redirectUri);
       
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
