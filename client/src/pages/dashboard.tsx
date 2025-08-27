@@ -12,13 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator
-} from "@/components/ui/dropdown-menu";
 import { useSwipeable } from "react-swipeable";
 import { useReadingSession } from "@/hooks/useReadingSession";
 import { cn } from "@/lib/utils";
@@ -41,7 +34,7 @@ export default function Dashboard() {
   const [selectedPersona, setSelectedPersona] = useState<ScholarPersona | null>(null);
   const [currentView, setCurrentView] = useState<'scripture' | 'progress'>('scripture');
   const { toast } = useToast();
-  const { user, isGuest, logout } = useAuth();
+  const { user, isGuest } = useAuth();
 
   // Debug panel visibility state
   useEffect(() => {
@@ -393,57 +386,19 @@ export default function Dashboard() {
                 Progress
               </Button>
               
-              {/* User Profile Section */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2 hover:bg-amber-50 transition-colors"
-                  >
-                    <User className="w-4 h-4 mr-1" />
-                    <span className="text-xs hidden sm:inline">
-                      {isGuest ? 'Guest' : user?.email?.split('@')[0] || 'User'}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-white border border-amber-200 shadow-lg">
-                  <div className="px-2 py-1.5 text-sm">
-                    <div className="font-medium">{isGuest ? 'Guest User' : user?.email}</div>
-                    <div className="text-xs text-gray-500">
-                      {isGuest ? 'Sign up for full access' : 'Rellio Premium Member'}
-                    </div>
-                  </div>
-                  <DropdownMenuSeparator />
-                  {!isGuest && (
-                    <>
-                      <DropdownMenuItem onClick={() => window.location.href = '/profile'}>
-                        <User className="w-4 h-4 mr-2" />
-                        View Profile
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Settings className="w-4 h-4 mr-2" />
-                        Settings
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  {isGuest ? (
-                    <DropdownMenuItem onClick={() => window.location.href = '/auth'}>
-                      <User className="w-4 h-4 mr-2" />
-                      Sign Up / Login
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem 
-                      onClick={logout}
-                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {/* User Profile Section - Simplified */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.location.href = isGuest ? '/auth' : '/profile'}
+                className="h-8 px-3 hover:bg-amber-50 transition-colors border border-amber-200"
+                title={isGuest ? 'Sign Up / Login' : 'View Profile'}
+              >
+                <User className="w-4 h-4 mr-1" />
+                <span className="text-xs">
+                  {isGuest ? 'Sign Up' : 'Profile'}
+                </span>
+              </Button>
             </div>
           </div>
         </div>
