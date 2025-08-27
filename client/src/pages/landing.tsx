@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -117,16 +118,38 @@ export default function LandingPage() {
   };
 
   return (
-    <div 
-      className="min-h-screen"
-      style={{
-        background: `
-          linear-gradient(135deg, #060A1A 0%, #0A0F29 50%, #060A1A 100%),
-          radial-gradient(ellipse at 30% 40%, rgba(212, 175, 55, 0.12) 0%, transparent 50%),
-          radial-gradient(ellipse at 70% 60%, rgba(0, 213, 255, 0.08) 0%, transparent 50%)
-        `
-      }}
-    >
+    <>
+      <Helmet>
+        <title>Rellio - Explore Sacred Wisdom with AI</title>
+        <meta name="description" content="Dive into a transformative journey with Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more. Engage with voice chats, scholar personas, and theme-based verse comparisons—enlighten your soul today!" />
+        
+        {/* Open Graph Meta Tags */}
+        <meta property="og:title" content="Rellio - Explore Sacred Wisdom with AI" />
+        <meta property="og:description" content="Dive into a transformative journey with Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more. Engage with voice chats, scholar personas, and theme-based verse comparisons—enlighten your soul today!" />
+        <meta property="og:image" content="https://rellio.co/images/og-image.jpg" />
+        <meta property="og:image:alt" content="Rellio - A captivating spiritual interface showcasing the app's essence" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:url" content="https://rellio.co/" />
+        <meta property="og:type" content="website" />
+        
+        {/* Twitter Card Meta Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Rellio - Explore Sacred Wisdom with AI" />
+        <meta name="twitter:description" content="Dive into a transformative journey with Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more. Engage with voice chats, scholar personas, and theme-based verse comparisons—enlighten your soul today!" />
+        <meta name="twitter:image" content="https://rellio.co/images/og-image.jpg" />
+      </Helmet>
+      
+      <div 
+        className="min-h-screen"
+        style={{
+          background: `
+            linear-gradient(135deg, #060A1A 0%, #0A0F29 50%, #060A1A 100%),
+            radial-gradient(ellipse at 30% 40%, rgba(212, 175, 55, 0.12) 0%, transparent 50%),
+            radial-gradient(ellipse at 70% 60%, rgba(0, 213, 255, 0.08) 0%, transparent 50%)
+          `
+        }}
+      >
       {/* Navigation */}
       <nav className="relative z-40 py-6 px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -739,6 +762,7 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   );
 }

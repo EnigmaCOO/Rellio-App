@@ -1,0 +1,117 @@
+Since you’ve indicated a specific image to be used for the Open Graph preview of the Rellio link (https://rellio.co/), and given that it’s 11:14 PM CDT on Tuesday, August 26, 2025, I’ll assume you’ve provided or will provide the image (e.g., via upload or a URL). Without the exact image details yet, I’ll craft a high-level prompt for your Replit AI agent to implement the link sharing customization using this image, paired with the previously crafted description. The prompt will ensure the image appears when the link is shared, maintaining Rellio’s spiritual AI theme and functionality. Once you share the image or its URL, I can refine the prompt accordingly.
+
+### High-Level Prompt for Replit AI Agent
+
+#### SYSTEM / GUARDRAILS (paste first)
+
+You are a senior front-end engineer tasked with customizing the link sharing experience for Rellio, ensuring a specific Open Graph (OG) image and description appear when the app link (https://rellio.co/) is shared on platforms like X, Facebook, or messaging apps. Do not alter existing business logic, routing, APIs, or state management.
+
+- Keep all existing component props and exported names.
+- Modify only the `<head>` meta tags for OG properties.
+- Ensure imports remain relative and tree-shakable.
+- Write accessible, responsive, and performant code.
+- Use existing Tailwind CSS or adapt to the project’s CSS approach.
+- Add semantic HTML and ARIA where relevant.
+- Produce a single PR with clear commits.
+
+#### TASK BRIEF (paste after system block)
+
+Goal: Customize the link sharing preview for Rellio (https://rellio.co/) to display a specific high-resolution Open Graph image (provided or to be uploaded as `og-image.jpg` at `https://rellio.co/images/og-image.jpg`) and a tailored description when shared, enhancing the app’s spiritual AI appeal. Update the landing page (client/src/pages/landing.tsx) to include OG meta tags, ensuring the image and description reflect Rellio’s mission of uniting users through scripture exploration.
+
+1. **Open Graph Meta Tags**
+
+- Add the following meta tags to the `<head>` section of `client/src/pages/landing.tsx` (use `react-helmet` or equivalent if available, otherwise inline):
+  
+  ```tsx
+  <meta property="og:title" content="Rellio - Explore Sacred Wisdom with AI" />
+  <meta property="og:description" content="Dive into a transformative journey with Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more. Engage with voice chats, scholar personas, and theme-based verse comparisons—enlighten your soul today!" />
+  <meta property="og:image" content="https://rellio.co/images/og-image.jpg" />
+  <meta property="og:image:alt" content="Rellio - A captivating spiritual interface showcasing the app's essence" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:url" content="https://rellio.co/" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Rellio - Explore Sacred Wisdom with AI" />
+  <meta name="twitter:description" content="Dive into a transformative journey with Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more. Engage with voice chats, scholar personas, and theme-based verse comparisons—enlighten your soul today!" />
+  <meta name="twitter:image" content="https://rellio.co/images/og-image.jpg" />
+  ```
+- **Image Requirement**: Use the image provided by the user (assumed to be uploaded as `og-image.jpg` at `https://rellio.co/images/og-image.jpg`). Ensure it is 1200x630px, publicly accessible, and optimized (<100KB) to match OG standards. The `og:image:alt` is a placeholder—update with a specific description once the image is shared (e.g., “Rellio - A cosmic compass with mandala art and scripture verses”).
+
+1. **Implementation Steps**
+
+- **Update Landing Page**: Modify `client/src/pages/landing.tsx` to include the OG meta tags within a `<Helmet>` component (install `react-helmet` if needed: `npm install react-helmet`).
+  - Example:
+    
+    ```tsx
+    import { Helmet } from 'react-helmet';
+    
+    export default function Landing() {
+      return (
+        <>
+          <Helmet>
+            <meta property="og:title" content="Rellio - Explore Sacred Wisdom with AI" />
+            <meta property="og:description" content="Dive into a transformative journey with Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more. Engage with voice chats, scholar personas, and theme-based verse comparisons—enlighten your soul today!" />
+            <meta property="og:image" content="https://rellio.co/images/og-image.jpg" />
+            <meta property="og:image:alt" content="Rellio - A captivating spiritual interface showcasing the app's essence" />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+            <meta property="og:url" content="https://rellio.co/" />
+            <meta property="og:type" content="website" />
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content="Rellio - Explore Sacred Wisdom with AI" />
+            <meta name="twitter:description" content="Dive into a transformative journey with Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more. Engage with voice chats, scholar personas, and theme-based verse comparisons—enlighten your soul today!" />
+            <meta name="twitter:image" content="https://rellio.co/images/og-image.jpg" />
+          </Helmet>
+          {/* Existing landing content */}
+        </>
+      );
+    }
+    ```
+- **Image Hosting**: Upload the user-provided image as `og-image.jpg` to `https://rellio.co/images/`. If hosting isn’t configured, use a temporary service (e.g., Cloudinary) and update the URL in the meta tags post-upload.
+- **Testing**: Share https://rellio.co/ on X, Facebook, or a messaging app; verify the preview displays the custom title, description, and the specified image. Adjust `og:image:alt` and URL if the image doesn’t load.
+
+1. **Design Consistency**
+
+- Ensure the provided image aligns with Rellio’s aesthetic (white theme, teal accents, spiritual gradient). If it deviates, suggest adjustments to the user (e.g., via follow-up prompt).
+- No changes to existing styles or logic—only meta tag additions.
+
+1. **Accessibility & SEO**
+
+- Include `og:image:alt` for screen readers (placeholder until image is specified).
+- Preserve existing IDs and `aria-labels`.
+- Boost SEO with `og:type` and Twitter Card tags.
+
+1. **Performance**
+
+- Optimize the image (compress to <100KB) to avoid LCP impact.
+- Use CDN if possible (e.g., Cloudflare) for faster loads.
+
+1. **Acceptance Criteria**
+
+- Link preview on share shows custom title, description, and the provided image.
+- No console errors/warnings.
+- Existing landing functionality (e.g., CTAs, navigation) remains intact.
+- Lighthouse Performance ≥ 90, SEO ≥ 95.
+
+1. **Implementation Steps (agent checklist)**
+
+1. Install `react-helmet` if not present (`npm install react-helmet`).
+2. Add OG meta tags to `client/src/pages/landing.tsx` within `<Helmet>`.
+3. Upload the user-provided image to `https://rellio.co/images/og-image.jpg` and verify URL accessibility.
+4. Test share on multiple platforms (X, Facebook); adjust meta if needed.
+5. Commit with message: `feat(seo): add custom OG tags with user-provided image for link sharing (no logic changes)`.
+
+#### FINAL INSTRUCTION TO AGENT
+
+Implement the above customization precisely, preserving all logic, and submit a PR that passes acceptance criteria and lint/build checks. Do not rename or remove existing components, props, or IDs. Add only the `react-helmet` dependency and meta tags. Await user confirmation of the image URL or upload before final deployment.
+
+-----
+
+### Notes
+
+- **Image Placeholder**: The prompt assumes you’ll provide the image or its URL. Please share the image or confirm its location (e.g., a local file or hosted URL) so I can update the `og:image` value and `alt` text accurately.
+- **Next Steps**: Once the image is shared, I’ll refine the `og:image:alt` and re-run the prompt if needed. Test the share post-implementation to ensure the desired image appears.
+- **Fallback**: If the image upload fails, the agent should notify you to provide an alternative URL.
+
+Please provide the image or its details, and I’ll adjust accordingly!
