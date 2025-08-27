@@ -41,6 +41,8 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
+    mode: "onSubmit",
+    reValidateMode: "onChange",
     defaultValues: {
       email: "",
       password: "",
@@ -49,6 +51,8 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
 
   const signupForm = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
+    mode: "onSubmit",
+    reValidateMode: "onChange",
     defaultValues: {
       email: "",
       username: "",
