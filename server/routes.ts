@@ -371,6 +371,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/auth/google", (req: any, res) => {
     const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${req.protocol}://${req.get('host')}/api/auth/google/callback`;
     console.log('🔗 Google OAuth - Redirect URI being used:', redirectUri);
+    console.log('🌍 Host header:', req.get('host'));
+    console.log('🔒 Protocol:', req.protocol);
     console.log('🔑 Google OAuth - Client ID:', process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...');
     
     const googleAuthUrl = `https://accounts.google.com/oauth/authorize?` +
@@ -379,7 +381,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `response_type=code&` +
       `scope=${encodeURIComponent('openid profile email')}`;
     
-    console.log('🚀 Redirecting to Google OAuth URL');
+    console.log('🚀 Full Google OAuth URL:', googleAuthUrl.substring(0, 100) + '...');
     res.redirect(googleAuthUrl);
   });
 
