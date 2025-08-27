@@ -192,10 +192,15 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
   };
 
   const handleSocialLogin = (provider: string) => {
-    toast({
-      title: "Coming Soon",
-      description: `${provider} authentication will be available soon.`,
-    });
+    if (provider === 'Google') {
+      // Start Google OAuth flow
+      window.location.href = '/api/auth/google';
+    } else {
+      toast({
+        title: "Coming Soon",
+        description: `${provider} authentication will be available soon.`,
+      });
+    }
   };
 
   return (
