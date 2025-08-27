@@ -138,16 +138,24 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
   // OTP verification mutation
   const otpMutation = useMutation({
     mutationFn: async (data: VerifyOtpFormData) => {
+      console.log("Sending verification data:", {
+        ...data,
+        email: otpContext?.email,
+        phone: otpContext?.phone,
+        purpose: otpContext?.purpose
+      });
       return await apiRequest("/api/auth/verify-otp", {
         method: "POST",
         body: JSON.stringify({
           ...data,
           email: otpContext?.email,
           phone: otpContext?.phone,
+          purpose: otpContext?.purpose
         }),
       });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Verification successful:", data);
       toast({
         title: "Account Verified!",
         description: "Welcome to Rellio. Your spiritual journey begins now.",
@@ -157,6 +165,7 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
       onSuccess();
     },
     onError: (error: any) => {
+      console.error("Verification error:", error);
       toast({
         title: "Verification Failed",
         description: error.message || "Invalid verification code. Please try again.",
