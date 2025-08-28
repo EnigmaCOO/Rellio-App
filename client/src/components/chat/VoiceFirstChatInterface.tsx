@@ -552,8 +552,8 @@ export function VoiceFirstChatInterface({
       // Track voice activity for cooldown system
       setLastVoiceActivity(Date.now());
 
-      // Auto-send logic with VERY LOW confidence threshold for maximum sensitivity
-      if (finalTranscript && maxConfidence > 0.3) { // Super low for better voice detection
+      // Auto-send logic with VERY LOW confidence threshold for maximum sensitivity  
+      if (finalTranscript && (maxConfidence || 0.9) > 0.3) { // Super low for better voice detection
         // Clear existing timeout
         if (autoSendTimeoutRef.current) {
           clearTimeout(autoSendTimeoutRef.current);
@@ -605,7 +605,7 @@ export function VoiceFirstChatInterface({
           channelCount: 1,
           sampleRate: 44100,
           sampleSize: 16,
-          volume: 1.0 // Request maximum volume
+          // volume: 1.0 // Not supported in MediaTrackConstraints
         } 
       });
       streamRef.current = stream;
@@ -1061,7 +1061,7 @@ export function VoiceFirstChatInterface({
             
             if (onNavigateToVerse && parsed) {
               // Navigate to the scripture location
-              onNavigateToVerse(parsed.religion, parsed.book, parsed.chapter, parsed.verse);
+              onNavigateToVerse(parsed.religion, parsed.book, parsed.chapter, parsed.verse || undefined);
             }
           }}
           className="inline-flex items-center gap-1 px-1 py-0.5 rounded text-xs bg-teal-100 text-teal-700 hover:bg-teal-200 transition-colors duration-200 border border-teal-200 hover:border-teal-300 cursor-pointer"
@@ -1694,7 +1694,7 @@ export function VoiceFirstChatInterface({
                   }}
                   onHighlightVerse={(religion, book, chapter) => {
                     if (onNavigateToVerse) {
-                      onNavigateToVerse(religion, book, chapter);
+                      onNavigateToVerse(religion as any, book, chapter);
                     }
                     setShowHistoryPanel(false);
                   }}
