@@ -795,9 +795,17 @@ export function VoiceFirstChatInterface({
         backgroundRecognition.interimResults = true;
         backgroundRecognition.lang = 'en-US';
         
-        // Enhanced interruption detection with fade-out
+        // Enhanced interruption detection with fade-out and proper transcription restart
         backgroundRecognition.onspeechstart = () => {
-          console.log('🚨 INTERRUPTION DETECTED via isolated onspeechstart!');
+          console.log('🚨 INTERRUPTION DETECTED via background recognition!');
+          
+          // IMMEDIATELY stop background recognition to prevent conflicts
+          try {
+            backgroundRecognition.stop();
+            console.log('🛑 Background recognition stopped');
+          } catch (error) {
+            console.warn('Warning stopping background recognition:', error);
+          }
           
           // Fade-out and stop AI speech (300ms fade as requested)
           if (stopAIPlayback && audioContextRef.current && gainNodeRef.current) {
@@ -810,31 +818,48 @@ export function VoiceFirstChatInterface({
             console.log('🛑 AI speech interrupted with 300ms fade-out');
           }
           
-          // Reset states
+          // Reset states immediately
           setVoiceState('interrupted');
           setIsAISpeaking(false);
           setIsTalkingBack(false);
           setInputIsolated(false);
           setIsAudioIsolated(false);
           
-          // Start normal listening for new question with fresh recognition
+          // Clear any existing transcript
+          setCurrentTranscriptState('');
+          
+          // Start fresh recognition for user input transcription
           setTimeout(() => {
             if (hasPermission && isSupported) {
               try {
-                // Ensure we have a fresh recognition instance
-                if (!recognitionRef.current) {
-                  recognitionRef.current = initializeRecognition();
-                }
-                recognitionRef.current.start();
+                console.log('🎤 Starting fresh recognition for user transcription after interruption');
+                
+                // Create completely fresh recognition instance
+                const freshRecognition = initializeRecognition();
+                recognitionRef.current = freshRecognition;
+                
+                // Start listening immediately for user input
+                freshRecognition.start();
                 setVoiceState('listening');
-                console.log('🎤 Switched to normal listening after interruption');
+                console.log('🎤✅ Fresh recognition active - transcription should work now');
               } catch (error) {
-                console.warn('🎤 Failed to start normal recognition:', error);
-                // Try to recreate if failed
-                recognitionRef.current = initializeRecognition();
+                console.error('🚨 CRITICAL: Failed to start recognition after interruption:', error);
+                setVoiceState('idle');
+                // Try one more time
+                setTimeout(() => {
+                  try {
+                    const retryRecognition = initializeRecognition();
+                    recognitionRef.current = retryRecognition;
+                    retryRecognition.start();
+                    setVoiceState('listening');
+                    console.log('🎤 RETRY: Recognition started successfully');
+                  } catch (retryError) {
+                    console.error('🚨 RETRY FAILED:', retryError);
+                  }
+                }, 1000);
               }
             }
-          }, 300);
+          }, 600); // Allow time for AI to fully stop
         };
 
         // Start background recognition
