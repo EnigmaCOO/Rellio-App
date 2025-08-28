@@ -516,6 +516,12 @@ export function VoiceFirstChatInterface({
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
+      // BLOCK transcription if AI is speaking (prevents feedback)
+      if (isAISpeaking || inputIsolated) {
+        console.log('🔇 BLOCKED transcription - AI is speaking, ignoring speech input');
+        return;
+      }
+
       let finalTranscript = '';
       let interimTranscript = '';
       let maxConfidence = 0;
@@ -534,7 +540,7 @@ export function VoiceFirstChatInterface({
 
       // Show LIVE transcript as user speaks (interim + final)
       const fullTranscript = finalTranscript || interimTranscript;
-      console.log(`🎤 LIVE: "${fullTranscript}" (interim: "${interimTranscript}", final: "${finalTranscript}")`);
+      console.log(`🎤 USER SPEECH: "${fullTranscript}" (interim: "${interimTranscript}", final: "${finalTranscript}")`);
       setCurrentTranscript(fullTranscript);
       setConfidence(maxConfidence);
 
@@ -696,6 +702,20 @@ export function VoiceFirstChatInterface({
       }
     };
   }, [initializeRecognition, initializeAudioContext]);
+
+  // CRITICAL: Stop speech recognition when AI is speaking to prevent feedback
+  useEffect(() => {
+    if (isAISpeaking && recognitionRef.current && voiceState === 'listening') {
+      console.log('🔇 STOPPING speech recognition - AI is speaking (preventing feedback)');
+      try {
+        recognitionRef.current.stop();
+        setVoiceState('idle');
+        setCurrentTranscript(''); // Clear any partial transcript
+      } catch (error) {
+        console.warn('🔇 Failed to stop recognition:', error);
+      }
+    }
+  }, [isAISpeaking, voiceState]);
 
   // Voice Control Functions
   const startListening = useCallback(async () => {
