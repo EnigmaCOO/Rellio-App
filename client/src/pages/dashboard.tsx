@@ -411,26 +411,25 @@ export default function Dashboard() {
                     onClick={() => window.location.href = '/profile'}
                     title="View Profile"
                   >
-                    {(user as any)?.profileImageUrl ? (
+                    {user?.profileImageUrl ? (
                       <img 
-                        src={(user as any).profileImageUrl} 
+                        src={user.profileImageUrl} 
                         alt="Profile" 
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           // Fallback to initials if image fails to load
                           e.currentTarget.style.display = 'none';
-                          const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
-                          if (nextElement) nextElement.style.display = 'flex';
+                          e.currentTarget.nextElementSibling!.style.display = 'flex';
                         }}
                       />
                     ) : null}
                     <div 
                       className={cn(
                         "w-full h-full flex items-center justify-center text-xs font-semibold text-amber-700",
-                        (user as any)?.profileImageUrl ? "hidden" : "flex"
+                        user?.profileImageUrl ? "hidden" : "flex"
                       )}
                     >
-                      {(user as any)?.firstName?.charAt(0) || (user as any)?.email?.charAt(0) || 'U'}
+                      {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'U'}
                     </div>
                   </div>
                   
@@ -442,7 +441,7 @@ export default function Dashboard() {
                     className="h-8 px-2 hover:bg-amber-50 transition-colors text-xs"
                     title="View Profile"
                   >
-                    {(user as any)?.firstName || 'Profile'}
+                    {user?.firstName || 'Profile'}
                   </Button>
                 </div>
               )}

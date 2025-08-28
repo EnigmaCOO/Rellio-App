@@ -171,7 +171,7 @@ export function VoiceFirstChatInterface({
   // Settings and persona change tracking
   const [settings, setSettings] = useState({
     autoSendDelay: 800, // Faster auto-send for better voice UX
-    confidenceThreshold: 0.4, // VERY low threshold for maximum sensitivity
+    confidenceThreshold: 0.6, // Lower threshold for better auto-send
     voiceEnabled: true,
     autoPlayAI: true, // Re-enabled with server-side deduplication protection
     interruptionSensitivity: 0.2, // Very sensitive for interruption testing
@@ -508,12 +508,7 @@ export function VoiceFirstChatInterface({
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
-    recognition.maxAlternatives = 5; // More alternatives for better detection
-    
-    // Experimental: Try to make recognition more sensitive
-    if ('grammars' in recognition) {
-      recognition.grammars = null; // Remove grammar restrictions
-    }
+    recognition.maxAlternatives = 3;
 
     recognition.onstart = () => {
       console.log('🎤 Speech recognition started');
@@ -533,7 +528,7 @@ export function VoiceFirstChatInterface({
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
-        const currentConfidence = event.results[i][0].confidence || 0.9; // Higher default confidence
+        const currentConfidence = event.results[i][0].confidence || 0.8; // Default confidence
 
         if (event.results[i].isFinal) {
           finalTranscript += transcript;
@@ -552,8 +547,8 @@ export function VoiceFirstChatInterface({
       // Track voice activity for cooldown system
       setLastVoiceActivity(Date.now());
 
-      // Auto-send logic with VERY LOW confidence threshold for maximum sensitivity  
-      if (finalTranscript && (maxConfidence || 0.9) > 0.3) { // Super low for better voice detection
+      // Auto-send logic with LOWER confidence threshold for better auto-send
+      if (finalTranscript && maxConfidence > 0.6) { // Lowered from 0.8 to 0.6
         // Clear existing timeout
         if (autoSendTimeoutRef.current) {
           clearTimeout(autoSendTimeoutRef.current);
@@ -596,16 +591,15 @@ export function VoiceFirstChatInterface({
   // Initialize Audio Context with Echo Cancellation for Level Detection
   const initializeAudioContext = useCallback(async () => {
     try {
-      // MAXIMUM SENSITIVITY getUserMedia for better voice detection
+      // Enhanced getUserMedia with echo cancellation to prevent self-feedback
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
-          noiseSuppression: false, // Turn OFF to increase sensitivity
+          noiseSuppression: true,
           autoGainControl: true,
           channelCount: 1,
           sampleRate: 44100,
-          sampleSize: 16,
-          // volume: 1.0 // Not supported in MediaTrackConstraints
+          sampleSize: 16
         } 
       });
       streamRef.current = stream;
@@ -633,9 +627,9 @@ export function VoiceFirstChatInterface({
           const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
           setAudioLevel(average / 255);
           
-          // DEBUG: Show microphone levels for voice detection debugging
-          if (average > 5) { // Show any detectable audio activity
-            console.log(`🎤 MICROPHONE: Level ${average.toFixed(1)} | Voice State: ${voiceState} | AI Speaking: ${isAISpeaking}`);
+          // DEBUG: Log audio levels when AI is speaking
+          if (isAISpeaking) {
+            console.log(`🔊 DEBUG: Audio level: ${average}, AI speaking: ${isAISpeaking}, Voice state: ${voiceState}`);
           }
           
           // GROK-STYLE interruption - VERY SENSITIVE during AI speech
@@ -1061,7 +1055,7 @@ export function VoiceFirstChatInterface({
             
             if (onNavigateToVerse && parsed) {
               // Navigate to the scripture location
-              onNavigateToVerse(parsed.religion, parsed.book, parsed.chapter, parsed.verse || undefined);
+              onNavigateToVerse(parsed.religion, parsed.book, parsed.chapter, parsed.verse);
             }
           }}
           className="inline-flex items-center gap-1 px-1 py-0.5 rounded text-xs bg-teal-100 text-teal-700 hover:bg-teal-200 transition-colors duration-200 border border-teal-200 hover:border-teal-300 cursor-pointer"
@@ -1694,7 +1688,7 @@ export function VoiceFirstChatInterface({
                   }}
                   onHighlightVerse={(religion, book, chapter) => {
                     if (onNavigateToVerse) {
-                      onNavigateToVerse(religion as any, book, chapter);
+                      onNavigateToVerse(religion, book, chapter);
                     }
                     setShowHistoryPanel(false);
                   }}

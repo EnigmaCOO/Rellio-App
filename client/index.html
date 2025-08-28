@@ -14,17 +14,8 @@
   <body class="bg-gray-100 min-h-screen">
     <!-- Main Application Container -->
     <div id="root" class="relative min-h-screen">
-      <!-- Loading message - React will replace this -->
-      <div id="static-loading" class="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-600 to-blue-600">
-        <div class="text-center text-white">
-          <div class="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <h1 class="text-2xl font-bold mb-2">🎯 Rellio</h1>
-          <p class="text-lg">Loading AI Scripture Platform...</p>
-        </div>
-      </div>
-      
-      <!-- Hidden static chat panel for fallback -->
-      <div id="fallback-chat" style="display: none;" class="fixed right-0 top-1/2 transform -translate-y-1/2 bg-white shadow-lg p-4 rounded-l-lg w-[300px] h-[500px] z-50 border-l-4 border-blue-500">
+      <!-- Static AI Scripture Guide Chat Panel -->
+      <div class="fixed right-0 top-1/2 transform -translate-y-1/2 bg-white shadow-lg p-4 rounded-l-lg w-[300px] h-[500px] z-50 border-l-4 border-blue-500">
         <!-- Panel Header -->
         <div class="mb-3 pb-2 border-b border-gray-200">
           <div class="flex items-center justify-between mb-2">
