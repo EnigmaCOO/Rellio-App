@@ -1,0 +1,57 @@
+High-Level Prompt for Replit AI Agent
+SYSTEM / GUARDRAILS (paste first)
+You are a senior full-stack engineer tasked with refactoring the voice system in Rellio to resolve conflicts from multiple overlapping components, eliminating duplicates, and fixing the white screen issue caused by import errors or state conflicts. Do not alter core business logic, routing, APIs, or non-voice-related features.
+
+Preserve existing exported names, props, and IDs.
+Remove redundant files/components safely, updating imports accordingly.
+Consolidate into a single, efficient handler while keeping tree-shakable code.
+Write accessible, responsive, and performant code.
+Use Tailwind CSS for any UI tweaks.
+Use semantic HTML and ARIA where relevant.
+Produce a single PR with clear commits (e.g., "refactor(voice): consolidate handlers", "fix(voice): resolve import conflicts").
+Test for white screen errors (e.g., circular imports, undefined states) and ensure smooth operation.
+
+TASK BRIEF (paste after system block)
+Goal: Refactor Rellio's voice system (in client/src/components/chat/ and related files) to eliminate duplicates and conflicts from the 12 overlapping components, consolidating into a single working handler based on the primary functional one (VoiceModeHandler.tsx). Fix the white screen issue from import conflicts/errors, ensuring seamless Grok-like voice input/output, interruption handling, and ElevenLabs integration. Maintain the white-themed UI (#FFFFFF, rounded corners 12px, shadow-md) with teal #00D5FF accents and purple-to-gold gradient (#4B0082 to #D4AF37, 10% opacity) in the right-hand chat column.
+
+Voice System Consolidation:
+
+Keep VoiceModeHandler.tsx as the core (complex FSM with auto-send, ElevenLabs TTS, personas from ScholarPersonas.tsx).
+Merge useful logic from VoiceFirstChatInterface.tsx (chat UI) and useElevenLabsStreaming.ts (TTS config) into VoiceModeHandler.tsx.
+Remove duplicates: EnhancedVoiceInterface.tsx, SimpleVoiceInterface.tsx, SupremeVoiceInterface.tsx, GrokStyleVoiceInterface.tsx, VoiceInputButton.tsx, VoiceInputControls.tsx (consolidate into handler hooks).
+Retain test components (VoiceTest.tsx, SimpleVoiceTest.tsx) but isolate them (e.g., move to client/src/tests/voice/).
+
+
+Fix Import Conflicts and White Screen:
+
+Scan for circular imports (e.g., A imports B, B imports A) in chat components—resolve by forward refs or restructuring.
+Handle undefined states/errors: Add error boundaries (<errorboundary>) around voice components; log errors to console with descriptive messages.</errorboundary>
+Update imports: Use relative paths; remove unused (e.g., if VoiceInputButton.tsx is deleted, update references in RightColumnChat.tsx).
+Test: Ensure no render errors (e.g., null refs in recognition instances); add useEffect cleanup for SpeechRecognition.stop().
+
+
+Enhanced Features Post-Refactor:
+
+Voice Input: Single instance (continuous=true, auto-send 1.5s pause, confidence >0.85) with waveform UI.
+Interruption: Background listener during ElevenLabs playback (onspeechstart >0.7 confidence, pause audio fade-out 300ms).
+Isolation: Mute mic during SPEAKING (gain=0); echo cancellation (Web Audio API).
+Personas: Dynamic switching from app/book state (e.g., Bible → Priest voice).
+
+
+UI and Performance Tweaks:
+
+Chat panel: Add loading spinner/orb (teal pulse) during voice processing to mask white screens.
+Responsiveness: Ensure mobile stacking without conflicts.
+
+
+
+Deliverables:
+
+Refactored VoiceModeHandler.tsx: Consolidated logic, state machine (IDLE/LISTENING/PROCESSING/SPEAKING).
+Updated RightColumnChat.tsx / EnhancedAuraArchivist.tsx: Use new handler; remove duplicate imports.
+Deleted redundant files: List above duplicates; update file plan.
+<errorboundary> component: For voice wrappers.</errorboundary>
+Tailwind/CSS: Spinner/orb styles (animate-pulse).
+State/Hooks: useReducer for voiceState; useEffect for cleanup/recognition init.
+
+Provide React/TypeScript code with Tailwind classes, and describe state/effects. Ensure a stable, conflict-free voice system for mesmerizing spiritual conversations.
