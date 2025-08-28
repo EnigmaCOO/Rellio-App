@@ -143,13 +143,19 @@ export function VoiceFirstChatInterface({
   const setCurrentTranscript = useCallback((transcript: string) => {
     // Check for AI isolation but allow during interruption recovery
     if (isAISpeaking || isTalkingBack || inputIsolated || isAudioIsolated) {
-      // CRITICAL EXCEPTION: Allow transcription if we're in recovery mode
+      // CRITICAL EXCEPTION: Allow transcription ONLY if we're in recovery mode AND AI is completely silent
       if (voiceState === 'interrupted' || voiceState === 'listening') {
-        console.log('✅ RECOVERY EXCEPTION: Allowing user transcript during post-interruption recovery:', transcript);
-        if (transcript && transcript.trim().length > 0) {
-          setCurrentTranscriptState(transcript);
+        // DOUBLE CHECK: Ensure AI is completely silent before allowing transcript
+        if (!isAISpeaking && !isTalkingBack) {
+          console.log('✅ SAFE RECOVERY: AI confirmed silent, allowing user transcript:', transcript);
+          if (transcript && transcript.trim().length > 0) {
+            setCurrentTranscriptState(transcript);
+          }
+          return;
+        } else {
+          console.log('🚫 UNSAFE RECOVERY: AI still active, blocking potential contamination');
+          return;
         }
-        return;
       }
       
       console.log('🚫 BULLETPROOF BLOCK: Rejecting transcript - Voice isolation active:', {
@@ -648,14 +654,14 @@ export function VoiceFirstChatInterface({
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       // CRITICAL: Block transcription ONLY during active AI speech (not after interruption)
       if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
-        // Exception: Allow transcription if we're in interrupted state and user is speaking
-        if (voiceState === 'interrupted' || voiceState === 'listening') {
-          console.log('✅ INTERRUPTION RECOVERY: Allowing user transcription after interruption');
+        // Exception: Allow ONLY if completely safe (AI fully stopped + in recovery state)
+        if ((voiceState === 'interrupted' || voiceState === 'listening') && !isAISpeaking && !isTalkingBack) {
+          console.log('✅ SAFE INTERRUPTION RECOVERY: AI confirmed stopped, allowing user transcription');
         } else {
-          console.log('🚫 ABSOLUTE BLOCK: Rejecting transcription - AI still active:', {
+          console.log('🚫 ABSOLUTE BLOCK: Rejecting ALL transcription - AI contamination risk:', {
             isAISpeaking, inputIsolated, isAudioIsolated, isTalkingBack, voiceState
           });
-          return; // Block during active AI speech
+          return; // Block ANY potential AI contamination
         }
       }
 
@@ -788,10 +794,14 @@ export function VoiceFirstChatInterface({
       analyser.smoothingTimeConstant = 0.8;
       
       // Audio routing: microphone -> gainNode -> analyser
-      // gainNode allows us to mute mic during AI playback
+      // gainNode allows us to COMPLETELY mute mic during AI playback
       microphone.connect(gainNode);
       gainNode.connect(analyser);
       gainNode.connect(destination);
+      
+      // CRITICAL: Set initial gain to 0 to prevent any AI audio leakage
+      gainNode.gain.value = 0;
+      console.log('🔇 Microphone gain initialized to 0 for complete AI isolation');
       
       audioContextRef.current = audioContext;
       analyserRef.current = analyser;
@@ -887,9 +897,16 @@ export function VoiceFirstChatInterface({
         backgroundRecognition.lang = 'en-US';
         
         // CRITICAL: Block ALL transcript updates from background recognition
-        backgroundRecognition.onresult = () => {
-          console.log('🚫 Background recognition result BLOCKED - only used for interruption detection');
-          // Do nothing - this recognition is ONLY for interruption detection
+        backgroundRecognition.onresult = (event: any) => {
+          console.log('🚫 Background recognition result COMPLETELY BLOCKED - AI audio cannot contaminate transcript');
+          // ABSOLUTE BLOCK: This recognition must NEVER update transcripts
+          // Only used for onspeechstart interruption detection
+          
+          // Extra safety: Log what we're blocking to ensure no AI audio leaks through
+          if (event.results && event.results.length > 0) {
+            const blockedText = event.results[event.results.length - 1][0].transcript;
+            console.log('🚫 BLOCKED AI AUDIO CONTAMINATION:', blockedText.substring(0, 50) + '...');
+          }
         };
         
         // Interruption detection ONLY - never updates transcript
@@ -918,12 +935,19 @@ export function VoiceFirstChatInterface({
             console.log('🛑 AI speech interrupted with 300ms fade-out');
           }
           
-          // Reset states immediately
+          // Reset states immediately and UNMUTE microphone
           setVoiceState('interrupted');
           setIsAISpeaking(false);
           setIsTalkingBack(false);
           setInputIsolated(false);
           setIsAudioIsolated(false);
+          
+          // CRITICAL: Unmute microphone for user input after interruption
+          if (gainNodeRef.current && audioContextRef.current) {
+            const currentTime = audioContextRef.current.currentTime;
+            gainNodeRef.current.gain.setValueAtTime(1, currentTime);
+            console.log('🎤 MICROPHONE UNMUTED after interruption - ready for user input');
+          }
           
           // Clear any existing transcript
           setCurrentTranscriptState('');
@@ -1002,17 +1026,29 @@ export function VoiceFirstChatInterface({
     };
   }, [isAISpeaking, inputIsolated, hasPermission, isSupported]);
 
-  // CRITICAL: Monitor AI speaking states but don't clear during recovery
+  // CRITICAL: Dynamic microphone gain control for complete AI isolation
   useEffect(() => {
-    if (isAISpeaking || isTalkingBack || inputIsolated || isAudioIsolated) {
-      // Don't clear transcript if we're recovering from interruption
-      if (voiceState === 'interrupted' || voiceState === 'listening') {
-        console.log('🎤 RECOVERY: Preserving transcript during post-interruption recovery');
-        return;
-      }
+    if (gainNodeRef.current && audioContextRef.current) {
+      const currentTime = audioContextRef.current.currentTime;
       
-      console.log('🧹 AI state change detected - FORCE clearing transcript for COMPLETE voice isolation');
-      setCurrentTranscriptState(''); // Force clear bypassing protection
+      if (isAISpeaking || isTalkingBack || inputIsolated || isAudioIsolated) {
+        // COMPLETE MICROPHONE MUTE during AI speech
+        gainNodeRef.current.gain.setValueAtTime(0, currentTime);
+        console.log('🔇 MICROPHONE MUTED: Complete AI isolation active');
+        
+        // Don't clear transcript if we're recovering from interruption
+        if (voiceState === 'interrupted' || voiceState === 'listening') {
+          console.log('🎤 RECOVERY: Preserving transcript during post-interruption recovery');
+          return;
+        }
+        
+        console.log('🧹 AI state change detected - FORCE clearing transcript for COMPLETE voice isolation');
+        setCurrentTranscriptState(''); // Force clear bypassing protection
+      } else {
+        // UNMUTE microphone only when AI is completely silent
+        gainNodeRef.current.gain.setValueAtTime(1, currentTime);
+        console.log('🎤 MICROPHONE UNMUTED: AI silent, user input allowed');
+      }
     }
   }, [isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated, voiceState]);
 
