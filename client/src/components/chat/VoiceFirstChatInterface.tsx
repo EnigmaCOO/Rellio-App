@@ -814,9 +814,11 @@ export function VoiceFirstChatInterface({
       autoPlayAI: settings.autoPlayAI, 
       messagesCount: messages.length,
       isTalkingBack,
+      isAIPlaying,
       voiceState,
       inputIsolated,
-      wasLastMessageVoice
+      wasLastMessageVoice,
+      playingMessageId
     });
     
     // Only block during active listening - not during processing after message sent
@@ -859,10 +861,12 @@ export function VoiceFirstChatInterface({
             
             console.log('🔊 Starting single auto-play:', lastAIMessage.substring(0, 50) + '...');
             try {
+              console.log('🔊 Calling playAIText with message:', lastAIMessage.length, 'characters');
               await playAIText(lastAIMessage);
               console.log('✅ Auto-play completed successfully');
             } catch (error) {
               console.error('🚨 Auto-play failed:', error);
+              console.error('🚨 Error details:', error);
               setPlayingMessageId(null); // Clear on error
             }
           }, 800);
