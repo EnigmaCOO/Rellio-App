@@ -1,4 +1,5 @@
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { cn } from '@/lib/utils';
 
 interface GrokStyleOrbProps {
   state: 'idle' | 'listening' | 'processing' | 'responding' | 'interrupted';
@@ -26,7 +27,7 @@ export function GrokStyleOrb({
     switch (state) {
       case 'idle':
         return cn(baseClasses, 'bg-gray-300 border-2 border-gray-400');
-      
+
       case 'listening':
         return cn(
           baseClasses, 
@@ -34,7 +35,7 @@ export function GrokStyleOrb({
           'border-2 border-teal-300',
           'animate-pulse shadow-lg shadow-teal-200'
         );
-      
+
       case 'processing':
         return cn(
           baseClasses,
@@ -42,7 +43,7 @@ export function GrokStyleOrb({
           'border-2 border-purple-300',
           'animate-spin shadow-lg shadow-purple-200'
         );
-      
+
       case 'responding':
         return cn(
           baseClasses,
@@ -50,7 +51,7 @@ export function GrokStyleOrb({
           'border-2 border-yellow-300', 
           'animate-pulse shadow-lg shadow-yellow-200'
         );
-      
+
       case 'interrupted':
         return cn(
           baseClasses,
@@ -58,7 +59,7 @@ export function GrokStyleOrb({
           'border-2 border-red-300',
           'animate-bounce shadow-lg shadow-red-200'
         );
-      
+
       default:
         return baseClasses;
     }
@@ -112,7 +113,7 @@ export function GrokStyleOrb({
       <div className={getOrbClasses()}>
         {getInnerAnimation()}
       </div>
-      
+
       {/* Ripple effect for listening state */}
       {state === 'listening' && (
         <div className="absolute inset-0 rounded-full">

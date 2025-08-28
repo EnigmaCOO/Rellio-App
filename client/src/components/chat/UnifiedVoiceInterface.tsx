@@ -1,382 +1,334 @@
-import React, { useState, useRef } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { Mic, MicOff, Square, Settings, Volume2, VolumeX } from 'lucide-react';
-import { useUnifiedVoiceHandler, type VoiceState, type UnifiedVoiceHandlerProps } from './UnifiedVoiceHandler';
+import { Mic, MicOff, Square, Send, Keyboard, Volume2, VolumeX } from 'lucide-react';
+import { useConsolidatedVoiceHandler, VoiceState } from './ConsolidatedVoiceHandler';
 import { GrokStyleOrb } from './GrokStyleOrb';
-import { AudioWaveform } from './AudioWaveform';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Slider } from '@/components/ui/slider';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import type { ScholarPersona } from './ScholarPersonas';
 
-// Map internal voice states to orb states
-function mapVoiceStateToOrb(state: VoiceState, isInterrupted: boolean): 'idle' | 'listening' | 'processing' | 'responding' | 'interrupted' {
-  if (isInterrupted) return 'interrupted';
-  
-  switch (state) {
-    case 'IDLE': return 'idle';
-    case 'LISTENING': return 'listening';
-    case 'PROCESSING': return 'processing';
-    case 'SPEAKING': return 'responding';
-    default: return 'idle';
-  }
-}
-
-export interface UnifiedVoiceInterfaceProps {
-  onSendMessage: (message: string) => void;
+interface UnifiedVoiceInterfaceProps {
+  onSubmit: (message: string) => void;
+  isStreaming: boolean;
+  isInterrupted: boolean;
   onInterrupt: () => void;
-  selectedPersona?: ScholarPersona | null;
-  isAIResponding?: boolean;
+  placeholder?: string;
   disabled?: boolean;
   className?: string;
+  isAIResponding?: boolean;
+  setAISpeaking?: (speaking: boolean) => void;
 }
 
 export function UnifiedVoiceInterface({
-  onSendMessage,
+  onSubmit,
+  isStreaming,
+  isInterrupted,
   onInterrupt,
-  selectedPersona,
-  isAIResponding = false,
+  placeholder = "Speak or type your spiritual question...",
   disabled = false,
-  className = ""
+  className = "",
+  isAIResponding = false,
+  setAISpeaking
 }: UnifiedVoiceInterfaceProps) {
-  // Voice settings
-  const [settings, setSettings] = useState({
-    autoSendDelay: 1500,
-    confidenceThreshold: 0.85,
-    interruptionSensitivity: 0.3,
-    volume: 0.8,
-    autoPlay: true
-  });
-  
-  const [showSettings, setShowSettings] = useState(false);
-  const [lastInterruptedText, setLastInterruptedText] = useState('');
-  const currentResponseRef = useRef('');
-  
-  // Use unified voice handler
+  const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice');
+  const [textInput, setTextInput] = useState("");
+  const [orbState, setOrbState] = useState<'idle' | 'listening' | 'processing' | 'responding' | 'interrupted'>('idle');
+
+  // Use the consolidated voice handler
   const {
+    isListening,
+    currentTranscript,
+    confidence,
     voiceState,
+    audioLevel,
     startListening,
     stopListening,
     toggleListening,
-    playText,
-    stopPlayback,
-    interruptAI,
-    setVolume
-  } = useUnifiedVoiceHandler({
+    setAISpeaking: voiceSetAISpeaking,
+    isSupported,
+    hasPermission,
+    interruptAI
+  } = useConsolidatedVoiceHandler({
     onTranscript: (text, isInterim) => {
-      console.log('📝 Voice transcript:', { text, isInterim, confidence: voiceState.confidence });
+      console.log('📝 Voice transcript:', { text, isInterim });
     },
     onAutoSend: (text) => {
       console.log('🚀 Auto-sending message:', text);
-      onSendMessage(text);
+      onSubmit(text);
+    },
+    onStateChange: (state: VoiceState) => {
+      console.log('🎤 Voice state changed:', state);
     },
     onInterrupt: () => {
       console.log('🛑 Voice interrupted AI');
-      
-      // Store interrupted context for potential continuation
-      if (currentResponseRef.current) {
-        setLastInterruptedText(currentResponseRef.current);
-        console.log('💾 Stored interrupted context:', currentResponseRef.current.substring(0, 50) + '...');
-      }
-      
       onInterrupt();
     },
-    onPlaybackStart: () => {
-      console.log('🔊 AI voice playback started');
-    },
-    onPlaybackEnd: () => {
-      console.log('🔊 AI voice playback finished');
-      currentResponseRef.current = '';
-    },
-    selectedPersona,
     disabled,
-    autoSendDelay: settings.autoSendDelay,
-    confidenceThreshold: settings.confidenceThreshold,
-    interruptionSensitivity: settings.interruptionSensitivity,
-    volume: settings.volume
+    isAIResponding,
+    autoSendDelay: 1500,
+    confidenceThreshold: 0.8
   });
-  
-  // Handle AI response playback
-  const handlePlayAIResponse = async (text: string) => {
-    if (!text || !settings.autoPlay) return;
-    
-    currentResponseRef.current = text;
-    console.log('🎙️ Playing AI response with unified handler:', text.substring(0, 50) + '...');
-    
-    try {
-      await playText(text);
-    } catch (error) {
-      console.error('🚨 Failed to play AI response:', error);
+
+  // Sync external AI speaking state with voice handler
+  useEffect(() => {
+    if (setAISpeaking && voiceSetAISpeaking) {
+      voiceSetAISpeaking(isAIResponding);
+    }
+  }, [isAIResponding, setAISpeaking, voiceSetAISpeaking]);
+
+  // Update orb state based on voice and app state
+  useEffect(() => {
+    if (isInterrupted) {
+      setOrbState('interrupted');
+    } else if (isStreaming || isAIResponding) {
+      setOrbState('responding');
+    } else if (voiceState === 'processing') {
+      setOrbState('processing');
+    } else if (isListening) {
+      setOrbState('listening');
+    } else {
+      setOrbState('idle');
+    }
+  }, [isListening, voiceState, isStreaming, isInterrupted, isAIResponding]);
+
+  const handleTextSubmit = () => {
+    if (textInput.trim()) {
+      setOrbState('processing');
+      setTimeout(() => {
+        onSubmit(textInput.trim());
+        setTextInput("");
+        setOrbState('idle');
+      }, 300);
     }
   };
-  
-  // Handle manual interruption
-  const handleManualInterrupt = () => {
-    if (voiceState.state === 'SPEAKING') {
-      console.log('🚨 Manual interruption triggered');
-      interruptAI();
-    } else {
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleTextSubmit();
+    }
+  };
+
+  const toggleInputMode = () => {
+    if (isListening) {
       stopListening();
     }
+    setInputMode(prev => prev === 'voice' ? 'text' : 'voice');
+    setTextInput("");
   };
-  
-  // Handle volume change
-  const handleVolumeChange = (value: number[]) => {
-    const newVolume = value[0];
-    setSettings(prev => ({ ...prev, volume: newVolume }));
-    setVolume(newVolume);
-  };
-  
-  // Get status message
-  const getStatusMessage = (): string => {
-    if (!voiceState.isSupported) return 'Voice not supported';
-    if (!voiceState.hasPermission) return 'Microphone access needed';
-    if (voiceState.error) return voiceState.error;
-    if (voiceState.isInterrupted) return 'Interrupted - Continue speaking';
-    
-    switch (voiceState.state) {
-      case 'LISTENING': return 'Listening...';
-      case 'PROCESSING': return 'Processing...';
-      case 'SPEAKING': return 'AI speaking (speak to interrupt)';
-      default: return 'Ready';
+
+  const handleVoiceToggle = async () => {
+    console.log('🎤 Voice toggle clicked');
+    try {
+      await toggleListening();
+    } catch (error) {
+      console.error('❌ Error in toggleListening:', error);
     }
   };
-  
-  // Get status color
-  const getStatusColor = (): string => {
-    if (voiceState.error) return 'text-red-500';
-    if (voiceState.isInterrupted) return 'text-red-400';
-    
-    switch (voiceState.state) {
-      case 'LISTENING': return 'text-teal-500';
-      case 'PROCESSING': return 'text-purple-500';
-      case 'SPEAKING': return 'text-amber-500';
-      default: return 'text-gray-500';
-    }
+
+  const handleManualInterrupt = () => {
+    console.log('🛑 Manual interrupt clicked');
+    onInterrupt();
+    interruptAI();
   };
-  
-  const orbState = mapVoiceStateToOrb(voiceState.state, voiceState.isInterrupted);
-  const isActive = voiceState.state !== 'IDLE';
-  
+
   return (
-    <div className={cn("flex items-center gap-3 p-3 bg-white dark:bg-gray-900 border rounded-lg shadow-sm", className)}>
-      {/* Main Orb */}
-      <div className="relative">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="relative">
-              <GrokStyleOrb 
-                state={orbState} 
-                size="lg" 
-                className="cursor-pointer transition-transform hover:scale-110" 
-              />
-              {voiceState.isInterrupted && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+    <div className={cn("space-y-3 p-4 bg-white rounded-xl shadow-md border border-gray-100", className)}>
+      {/* Header with Orb and Controls */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <GrokStyleOrb state={orbState} size="sm" />
+          <Button
+            variant={inputMode === 'voice' ? 'default' : 'outline'}
+            size="sm"
+            onClick={toggleInputMode}
+            className={cn(
+              "flex items-center gap-2 h-9 px-4 text-sm rounded-xl transition-all duration-200",
+              inputMode === 'voice' 
+                ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-md hover:shadow-lg" 
+                : "border-2 border-gray-200 hover:border-teal-300 hover:bg-teal-50"
+            )}
+            disabled={!isSupported}
+          >
+            {inputMode === 'voice' ? <Mic className="h-4 w-4" /> : <Keyboard className="h-4 w-4" />}
+            {inputMode === 'voice' ? 'Voice' : 'Text'}
+          </Button>
+
+          {(orbState === 'responding' || isAIResponding) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleManualInterrupt}
+              className="text-red-600 hover:text-red-700 border-red-300 hover:border-red-400 h-9 px-4 text-sm rounded-xl animate-pulse transition-all duration-200"
+            >
+              <Square className="h-4 w-4 mr-2" />
+              Stop AI
+            </Button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2">
+            {isSupported ? (
+              <div className="flex items-center gap-1">
+                <Volume2 className="h-3 w-3 text-teal-500" />
+                <span className="text-xs">
+                  {orbState === 'idle' && !isAIResponding && inputMode === 'voice' && 'Voice Ready'}
+                  {orbState === 'idle' && !isAIResponding && inputMode === 'text' && 'Text Ready'}
+                  {orbState === 'listening' && 'Listening...'}
+                  {orbState === 'processing' && 'Processing...'}
+                  {orbState === 'responding' && '🔊 AI Speaking'}
+                  {orbState === 'interrupted' && 'Voice Ready'}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                <VolumeX className="h-3 w-3 text-gray-400" />
+                <span className="text-xs">Voice Not Supported</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Voice Input Mode */}
+      {inputMode === 'voice' && (
+        <div className="space-y-3">
+          <div className={cn(
+            "relative p-4 rounded-xl border-2 transition-all duration-300",
+            isListening 
+              ? "border-teal-300 bg-gradient-to-br from-teal-50 to-cyan-50 shadow-md" 
+              : "border-gray-200 bg-gray-50 hover:border-gray-300"
+          )}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-gray-700">
+                {isListening ? 'Listening...' : 'Voice Input'}
+              </span>
+              {isListening && (
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-red-600 font-medium">Recording</span>
+                </div>
               )}
             </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{voiceState.isInterrupted ? 'Interrupted' : getStatusMessage()}</p>
-          </TooltipContent>
-        </Tooltip>
-      </div>
-      
-      {/* Audio Waveform */}
-      {voiceState.state === 'LISTENING' && (
-        <AudioWaveform 
-          isActive={true}
-          audioLevel={voiceState.audioLevel}
-          size="md"
-          color="teal"
-          className="flex-1"
-        />
-      )}
-      
-      {/* Status and Transcript */}
-      <div className="flex-1 min-w-0">
-        <div className={cn("text-sm font-medium", getStatusColor())}>
-          {getStatusMessage()}
+
+            <div className="min-h-[50px] flex items-center">
+              {currentTranscript ? (
+                <p className="text-sm text-gray-900 leading-relaxed">{currentTranscript}</p>
+              ) : (
+                <p className="text-sm text-gray-500 italic">
+                  {isListening ? 'Speak now...' : 'Click microphone to start'}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between mt-3">
+              <Button
+                variant={isListening ? "destructive" : "default"}
+                size="sm"
+                onClick={handleVoiceToggle}
+                disabled={disabled}
+                className={cn(
+                  "flex items-center gap-2 h-9 px-4 text-sm rounded-xl transition-all duration-200",
+                  isListening 
+                    ? "bg-red-500 hover:bg-red-600 text-white shadow-md" 
+                    : "bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white shadow-md hover:shadow-lg"
+                )}
+              >
+                {isListening ? (
+                  <>
+                    <MicOff className="h-4 w-4" />
+                    Stop
+                  </>
+                ) : (
+                  <>
+                    <Mic className="h-4 w-4" />
+                    Speak
+                  </>
+                )}
+              </Button>
+
+              {confidence > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-teal-600 font-medium">
+                    Confidence: {Math.round(confidence * 100)}%
+                  </span>
+                  <div className="w-16 h-1 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-teal-400 to-cyan-400 transition-all duration-300"
+                      style={{ width: `${confidence * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Audio Waveform */}
+          {isListening && (
+            <div className="flex items-center justify-center gap-1 py-2">
+              {[...Array(7)].map((_, i) => (
+                <div
+                  key={i}
+                  className="w-1 bg-gradient-to-t from-teal-400 to-cyan-400 rounded-full animate-pulse"
+                  style={{
+                    animationDelay: `${i * 150}ms`,
+                    height: `${8 + (audioLevel * 12)}px`
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
-        
-        {voiceState.transcript && (
-          <div className="text-sm text-gray-600 dark:text-gray-400 truncate mt-1">
-            "{voiceState.transcript}"
-          </div>
-        )}
-        
-        {voiceState.confidence > 0 && (
-          <Badge variant="secondary" className="text-xs mt-1">
-            {Math.round(voiceState.confidence * 100)}% confident
-          </Badge>
-        )}
-        
-        {lastInterruptedText && voiceState.isInterrupted && (
-          <div className="text-xs text-orange-600 dark:text-orange-400 mt-1">
-            💬 Context: "{lastInterruptedText.substring(0, 50)}..."
-          </div>
-        )}
-      </div>
-      
-      {/* Control Buttons */}
-      <div className="flex items-center gap-2">
-        {/* Primary Voice Button */}
-        <Tooltip>
-          <TooltipTrigger asChild>
+      )}
+
+      {/* Text Input Mode */}
+      {inputMode === 'text' && (
+        <div className="space-y-2">
+          <div className="relative">
+            <Textarea
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder={placeholder}
+              disabled={disabled}
+              className="min-h-[80px] pr-14 resize-none text-sm rounded-xl border-2 border-gray-200 focus:border-teal-300 focus:ring-2 focus:ring-teal-100 transition-all duration-200"
+            />
             <Button
-              variant={voiceState.state === 'LISTENING' ? 'default' : 'outline'}
+              variant="ghost"
               size="sm"
-              onClick={toggleListening}
-              disabled={disabled || !voiceState.isSupported || !voiceState.hasPermission}
+              onClick={handleTextSubmit}
+              disabled={!textInput.trim() || disabled}
               className={cn(
-                "transition-all duration-200",
-                voiceState.state === 'LISTENING' && "bg-teal-500 hover:bg-teal-600 text-white",
-                voiceState.state === 'SPEAKING' && "bg-amber-500 hover:bg-amber-600 text-white"
+                "absolute bottom-3 right-3 h-8 w-8 p-0 rounded-lg transition-all duration-200",
+                textInput.trim() 
+                  ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white hover:from-teal-600 hover:to-cyan-600 shadow-md" 
+                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
               )}
             >
-              {voiceState.state === 'LISTENING' ? (
-                <MicOff className="h-4 w-4" />
-              ) : voiceState.state === 'SPEAKING' ? (
-                <Square className="h-4 w-4" />
-              ) : (
-                <Mic className="h-4 w-4" />
-              )}
+              <Send className="h-4 w-4" />
             </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>
-              {voiceState.state === 'LISTENING' 
-                ? 'Stop listening' 
-                : voiceState.state === 'SPEAKING'
-                ? 'Interrupt AI'
-                : 'Start listening'
-              }
-            </p>
-          </TooltipContent>
-        </Tooltip>
-        
-        {/* Interrupt Button (during AI speech) */}
-        {voiceState.state === 'SPEAKING' && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleManualInterrupt}
-                className="animate-pulse"
-              >
-                <Square className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Interrupt AI (Grok-style)</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-        
-        {/* Resume Button (after interruption) */}
-        {voiceState.isInterrupted && lastInterruptedText && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePlayAIResponse(lastInterruptedText)}
-                className="border-orange-200 text-orange-600 hover:bg-orange-50"
-              >
-                Resume
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Resume interrupted response</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-        
-        {/* Settings */}
-        <Popover open={showSettings} onOpenChange={setShowSettings}>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80" align="end">
-            <div className="space-y-4">
-              <h4 className="font-medium">Voice Settings</h4>
-              
-              {/* Auto-send Delay */}
-              <div className="space-y-2">
-                <Label className="text-sm">Auto-send Delay: {settings.autoSendDelay}ms</Label>
-                <Slider
-                  value={[settings.autoSendDelay]}
-                  onValueChange={(value) => setSettings(prev => ({ ...prev, autoSendDelay: value[0] }))}
-                  max={3000}
-                  min={500}
-                  step={100}
-                  className="w-full"
-                />
-              </div>
-              
-              {/* Confidence Threshold */}
-              <div className="space-y-2">
-                <Label className="text-sm">Confidence: {Math.round(settings.confidenceThreshold * 100)}%</Label>
-                <Slider
-                  value={[settings.confidenceThreshold]}
-                  onValueChange={(value) => setSettings(prev => ({ ...prev, confidenceThreshold: value[0] }))}
-                  max={1}
-                  min={0.3}
-                  step={0.05}
-                  className="w-full"
-                />
-              </div>
-              
-              {/* Volume */}
-              <div className="space-y-2">
-                <Label className="text-sm flex items-center gap-2">
-                  <Volume2 className="h-3 w-3" />
-                  Volume: {Math.round(settings.volume * 100)}%
-                </Label>
-                <Slider
-                  value={[settings.volume]}
-                  onValueChange={handleVolumeChange}
-                  max={1}
-                  min={0}
-                  step={0.1}
-                  className="w-full"
-                />
-              </div>
-              
-              {/* Interruption Sensitivity */}
-              <div className="space-y-2">
-                <Label className="text-sm">Interruption Sensitivity: {Math.round(settings.interruptionSensitivity * 100)}%</Label>
-                <Slider
-                  value={[settings.interruptionSensitivity]}
-                  onValueChange={(value) => setSettings(prev => ({ ...prev, interruptionSensitivity: value[0] }))}
-                  max={1}
-                  min={0.1}
-                  step={0.1}
-                  className="w-full"
-                />
-              </div>
-              
-              {/* Auto-play Toggle */}
-              <div className="flex items-center justify-between">
-                <Label className="text-sm">Auto-play AI responses</Label>
-                <Switch
-                  checked={settings.autoPlay}
-                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, autoPlay: checked }))}
-                />
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
+          </div>
+        </div>
+      )}
+
+      {/* Support Notice */}
+      {!isSupported && (
+        <div className="text-center p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-200">
+          <p className="text-sm text-yellow-800">
+            Voice input not supported in this browser. Use text mode instead.
+          </p>
+        </div>
+      )}
+
+      {/* Permission Notice */}
+      {isSupported && !hasPermission && (
+        <div className="text-center p-3 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border border-red-200">
+          <p className="text-sm text-red-800">
+            Microphone permission required for voice input.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
-
-// Export the voice interface component only
-// Playback functionality is handled internally through the component

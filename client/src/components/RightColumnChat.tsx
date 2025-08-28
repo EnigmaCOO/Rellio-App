@@ -44,6 +44,7 @@ import { VoiceInputControls } from "@/components/chat/VoiceInputControls";
 import { ScholarPersonaSelector, type ScholarPersona, scholarPersonas } from "@/components/chat/ScholarPersonas";
 import { ChatHistoryManager } from "@/components/chat/ChatHistoryManager";
 import { MandalaOverlay } from "@/components/chat/MandalaOverlay";
+import { UnifiedVoiceInterface } from "@/components/chat/UnifiedVoiceInterface";
 import { cn } from "@/lib/utils";
 
 interface RightColumnChatProps {
@@ -640,32 +641,25 @@ export function RightColumnChat({
         </div>
       </ScrollArea>
 
-      {/* Simple Text Input - Restored Original */}
-      <div className="p-4 border-t border-gray-100 bg-gray-50/50">
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          const formData = new FormData(e.currentTarget);
-          const message = formData.get('message') as string;
-          if (message.trim() && !sendMessageMutation.isPending && !isStreaming) {
-            sendMessageMutation.mutate(message.trim());
-            e.currentTarget.reset();
-          }
-        }} className="flex gap-2">
-          <Input
-            name="message"
-            placeholder="Ask about scripture..."
-            disabled={sendMessageMutation.isPending || isStreaming}
-            className="flex-1 text-sm"
-          />
-          <Button 
-            type="submit" 
-            size="sm"
-            disabled={sendMessageMutation.isPending || isStreaming}
-            className="bg-teal-600 hover:bg-teal-700 text-white"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
-        </form>
+      {/* Unified Voice Interface */}
+      <div className="p-4 border-t border-gray-100 bg-gradient-to-br from-purple-900/10 to-yellow-600/10">
+        <UnifiedVoiceInterface
+          onSubmit={(message) => {
+            if (message.trim() && !sendMessageMutation.isPending && !isStreaming) {
+              sendMessageMutation.mutate(message.trim());
+            }
+          }}
+          isStreaming={isStreaming}
+          isInterrupted={isInterrupted}
+          onInterrupt={() => {
+            setIsInterrupted(true);
+            setTimeout(() => setIsInterrupted(false), 2000);
+          }}
+          placeholder="Ask about scripture..."
+          disabled={sendMessageMutation.isPending || isStreaming}
+          isAIResponding={isStreaming}
+          className="border-0 shadow-none bg-transparent p-0"
+        />
       </div>
     </div>
   );

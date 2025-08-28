@@ -44,7 +44,7 @@ import { ChatHistoryManager } from './ChatHistoryManager';
 import { ProgressDashboard } from '@/components/progress/ProgressDashboard';
 import { AudioPlaybackButton } from './AudioPlaybackButton';
 import { Input } from '@/components/ui/input';
-import { useSimplifiedVoiceHandler } from './SimplifiedVoiceHandler';
+import { useConsolidatedVoiceHandler } from './ConsolidatedVoiceHandler';
 import { apiRequest } from '@/lib/queryClient';
 import type { Religion, ChatMessage } from '@shared/schema';
 import type { ScholarPersona } from './ScholarPersonas';
@@ -151,18 +151,31 @@ export function VoiceFirstChatInterface({
     }
   }, [isAIPlaying, stopAIPlayback]);
 
-  // Simplified voice handler initialization
+  // Consolidated voice handler initialization
   const {
+    isListening,
+    currentTranscript,
+    confidence,
+    voiceState,
+    audioLevel,
     startListening,
     stopListening,
+    toggleListening,
     setAISpeaking,
     isSupported,
     hasPermission,
     interruptAI
-  } = useSimplifiedVoiceHandler({
-    onMessage: handleVoiceMessage,
+  } = useConsolidatedVoiceHandler({
+    onTranscript: (text, isInterim) => {
+      handleTranscriptUpdate(text);
+    },
+    onAutoSend: handleVoiceMessage,
+    onStateChange: (state) => {
+      console.log('🎤 Voice state:', state);
+    },
     onInterrupt: handleVoiceInterruption,
     disabled: false,
+    isAIResponding: isAIPlaying,
     autoSendDelay: 2000,
     confidenceThreshold: 0.7
   });

@@ -3,6 +3,7 @@ import { NavigationPanel } from "@/components/NavigationPanel";
 import { VerseSpotlight } from "@/components/VerseSpotlight";
 import { VerseList } from "@/components/IlluminVerse/VerseList";
 import { VoiceFirstChatInterface } from "@/components/chat/VoiceFirstChatInterface";
+// Note: VoiceFirstChatInterface now uses ConsolidatedVoiceHandler internally
 import { ProgressDashboard } from "@/components/progress/ProgressDashboard";
 import { type ScholarPersona, getPersonaForReligion } from "@/components/chat/ScholarPersonas";
 import { useQuery } from "@tanstack/react-query";
