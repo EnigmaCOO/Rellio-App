@@ -128,18 +128,21 @@ export function VoiceIsolationFilter({
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
         const transcript = result[0].transcript;
-        const confidence = result[0].confidence || 0;
+        const confidence = result[0].confidence || 0.8; // Default confidence if not provided
         
-        // CRITICAL: Filter out low-confidence results (likely AI voice contamination)
-        if (confidence >= finalConfig.confidenceThreshold) {
-          console.log('✅ HIGH-CONFIDENCE user voice detected:', {
-            transcript: transcript.substring(0, 30) + '...',
-            confidence: Math.round(confidence * 100) + '%'
-          });
+        console.log('🎤 Voice detected:', {
+          transcript: transcript,
+          confidence: Math.round(confidence * 100) + '%',
+          isFinal: result.isFinal
+        });
+        
+        // LOWERED threshold for better voice capture
+        if (confidence >= 0.3 && transcript.trim()) {
+          console.log('✅ Voice accepted:', transcript);
           onUserVoiceDetected(transcript, confidence);
         } else {
-          console.log('🚫 LOW-CONFIDENCE voice filtered out (likely AI contamination):', {
-            transcript: transcript.substring(0, 30) + '...',
+          console.log('🚫 Voice filtered - low confidence or empty:', {
+            transcript,
             confidence: Math.round(confidence * 100) + '%'
           });
         }
@@ -216,16 +219,31 @@ export function VoiceIsolationFilter({
     }
     
     try {
+      // Test microphone access explicitly
+      console.log('🎤 Testing microphone access...');
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } 
+      });
+      console.log('✅ Microphone access granted');
+      
       await initializeIsolatedAudio();
       
       primaryRecognitionRef.current = initializePrimaryRecognition();
-      if (!primaryRecognitionRef.current) return false;
+      if (!primaryRecognitionRef.current) {
+        console.error('❌ Failed to create speech recognition');
+        return false;
+      }
       
       primaryRecognitionRef.current.start();
       console.log('🎤 Primary recognition started with isolation filter');
       return true;
     } catch (error) {
       console.error('❌ Failed to start primary recognition:', error);
+      alert('Please allow microphone access to use voice input.');
       return false;
     }
   }, [isAISpeaking, initializeIsolatedAudio, initializePrimaryRecognition]);

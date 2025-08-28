@@ -480,14 +480,17 @@ export function VoiceFirstChatInterface({
       clearTimeout(autoSendTimeoutRef.current);
     }
     
-    // Auto-send high-confidence speech after delay
-    if (confidence >= 0.7) {
+    // Auto-send reasonable-confidence speech after delay
+    if (confidence >= 0.5 && transcript.trim().length > 3) {
       autoSendTimeoutRef.current = setTimeout(() => {
-        if (transcript.trim().length > 3) {
-          console.log('🚀 Auto-sending high-confidence isolated user voice:', transcript);
-          handleVoiceMessage(transcript);
-        }
-      }, 1500);
+        console.log('🚀 Auto-sending user voice:', transcript);
+        handleVoiceMessage(transcript);
+        // Clear UI state after sending
+        setCurrentTranscript('');
+        setTranscriptConfidence(0);
+        setIsListening(false);
+        (window as any).voiceIsolationControl?.stopPrimaryRecognition();
+      }, 2000); // Longer delay for user to see transcript
     }
   }, [handleVoiceMessage]);
   
