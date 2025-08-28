@@ -637,12 +637,17 @@ export function VoiceFirstChatInterface({
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      // CRITICAL: Completely block all transcription during AI speech or isolation
+      // CRITICAL: Block transcription ONLY during active AI speech (not after interruption)
       if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
-        console.log('🚫 ABSOLUTE BLOCK: Rejecting ALL transcription - Voice isolation active:', {
-          isAISpeaking, inputIsolated, isAudioIsolated, isTalkingBack
-        });
-        return; // Completely block during AI speech
+        // Exception: Allow transcription if we're in interrupted state and user is speaking
+        if (voiceState === 'interrupted' || voiceState === 'listening') {
+          console.log('✅ INTERRUPTION RECOVERY: Allowing user transcription after interruption');
+        } else {
+          console.log('🚫 ABSOLUTE BLOCK: Rejecting transcription - AI still active:', {
+            isAISpeaking, inputIsolated, isAudioIsolated, isTalkingBack, voiceState
+          });
+          return; // Block during active AI speech
+        }
       }
 
       let finalTranscript = '';
@@ -661,19 +666,29 @@ export function VoiceFirstChatInterface({
         }
       }
 
-      // Double-check isolation before showing transcript
+      // Double-check isolation but allow post-interruption transcription
       if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
-        console.log('🚫 DOUBLE-CHECK: Still blocking - AI is speaking');
-        return;
+        // Exception: Allow if we're recovering from interruption
+        if (voiceState === 'interrupted' || voiceState === 'listening') {
+          console.log('✅ POST-INTERRUPTION: Allowing transcription during recovery');
+        } else {
+          console.log('🚫 DOUBLE-CHECK: Still blocking - AI is speaking');
+          return;
+        }
       }
 
       // Show LIVE transcript as user speaks (ONLY when AI is not speaking)
       const fullTranscript = finalTranscript || interimTranscript;
       
-      // TRIPLE CHECK: Ensure AI is completely silent before updating transcript
+      // TRIPLE CHECK: Allow transcription if recovering from interruption
       if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
-        console.log('🚫 TRIPLE CHECK FAILED: Still blocking transcript update - AI is active');
-        return;
+        // Exception: Allow during interruption recovery
+        if (voiceState === 'interrupted' || voiceState === 'listening') {
+          console.log('✅ RECOVERY MODE: Transcription allowed after interruption');
+        } else {
+          console.log('🚫 TRIPLE CHECK FAILED: Still blocking transcript update - AI is active');
+          return;
+        }
       }
       
       console.log(`🎤 USER SPEECH (AI Silent): "${fullTranscript}" (confidence: ${maxConfidence})`);
@@ -910,6 +925,9 @@ export function VoiceFirstChatInterface({
               try {
                 console.log('🎤 Starting fresh recognition for user transcription after interruption');
                 
+                // CRITICAL: Clear transcript first to ensure clean slate
+                setCurrentTranscriptState('');
+                
                 // Create completely fresh recognition instance
                 const freshRecognition = initializeRecognition();
                 recognitionRef.current = freshRecognition;
@@ -917,25 +935,28 @@ export function VoiceFirstChatInterface({
                 // Start listening immediately for user input
                 freshRecognition.start();
                 setVoiceState('listening');
-                console.log('🎤✅ Fresh recognition active - transcription should work now');
+                console.log('🎤✅ Fresh recognition active and listening for user voice');
               } catch (error) {
                 console.error('🚨 CRITICAL: Failed to start recognition after interruption:', error);
                 setVoiceState('idle');
-                // Try one more time
+                // Try one more time with different approach
                 setTimeout(() => {
                   try {
+                    console.log('🎤 RETRY: Attempting recognition restart...');
                     const retryRecognition = initializeRecognition();
                     recognitionRef.current = retryRecognition;
                     retryRecognition.start();
                     setVoiceState('listening');
-                    console.log('🎤 RETRY: Recognition started successfully');
+                    console.log('🎤 RETRY SUCCESS: Recognition restarted after interruption');
                   } catch (retryError) {
                     console.error('🚨 RETRY FAILED:', retryError);
+                    // Force manual restart
+                    setVoiceState('idle');
                   }
-                }, 1000);
+                }, 500);
               }
             }
-          }, 600); // Allow time for AI to fully stop
+          }, 400); // Reduced delay for faster recovery
         };
 
         // Start background recognition with error handling
