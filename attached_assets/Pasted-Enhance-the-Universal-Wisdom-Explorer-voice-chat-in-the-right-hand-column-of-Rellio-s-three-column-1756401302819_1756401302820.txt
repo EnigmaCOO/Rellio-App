@@ -1,0 +1,38 @@
+Enhance the “Universal Wisdom Explorer” voice chat in the right-hand column of Rellio’s three-column Scripture Reader page (Left: Navigation, Center: Verse Card, Right: Chat) to address voice mixing, improve isolation, and fix interruption issues. Build on the current system (<VoiceModeHandler.tsx>, <VoiceInputControls.tsx>, <AudioPlaybackButton.tsx>, <useElevenLabsStreaming.ts>) where ElevenLabs (e.g., voice ID ErXwobaYiN019PkySvjV) playback mixes with transcription and interruptions fail. Use Web Speech API for input and ElevenLabs for output, ensuring no audio overlap and seamless Grok-like interruption handling. Maintain the white-themed UI (#FFFFFF, rounded corners 12px, shadow-md) with teal #00D5FF accents and purple-to-gold gradient (#4B0082 to #D4AF37, 10% opacity).
+Key Features and Goals:
+
+Voice Isolation During AI Playback:
+
+Mute Web Speech API input during ElevenLabs playback by routing audio through Web Audio API’s createMediaStreamDestination with echoCancellation=true and muting the mic stream (set gain to 0).
+Ensure transcription only captures user input post-playback or during interruptions.
+
+
+Interruption Handling (Grok-Style):
+
+Run Web Speech API in continuous background mode (interimResults=true, low sensitivity 0.3) during talk-back to detect user speech (onspeechstart, confidence >0.7).
+On detection, fade out ElevenLabs audio (300ms) and pause streaming; append interrupted text to chat history (shared/schema.ts chatMessages).
+Process new input as follow-up query with context (e.g., “You interrupted—shifting focus…”); add “Resume” button to continue from pause.
+
+
+Loop Prevention and Feedback Control:
+
+Enhance echo cancellation with noise suppression; block auto-play if mic is active (voiceState.isListening=true).
+Isolate responses: Render AI audio/text in chat bubbles (right-aligned, white with border) without affecting input field (lock/fade during playback).
+
+
+UI and Animation Enhancements:
+
+Header orb (teal 24px) pulses (purple processing, gold speaking, red interrupted).
+Show “Paused” label with grayed-out bubble on interruption; waveform for new input.
+
+
+
+Deliverables:
+
+Updated <VoiceModeHandler.tsx>: Add background listener, isolation logic.
+<interruptionmanager> sub-component: For pause/resume, context handling.</interruptionmanager>
+ElevenLabs/Web Speech updates: <VoiceInputControls.tsx> for continuous mode, <AudioPlaybackButton.tsx> for fade-out.
+Tailwind/CSS: Interruption styles (text-gray-500, animate-fadeOut).
+State/Hooks: useState for isPlaying, interruptionActive; useEffect for audio routing, interruption detection.
+
+Provide React/TypeScript code with Tailwind classes, and describe state/effects. Ensure a mesmerizing voice experience with isolated, interruptible talk-back for profound spiritual conversations.

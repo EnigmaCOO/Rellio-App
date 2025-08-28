@@ -165,8 +165,11 @@ export function VoiceFirstChatInterface({
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+  const destinationRef = useRef<MediaStreamAudioDestinationNode | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const elevenLabsStreamRef = useRef<any>(null);
+  const [isAudioIsolated, setIsAudioIsolated] = useState(false);
   
   // Settings and persona change tracking
   const [settings, setSettings] = useState({
@@ -200,6 +203,12 @@ export function VoiceFirstChatInterface({
       setIsAISpeaking(true);
       setIsTalkingBack(true);
       
+      // MUTE microphone gain during AI playback (Web Audio API isolation)
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.setValueAtTime(0, audioContextRef.current?.currentTime || 0);
+        console.log('🔇 Microphone gain set to 0 (muted during AI speech)');
+      }
+      
       // STOP voice recognition to prevent AI voice feedback (like Grok)
       if (recognitionRef.current) {
         try {
@@ -211,12 +220,19 @@ export function VoiceFirstChatInterface({
       }
     },
     onEnd: () => {
-      console.log('🔊 ElevenLabs finished - Re-enabling voice recognition');
+      console.log('🔊 ElevenLabs finished - Re-enabling voice recognition and unmuting mic');
       setVoiceState('idle');
       setPlayingMessageId(null);
       setInputIsolated(false);
+      setIsAudioIsolated(false);
       setIsAISpeaking(false);
       setIsTalkingBack(false);
+      
+      // RESTORE microphone gain after AI playback
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.setValueAtTime(1, audioContextRef.current?.currentTime || 0);
+        console.log('🔊 Microphone gain restored to 1 (unmuted after AI speech)');
+      }
       
       // IMMEDIATELY re-enable voice recognition after AI finishes (like Grok)
       setTimeout(() => {
@@ -227,12 +243,19 @@ export function VoiceFirstChatInterface({
       }, 300);
     },
     onInterrupted: () => {
-      console.log('🚨 ElevenLabs interrupted by user');
+      console.log('🚨 ElevenLabs interrupted by user - fade-out and restore mic');
       setVoiceState('interrupted');
       setPlayingMessageId(null);
       setInputIsolated(false);
+      setIsAudioIsolated(false);
       setIsAISpeaking(false);
       setIsTalkingBack(false);
+      
+      // RESTORE microphone gain immediately on interruption
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.setValueAtTime(1, audioContextRef.current?.currentTime || 0);
+        console.log('🔊 Microphone gain restored to 1 (interruption detected)');
+      }
       
       // ElevenLabs ONLY - no other voice systems to stop
     },
@@ -240,9 +263,17 @@ export function VoiceFirstChatInterface({
       console.log('🔊 ElevenLabs error - continuing silently:', error);
       setVoiceState('idle');
       setPlayingMessageId(null);
-      setInputIsolated(false); // Release isolation on error
+      setInputIsolated(false);
+      setIsAudioIsolated(false);
       setIsAISpeaking(false);
       setIsTalkingBack(false);
+      
+      // RESTORE microphone gain on error
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.setValueAtTime(1, audioContextRef.current?.currentTime || 0);
+        console.log('🔊 Microphone gain restored to 1 (error recovery)');
+      }
+      
       // Don't show error toasts - just continue silently
     }
   });
@@ -604,16 +635,28 @@ export function VoiceFirstChatInterface({
 
       console.log('🎤 Audio stream initialized with echo cancellation');
 
+      // Enhanced Audio Context with Isolation Controls
       const audioContext = new AudioContext();
       const analyser = audioContext.createAnalyser();
+      const gainNode = audioContext.createGain();
+      const destination = audioContext.createMediaStreamDestination();
       const microphone = audioContext.createMediaStreamSource(stream);
       
       analyser.fftSize = 256;
       analyser.smoothingTimeConstant = 0.8;
-      microphone.connect(analyser);
+      
+      // Audio routing: microphone -> gainNode -> analyser
+      // gainNode allows us to mute mic during AI playback
+      microphone.connect(gainNode);
+      gainNode.connect(analyser);
+      gainNode.connect(destination);
       
       audioContextRef.current = audioContext;
       analyserRef.current = analyser;
+      gainNodeRef.current = gainNode;
+      destinationRef.current = destination;
+      
+      console.log('🎤 Enhanced audio context with isolation controls ready');
 
       // Start audio level monitoring
       const monitorAudioLevel = () => {
@@ -690,7 +733,7 @@ export function VoiceFirstChatInterface({
     let backgroundRecognition: any = null;
 
     if (isAISpeaking && !inputIsolated) {
-      console.log('🎤 GROK-STYLE: Starting background listening for interruption detection');
+      console.log('🎤 GROK-STYLE: Starting isolated background listening for interruption detection');
       
       // Create separate recognition instance for background listening
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -700,14 +743,19 @@ export function VoiceFirstChatInterface({
         backgroundRecognition.interimResults = true;
         backgroundRecognition.lang = 'en-US';
         
-        // Lower sensitivity for background detection
+        // Enhanced interruption detection with fade-out
         backgroundRecognition.onspeechstart = () => {
-          console.log('🚨 INTERRUPTION DETECTED via onspeechstart!');
+          console.log('🚨 INTERRUPTION DETECTED via isolated onspeechstart!');
           
-          // Immediate interruption
-          if (stopAIPlayback) {
+          // Fade-out and stop AI speech (300ms fade as requested)
+          if (stopAIPlayback && audioContextRef.current && gainNodeRef.current) {
+            // Smooth fade-out over 300ms
+            const currentTime = audioContextRef.current.currentTime;
+            gainNodeRef.current.gain.setValueAtTime(1, currentTime);
+            gainNodeRef.current.gain.linearRampToValueAtTime(0, currentTime + 0.3);
+            
             stopAIPlayback();
-            console.log('🛑 AI speech interrupted instantly');
+            console.log('🛑 AI speech interrupted with 300ms fade-out');
           }
           
           // Reset states
@@ -715,6 +763,7 @@ export function VoiceFirstChatInterface({
           setIsAISpeaking(false);
           setIsTalkingBack(false);
           setInputIsolated(false);
+          setIsAudioIsolated(false);
           
           // Start normal listening for new question
           setTimeout(() => {
@@ -733,7 +782,7 @@ export function VoiceFirstChatInterface({
         // Start background recognition
         try {
           backgroundRecognition.start();
-          console.log('🎤 Background interruption listener started');
+          console.log('🎤 Background interruption listener started with audio isolation');
         } catch (error) {
           console.warn('🎤 Failed to start background recognition:', error);
         }
@@ -1556,20 +1605,24 @@ export function VoiceFirstChatInterface({
                 type="text"
                 value={textInputValue}
                 onChange={(e) => setTextInputValue(e.target.value)}
-                disabled={inputIsolated || sendMessageMutation.isPending}
-                placeholder={inputIsolated ? "Input locked - AI is speaking..." : "Type your spiritual question..."}
+                disabled={inputIsolated || isAudioIsolated || sendMessageMutation.isPending}
+                placeholder={
+                  inputIsolated ? "Input locked - AI is speaking..." : 
+                  isAudioIsolated ? "Audio isolated - Please wait..." : 
+                  "Type your spiritual question..."
+                }
                 className={cn(
                   "flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm transition-all duration-300",
                   "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent",
-                  inputIsolated ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white text-gray-800"
+                  (inputIsolated || isAudioIsolated) ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white text-gray-800"
                 )}
               />
               <Button
                 type="submit"
-                disabled={!textInputValue.trim() || inputIsolated || sendMessageMutation.isPending}
+                disabled={!textInputValue.trim() || inputIsolated || isAudioIsolated || sendMessageMutation.isPending}
                 className={cn(
                   "px-4 py-2 transition-all duration-300",
-                  inputIsolated 
+                  (inputIsolated || isAudioIsolated)
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed" 
                     : "bg-teal-600 text-white hover:bg-teal-700"
                 )}
@@ -1651,6 +1704,11 @@ export function VoiceFirstChatInterface({
               {inputIsolated && (
                 <div className="text-xs text-red-600 font-medium animate-pulse">
                   🔒 Inputs Locked
+                </div>
+              )}
+              {isAudioIsolated && (
+                <div className="text-xs text-amber-600 font-medium animate-pulse">
+                  🔇 Audio Isolated
                 </div>
               )}
             </div>
