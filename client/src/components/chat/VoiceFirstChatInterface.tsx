@@ -1476,8 +1476,8 @@ export function VoiceFirstChatInterface({
                       onClick={() => handleThemeSelect(theme.label.toLowerCase())}
                       disabled={isLoadingComparison}
                       className={cn(
-                        "h-auto py-4 px-4 flex flex-col items-center gap-3 border-2 transition-all duration-300 ease-out",
-                        "rounded-2xl backdrop-blur-sm",
+                        "h-auto py-4 px-3 flex flex-col items-center gap-3 border-2 transition-all duration-300 ease-out",
+                        "rounded-2xl backdrop-blur-sm min-h-[100px]",
                         theme.color,
                         theme.hoverColor,
                         "hover:scale-105 hover:shadow-lg hover:-translate-y-1",
@@ -1492,9 +1492,11 @@ export function VoiceFirstChatInterface({
                         </div>
                         <span className={cn(
                           "font-semibold text-center leading-tight group-hover:font-bold transition-all duration-300",
-                          // Responsive font sizing for longer labels
-                          theme.label.length > 12 ? "text-xs" : 
-                          theme.label.length > 9 ? "text-xs" : "text-sm"
+                          // More aggressive font sizing for longer labels
+                          theme.label.length > 12 ? "text-[10px]" : 
+                          theme.label.length > 8 ? "text-xs" : "text-sm",
+                          // Allow text wrapping for very long labels
+                          "break-words max-w-full px-1"
                         )}>
                           {theme.label}
                         </span>
