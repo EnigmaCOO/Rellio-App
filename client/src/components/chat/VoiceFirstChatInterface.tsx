@@ -1101,99 +1101,89 @@ export function VoiceFirstChatInterface({
                           audioLevelIntervalRef.current = null;
                         }
                       } else if (!isAISpeaking && !sendMessageMutation.isPending) {
-                        // SIMPLE VOICE INPUT LIKE GROK
-                        console.log('🎤 Starting voice input...');
+                        // STEP-BY-STEP VOICE DEBUG
+                        console.log('🎤 STEP 1: Starting voice input debug...');
                         
+                        // Test 1: Check if speech recognition exists
                         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                          alert('Voice recognition not supported. Please use Chrome or Edge.');
+                          alert('❌ Speech recognition not supported. Please use Chrome or Edge.');
                           return;
                         }
+                        console.log('✅ STEP 2: Speech recognition supported');
 
-                        const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-                        const recognition = new SpeechRecognition();
-                        
-                        // Grok-like configuration
-                        recognition.continuous = true;
-                        recognition.interimResults = true;
-                        recognition.lang = 'en-US';
-                        recognition.maxAlternatives = 1;
-                        
-                        let finalTranscriptSent = false;
-                        
-                        recognition.onstart = () => {
-                          console.log('🎤 VOICE STARTED');
-                          setIsListening(true);
-                          setCurrentTranscript('Speak now...');
-                          finalTranscriptSent = false;
-                        };
+                        // Test 2: Test microphone access first
+                        navigator.mediaDevices.getUserMedia({ audio: true })
+                          .then((stream) => {
+                            console.log('✅ STEP 3: Microphone access granted');
+                            
+                            // Stop the test stream
+                            stream.getTracks().forEach(track => track.stop());
+                            
+                            // Now try speech recognition
+                            const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+                            const recognition = new SpeechRecognition();
+                            
+                            console.log('✅ STEP 4: Creating speech recognition...');
+                            
+                            // Simple configuration
+                            recognition.continuous = false;
+                            recognition.interimResults = true;
+                            recognition.lang = 'en-US';
+                            
+                            recognition.onstart = () => {
+                              console.log('✅ STEP 5: SPEECH RECOGNITION STARTED');
+                              setIsListening(true);
+                              setCurrentTranscript('🔴 LISTENING - Say something!');
+                            };
 
-                        recognition.onresult = (event: any) => {
-                          let interimTranscript = '';
-                          let finalTranscript = '';
-                          
-                          // Process all results
-                          for (let i = event.resultIndex; i < event.results.length; i++) {
-                            const transcript = event.results[i][0].transcript;
-                            if (event.results[i].isFinal) {
-                              finalTranscript += transcript;
-                            } else {
-                              interimTranscript += transcript;
+                            recognition.onresult = (event: any) => {
+                              console.log('✅ STEP 6: GOT SPEECH RESULT!', event);
+                              
+                              let transcript = '';
+                              for (let i = 0; i < event.results.length; i++) {
+                                transcript += event.results[i][0].transcript;
+                              }
+                              
+                              console.log('🎤 HEARD TEXT:', transcript);
+                              setCurrentTranscript(`"${transcript}"`);
+                              
+                              // If final result, send it
+                              if (event.results[event.results.length - 1].isFinal) {
+                                console.log('🚀 FINAL RESULT - SENDING:', transcript);
+                                setTimeout(() => {
+                                  setIsListening(false);
+                                  setCurrentTranscript('');
+                                  handleVoiceMessage(transcript.trim());
+                                }, 1000);
+                              }
+                            };
+
+                            recognition.onerror = (event: any) => {
+                              console.error('❌ STEP ERROR:', event.error, event);
+                              setIsListening(false);
+                              setCurrentTranscript(`Error: ${event.error}`);
+                              
+                              setTimeout(() => setCurrentTranscript(''), 3000);
+                            };
+
+                            recognition.onend = () => {
+                              console.log('🛑 STEP 7: Speech recognition ended');
+                              setIsListening(false);
+                            };
+
+                            // Start it
+                            try {
+                              console.log('🎤 STEP 5: Starting speech recognition...');
+                              recognition.start();
+                            } catch (error) {
+                              console.error('❌ Failed to start:', error);
+                              setCurrentTranscript(`Start failed: ${error}`);
                             }
-                          }
-                          
-                          // Show real-time transcription
-                          const currentText = finalTranscript || interimTranscript;
-                          if (currentText.trim()) {
-                            console.log('🎤 TRANSCRIBING:', currentText);
-                            setCurrentTranscript(currentText);
-                          }
-                          
-                          // Send final result
-                          if (finalTranscript.trim() && !finalTranscriptSent) {
-                            finalTranscriptSent = true;
-                            console.log('🚀 SENDING:', finalTranscript);
-                            recognition.stop();
-                            setIsListening(false);
-                            setCurrentTranscript('');
-                            handleVoiceMessage(finalTranscript.trim());
-                          }
-                        };
-
-                        recognition.onerror = (event: any) => {
-                          console.error('🚫 VOICE ERROR:', event.error);
-                          setIsListening(false);
-                          setCurrentTranscript('');
-                          
-                          if (event.error === 'not-allowed') {
-                            alert('Microphone access denied. Please allow microphone and try again.');
-                          } else if (event.error === 'no-speech') {
-                            console.log('No speech detected - click orb and try again');
-                          }
-                        };
-
-                        recognition.onend = () => {
-                          console.log('🛑 VOICE ENDED');
-                          if (!finalTranscriptSent && currentTranscript && currentTranscript !== 'Speak now...') {
-                            // Send partial transcript if we have it
-                            const text = currentTranscript.trim();
-                            if (text) {
-                              console.log('🚀 SENDING PARTIAL:', text);
-                              handleVoiceMessage(text);
-                            }
-                          }
-                          setIsListening(false);
-                          setCurrentTranscript('');
-                        };
-
-                        // Start recognition
-                        try {
-                          recognition.start();
-                          console.log('✅ Voice recognition started successfully');
-                        } catch (error) {
-                          console.error('❌ Failed to start voice recognition:', error);
-                          setIsListening(false);
-                          alert('Voice input failed. Please refresh and try again.');
-                        }
+                          })
+                          .catch((error) => {
+                            console.error('❌ STEP 3 FAILED: Microphone access denied:', error);
+                            alert('❌ Microphone access denied. Please:\n1. Click the microphone icon in your browser address bar\n2. Allow microphone access\n3. Refresh the page and try again');
+                          });
                       }
                     }}
                   >
