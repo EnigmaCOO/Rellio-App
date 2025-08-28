@@ -46,6 +46,7 @@ import { Input } from '@/components/ui/input';
 import { apiRequest } from '@/lib/queryClient';
 import type { Religion, ChatMessage } from '@shared/schema';
 import type { ScholarPersona } from './ScholarPersonas';
+import ScriptureContent from './ScriptureContent';
 
 // Compare Mode interfaces
 interface ComparisonVerse {
@@ -787,15 +788,15 @@ export function VoiceFirstChatInterface({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 flex-wrap">
             {/* Compare Mode Toggle */}
             <Button
               variant={isCompareMode ? "default" : "outline"}
               size="sm"
               onClick={handleCompareToggle}
-              className="text-xs"
+              className="text-xs whitespace-nowrap"
             >
-              <Scale className="h-4 w-4 mr-1" />
+              <Scale className="h-3 w-3 mr-1" />
               Compare
             </Button>
 
@@ -804,20 +805,20 @@ export function VoiceFirstChatInterface({
               variant="outline"
               size="sm"
               onClick={() => setShowHistoryPanel(!showHistoryPanel)}
-              className="text-xs"
+              className="text-xs whitespace-nowrap"
             >
-              <HistoryIcon className="h-4 w-4 mr-1" />
+              <HistoryIcon className="h-3 w-3 mr-1" />
               History
             </Button>
 
-            {/* Text Input Toggle */}
+            {/* Text Input Toggle - Fixed Cutoff */}
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowTextInput(!showTextInput)}
-              className="text-xs"
+              className="text-xs whitespace-nowrap"
             >
-              <MessageCircle className="h-4 w-4 mr-1" />
+              <MessageCircle className="h-3 w-3 mr-1" />
               Type
             </Button>
 
@@ -826,7 +827,7 @@ export function VoiceFirstChatInterface({
               variant="outline"
               size="sm"
               onClick={clearChat}
-              className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 whitespace-nowrap"
             >
               Clear
             </Button>
@@ -1075,16 +1076,29 @@ export function VoiceFirstChatInterface({
                           audioLevelIntervalRef.current = null;
                         }
                       } else if (!isAISpeaking && !sendMessageMutation.isPending) {
-                        // Start listening with complete isolation
-                        const success = await (window as any).voiceIsolationControl?.startPrimaryRecognition();
-                        if (success) {
-                          setIsListening(true);
-                          setCurrentTranscript('');
-                          setTranscriptConfidence(0);
-                          // Start audio level monitoring
-                          audioLevelIntervalRef.current = setInterval(() => {
-                            setAudioLevel(Math.random() * 0.6 + 0.2);
-                          }, 100);
+                        // Start listening with complete isolation - ENHANCED VOICE REGISTRATION
+                        try {
+                          // Request microphone permission explicitly
+                          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                          stream.getTracks().forEach(track => track.stop()); // Stop the test stream
+                          
+                          // Now start voice isolation with confirmed mic access
+                          const success = await (window as any).voiceIsolationControl?.startPrimaryRecognition();
+                          if (success) {
+                            setIsListening(true);
+                            setCurrentTranscript('');
+                            setTranscriptConfidence(0);
+                            console.log('🎤 Voice registration started successfully');
+                            // Start audio level monitoring
+                            audioLevelIntervalRef.current = setInterval(() => {
+                              setAudioLevel(Math.random() * 0.6 + 0.2);
+                            }, 100);
+                          } else {
+                            console.error('❌ Voice isolation failed to start');
+                          }
+                        } catch (error) {
+                          console.error('🚨 Microphone access denied:', error);
+                          alert('Microphone access is required for voice input. Please allow microphone permissions and try again.');
                         }
                       }
                     }}
