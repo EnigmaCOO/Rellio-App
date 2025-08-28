@@ -200,15 +200,7 @@ export function VoiceFirstChatInterface({
       setIsAISpeaking(true);
       setIsTalkingBack(true);
       
-      // Stop ALL other voice systems immediately
-      if ('speechSynthesis' in window) {
-        try {
-          window.speechSynthesis.cancel();
-          console.log('🔊 Browser speech synthesis stopped');
-        } catch (error) {
-          console.warn('🔊 Browser speech stop error:', error);
-        }
-      }
+      // ElevenLabs ONLY - no other voice systems to stop
       
       // Stop speech recognition to prevent feedback
       if (recognitionRef.current) {
@@ -243,15 +235,7 @@ export function VoiceFirstChatInterface({
       setIsAISpeaking(false);
       setIsTalkingBack(false);
       
-      // Ensure all voice systems are stopped
-      if ('speechSynthesis' in window) {
-        try {
-          window.speechSynthesis.cancel();
-          console.log('🔊 All voice synthesis stopped on interruption');
-        } catch (error) {
-          console.warn('🔊 Voice stop error:', error);
-        }
-      }
+      // ElevenLabs ONLY - no other voice systems to stop
     },
     onError: (error) => {
       console.log('🔊 ElevenLabs error - continuing silently:', error);
@@ -807,75 +791,25 @@ export function VoiceFirstChatInterface({
 
   // REMOVED: Duplicate voice synthesis system - using only useElevenLabsStreaming hook
 
-  // Auto-play new AI messages with smart voice isolation
+  // SIMPLIFIED: Direct ElevenLabs auto-play without complex tracking
   useEffect(() => {
-    console.log('🔊 Auto-play check:', { 
-      lastAIMessage: lastAIMessage?.substring(0, 50), 
-      autoPlayAI: settings.autoPlayAI, 
-      messagesCount: messages.length,
-      isTalkingBack,
-      isAIPlaying,
-      voiceState,
-      inputIsolated,
-      wasLastMessageVoice,
-      playingMessageId
+    console.log('🔊 SIMPLE Auto-play check:', { 
+      hasMessage: !!lastAIMessage,
+      autoPlayEnabled: settings.autoPlayAI,
+      isCurrentlyPlaying: isAIPlaying,
+      voiceState
     });
     
-    // Only block during active listening - not during processing after message sent
-    if (voiceState === 'listening' || inputIsolated) {
-      console.log('🚫 Auto-play BLOCKED - Voice input active, preventing feedback loop');
-      return;
+    // Simple conditions: have message, auto-play enabled, not currently playing
+    if (lastAIMessage && settings.autoPlayAI && !isAIPlaying && voiceState === 'idle') {
+      console.log('🔊 CALLING ElevenLabs directly:', lastAIMessage.substring(0, 50) + '...');
+      
+      // Direct call to ElevenLabs - no complex tracking
+      playAIText(lastAIMessage).catch(error => {
+        console.error('🚨 ElevenLabs failed:', error);
+      });
     }
-    
-    // Allow during 'processing' if no current transcript (message already sent)
-    if (voiceState === 'processing' && currentTranscript && currentTranscript.trim().length > 0) {
-      console.log('🚫 Auto-play BLOCKED - Still processing voice input');
-      return;
-    }
-    
-    // Reduced cooldown period after voice activity (was 2000ms, now 800ms)
-    const now = Date.now();
-    if (lastVoiceActivity && (now - lastVoiceActivity) < 800) {
-      console.log('🚫 Auto-play BLOCKED - Recent voice activity cooldown');
-      return;
-    }
-    
-    // Prevent duplicate auto-play with message ID tracking
-    if (lastAIMessage && settings.autoPlayAI && messages.length > 0 && !isTalkingBack && !isAIPlaying) {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage?.type === 'ai' && lastMessage.content === lastAIMessage) {
-        // Use message ID to prevent duplicate auto-play
-        const messageId = `msg_${messages.length}_${lastAIMessage.substring(0, 20)}`;
-        
-        if (playingMessageId !== messageId) {
-          console.log('🔊 Auto-playing AI response (ID:', messageId, ')');
-          setPlayingMessageId(messageId); // Set before async operation
-          
-          // Small delay to ensure message is rendered
-          setTimeout(async () => {
-            // Double-check voice state and ensure no duplicate
-            if (voiceState === 'listening' || inputIsolated || playingMessageId !== messageId) {
-              console.log('🚫 Auto-play CANCELLED - conditions changed');
-              return;
-            }
-            
-            console.log('🔊 Starting single auto-play:', lastAIMessage.substring(0, 50) + '...');
-            try {
-              console.log('🔊 Calling playAIText with message:', lastAIMessage.length, 'characters');
-              await playAIText(lastAIMessage);
-              console.log('✅ Auto-play completed successfully');
-            } catch (error) {
-              console.error('🚨 Auto-play failed:', error);
-              console.error('🚨 Error details:', error);
-              setPlayingMessageId(null); // Clear on error
-            }
-          }, 800);
-        } else {
-          console.log('🚫 Auto-play SKIPPED - Already playing this message');
-        }
-      }
-    }
-  }, [lastAIMessage, settings.autoPlayAI, messages, playAIText, isTalkingBack, isAIPlaying, voiceState, inputIsolated, lastVoiceActivity, playingMessageId]);
+  }, [lastAIMessage, settings.autoPlayAI, isAIPlaying, voiceState, playAIText]);
 
   // Enhanced message parsing for multi-perspective responses with colors and clickable references
   const parseMessageContent = useCallback((content: string) => {
