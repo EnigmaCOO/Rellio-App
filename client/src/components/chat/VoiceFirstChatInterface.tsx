@@ -174,7 +174,7 @@ export function VoiceFirstChatInterface({
     confidenceThreshold: 0.8,
     voiceEnabled: true,
     autoPlayAI: true, // Re-enabled with server-side deduplication protection
-    interruptionSensitivity: 0.15, // Ultra sensitive for instant interruption
+    interruptionSensitivity: 0.4, // Balanced - detects speech but ignores background noise
     volume: 0.8
   });
 
@@ -611,10 +611,10 @@ export function VoiceFirstChatInterface({
           const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
           setAudioLevel(average / 255);
           
-          // ULTRA SENSITIVE interruption - any user sound stops AI immediately  
-          if ((voiceState === 'responding' || isAISpeaking) && average > 45) {
+          // BALANCED interruption - detects actual speech but ignores background noise  
+          if ((voiceState === 'responding' || isAISpeaking) && average > 120) {
             console.log('🚨 INTERRUPTION! User speaking detected, stopping AI NOW');
-            console.log(`🔊 Audio level: ${average}, Threshold: 45 (ultra sensitive)`);
+            console.log(`🔊 Audio level: ${average}, Threshold: 120 (balanced for speech)`);
             console.log(`🔊 Voice state: ${voiceState}, AI speaking: ${isAISpeaking}`);
             
             // IMMEDIATE AI stoppage
