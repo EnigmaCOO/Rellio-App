@@ -6,6 +6,8 @@ interface ScriptureContentProps {
 }
 
 const ScriptureContent: React.FC<ScriptureContentProps> = ({ content, onNavigateToVerse }) => {
+  console.log('🎨 ScriptureContent rendering:', content.substring(0, 100) + '...');
+  
   // Parse content to handle multi-religious perspectives with beautiful colors
   const renderFormattedContent = (text: string) => {
     // Split by perspective tags and render with appropriate colors
@@ -19,56 +21,57 @@ const ScriptureContent: React.FC<ScriptureContentProps> = ({ content, onNavigate
 
     // Check if content contains perspective tags
     if (text.includes('<perspective>')) {
-      const sections = text.split(/(<perspective>.*?<\/perspective>)/g);
+      console.log('🏛️ Multi-perspective content detected');
+      const parts = text.split(/(<perspective>.*?<\/perspective>)/g);
       
-      return sections.map((section, index) => {
+      const result = [];
+      let currentReligion = '';
+      
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        
         // Handle perspective headers
-        const perspectiveMatch = section.match(/<perspective>(.*?)<\/perspective>/);
+        const perspectiveMatch = part.match(/<perspective>(.*?)<\/perspective>/);
         if (perspectiveMatch) {
-          const religion = perspectiveMatch[1];
-          const colorClass = perspectiveColors[religion as keyof typeof perspectiveColors] || 'text-gray-700 bg-gray-50 border-l-4 border-gray-500';
+          currentReligion = perspectiveMatch[1];
+          const colorClass = perspectiveColors[currentReligion as keyof typeof perspectiveColors] || 'text-gray-700 bg-gray-50 border-l-4 border-gray-500';
           
-          return (
-            <div key={index} className={`pl-4 py-2 mb-3 rounded-r-lg ${colorClass}`}>
-              <h4 className="font-semibold text-sm mb-1 flex items-center">
+          result.push(
+            <div key={`header-${i}`} className={`pl-4 py-2 mb-1 rounded-r-lg ${colorClass}`}>
+              <h4 className="font-semibold text-sm flex items-center">
                 <span className="w-2 h-2 rounded-full bg-current mr-2"></span>
-                {religion}
+                {currentReligion}
               </h4>
             </div>
           );
+        } else if (part.trim() && currentReligion) {
+          // Handle content following a perspective header
+          const colorClass = perspectiveColors[currentReligion as keyof typeof perspectiveColors] || 'text-gray-700 bg-gray-50';
+          
+          result.push(
+            <div key={`content-${i}`} className={`pl-4 pr-3 py-2 mb-3 rounded-r-lg ${colorClass.replace('border-l-4', 'border-l-2')} border-opacity-50`}>
+              <p className="text-sm leading-relaxed">{part.trim()}</p>
+            </div>
+          );
+          currentReligion = ''; // Reset for next perspective
         }
-        
-        // Handle regular content following a perspective
-        if (section.trim() && !section.includes('<perspective>')) {
-          // Get the previous section to determine context
-          const prevIndex = index - 1;
-          if (prevIndex >= 0 && sections[prevIndex].includes('<perspective>')) {
-            const prevPerspectiveMatch = sections[prevIndex].match(/<perspective>(.*?)<\/perspective>/);
-            if (prevPerspectiveMatch) {
-              const religion = prevPerspectiveMatch[1];
-              const colorClass = perspectiveColors[religion as keyof typeof perspectiveColors] || 'text-gray-700 bg-gray-50';
-              
-              return (
-                <div key={index} className={`pl-4 pr-3 pb-3 mb-3 rounded-r-lg ${colorClass.replace('border-l-4', 'border-l-2')} border-opacity-50`}>
-                  <p className="text-sm leading-relaxed">{section.trim()}</p>
-                </div>
-              );
-            }
-          }
-        }
-        
-        return null;
-      }).filter(Boolean);
+      }
+      
+      return result.length > 0 ? result : [
+        <div key="fallback" className="text-gray-700 leading-relaxed">
+          <p>{text}</p>
+        </div>
+      ];
     }
 
     // Fallback for content without perspectives
-    return (
-      <div className="text-gray-700 leading-relaxed">
+    return [
+      <div key="simple" className="text-gray-700 leading-relaxed">
         {text.split('\n').map((line, index) => (
-          <p key={index} className="mb-2">{line}</p>
+          <p key={index} className="mb-2">{line || '\u00A0'}</p>
         ))}
       </div>
-    );
+    ];
   };
 
   return (

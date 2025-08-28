@@ -321,14 +321,6 @@ export function VoiceFirstChatInterface({
     staleTime: 0 // Always fetch fresh data
   });
   
-  // Debug messages for troubleshooting
-  console.log('💬 Messages Debug:', { 
-    messagesCount: messages.length, 
-    isLoading: messagesLoading,
-    sessionId,
-    messages: messages
-  });
-
   // Compare Mode mutation
   const compareMutation = useMutation({
     mutationFn: async ({ theme }: { theme: string }) => {
@@ -928,7 +920,7 @@ export function VoiceFirstChatInterface({
           {/* Messages */}
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
-              {messagesLoading || sendMessageMutation.isPending ? (
+              {messagesLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-300 mx-auto"></div>
                   <p className="text-sm text-gray-500 mt-2">
