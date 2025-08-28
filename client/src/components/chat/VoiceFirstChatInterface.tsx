@@ -308,14 +308,24 @@ export function VoiceFirstChatInterface({
   }, [selectedPersona, context, previousPersona, clearChat]);
 
   // Load Messages
-  const { data: messages = [], isLoading: messagesLoading } = useQuery<ChatMessage[]>({
+  const { data: messages = [], isLoading: messagesLoading, refetch: refetchMessages } = useQuery<ChatMessage[]>({
     queryKey: ['/api/chat', sessionId],
     queryFn: async () => {
       const response = await fetch(`/api/chat/${sessionId}`);
       if (!response.ok) throw new Error('Failed to fetch messages');
       return response.json();
     },
-    enabled: !!sessionId
+    enabled: !!sessionId,
+    refetchOnWindowFocus: false,
+    staleTime: 0 // Always fetch fresh data
+  });
+  
+  // Debug messages for troubleshooting
+  console.log('💬 Messages Debug:', { 
+    messagesCount: messages.length, 
+    isLoading: messagesLoading,
+    sessionId,
+    messages: messages
   });
 
   // Compare Mode mutation
@@ -400,11 +410,14 @@ export function VoiceFirstChatInterface({
       return await response.json();
     },
     onSuccess: async (data) => {
+      console.log('✅ Chat message sent successfully:', data);
+      
       // Track message sent for progress tracking
       onMessageSent?.();
       
-      // Invalidate query to refresh messages
+      // CRITICAL: Force immediate cache invalidation AND refetch
       await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
+      await refetchMessages();
       
       // Store AI message for potential interruption context and audio playback
       if (data.aiMessage?.content) {
@@ -415,7 +428,7 @@ export function VoiceFirstChatInterface({
         if (settings.autoPlayAI) {
           setTimeout(() => {
             playAIResponseWithIsolation(data.aiMessage.content);
-          }, 1000); // Longer delay to ensure messages display first
+          }, 2000); // Even longer delay to ensure messages are visible first
         }
       }
       
@@ -914,10 +927,12 @@ export function VoiceFirstChatInterface({
           {/* Messages */}
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
-              {messagesLoading ? (
+              {messagesLoading || sendMessageMutation.isPending ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-300 mx-auto"></div>
-                  <p className="text-sm text-gray-500 mt-2">Loading messages...</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    {sendMessageMutation.isPending ? "Processing your message..." : "Loading messages..."}
+                  </p>
                 </div>
               ) : messages.length === 0 ? (
                 <div className="text-center py-8">
