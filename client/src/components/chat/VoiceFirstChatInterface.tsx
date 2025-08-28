@@ -308,17 +308,22 @@ export function VoiceFirstChatInterface({
     setPreviousContext({ religion: context.religion, book: context.book });
   }, [selectedPersona, context, previousPersona, clearChat]);
 
-  // Load Messages
+  // Load Messages - ENHANCED REFRESH
   const { data: messages = [], isLoading: messagesLoading, refetch: refetchMessages } = useQuery<ChatMessage[]>({
     queryKey: ['/api/chat', sessionId],
     queryFn: async () => {
-      const response = await fetch(`/api/chat/${sessionId}`);
+      console.log('📥 Fetching messages for session:', sessionId);
+      const response = await fetch(`/api/chat/${sessionId}?t=${Date.now()}`); // Cache bust
       if (!response.ok) throw new Error('Failed to fetch messages');
-      return response.json();
+      const data = await response.json();
+      console.log('📨 Messages loaded:', data.length, 'messages');
+      return data;
     },
     enabled: !!sessionId,
-    refetchOnWindowFocus: false,
-    staleTime: 0 // Always fetch fresh data
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache
+    refetchInterval: 2000 // Auto-refresh every 2 seconds
   });
   
   // Compare Mode mutation
@@ -412,9 +417,27 @@ export function VoiceFirstChatInterface({
       // Track message sent for progress tracking
       onMessageSent?.();
       
-      // CRITICAL: Force immediate cache invalidation AND refetch
-      await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
-      await refetchMessages();
+      // FORCE IMMEDIATE UI UPDATE - Multiple approaches
+      console.log('🔄 Forcing message refresh...');
+      
+      // Method 1: Invalidate cache
+      queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
+      
+      // Method 2: Force refetch
+      setTimeout(async () => {
+        try {
+          await refetchMessages();
+          console.log('✅ Messages refetched successfully');
+        } catch (error) {
+          console.error('❌ Failed to refetch messages:', error);
+        }
+      }, 100);
+      
+      // Method 3: Second refetch attempt if needed
+      setTimeout(async () => {
+        await refetchMessages();
+        console.log('🔄 Second refetch attempt completed');
+      }, 1000);
       
       // Store AI message for potential interruption context and audio playback
       if (data.aiMessage?.content) {
@@ -425,7 +448,7 @@ export function VoiceFirstChatInterface({
         if (settings.autoPlayAI) {
           setTimeout(() => {
             playAIResponseWithIsolation(data.aiMessage.content);
-          }, 2000); // Even longer delay to ensure messages are visible first
+          }, 3000); // Longer delay to ensure messages are visible first
         }
       }
       
@@ -945,56 +968,59 @@ export function VoiceFirstChatInterface({
                   </p>
                 </div>
               ) : (
-                messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={cn(
-                      "flex gap-3 group",
-                      message.type === 'user' ? 'justify-end' : 'justify-start'
-                    )}
-                  >
+                <div className="space-y-4">
+                  {messages.map((message, index) => (
                     <div
+                      key={`${message.id}-${index}-${sessionId}`}
                       className={cn(
-                        "max-w-[80%] rounded-lg p-4 shadow-sm border",
-                        message.type === 'user'
-                          ? 'bg-blue-500 text-white border-blue-600'
-                          : 'bg-white border-gray-200'
+                        "flex gap-3 group animate-in slide-in-from-bottom-2",
+                        message.type === 'user' ? 'justify-end' : 'justify-start'
                       )}
                     >
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0">
-                          {message.type === 'user' ? (
-                            <User className="h-5 w-5" />
-                          ) : (
-                            <Bot className="h-5 w-5 text-blue-600" />
-                          )}
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <ScriptureContent 
-                            content={message.content}
-                            onNavigateToVerse={onNavigateToVerse}
-                          />
+                      <div
+                        className={cn(
+                          "max-w-[80%] rounded-lg p-4 shadow-sm border",
+                          message.type === 'user'
+                            ? 'bg-blue-500 text-white border-blue-600'
+                            : 'bg-white border-gray-200'
+                        )}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0">
+                            {message.type === 'user' ? (
+                              <User className="h-5 w-5" />
+                            ) : (
+                              <Bot className="h-5 w-5 text-blue-600" />
+                            )}
+                          </div>
                           
-                          {/* AI Message Controls */}
-                          {message.type === 'ai' && (
-                            <div className="flex items-center gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <AudioPlaybackButton
-                                text={message.content}
-                                voiceId={selectedPersona?.elevenLabsVoice}
-                                voiceTone={selectedPersona?.name || 'scholarly'}
-                                size="sm"
-                              />
-                              <Badge variant="secondary" className="text-xs">
-                                {selectedPersona?.name || 'Universal Scholar'}
-                              </Badge>
-                            </div>
-                          )}
+                          <div className="flex-1 min-w-0">
+                            
+                            <ScriptureContent 
+                              content={message.content}
+                              onNavigateToVerse={onNavigateToVerse}
+                            />
+                            
+                            {/* AI Message Controls */}
+                            {message.type === 'ai' && (
+                              <div className="flex items-center gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <AudioPlaybackButton
+                                  text={message.content}
+                                  voiceId={selectedPersona?.elevenLabsVoice}
+                                  voiceTone={selectedPersona?.name || 'scholarly'}
+                                  size="sm"
+                                />
+                                <Badge variant="secondary" className="text-xs">
+                                  {selectedPersona?.name || 'Universal Scholar'}
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
               
               {/* Loading indicator for new messages */}
