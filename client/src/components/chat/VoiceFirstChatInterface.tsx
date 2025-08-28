@@ -117,7 +117,21 @@ export function VoiceFirstChatInterface({
   
   // Voice State Management
   const [voiceState, setVoiceState] = useState<VoiceFirstState>('idle');
-  const [currentTranscript, setCurrentTranscript] = useState('');
+  const [currentTranscript, setCurrentTranscriptState] = useState('');
+  
+  // PROTECTED transcript setter - completely blocks AI voice contamination
+  const setCurrentTranscript = useCallback((transcript: string) => {
+    // ABSOLUTE BLOCKING: Never allow transcript updates during AI speech
+    if (isAISpeaking || isTalkingBack || inputIsolated || isAudioIsolated) {
+      console.log('🚫 PROTECTED SETTER: Blocking transcript update - AI is active:', {
+        isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated, transcript
+      });
+      return;
+    }
+    
+    console.log('✅ PROTECTED SETTER: Allowing transcript update - AI is silent:', transcript);
+    setCurrentTranscriptState(transcript);
+  }, [isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated]);
   const [audioLevel, setAudioLevel] = useState(0);
   const [confidence, setConfidence] = useState(0);
   const [isSupported, setIsSupported] = useState(false);
@@ -203,9 +217,9 @@ export function VoiceFirstChatInterface({
       setIsAISpeaking(true);
       setIsTalkingBack(true);
       
-      // CLEAR any existing transcript to prevent AI voice contamination
-      setCurrentTranscript('');
-      console.log('🧹 Transcript cleared - AI voice isolation active');
+      // FORCE CLEAR transcript using state setter (bypass protection for clearing)
+      setCurrentTranscriptState('');
+      console.log('🧹 Transcript FORCE cleared - AI voice isolation active');
       
       // MUTE microphone gain during AI playback (Web Audio API isolation)
       if (gainNodeRef.current) {
@@ -213,11 +227,12 @@ export function VoiceFirstChatInterface({
         console.log('🔇 Microphone gain set to 0 (muted during AI speech)');
       }
       
-      // STOP voice recognition to prevent AI voice feedback (like Grok)
+      // COMPLETELY STOP voice recognition to prevent AI voice feedback (like Grok)
       if (recognitionRef.current) {
         try {
           recognitionRef.current.abort();
-          console.log('🎤 Voice recognition STOPPED - preventing AI voice feedback');
+          recognitionRef.current = null; // Completely destroy recognition instance
+          console.log('🎤 Voice recognition STOPPED and DESTROYED - preventing AI voice feedback');
         } catch (error) {
           console.warn('🎤 Recognition stop warning:', error);
         }
@@ -238,11 +253,11 @@ export function VoiceFirstChatInterface({
         console.log('🔊 Microphone gain restored to 1 (unmuted after AI speech)');
       }
       
-      // IMMEDIATELY re-enable voice recognition after AI finishes (like Grok)
+      // RECREATE and re-enable voice recognition after AI finishes (like Grok)
       setTimeout(() => {
         if (hasPermission && isSupported && !inputIsolated) {
-          console.log('🎤 Voice recognition RE-ENABLED - ready for next question');
-          // Don't auto-start listening, just make it available
+          console.log('🎤 RECREATING Voice recognition - ready for next question');
+          initializeRecognition(); // Recreate fresh recognition instance
         }
       }, 300);
     },
@@ -255,15 +270,34 @@ export function VoiceFirstChatInterface({
       setIsAISpeaking(false);
       setIsTalkingBack(false);
       
-      // CLEAR transcript on interruption to prevent any AI voice remnants
-      setCurrentTranscript('');
-      console.log('🧹 Transcript cleared on interruption');
+      // FORCE CLEAR transcript on interruption (bypass protection for clearing)
+      setCurrentTranscriptState('');
+      console.log('🧹 Transcript FORCE cleared on interruption');
+      
+      // RECREATE recognition instance on interruption
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+          recognitionRef.current = null;
+          console.log('🎤 Recognition instance destroyed on interruption');
+        } catch (error) {
+          console.warn('🎤 Error destroying recognition:', error);
+        }
+      }
       
       // RESTORE microphone gain immediately on interruption
       if (gainNodeRef.current) {
         gainNodeRef.current.gain.setValueAtTime(1, audioContextRef.current?.currentTime || 0);
         console.log('🔊 Microphone gain restored to 1 (interruption detected)');
       }
+      
+      // Recreate recognition after brief delay
+      setTimeout(() => {
+        if (hasPermission && isSupported) {
+          initializeRecognition();
+          console.log('🎤 Fresh recognition instance created after interruption');
+        }
+      }, 500);
       
       // ElevenLabs ONLY - no other voice systems to stop
     },
@@ -276,9 +310,9 @@ export function VoiceFirstChatInterface({
       setIsAISpeaking(false);
       setIsTalkingBack(false);
       
-      // CLEAR transcript on error to prevent any AI voice remnants
-      setCurrentTranscript('');
-      console.log('🧹 Transcript cleared on error recovery');
+      // FORCE CLEAR transcript on error (bypass protection for clearing)
+      setCurrentTranscriptState('');
+      console.log('🧹 Transcript FORCE cleared on error recovery');
       
       // RESTORE microphone gain on error
       if (gainNodeRef.current) {
@@ -303,7 +337,7 @@ export function VoiceFirstChatInterface({
         await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
         
         // Clear local state
-        setCurrentTranscript('');
+        setCurrentTranscriptState(''); // Force clear
         setTextInputValue('');
         setWasLastMessageVoice(false);
         setLastAIMessage('');
@@ -503,7 +537,7 @@ export function VoiceFirstChatInterface({
       setWasLastMessageVoice(false);
       
       // Clear transcript after successful send
-      setCurrentTranscript('');
+      setCurrentTranscriptState(''); // Force clear
     },
     onError: async (error: any) => {
       console.error('🚨 Send message error:', error);
@@ -589,6 +623,13 @@ export function VoiceFirstChatInterface({
 
       // Show LIVE transcript as user speaks (ONLY when AI is not speaking)
       const fullTranscript = finalTranscript || interimTranscript;
+      
+      // TRIPLE CHECK: Ensure AI is completely silent before updating transcript
+      if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
+        console.log('🚫 TRIPLE CHECK FAILED: Still blocking transcript update - AI is active');
+        return;
+      }
+      
       console.log(`🎤 USER SPEECH (AI Silent): "${fullTranscript}" (confidence: ${maxConfidence})`);
       setCurrentTranscript(fullTranscript);
       setConfidence(maxConfidence);
@@ -609,6 +650,12 @@ export function VoiceFirstChatInterface({
         }
 
         autoSendTimeoutRef.current = setTimeout(() => {
+          // FINAL ISOLATION CHECK before sending
+          if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
+            console.log('🚫 BLOCKING auto-send at timeout - AI is still active');
+            return;
+          }
+          
           console.log('🚀 AUTO-SENDING message:', finalTranscript.trim());
           setWasLastMessageVoice(true);
           handleSendMessage(finalTranscript.trim());
@@ -830,8 +877,8 @@ export function VoiceFirstChatInterface({
   // CRITICAL: Monitor AI speaking states and immediately clear transcripts for complete voice isolation
   useEffect(() => {
     if (isAISpeaking || isTalkingBack || inputIsolated || isAudioIsolated) {
-      console.log('🧹 AI state change detected - clearing transcript for COMPLETE voice isolation');
-      setCurrentTranscript('');
+      console.log('🧹 AI state change detected - FORCE clearing transcript for COMPLETE voice isolation');
+      setCurrentTranscriptState(''); // Force clear bypassing protection
     }
   }, [isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated]);
 
@@ -852,7 +899,7 @@ export function VoiceFirstChatInterface({
         stopAIPlayback();
       }
       
-      setCurrentTranscript('');
+      setCurrentTranscriptState(''); // Force clear
       setVoiceState('listening');
       recognitionRef.current.start();
       
