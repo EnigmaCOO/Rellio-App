@@ -47,6 +47,7 @@ import { apiRequest } from '@/lib/queryClient';
 import type { Religion, ChatMessage } from '@shared/schema';
 import type { ScholarPersona } from './ScholarPersonas';
 import ScriptureContent from './ScriptureContent';
+import { VoiceTest } from './VoiceTest';
 
 // Compare Mode interfaces
 interface ComparisonVerse {
@@ -946,6 +947,9 @@ export function VoiceFirstChatInterface({
               </div>
             </div>
           )}
+
+          {/* Voice Debug Test */}
+          <VoiceTest />
 
           {/* Messages */}
           <ScrollArea className="flex-1 p-4">
