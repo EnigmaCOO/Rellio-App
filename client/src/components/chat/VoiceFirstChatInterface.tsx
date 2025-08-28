@@ -174,7 +174,7 @@ export function VoiceFirstChatInterface({
     confidenceThreshold: 0.8,
     voiceEnabled: true,
     autoPlayAI: true, // Re-enabled with server-side deduplication protection
-    interruptionSensitivity: 0.3,
+    interruptionSensitivity: 0.15, // Ultra sensitive for instant interruption
     volume: 0.8
   });
 
@@ -611,12 +611,25 @@ export function VoiceFirstChatInterface({
           const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
           setAudioLevel(average / 255);
           
-          // Check for interruption during AI response - use isAISpeaking for more reliable detection
-          if ((voiceState === 'responding' || isAISpeaking) && average > (settings.interruptionSensitivity * 255)) {
-            console.log('🚨 User interruption detected during AI response');
-            console.log(`🔊 Audio level: ${average}, Threshold: ${settings.interruptionSensitivity * 255}`);
+          // ULTRA SENSITIVE interruption - any user sound stops AI immediately  
+          if ((voiceState === 'responding' || isAISpeaking) && average > 45) {
+            console.log('🚨 INTERRUPTION! User speaking detected, stopping AI NOW');
+            console.log(`🔊 Audio level: ${average}, Threshold: 45 (ultra sensitive)`);
             console.log(`🔊 Voice state: ${voiceState}, AI speaking: ${isAISpeaking}`);
+            
+            // IMMEDIATE AI stoppage
+            if (stopAIPlayback) {
+              stopAIPlayback();
+              console.log('🛑 AI playback stopped immediately');
+            }
+            
             handleInterruption();
+            
+            // Quick transition to listening for new question
+            setTimeout(() => {
+              console.log('🎤 Ready to listen for new question after interruption');
+              startListening();
+            }, 100);
           }
         }
         
