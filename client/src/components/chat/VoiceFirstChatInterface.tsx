@@ -1476,8 +1476,8 @@ export function VoiceFirstChatInterface({
                       onClick={() => handleThemeSelect(theme.label.toLowerCase())}
                       disabled={isLoadingComparison}
                       className={cn(
-                        "h-auto py-4 px-3 flex flex-col items-center gap-3 border-2 transition-all duration-300 ease-out",
-                        "rounded-2xl backdrop-blur-sm min-h-[100px]",
+                        "h-auto py-3 px-2 flex flex-col items-center gap-2 border-2 transition-all duration-300 ease-out",
+                        "rounded-2xl backdrop-blur-sm min-h-[95px] max-w-full",
                         theme.color,
                         theme.hoverColor,
                         "hover:scale-105 hover:shadow-lg hover:-translate-y-1",
@@ -1486,17 +1486,18 @@ export function VoiceFirstChatInterface({
                         "group relative overflow-hidden"
                       )}
                     >
-                      <div className="relative z-10 flex flex-col items-center gap-2">
-                        <div className="p-2 rounded-xl bg-white/50 backdrop-blur-sm group-hover:bg-white/70 transition-all duration-300">
-                          <IconComponent className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
+                      <div className="relative z-10 flex flex-col items-center gap-1.5 w-full">
+                        <div className="p-1.5 rounded-xl bg-white/50 backdrop-blur-sm group-hover:bg-white/70 transition-all duration-300">
+                          <IconComponent className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
                         </div>
                         <span className={cn(
                           "font-semibold text-center leading-tight group-hover:font-bold transition-all duration-300",
-                          // More aggressive font sizing for longer labels
-                          theme.label.length > 12 ? "text-[10px]" : 
+                          // Very aggressive font sizing to prevent text cutoff
+                          theme.label.length > 12 ? "text-[9px]" : 
+                          theme.label.length > 10 ? "text-[10px]" : 
                           theme.label.length > 8 ? "text-xs" : "text-sm",
-                          // Allow text wrapping for very long labels
-                          "break-words max-w-full px-1"
+                          // Better text fitting and wrapping
+                          "break-words hyphens-auto w-full px-0.5 leading-[1.1]"
                         )}>
                           {theme.label}
                         </span>
