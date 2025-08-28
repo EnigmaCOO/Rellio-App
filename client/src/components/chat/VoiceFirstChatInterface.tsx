@@ -333,10 +333,14 @@ export function VoiceFirstChatInterface({
         })
       });
     },
-    onSuccess: (data: ComparisonResult) => {
+    onSuccess: async (data: ComparisonResult) => {
       setComparisonResult(data);
       setIsLoadingComparison(false);
-      queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
+      
+      // CRITICAL: Force immediate cache invalidation AND refetch
+      await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
+      await refetchMessages();
+      
       toast({
         title: "Comparison Complete",
         description: `Found verses about "${data.theme}" from multiple religious traditions`,
@@ -1071,20 +1075,60 @@ export function VoiceFirstChatInterface({
                           audioLevelIntervalRef.current = null;
                         }
                       } else if (!isAISpeaking && !sendMessageMutation.isPending) {
-                        // Start listening with simplified voice registration
-                        console.log('🎤 Starting voice input...');
-                        const success = await (window as any).voiceIsolationControl?.startPrimaryRecognition();
-                        if (success) {
-                          setIsListening(true);
-                          setCurrentTranscript('');
-                          setTranscriptConfidence(0);
-                          console.log('✅ Voice input started');
-                          // Start audio level monitoring
-                          audioLevelIntervalRef.current = setInterval(() => {
-                            setAudioLevel(Math.random() * 0.6 + 0.2);
-                          }, 100);
-                        } else {
-                          console.log('❌ Voice input failed to start');
+                        // SIMPLE VOICE INPUT - Like Grok
+                        try {
+                          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                          if (!SpeechRecognition) {
+                            alert('Speech recognition not supported in this browser');
+                            return;
+                          }
+
+                          const recognition = new SpeechRecognition();
+                          recognition.continuous = false;
+                          recognition.interimResults = true;
+                          recognition.lang = 'en-US';
+
+                          recognition.onstart = () => {
+                            console.log('🎤 Voice recognition started');
+                            setIsListening(true);
+                            setCurrentTranscript('');
+                          };
+
+                          recognition.onresult = (event) => {
+                            let transcript = '';
+                            for (let i = 0; i < event.results.length; i++) {
+                              transcript += event.results[i][0].transcript;
+                            }
+                            console.log('🎤 Heard:', transcript);
+                            setCurrentTranscript(transcript);
+                            setTranscriptConfidence(event.results[0][0].confidence || 0.8);
+                            
+                            // Auto-send when final result
+                            if (event.results[event.results.length - 1].isFinal) {
+                              setTimeout(() => {
+                                if (transcript.trim()) {
+                                  handleVoiceMessage(transcript.trim());
+                                  setIsListening(false);
+                                  setCurrentTranscript('');
+                                }
+                              }, 500);
+                            }
+                          };
+
+                          recognition.onerror = (event) => {
+                            console.error('Voice recognition error:', event.error);
+                            setIsListening(false);
+                          };
+
+                          recognition.onend = () => {
+                            console.log('Voice recognition ended');
+                            setIsListening(false);
+                          };
+
+                          recognition.start();
+                        } catch (error) {
+                          console.error('Failed to start voice recognition:', error);
+                          alert('Could not start voice recognition. Please check microphone permissions.');
                         }
                       }
                     }}
