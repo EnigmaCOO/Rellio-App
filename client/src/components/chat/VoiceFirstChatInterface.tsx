@@ -44,7 +44,7 @@ import { ChatHistoryManager } from './ChatHistoryManager';
 import { ProgressDashboard } from '@/components/progress/ProgressDashboard';
 import { AudioPlaybackButton } from './AudioPlaybackButton';
 import { Input } from '@/components/ui/input';
-import { useUnifiedVoiceHandler } from './UnifiedVoiceHandler';
+import { useSimplifiedVoiceHandler } from './SimplifiedVoiceHandler';
 import { apiRequest } from '@/lib/queryClient';
 import type { Religion, ChatMessage } from '@shared/schema';
 import type { ScholarPersona } from './ScholarPersonas';
@@ -126,7 +126,7 @@ export function VoiceFirstChatInterface({
   const [textInputValue, setTextInputValue] = useState('');
   const [lastAIMessage, setLastAIMessage] = useState<string>('');
 
-  // Unified Voice Handler
+  // Simplified Voice Handler
   const {
     voiceState,
     currentTranscript,
@@ -136,8 +136,9 @@ export function VoiceFirstChatInterface({
     stopListening,
     setAISpeaking,
     isSupported,
-    hasPermission
-  } = useUnifiedVoiceHandler({
+    hasPermission,
+    interruptAI
+  } = useSimplifiedVoiceHandler({
     onMessage: (text: string) => {
       console.log('📤 Voice message received:', text);
       setWasLastMessageVoice(true);
@@ -150,8 +151,8 @@ export function VoiceFirstChatInterface({
       }
     },
     disabled: false,
-    autoSendDelay: 1500,
-    confidenceThreshold: 0.7
+    autoSendDelay: 1200,
+    confidenceThreshold: 0.65
   });
 
   // Simplified transcript handling
@@ -275,7 +276,7 @@ export function VoiceFirstChatInterface({
     setVolume: setAIVolume
   } = useElevenLabsStreaming({
     voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV',
-    autoPlay: true,
+    autoPlay: false, // Disable auto-play to prevent conflicts
     onStart: () => {
       console.log('🔊 AI started speaking');
       setAISpeaking(true);
@@ -489,22 +490,18 @@ export function VoiceFirstChatInterface({
       await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
       
       // Auto-play the AI response with ElevenLabs ONLY if the user used voice input
-      if (data.content && autoPlayEnabled && settings.voiceEnabled && wasLastMessageVoice) {
+      if (data.content && autoPlayEnabled && wasLastMessageVoice) {
         console.log('🎙️ Auto-playing AI response (voice mode):', data.content.substring(0, 50) + '...');
         setPlayingMessageId(data.id);
-        setVoiceState('responding');
         try {
           await playAIText(data.content);
           setPlayingMessageId(null);
-          setVoiceState('idle');
         } catch (error) {
           console.error('🚨 Failed to play AI response:', error);
           setPlayingMessageId(null);
-          setVoiceState('idle');
         }
       } else {
         console.log('🔇 Skipping AI voice response (text mode or voice disabled)');
-        setVoiceState('idle');
       }
       
       // Reset voice message flag
@@ -975,13 +972,13 @@ export function VoiceFirstChatInterface({
   const toggleVoiceInput = useCallback(() => {
     if (voiceState === 'listening') {
       stopListening();
-    } else if (voiceState === 'ai_speaking' && isAIPlaying) {
-      handleInterruption();
+    } else if (voiceState === 'ai_speaking') {
+      interruptAI();
     } else {
       setWasLastMessageVoice(true);
       startListening();
     }
-  }, [voiceState, isAIPlaying, stopListening, startListening, handleInterruption]);
+  }, [voiceState, stopListening, startListening, interruptAI]);
 
   // Auto-scroll to bottom
   useEffect(() => {
