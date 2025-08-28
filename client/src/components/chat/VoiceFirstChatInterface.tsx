@@ -36,10 +36,8 @@ import {
   Bookmark
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useElevenLabsStreaming } from '@/hooks/useElevenLabsStreaming';
+import { UnifiedVoiceInterface } from './UnifiedVoiceInterface';
 import { GrokStyleOrb } from './GrokStyleOrb';
-import { AudioWaveform } from './AudioWaveform';
-import { VoiceTalkBackHandler } from './VoiceTalkBackHandler';
 import { ChatHistoryManager } from './ChatHistoryManager';
 import { ProgressDashboard } from '@/components/progress/ProgressDashboard';
 import { AudioPlaybackButton } from './AudioPlaybackButton';
@@ -67,8 +65,8 @@ interface ComparisonResult {
   };
 }
 
-// Enhanced Voice State Management
-export type VoiceFirstState = 'idle' | 'listening' | 'processing' | 'responding' | 'interrupted' | 'ai_speaking';
+// Voice State (simplified with unified handler)
+export type VoiceFirstState = 'idle' | 'listening' | 'processing' | 'responding' | 'interrupted';
 
 interface VoiceFirstChatInterfaceProps {
   sessionId: string;
@@ -84,24 +82,6 @@ interface VoiceFirstChatInterfaceProps {
   onMessageSent?: () => void;
 }
 
-// Voice Recognition Types
-interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList;
-  resultIndex: number;
-}
-
-interface SpeechRecognitionErrorEvent extends Event {
-  error: string;
-  message?: string;
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
-}
-
 export function VoiceFirstChatInterface({
   sessionId,
   context,
@@ -115,56 +95,21 @@ export function VoiceFirstChatInterface({
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Voice State Management
-  const [voiceState, setVoiceState] = useState<VoiceFirstState>('idle');
-  const [currentTranscript, setCurrentTranscriptState] = useState('');
-  const [audioLevel, setAudioLevel] = useState(0);
-  const [confidence, setConfidence] = useState(0);
-  const [isSupported, setIsSupported] = useState(false);
-  const [hasPermission, setHasPermission] = useState(false);
-  const [playingMessageId, setPlayingMessageId] = useState<number | null>(null);
-  const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
-  const [wasLastMessageVoice, setWasLastMessageVoice] = useState(false);
+  // Simplified Voice State Management (unified handler manages internal state)
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   const [historyView, setHistoryView] = useState<'chat' | 'progress'>('chat');
-  
-  // Input Isolation State
   const [showTextInput, setShowTextInput] = useState(false);
   const [textInputValue, setTextInputValue] = useState('');
-  const [inputIsolated, setInputIsolated] = useState(false);
-  const [isTalkingBack, setIsTalkingBack] = useState(false);
-  const [isAISpeaking, setIsAISpeaking] = useState(false);
-  const [isAudioIsolated, setIsAudioIsolated] = useState(false);
+  const [wasLastMessageVoice, setWasLastMessageVoice] = useState(false);
   const [interruptedQuery, setInterruptedQuery] = useState<string>('');
   const [lastAIMessage, setLastAIMessage] = useState<string>('');
-  const [lastVoiceActivity, setLastVoiceActivity] = useState<number>(0);
 
-  // GROK-STYLE transcript setter - blocks AI voice but allows post-interruption user voice
-  const setCurrentTranscript = useCallback((transcript: string) => {
-    // Block during active AI speech but allow during interruption recovery
-    if (isAISpeaking || isTalkingBack || inputIsolated || isAudioIsolated) {
-      // EXCEPTION: Allow transcription after successful interruption
-      if (voiceState === 'interrupted' || voiceState === 'listening') {
-        console.log('✅ POST-INTERRUPTION: User voice after interruption allowed:', transcript);
-        if (transcript && transcript.trim().length > 0) {
-          setCurrentTranscriptState(transcript);
-        }
-        return;
-      }
-      
-      console.log('🚫 BLOCKING AI VOICE: Preventing contamination:', {
-        isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated, voiceState,
-        blockedText: transcript.substring(0, 30) + '...'
-      });
-      return;
-    }
-    
-    // Normal flow - allow when AI is silent
-    if (transcript && transcript.trim().length > 0) {
-      console.log('✅ USER VOICE: Transcription allowed:', transcript);
-      setCurrentTranscriptState(transcript);
-    }
-  }, [isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated, voiceState]);
+  // Voice interruption handler
+  const handleVoiceInterrupt = useCallback(() => {
+    console.log('🛑 Voice interruption detected');
+    // Store interrupted context for potential continuation
+    setInterruptedQuery(lastAIMessage);
+  }, [lastAIMessage]);
   
   // Compare Mode state
   const [isCompareMode, setIsCompareMode] = useState(false);
@@ -247,135 +192,17 @@ export function VoiceFirstChatInterface({
     }
   ];
   
-  // Speech Recognition Setup
-  const recognitionRef = useRef<any>(null);
-  const autoSendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const gainNodeRef = useRef<GainNode | null>(null);
-  const destinationRef = useRef<MediaStreamAudioDestinationNode | null>(null);
-  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-  const elevenLabsStreamRef = useRef<any>(null);
-  
-  // Settings and persona change tracking
+  // Persona change tracking
   const [settings, setSettings] = useState({
-    autoSendDelay: 800, // Faster auto-send for better voice UX
-    confidenceThreshold: 0.6, // Lower threshold for better auto-send
     voiceEnabled: true,
-    autoPlayAI: true, // Re-enabled with server-side deduplication protection
-    interruptionSensitivity: 0.2, // Very sensitive for interruption testing
-    volume: 0.8
+    autoPlayAI: true
   });
 
   // Track previous persona to detect changes
   const [previousPersona, setPreviousPersona] = useState<string | null>(null);
   const [previousContext, setPreviousContext] = useState<{religion: Religion | null, book: string} | null>(null);
 
-  // Enhanced ElevenLabs Integration with Interruption Support
-  const {
-    isPlaying: isAIPlaying,
-    isLoading: isAILoading,
-    playText: playAIText,
-    stopPlayback: stopAIPlayback,
-    volume: aiVolume,
-    setVolume: setAIVolume
-  } = useElevenLabsStreaming({
-    voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV', // Dynamic voice based on persona
-    autoPlay: true,
-    onStart: () => {
-      console.log('🔊 ElevenLabs started - COMPLETE isolation mode activated');
-      setVoiceState('responding');
-      setInputIsolated(true); // BLOCK voice recognition during AI speech
-      setIsAISpeaking(true);
-      setIsTalkingBack(true);
-      
-      // FORCE CLEAR transcript using state setter (bypass protection for clearing)
-      setCurrentTranscriptState('');
-      console.log('🧹 Transcript FORCE cleared - AI voice isolation active');
-      
-      // MUTE microphone gain during AI playback (Web Audio API isolation)
-      if (gainNodeRef.current) {
-        gainNodeRef.current.gain.setValueAtTime(0, audioContextRef.current?.currentTime || 0);
-        console.log('🔇 Microphone gain set to 0 (muted during AI speech)');
-      }
-      
-      // STOP voice recognition to prevent AI voice feedback (like Grok)
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-          console.log('🎤 Voice recognition STOPPED - preventing AI voice feedback');
-        } catch (error) {
-          console.warn('🎤 Recognition stop warning:', error);
-        }
-      }
-    },
-    onEnd: () => {
-      console.log('🔊 ElevenLabs finished - Re-enabling voice recognition and unmuting mic');
-      setVoiceState('idle');
-      setPlayingMessageId(null);
-      setInputIsolated(false);
-      setIsAudioIsolated(false);
-      setIsAISpeaking(false);
-      setIsTalkingBack(false);
-      
-      // RESTORE microphone gain after AI playback
-      if (gainNodeRef.current) {
-        gainNodeRef.current.gain.setValueAtTime(1, audioContextRef.current?.currentTime || 0);
-        console.log('🔊 Microphone gain restored to 1 (unmuted after AI speech)');
-      }
-      
-      // RE-ENABLE voice recognition after AI finishes (like Grok)
-      setTimeout(() => {
-        if (hasPermission && isSupported && !inputIsolated) {
-          console.log('🎤 Voice recognition RE-ENABLED - ready for next question');
-          // Don't auto-start, just make it available for interruption
-        }
-      }, 300);
-    },
-    onInterrupted: () => {
-      console.log('🚨 ElevenLabs interrupted by user - fade-out and restore mic');
-      setVoiceState('interrupted');
-      setPlayingMessageId(null);
-      setInputIsolated(false);
-      setIsAudioIsolated(false);
-      setIsAISpeaking(false);
-      setIsTalkingBack(false);
-      
-      // FORCE CLEAR transcript on interruption (bypass protection for clearing)
-      setCurrentTranscriptState('');
-      console.log('🧹 Transcript FORCE cleared on interruption');
-      
-      // RESTORE microphone gain immediately on interruption
-      if (gainNodeRef.current) {
-        gainNodeRef.current.gain.setValueAtTime(1, audioContextRef.current?.currentTime || 0);
-        console.log('🔊 Microphone gain restored to 1 (interruption detected)');
-      }
-      
-      // ElevenLabs ONLY - no other voice systems to stop
-    },
-    onError: (error) => {
-      console.log('🔊 ElevenLabs error - continuing silently:', error);
-      setVoiceState('idle');
-      setPlayingMessageId(null);
-      setInputIsolated(false);
-      setIsAudioIsolated(false);
-      setIsAISpeaking(false);
-      setIsTalkingBack(false);
-      
-      // FORCE CLEAR transcript on error (bypass protection for clearing)
-      setCurrentTranscriptState('');
-      console.log('🧹 Transcript FORCE cleared on error recovery');
-      
-      // RESTORE microphone gain on error
-      if (gainNodeRef.current) {
-        gainNodeRef.current.gain.setValueAtTime(1, audioContextRef.current?.currentTime || 0);
-        console.log('🔊 Microphone gain restored to 1 (error recovery)');
-      }
-      
-      // Don't show error toasts - just continue silently
-    }
-  });
+  // Voice system is now handled by UnifiedVoiceInterface component
 
   // Clear chat function
   const clearChat = useCallback(async () => {
@@ -390,7 +217,6 @@ export function VoiceFirstChatInterface({
         await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
         
         // Clear local state
-        setCurrentTranscriptState(''); // Force clear
         setTextInputValue('');
         setWasLastMessageVoice(false);
         setLastAIMessage('');
@@ -429,42 +255,6 @@ export function VoiceFirstChatInterface({
     setPreviousPersona(currentPersonaKey);
     setPreviousContext({ religion: context.religion, book: context.book });
   }, [selectedPersona, context, previousPersona, clearChat]);
-
-  // Individual Message Audio Controls
-  const playMessageAudio = useCallback(async (message: ChatMessage) => {
-    if (playingMessageId === message.id) {
-      // Stop current playback
-      stopAIPlayback();
-      setPlayingMessageId(null);
-      return;
-    }
-
-    // Stop any current playback
-    if (playingMessageId) {
-      stopAIPlayback();
-    }
-
-    setPlayingMessageId(message.id);
-    console.log('🎙️ Playing message audio with <500ms latency:', message.content.substring(0, 50) + '...');
-    
-    try {
-      await playAIText(message.content);
-    } catch (error) {
-      console.error('🚨 Failed to play message audio:', error);
-      setPlayingMessageId(null);
-    }
-  }, [playingMessageId, playAIText, stopAIPlayback]);
-
-  const toggleAutoPlay = useCallback(() => {
-    setAutoPlayEnabled(!autoPlayEnabled);
-    toast({
-      title: autoPlayEnabled ? "Auto-play Disabled" : "Auto-play Enabled",
-      description: autoPlayEnabled 
-        ? "AI responses will no longer auto-play" 
-        : "AI responses will auto-play with voice",
-      variant: "default"
-    });
-  }, [autoPlayEnabled, toast]);
 
   // Load Messages
   const { data: messages = [], isLoading: messagesLoading } = useQuery<ChatMessage[]>({
@@ -537,11 +327,9 @@ export function VoiceFirstChatInterface({
     compareMutation.mutate({ theme });
   };
 
-  // Send Message with Enhanced Voice Integration
+  // Send Message with Voice Integration
   const sendMessageMutation = useMutation({
-    mutationFn: async (message: string) => {
-      setVoiceState('processing');
-      
+    mutationFn: async (message: string) => {      
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -567,34 +355,14 @@ export function VoiceFirstChatInterface({
       // Invalidate query to refresh messages
       await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
       
-      // Auto-play the AI response with ElevenLabs ONLY if the user used voice input
-      if (data.content && autoPlayEnabled && settings.voiceEnabled && wasLastMessageVoice) {
-        console.log('🎙️ Auto-playing AI response (voice mode):', data.content.substring(0, 50) + '...');
-        setPlayingMessageId(data.id);
-        setVoiceState('responding');
-        try {
-          await playAIText(data.content);
-          setPlayingMessageId(null);
-          setVoiceState('idle');
-        } catch (error) {
-          console.error('🚨 Failed to play AI response:', error);
-          setPlayingMessageId(null);
-          setVoiceState('idle');
-        }
-      } else {
-        console.log('🔇 Skipping AI voice response (text mode or voice disabled)');
-        setVoiceState('idle');
-      }
+      // Store AI message for potential interruption context
+      setLastAIMessage(data.content);
       
       // Reset voice message flag
       setWasLastMessageVoice(false);
-      
-      // Clear transcript after successful send
-      setCurrentTranscriptState(''); // Force clear
     },
     onError: async (error: any) => {
       console.error('🚨 Send message error:', error);
-      setVoiceState('idle');
       
       // Handle moderation blocks specifically
       if (error.status === 400) {
@@ -623,1412 +391,509 @@ export function VoiceFirstChatInterface({
     }
   });
 
-  // Initialize Speech Recognition with Enhanced Features
-  const initializeRecognition = useCallback(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-    if (!SpeechRecognition) {
-      setIsSupported(false);
-      return null;
-    }
-
-    setIsSupported(true);
-    
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-    recognition.maxAlternatives = 3;
-
-    recognition.onstart = () => {
-      console.log('🎤 Speech recognition started');
-      setVoiceState('listening');
-    };
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      // Block during active AI speech but allow post-interruption recovery
-      if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
-        // EXCEPTION: Allow if we successfully interrupted and are now listening to user
-        if (voiceState === 'interrupted' || voiceState === 'listening') {
-          console.log('✅ POST-INTERRUPTION RECOVERY: Processing user voice after interruption');
-        } else {
-          console.log('🚫 BLOCKING AI CONTAMINATION: Active AI speech detected, blocking recognition');
-          return;
-        }
-      }
-
-      let finalTranscript = '';
-      let interimTranscript = '';
-      let maxConfidence = 0;
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        const currentConfidence = event.results[i][0].confidence || 0.8;
-
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
-          maxConfidence = Math.max(maxConfidence, currentConfidence);
-        } else {
-          interimTranscript += transcript;
-        }
-      }
-
-      // Safety check but allow post-interruption transcription
-      if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
-        if (voiceState === 'interrupted' || voiceState === 'listening') {
-          console.log('✅ RECOVERY MODE: Allowing post-interruption transcription');
-        } else {
-          console.log('🚫 BLOCKING: AI is active, preventing contamination');
-          return;
-        }
-      }
-
-      // Show LIVE transcript as user speaks (ONLY when AI is not speaking)
-      const fullTranscript = finalTranscript || interimTranscript;
-      
-      // Final safety check with recovery exception
-      if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
-        if (voiceState === 'interrupted' || voiceState === 'listening') {
-          console.log('✅ FINAL RECOVERY: User voice approved after interruption');
-        } else {
-          console.log('🚫 FINAL BLOCK: Preventing AI voice contamination');
-          return;
-        }
-      }
-      
-      console.log(`🎤 USER SPEECH (AI Silent): "${fullTranscript}" (confidence: ${maxConfidence})`);
-      setCurrentTranscript(fullTranscript);
-      setConfidence(maxConfidence);
-
-      // Track voice activity
-      setLastVoiceActivity(Date.now());
-
-      // Auto-send on final result (triple-check isolation)
-      if (finalTranscript && maxConfidence > 0.6) {
-        // Final check before auto-send
-        if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
-          console.log('🚫 FINAL CHECK: Blocking auto-send - AI is speaking');
-          return;
-        }
-
-        if (autoSendTimeoutRef.current) {
-          clearTimeout(autoSendTimeoutRef.current);
-        }
-
-        autoSendTimeoutRef.current = setTimeout(() => {
-          // FINAL ISOLATION CHECK before sending
-          if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
-            console.log('🚫 BLOCKING auto-send at timeout - AI is still active');
-            return;
-          }
-          
-          console.log('🚀 AUTO-SENDING message:', finalTranscript.trim());
-          setWasLastMessageVoice(true);
-          handleSendMessage(finalTranscript.trim());
-          stopListening();
-        }, 800);
-      }
-    };
-
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error('🚨 Speech recognition error:', event.error);
-      setVoiceState('idle');
-      
-      if (event.error === 'not-allowed') {
-        setHasPermission(false);
-        toast({
-          title: "Microphone Access Denied",
-          description: "Please allow microphone access for voice input",
-          variant: "destructive"
-        });
-      }
-    };
-
-    recognition.onend = () => {
-      console.log('🎤 Speech recognition ended');
-      if (voiceState === 'listening') {
-        setVoiceState('idle');
-      }
-    };
-
-    return recognition;
-  }, [voiceState, settings.confidenceThreshold, settings.autoSendDelay]);
-
-  // Initialize Audio Context with Echo Cancellation for Level Detection
-  const initializeAudioContext = useCallback(async () => {
-    try {
-      // AGGRESSIVE echo cancellation to prevent AI audio feedback
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          echoCancellationType: 'system',
-          noiseSuppression: true,
-          autoGainControl: false, // Disable auto gain to prevent AI audio amplification
-          channelCount: 1,
-          sampleRate: 16000, // Lower sample rate for better echo cancellation
-          sampleSize: 16
-        } 
-      });
-      streamRef.current = stream;
-      setHasPermission(true);
-
-      console.log('🎤 Audio stream initialized with echo cancellation');
-
-      // Enhanced Audio Context with Isolation Controls
-      const audioContext = new AudioContext();
-      const analyser = audioContext.createAnalyser();
-      const gainNode = audioContext.createGain();
-      const destination = audioContext.createMediaStreamDestination();
-      const microphone = audioContext.createMediaStreamSource(stream);
-      
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.8;
-      
-      // Audio routing: microphone -> gainNode -> analyser
-      // gainNode allows us to COMPLETELY mute mic during AI playback
-      microphone.connect(gainNode);
-      gainNode.connect(analyser);
-      gainNode.connect(destination);
-      
-      // CRITICAL: Start with microphone unmuted for normal operation
-      gainNode.gain.value = 1;
-      console.log('🎤 Microphone initialized and ready');
-      
-      audioContextRef.current = audioContext;
-      analyserRef.current = analyser;
-      gainNodeRef.current = gainNode;
-      destinationRef.current = destination;
-      
-      console.log('🎤 Enhanced audio context with isolation controls ready');
-
-      // Start audio level monitoring
-      const monitorAudioLevel = () => {
-        if (analyserRef.current) {
-          const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-          analyserRef.current.getByteFrequencyData(dataArray);
-          
-          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-          setAudioLevel(average / 255);
-          
-          // DEBUG: Log audio levels when AI is speaking
-          if (isAISpeaking) {
-            console.log(`🔊 DEBUG: Audio level: ${average}, AI speaking: ${isAISpeaking}, Voice state: ${voiceState}`);
-          }
-          
-          // Enhanced interruption detection (backup to onspeechstart)
-          if ((voiceState === 'responding' || isAISpeaking) && average > 50) {
-            console.log('🚨 AUDIO-LEVEL INTERRUPTION! High audio detected during AI speech');
-            console.log(`🔊 Audio level: ${average}, Threshold: 50`);
-            
-            // Trigger interruption
-            if (stopAIPlayback) {
-              stopAIPlayback();
-              console.log('🛑 AI interrupted via audio level detection');
-            }
-            
-            // Reset states
-            setVoiceState('interrupted');
-            setIsAISpeaking(false);
-            setIsTalkingBack(false);
-            setInputIsolated(false);
-            setIsAudioIsolated(false);
-          }
-        }
-        
-        requestAnimationFrame(monitorAudioLevel);
-      };
-      
-      monitorAudioLevel();
-    } catch (error) {
-      console.error('🚨 Audio context initialization error:', error);
-      setHasPermission(false);
-    }
-  }, [voiceState, settings.interruptionSensitivity, isAISpeaking]);
-
-  // Check Support and Initialize
-  useEffect(() => {
-    const recognition = initializeRecognition();
-    recognitionRef.current = recognition;
-    
-    // Initialize audio context
-    if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
-      initializeAudioContext();
-    }
-    
-    return () => {
-      // Cleanup
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-      if (autoSendTimeoutRef.current) {
-        clearTimeout(autoSendTimeoutRef.current);
-      }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-    };
-  }, [initializeRecognition, initializeAudioContext]);
-
-  // GROK-STYLE: Background listening during AI speech for interruption detection
-  useEffect(() => {
-    let backgroundRecognition: any = null;
-    let startDelay: NodeJS.Timeout | null = null;
-
-    if (isAISpeaking && !inputIsolated && hasPermission && isSupported) {
-      console.log('🎤 GROK-STYLE: Starting background interruption detection during AI speech');
-      
-      // Create separate recognition instance for background listening
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        backgroundRecognition = new SpeechRecognition();
-        backgroundRecognition.continuous = true;
-        backgroundRecognition.interimResults = false;
-        backgroundRecognition.lang = 'en-US';
-        
-        // CRITICAL: Add delay to prevent immediate AI audio detection
-        startDelay = setTimeout(() => {
-          if (backgroundRecognition && isAISpeaking && !inputIsolated) {
-            try {
-              backgroundRecognition.start();
-              console.log('🎤 Background recognition started after delay to avoid AI audio');
-            } catch (error) {
-              console.warn('Delayed start failed:', error);
-            }
-          }
-        }, 1000); // Wait 1 second for AI audio to settle
-        
-        // CRITICAL: Block ALL transcript updates from background recognition
-        backgroundRecognition.onresult = (event: any) => {
-          console.log('🚫 Background recognition result COMPLETELY BLOCKED - AI audio cannot contaminate transcript');
-          // ABSOLUTE BLOCK: This recognition must NEVER update transcripts
-          // Only used for onspeechstart interruption detection
-          
-          // Extra safety: Log what we're blocking to ensure no AI audio leaks through
-          if (event.results && event.results.length > 0) {
-            const blockedText = event.results[event.results.length - 1][0].transcript;
-            console.log('🚫 BLOCKED AI AUDIO CONTAMINATION:', blockedText.substring(0, 50) + '...');
-          }
-        };
-        
-        // CRITICAL: Interruption detection via speech start
-        backgroundRecognition.onspeechstart = () => {
-          console.log('🚨 USER INTERRUPTION DETECTED! Stopping AI immediately');
-          
-          // Stop background recognition first
-          try {
-            backgroundRecognition.stop();
-          } catch (error) {
-            console.warn('Background recognition stop error:', error);
-          }
-          
-          // Stop AI playback with smooth fade
-          if (stopAIPlayback) {
-            stopAIPlayback();
-            console.log('🛑 AI playback stopped due to interruption');
-          }
-          
-          // Reset all AI states immediately
-          setIsAISpeaking(false);
-          setIsTalkingBack(false);
-          setInputIsolated(false);
-          setIsAudioIsolated(false);
-          setVoiceState('interrupted');
-          
-          // Clear transcript for clean slate
-          setCurrentTranscriptState('');
-          
-          // Start listening for user input immediately
-          setTimeout(() => {
-            try {
-              console.log('🎤 Starting user recognition after interruption');
-              const userRecognition = initializeRecognition();
-              recognitionRef.current = userRecognition;
-              userRecognition.start();
-              setVoiceState('listening');
-              console.log('✅ User recognition active - ready for transcription');
-            } catch (error) {
-              console.error('Failed to start user recognition after interruption:', error);
-              setVoiceState('idle');
-            }
-          }, 300);
-        };
-
-        // Background recognition now starts with delay above
-        // No immediate start to prevent AI audio detection
-      }
-    }
-
-    // Cleanup background recognition and timers
-    return () => {
-      if (startDelay) {
-        clearTimeout(startDelay);
-      }
-      if (backgroundRecognition) {
-        try {
-          backgroundRecognition.stop();
-          console.log('🎤 Background recognition stopped');
-        } catch (error) {
-          console.warn('🎤 Failed to stop background recognition:', error);
-        }
-      }
-    };
-  }, [isAISpeaking, inputIsolated, hasPermission, isSupported, stopAIPlayback, initializeRecognition]);
-
-  // HARDWARE AUDIO ISOLATION: Mute microphone during AI speech
-  useEffect(() => {
-    if (gainNodeRef.current && audioContextRef.current) {
-      const currentTime = audioContextRef.current.currentTime;
-      
-      if (isAISpeaking || isTalkingBack || inputIsolated || isAudioIsolated) {
-        // MUTE microphone during AI speech to prevent feedback
-        gainNodeRef.current.gain.setValueAtTime(0, currentTime);
-        console.log('🔇 MICROPHONE MUTED: Preventing AI audio feedback');
-        
-        // Set AI speaking state
-        if (voiceState !== 'interrupted') {
-          setVoiceState('ai_speaking');
-        }
-        
-        // Clear transcript during AI speech (except during recovery)
-        if (voiceState !== 'interrupted' && voiceState !== 'listening') {
-          console.log('🧹 Clearing transcript during AI speech');
-          setCurrentTranscriptState('');
-        }
-      } else {
-        // UNMUTE microphone when AI is silent
-        gainNodeRef.current.gain.setValueAtTime(1, currentTime);
-        console.log('🎤 MICROPHONE UNMUTED: Ready for user input');
-        
-        // Reset to idle when AI is completely silent
-        if (voiceState === 'ai_speaking') {
-          setVoiceState('idle');
-          console.log('🎤 AI finished - ready for user input');
-        }
-      }
-    }
-  }, [isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated, voiceState]);
-
-  // Voice Control Functions
-  const startListening = useCallback(async () => {
-    if (!recognitionRef.current || !isSupported || !hasPermission) {
-      return;
-    }
-    
-    // Allow starting while AI is speaking (for interruption)
-    if (isAISpeaking) {
-      console.log('🎤 Starting voice input to interrupt AI speech');
-    }
-    
-    try {
-      // Stop any ongoing AI speech before listening
-      if (isAIPlaying) {
-        stopAIPlayback();
-      }
-      
-      setCurrentTranscriptState(''); // Force clear
-      setVoiceState('listening');
-      recognitionRef.current.start();
-      
-      console.log('🎤 Started listening...');
-    } catch (error) {
-      console.error('🚨 Failed to start listening:', error);
-      setVoiceState('idle');
-    }
-  }, [isSupported, hasPermission, isAIPlaying, stopAIPlayback, inputIsolated]);
-
-  const stopListening = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
-    setVoiceState('idle');
-    console.log('🛑 Stopped listening');
-  }, []);
-
-  const handleInterruption = useCallback(() => {
-    console.log('🚨 Handling user interruption - stopping all AI speech');
-    
-    // Stop AI playback immediately
-    if (isAIPlaying) {
-      stopAIPlayback();
-    }
-    
-    // Stop browser speech synthesis immediately if it's running
-    if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
-      window.speechSynthesis.cancel();
-      console.log('🚨 Browser speech synthesis interrupted and stopped');
-    }
-    
-    // Clear AI speaking states
-    setIsAISpeaking(false);
-    setVoiceState('interrupted');
-    setInputIsolated(false);
-    
-    // Show feedback
-    toast({
-      title: "Response Interrupted",
-      description: "You can ask a new question or continue the conversation",
-      variant: "default"
-    });
-    
-    // Auto-start listening for new input
-    setTimeout(() => {
-      if (hasPermission && isSupported) {
-        startListening();
-      } else {
-        setVoiceState('idle');
-      }
-    }, 500);
-  }, [isAIPlaying, stopAIPlayback, hasPermission, isSupported, startListening]);
-
-  const handleSendMessage = useCallback((message: string) => {
-    if (!message.trim()) return;
-    
-    console.log('📤 Sending message:', message);
+  // Handle voice message submission
+  const handleVoiceMessage = useCallback((message: string) => {
+    console.log('🎤 Voice message received:', message);
+    setWasLastMessageVoice(true);
     sendMessageMutation.mutate(message);
-    
-    // Clear text input if using text mode
-    if (showTextInput) {
+  }, [sendMessageMutation]);
+
+  // Handle text input submission
+  const handleTextSubmit = () => {
+    if (textInputValue.trim()) {
+      console.log('⌨️ Text message sent:', textInputValue);
+      setWasLastMessageVoice(false);
+      sendMessageMutation.mutate(textInputValue.trim());
       setTextInputValue('');
     }
-  }, [sendMessageMutation, showTextInput]);
-  
-  // Handle text input submission
-  const handleTextSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputIsolated) return; // Prevent submission during AI speech
-    
-    setWasLastMessageVoice(false); // Mark this as a text-initiated message
-    handleSendMessage(textInputValue);
-  }, [textInputValue, inputIsolated, handleSendMessage]);
+  };
 
-  const toggleVoiceInput = useCallback(() => {
-    if (voiceState === 'listening') {
-      stopListening();
-    } else if (voiceState === 'responding' && isAIPlaying) {
-      handleInterruption();
-    } else {
-      setWasLastMessageVoice(true); // Pre-mark as voice mode when starting to listen
-      startListening();
-    }
-  }, [voiceState, isAIPlaying, stopListening, startListening, handleInterruption]);
-
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Update AI volume
-  useEffect(() => {
-    setAIVolume(settings.volume);
-  }, [settings.volume, setAIVolume]);
-  
-  // Log persona voice changes for debugging
-  useEffect(() => {
-    if (selectedPersona) {
-      const contextType = isInsideBook ? "Inside Book" : "Outside Books";
-      console.log(`🎭 ${contextType} - Persona Voice: ${selectedPersona.name} (${selectedPersona.elevenLabsVoice})`);
-      console.log(`🎤 Voice Tone: ${selectedPersona.voiceTone}`);
-      console.log(`📖 Context: ${context.religion ? `${context.religion} - ${context.book}` : 'Universal Wisdom'}`);
-    }
-  }, [selectedPersona, isInsideBook, context]);
+  // Scripture Content Component with Clickable References and Multi-Perspective Support
+  function ScriptureContent({ 
+    content, 
+    onNavigateToVerse 
+  }: { 
+    content: string;
+    onNavigateToVerse?: (religion: Religion, book: string, chapter: number, verse?: number) => void;
+  }) {
+    const parseScriptureReferences = (text: string) => {
+      const patterns = [
+        // Bible references
+        { 
+          pattern: /\b(\d*\s*[A-Za-z]+)\s+(\d+):(\d+)(?:-(\d+))?\b/g,
+          religion: 'christianity' as Religion,
+          type: 'bible'
+        },
+        // Quran references
+        { 
+          pattern: /\b(Surah|Chapter)\s+([A-Za-z-]+)\s+(\d+):(\d+)\b/g,
+          religion: 'islam' as Religion,
+          type: 'quran'
+        },
+        // Torah references  
+        { 
+          pattern: /\b(Genesis|Exodus|Leviticus|Numbers|Deuteronomy)\s+(\d+):(\d+)\b/g,
+          religion: 'judaism' as Religion,
+          type: 'torah'
+        }
+      ];
 
-  // REMOVED: Duplicate voice synthesis system - using only useElevenLabsStreaming hook
+      let processedText = text;
+      const links: Array<{
+        text: string;
+        religion: Religion;
+        book: string;
+        chapter: number;
+        verse: number;
+      }> = [];
 
-  // SIMPLIFIED: Direct ElevenLabs auto-play - trigger on NEW AI messages  
-  useEffect(() => {
-    // Get the latest AI message from messages array
-    const latestAIMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-    const isLatestMessageAI = latestAIMessage?.type === 'ai';
-    const latestAIText = isLatestMessageAI ? latestAIMessage.content : '';
-    
-    console.log('🔊 DIRECT Auto-play check:', { 
-      hasLatestAI: isLatestMessageAI,
-      messageLength: latestAIText.length,
-      autoPlayEnabled: settings.autoPlayAI,
-      isCurrentlyPlaying: isAIPlaying,
-      voiceState,
-      messagesCount: messages.length
-    });
-    
-    // Direct auto-play: if latest message is AI and we're not playing
-    if (isLatestMessageAI && latestAIText && settings.autoPlayAI && !isAIPlaying) {
-      console.log('🔊 CALLING ElevenLabs NOW:', latestAIText.substring(0, 50) + '...');
-      
-      // Immediate call to ElevenLabs with latest AI message
-      playAIText(latestAIText).catch(error => {
-        console.error('🚨 ElevenLabs failed:', error);
+      patterns.forEach(({ pattern, religion, type }) => {
+        processedText = processedText.replace(pattern, (match, book, chapterOrSurah, verse, endVerse) => {
+          const chapter = parseInt(chapterOrSurah);
+          const verseNum = parseInt(verse);
+          
+          if (!isNaN(chapter) && !isNaN(verseNum)) {
+            links.push({
+              text: match,
+              religion,
+              book: book.trim(),
+              chapter,
+              verse: verseNum
+            });
+
+            return `[${match}]`;
+          }
+          return match;
+        });
       });
-    }
-  }, [messages, settings.autoPlayAI, isAIPlaying, voiceState, playAIText]);
 
-  // Enhanced message parsing for multi-perspective responses with colors and clickable references
-  const parseMessageContent = useCallback((content: string) => {
-    console.log('🔍 Parsing message content:', content);
-    const parts = [];
-
-    // Define unique colors for each religious perspective
-    const perspectiveColors: Record<string, any> = {
-      'Christianity': {
-        border: 'border-blue-200',
-        bg: 'bg-blue-50',
-        badge: 'bg-blue-100 text-blue-800 border-blue-200',
-        accent: 'text-blue-600'
-      },
-      'Islam': {
-        border: 'border-green-200',
-        bg: 'bg-green-50',
-        badge: 'bg-green-100 text-green-800 border-green-200',
-        accent: 'text-green-600'
-      },
-      'Judaism': {
-        border: 'border-purple-200',
-        bg: 'bg-purple-50',
-        badge: 'bg-purple-100 text-purple-800 border-purple-200',
-        accent: 'text-purple-600'
-      },
-      'Hinduism': {
-        border: 'border-orange-200',
-        bg: 'bg-orange-50',
-        badge: 'bg-orange-100 text-orange-800 border-orange-200',
-        accent: 'text-orange-600'
-      },
-      'Buddhism': {
-        border: 'border-yellow-200',
-        bg: 'bg-yellow-50',
-        badge: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-        accent: 'text-yellow-600'
-      }
+      return { processedText, links };
     };
 
-    // Split content by perspective tags - simpler and more reliable approach
-    const sections = content.split(/(<perspective>.*?<\/perspective>)/);
-    console.log('📝 Split sections:', sections);
-
-    for (let i = 0; i < sections.length; i++) {
-      const section = sections[i].trim();
-      if (!section) continue;
-
-      // Check if this section is a perspective tag
-      const perspectiveMatch = section.match(/<perspective>(.*?)<\/perspective>/);
-      if (perspectiveMatch) {
-        // This is a perspective tag, the next section should be its content
-        const religion = perspectiveMatch[1].trim();
-        const nextSection = sections[i + 1];
-        if (nextSection) {
-          const perspectiveContent = nextSection.trim();
-          if (perspectiveContent) {
-            parts.push({
-              type: 'perspective',
-              religion,
-              content: perspectiveContent,
-              colors: perspectiveColors[religion] || perspectiveColors['Christianity']
-            });
-            console.log('✅ Added perspective:', religion, 'Content:', perspectiveContent.substring(0, 50) + '...');
-          }
-          i++; // Skip the next section since we just processed it
-        }
-      } else if (!perspectiveMatch && section && !section.includes('<perspective>')) {
-        // This is regular text content
-        parts.push({ type: 'text', content: section });
-        console.log('📄 Added text content:', section.substring(0, 50) + '...');
-      }
-    }
-
-    console.log('🎯 Final parsed parts:', parts.length, 'parts');
-    return parts.length > 0 ? parts : [{ type: 'text', content }];
-  }, []);
-
-  // Parse scripture reference to extract religion, book, and chapter info
-  const parseScriptureReference = useCallback((reference: string) => {
-    // Remove extra whitespace and normalize
-    const ref = reference.trim();
-
-    // Quran/Islam patterns
-    if (ref.includes('Surah') || ref.includes('Al-') || ref.includes('Quran')) {
-      let book = 'Quran';
-      let chapter = 1;
-      let verse = null;
-      
-      // Extract chapter number
-      const chapterMatch = ref.match(/(\d+):(\d+)/);
-      if (chapterMatch) {
-        chapter = parseInt(chapterMatch[1]);
-        verse = parseInt(chapterMatch[2]);
-      }
-      
-      return { religion: 'islam' as Religion, book, chapter, verse };
-    }
-
-    // Torah/Judaism patterns
-    const torahBooks = ['Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy', 'Bereshit', 'Shemot', 'Vayikra', 'Bamidbar', 'Devarim'];
-    for (const torahBook of torahBooks) {
-      if (ref.includes(torahBook)) {
-        const chapterMatch = ref.match(/(\d+):(\d+)/);
-        let chapter = 1;
-        let verse = null;
-        if (chapterMatch) {
-          chapter = parseInt(chapterMatch[1]);
-          verse = parseInt(chapterMatch[2]);
-        }
-        return { religion: 'judaism' as Religion, book: 'Torah', chapter, verse };
-      }
-    }
-
-    // Bible/Christianity patterns (default for most book references)
-    const bibleBooks = ['Matthew', 'Mark', 'Luke', 'John', 'Acts', 'Romans', 'Corinthians', 'Galatians', 'Ephesians', 'Philippians', 'Colossians', 'Thessalonians', 'Timothy', 'Titus', 'Philemon', 'Hebrews', 'James', 'Peter', 'Jude', 'Revelation'];
-    const chapterMatch = ref.match(/(\d+):(\d+)/);
-    let chapter = 1;
-    let verse = null;
-    if (chapterMatch) {
-      chapter = parseInt(chapterMatch[1]);
-      verse = parseInt(chapterMatch[2]);
-    }
-    
-    return { religion: 'christianity' as Religion, book: 'Bible', chapter, verse };
-  }, []);
-
-  // Make scripture references clickable
-  const renderTextWithClickableReferences = useCallback((text: string) => {
-    // Enhanced scripture reference patterns
-    const patterns = [
-      // Quran: Surah Al-Baqarah 2:256, Quran 112:1-4
-      /((?:Surah\s+)?(?:Al-)?[\w\s-]+\s+\d+:\d+(?:-\d+)?)/g,
-      // Bible: John 3:16, 1 John 4:8, Matthew 28:19
-      /(\d?\s?\w+\s+\d+:\d+(?:-\d+)?)/g,
-      // Torah: Deuteronomy 6:4, Exodus 34:6-7
-      /(\w+\s+\d+:\d+(?:-\d+)?)/g
-    ];
-
-    let result = text;
-    let parts = [];
-    let currentIndex = 0;
-
-    // Find all scripture references
-    const allMatches: Array<{text: string, start: number, end: number}> = [];
-    patterns.forEach(pattern => {
+    // Handle multi-perspective content with enhanced styling
+    if (content.includes('<perspective>')) {
+      const perspectiveRegex = /<perspective>(.*?)<\/perspective>\n([\s\S]*?)(?=<perspective>|$)/g;
+      const perspectives: Array<{name: string, content: string}> = [];
       let match;
-      while ((match = pattern.exec(text)) !== null) {
-        allMatches.push({
-          text: match[1],
-          start: match.index,
-          end: match.index + match[1].length
+
+      while ((match = perspectiveRegex.exec(content)) !== null) {
+        perspectives.push({
+          name: match[1].trim(),
+          content: match[2].trim()
         });
       }
-    });
 
-    // Sort matches by position
-    allMatches.sort((a, b) => a.start - b.start);
+      const PERSPECTIVE_COLORS = {
+        'Christianity': {
+          border: 'border-blue-200',
+          bg: 'bg-blue-50',
+          glow: 'shadow-blue-200/50',
+          text: 'text-blue-800',
+          glowClass: 'perspective-glow-blue'
+        },
+        'Islam': {
+          border: 'border-green-200', 
+          bg: 'bg-green-50',
+          glow: 'shadow-green-200/50',
+          text: 'text-green-800',
+          glowClass: 'perspective-glow-green'
+        },
+        'Judaism': {
+          border: 'border-purple-200',
+          bg: 'bg-purple-50', 
+          glow: 'shadow-purple-200/50',
+          text: 'text-purple-800',
+          glowClass: 'perspective-glow-purple'
+        },
+        'Hinduism': {
+          border: 'border-orange-200',
+          bg: 'bg-orange-50',
+          glow: 'shadow-orange-200/50', 
+          text: 'text-orange-800',
+          glowClass: 'perspective-glow-orange'
+        },
+        'Buddhism': {
+          border: 'border-yellow-200',
+          bg: 'bg-yellow-50',
+          glow: 'shadow-yellow-200/50',
+          text: 'text-yellow-800',
+          glowClass: 'perspective-glow-yellow'
+        }
+      };
 
-    // Remove overlapping matches (keep the first one)
-    const filteredMatches: Array<{text: string, start: number, end: number}> = [];
-    let lastEnd = -1;
-    allMatches.forEach(match => {
-      if (match.start >= lastEnd) {
-        filteredMatches.push(match);
-        lastEnd = match.end;
-      }
-    });
-
-    // Build parts with clickable references
-    filteredMatches.forEach((match, index) => {
-      // Add text before this match
-      if (match.start > currentIndex) {
-        parts.push(text.slice(currentIndex, match.start));
-      }
-
-      // Add clickable reference
-      parts.push(
-        <button
-          key={`ref-${index}`}
-          onClick={() => {
-            const parsed = parseScriptureReference(match.text);
-            console.log('Scripture reference clicked:', match.text, 'Parsed:', parsed);
+      return (
+        <div className="space-y-4">
+          {perspectives.map((perspective, index) => {
+            const colors = PERSPECTIVE_COLORS[perspective.name as keyof typeof PERSPECTIVE_COLORS] || {
+              border: 'border-gray-200',
+              bg: 'bg-gray-50', 
+              glow: 'shadow-gray-200/50',
+              text: 'text-gray-800',
+              glowClass: 'perspective-glow-gray'
+            };
             
-            if (onNavigateToVerse && parsed) {
-              // Navigate to the scripture location
-              onNavigateToVerse(parsed.religion, parsed.book, parsed.chapter, parsed.verse || undefined);
-            }
-          }}
-          className="inline-flex items-center gap-1 px-1 py-0.5 rounded text-xs bg-teal-100 text-teal-700 hover:bg-teal-200 transition-colors duration-200 border border-teal-200 hover:border-teal-300 cursor-pointer"
-          title={`Go to ${match.text}`}
-        >
-          {match.text}
-          <ExternalLink className="w-2 h-2" />
-        </button>
+            const { processedText, links } = parseScriptureReferences(perspective.content);
+            
+            return (
+              <div 
+                key={index}
+                className={cn(
+                  "relative p-4 rounded-lg border-2 transition-all duration-300 hover:shadow-lg",
+                  colors.border,
+                  colors.bg,
+                  colors.glow,
+                  colors.glowClass
+                )}
+              >
+                <div className={cn("font-semibold mb-2 flex items-center gap-2", colors.text)}>
+                  <BookOpen className="h-4 w-4" />
+                  {perspective.name} Perspective
+                </div>
+                <div className={cn("text-sm leading-relaxed", colors.text)}>
+                  {processedText.split(/\[(.*?)\]/).map((part, i) => {
+                    if (i % 2 === 1) {
+                      const link = links.find(l => l.text === part);
+                      if (link && onNavigateToVerse) {
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => onNavigateToVerse(link.religion, link.book, link.chapter, link.verse)}
+                            className="underline hover:bg-blue-100 px-1 rounded transition-colors duration-200 font-medium"
+                          >
+                            {part}
+                          </button>
+                        );
+                      }
+                      return <span key={i} className="font-medium">{part}</span>;
+                    }
+                    return <span key={i}>{part}</span>;
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       );
-
-      currentIndex = match.end;
-    });
-
-    // Add remaining text
-    if (currentIndex < text.length) {
-      parts.push(text.slice(currentIndex));
     }
 
-    return parts.length > 0 ? parts : [text];
-  }, [parseScriptureReference, onNavigateToVerse]);
-
-  // Update last AI message when new messages arrive
-  useEffect(() => {
-    if (messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage?.type === 'ai' && lastMessage.content !== lastAIMessage) {
-        setLastAIMessage(lastMessage.content);
-      }
-    }
-  }, [messages, lastAIMessage]);
+    // Regular content parsing for scripture references
+    const { processedText, links } = parseScriptureReferences(content);
+    
+    return (
+      <div className="text-sm leading-relaxed">
+        {processedText.split(/\[(.*?)\]/).map((part, i) => {
+          if (i % 2 === 1) {
+            const link = links.find(l => l.text === part);
+            if (link && onNavigateToVerse) {
+              return (
+                <button
+                  key={i}
+                  onClick={() => onNavigateToVerse(link.religion, link.book, link.chapter, link.verse)}
+                  className="underline hover:bg-blue-100 px-1 rounded transition-colors duration-200 text-blue-600 font-medium"
+                >
+                  {part}
+                </button>
+              );
+            }
+            return <span key={i} className="font-medium">{part}</span>;
+          }
+          return <span key={i}>{part}</span>;
+        })}
+      </div>
+    );
+  }
 
   return (
-    <Card className={cn("flex flex-col h-full bg-white shadow-lg", className)}>
-      {/* Enhanced Header with Dynamic Persona Display */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          {/* Dynamic Persona Avatar with Glowing Book Icon */}
-          <div className="relative">
-            {selectedPersona && isInsideBook ? (
-              <div className={cn(
-                "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300",
-                selectedPersona.bgColor,
-                "animate-pulse shadow-lg"
-              )}>
-                <selectedPersona.icon className={cn("w-6 h-6", selectedPersona.iconColor)} />
-                {/* Glowing book icon overlay */}
-                <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center animate-bounce shadow-md">
-                  <BookOpen className="w-3 h-3 text-white" />
-                </div>
+    <div className={cn("flex flex-col h-full", className)}>
+      {/* Header with Controls */}
+      <div className="flex-none p-4 border-b bg-gradient-to-r from-slate-50 to-gray-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <GrokStyleOrb state="idle" size="sm" />
+              <div>
+                <h2 className="font-semibold text-gray-900">
+                  {selectedPersona?.name || 'Universal Scholar'}
+                </h2>
+                <p className="text-xs text-gray-500">
+                  {context.religion ? `${context.religion} - ${context.book}` : 'All Traditions'}
+                </p>
               </div>
-            ) : (
-              <GrokStyleOrb 
-                state={voiceState === 'responding' ? 'responding' : 
-                       voiceState === 'processing' ? 'processing' :
-                       voiceState === 'listening' ? 'listening' :
-                       voiceState === 'interrupted' ? 'interrupted' : 'idle'} 
-                size="md" 
-              />
-            )}
+            </div>
           </div>
-          
-          {/* Simplified Persona Name */}
-          <div>
-            <h3 className={cn(
-              "text-lg font-semibold transition-colors duration-300",
-              selectedPersona && isInsideBook ? selectedPersona.textColor : "text-gray-900"
-            )}>
-              {selectedPersona?.name || 'Universal Scholar'}
-            </h3>
+
+          <div className="flex items-center gap-2">
+            {/* Compare Mode Toggle */}
+            <Button
+              variant={isCompareMode ? "default" : "outline"}
+              size="sm"
+              onClick={handleCompareToggle}
+              className="text-xs"
+            >
+              <Scale className="h-4 w-4 mr-1" />
+              Compare
+            </Button>
+
+            {/* History Panel Toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowHistoryPanel(!showHistoryPanel)}
+              className="text-xs"
+            >
+              <HistoryIcon className="h-4 w-4 mr-1" />
+              History
+            </Button>
+
+            {/* Text Input Toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTextInput(!showTextInput)}
+              className="text-xs"
+            >
+              <MessageCircle className="h-4 w-4 mr-1" />
+              Type
+            </Button>
+
+            {/* Clear Chat */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearChat}
+              className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              Clear
+            </Button>
           </div>
-        </div>
-        
-        <div className="flex items-center gap-1 flex-wrap">
-          {/* Compare Mode Toggle */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCompareToggle}
-            className={cn(
-              "text-xs px-2 h-7 relative",
-              isCompareMode ? "text-teal-600 border-teal-300 bg-teal-100" : "text-gray-600 border-gray-300"
-            )}
-            title="Compare verses across religions"
-          >
-            <Scale className="w-3 h-3 mr-1" />
-            Compare
-          </Button>
-          
-          {/* Auto-play Toggle */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleAutoPlay}
-            className={cn(
-              "text-xs px-2 h-7 relative",
-              autoPlayEnabled ? "text-teal-600 border-teal-300 bg-teal-100" : "text-gray-600 border-gray-300"
-            )}
-            title={autoPlayEnabled ? "Auto-Play ON" : "Auto-Play OFF"}
-          >
-            {autoPlayEnabled && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-teal-500 rounded-full animate-pulse" />
-            )}
-            Auto-play
-          </Button>
-          
-          {/* Text Input Toggle */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowTextInput(!showTextInput)}
-            className={cn(
-              "text-xs px-2 h-7",
-              showTextInput ? "text-blue-600 border-blue-300 bg-blue-50" : "text-gray-600 border-gray-300"
-            )}
-            title={showTextInput ? "Text ON" : "Text OFF"}
-          >
-            Text
-          </Button>
-          
-          {/* History Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowHistoryPanel(!showHistoryPanel)}
-            className={cn(
-              "text-xs px-2 h-7",
-              showHistoryPanel ? "text-teal-600 border-teal-300 bg-teal-50" : "text-gray-600 border-gray-300"
-            )}
-            title="View history & progress"
-          >
-            <HistoryIcon className="w-3 h-3 mr-1" />
-            History
-          </Button>
-          
-          {/* Clear Chat Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={async () => {
-              if (window.confirm('Clear all chat messages? This will start a fresh conversation.')) {
-                await clearChat();
-              }
-            }}
-            className="text-xs px-2 h-7 text-red-600 border-red-300 hover:bg-red-50"
-            title="Clear all messages"
-          >
-            Clear
-          </Button>
         </div>
       </div>
 
-      {/* Compare Mode Panel */}
-      {isCompareMode && (
-        <div className="border-b border-gray-200 bg-white p-4 max-h-80 overflow-y-auto">
-          {!comparisonResult ? (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <Scale className="w-5 h-5 text-teal-600" />
-                Choose a spiritual theme to compare across traditions
-              </h3>
+      <div className="flex-1 flex overflow-hidden">
+        {/* History Panel */}
+        {showHistoryPanel && (
+          <div className="w-80 border-r bg-gray-50 flex flex-col">
+            <Tabs value={historyView} onValueChange={(value) => setHistoryView(value as 'chat' | 'progress')} className="flex-1">
+              <TabsList className="grid w-full grid-cols-2 m-2">
+                <TabsTrigger value="chat" className="text-xs">Chat History</TabsTrigger>
+                <TabsTrigger value="progress" className="text-xs">Progress</TabsTrigger>
+              </TabsList>
               
-              {/* Predefined Themes */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                {PREDEFINED_THEMES.map((theme) => {
-                  const IconComponent = theme.icon;
-                  return (
-                    <Button
-                      key={theme.id}
-                      variant="outline"
-                      onClick={() => handleThemeSelect(theme.label.toLowerCase())}
-                      disabled={isLoadingComparison}
-                      className={cn(
-                        "h-auto py-3 px-2 flex flex-col items-center gap-2 border-2 transition-all duration-300 ease-out",
-                        "rounded-2xl backdrop-blur-sm min-h-[95px] max-w-full",
-                        theme.color,
-                        theme.hoverColor,
-                        "hover:scale-105 hover:shadow-lg hover:-translate-y-1",
-                        "active:scale-95 active:translate-y-0",
-                        "disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none",
-                        "group relative overflow-hidden"
-                      )}
-                    >
-                      <div className="relative z-10 flex flex-col items-center gap-1.5 w-full">
-                        <div className="p-1.5 rounded-xl bg-white/50 backdrop-blur-sm group-hover:bg-white/70 transition-all duration-300">
-                          <IconComponent className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
-                        </div>
-                        <span className={cn(
-                          "font-semibold text-center leading-tight group-hover:font-bold transition-all duration-300",
-                          // Very aggressive font sizing to prevent text cutoff
-                          theme.label.length > 12 ? "text-[9px]" : 
-                          theme.label.length > 10 ? "text-[10px]" : 
-                          theme.label.length > 8 ? "text-xs" : "text-sm",
-                          // Better text fitting and wrapping
-                          "break-words hyphens-auto w-full px-0.5 leading-[1.1]"
-                        )}>
-                          {theme.label}
-                        </span>
-                      </div>
-                      
-                      {/* Subtle shine effect on hover */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
-                    </Button>
-                  );
-                })}
-              </div>
-              
-              {/* Custom Theme Input */}
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Or enter your own theme (e.g., forgiveness, death, marriage)"
-                  value={customTheme}
-                  onChange={(e) => setCustomTheme(e.target.value)}
-                  disabled={isLoadingComparison}
-                  className="flex-1"
-                  onKeyPress={(e) => e.key === 'Enter' && handleCustomThemeSubmit()}
-                />
-                <Button
-                  onClick={handleCustomThemeSubmit}
-                  disabled={!customTheme.trim() || isLoadingComparison}
-                  className="bg-teal-600 hover:bg-teal-700 text-white"
-                >
-                  {isLoadingComparison ? "Loading..." : "Compare"}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            // Comparison Results Display
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <Scale className="w-5 h-5 text-teal-600" />
-                  Verses about "{comparisonResult.theme}"
-                </h3>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setComparisonResult(null)}
-                  className="text-gray-600"
-                >
-                  <X className="w-4 h-4 mr-1" />
-                  New Search
-                </Button>
-              </div>
-              
-              {/* AI Summary */}
-              <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-lg p-4">
-                <h4 className="font-semibold text-teal-800 mb-3 flex items-center gap-2">
-                  <Brain className="w-4 h-4" />
-                  Cross-Traditional Insights
-                </h4>
-                <div className="space-y-3">
-                  {(() => {
-                    // Parse the AI summary to extract perspectives
-                    const summary = comparisonResult.aiSummary;
-                    const parts = summary.split(/<perspective>([^<]+)<\/perspective>/);
-                    const perspectives = [];
-                    
-                    // Extract intro text (before first perspective)
-                    if (parts[0] && parts[0].trim()) {
-                      perspectives.push({
-                        type: 'intro',
-                        content: parts[0].trim()
-                      });
-                    }
-                    
-                    // Extract perspective sections
-                    for (let i = 1; i < parts.length; i += 2) {
-                      if (parts[i] && parts[i + 1]) {
-                        perspectives.push({
-                          type: 'perspective',
-                          religion: parts[i].trim(),
-                          content: parts[i + 1].trim()
-                        });
-                      }
-                    }
-                    
-                    return perspectives.map((item, index) => (
-                      <div key={index}>
-                        {item.type === 'intro' ? (
-                          <p className="text-teal-700 text-sm leading-relaxed font-medium">
-                            {item.content}
-                          </p>
-                        ) : (
-                          <div className="border-l-4 border-teal-300 pl-3 py-1">
-                            <h5 className="font-semibold text-teal-800 text-sm mb-1 flex items-center gap-1">
-                              <Sparkles className="w-3 h-3" />
-                              {item.religion}
-                            </h5>
-                            <p className="text-teal-700 text-sm leading-relaxed">
-                              {item.content}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    ));
-                  })()}
+              <TabsContent value="chat" className="flex-1 p-0">
+                <div className="p-4">
+                  <p className="text-sm text-gray-500">Chat history will be displayed here.</p>
                 </div>
-              </div>
+              </TabsContent>
               
-              {/* Verses by Religion */}
-              <div className="grid gap-4 lg:grid-cols-2">
-                {Object.entries(comparisonResult.verses).map(([religion, verses]) => (
-                  <Card key={religion} className="border border-gray-200 shadow-sm">
-                    <div className="p-4">
-                      <h5 className="font-semibold text-gray-900 mb-3 capitalize flex items-center gap-2">
-                        <BookOpen className="w-4 h-4" />
-                        {religion}
-                      </h5>
-                      <div className="space-y-3">
-                        {verses.map((verse, index) => (
-                          <div key={index} className="border-l-4 border-teal-200 pl-3">
-                            <p className="text-sm text-gray-700 mb-1 leading-relaxed">
-                              "{verse.text}"
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {verse.reference}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+              <TabsContent value="progress" className="flex-1 p-0">
+                <ProgressDashboard />
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
 
-      {/* Messages Area */}
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
-          {messagesLoading ? (
-            <div className="text-center text-gray-500">Loading conversation...</div>
-          ) : messages.length === 0 ? (
-            <div className="text-center text-gray-500 py-8">
-              <Bot className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <h4 className="text-lg font-medium mb-2">Start a Voice Conversation</h4>
-              <p className="text-sm">Click the microphone to ask about spiritual wisdom</p>
-            </div>
-          ) : (
-            messages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex gap-3 mb-4 transition-all duration-200 ease-in-out",
-                  message.type === 'user' ? "flex-row-reverse" : "flex-row"
-                )}
-                style={{ animation: `fadeIn 200ms ease-in-out` }}
-              >
-                {/* Avatar */}
-                <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
-                  message.type === 'user' 
-                    ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white"
-                    : "bg-gradient-to-br from-teal-500 to-teal-600 text-white"
-                )}>
-                  {message.type === 'user' ? (
-                    <User className="w-4 h-4" />
-                  ) : (
-                    <Bot className="w-4 h-4" />
-                  )}
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col">
+          {/* Compare Mode Interface */}
+          {isCompareMode && (
+            <div className="flex-none p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Scale className="h-5 w-5 text-blue-600" />
+                  <h3 className="font-medium text-blue-900">Multi-Religious Comparison</h3>
                 </div>
                 
-                {/* Enhanced Message Bubble */}
-                <div className={cn(
-                  "flex-1 max-w-[80%]",
-                  message.type === 'user' 
-                    ? "flex flex-col items-end" 
-                    : "flex flex-col items-end" // AI messages right-aligned per requirements
-                )}>
-                  <div className={cn(
-                    "relative px-4 py-3 rounded-2xl shadow-sm transition-all duration-200 group",
-                    message.type === 'user' 
-                      ? "bg-gray-100 text-gray-800 rounded-br-md border border-gray-200"
-                      : "bg-white text-gray-800 border border-gray-200 rounded-bl-md hover:border-teal-200" // White with 1px gray border
-                  )}>
-                    {message.type === 'ai' ? (
-                      <div className="pr-8 space-y-3">
-                        {parseMessageContent(message.content).map((part, index) => (
-                          <div key={index}>
-                            {part.type === 'perspective' ? (
-                              <div className={cn(
-                                "border-l-4 pl-4 py-3 rounded-r-lg space-y-2 transition-all duration-200 hover:shadow-sm",
-                                part.colors.border,
-                                part.colors.bg
-                              )}>
-                                <div className="flex items-center gap-2">
-                                  <Badge 
-                                    variant="outline" 
-                                    className={cn("text-xs font-medium", part.colors.badge)}
-                                  >
-                                    {part.religion}
-                                  </Badge>
-                                </div>
-                                <div className="text-sm leading-relaxed">
-                                  {renderTextWithClickableReferences(part.content)}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="text-sm leading-relaxed">
-                                {renderTextWithClickableReferences(part.content)}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                        {message.content}
-                      </p>
-                    )}
-                    
-                    {/* AI Message Audio Controls */}
-                    {message.type === 'ai' && (
-                      <div className="absolute top-2 right-2 flex items-center gap-1">
-                        {/* Pulsing Teal Orb During Playback (24px) */}
-                        {playingMessageId === message.id && (
-                          <div className="w-6 h-6 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full animate-pulse flex items-center justify-center mr-1">
-                            <div className="w-3 h-3 bg-white rounded-full animate-bounce" />
-                          </div>
+                {/* Theme Selection */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+                  {PREDEFINED_THEMES.map((theme) => {
+                    const IconComponent = theme.icon;
+                    return (
+                      <Button
+                        key={theme.id}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleThemeSelect(theme.label.toLowerCase())}
+                        disabled={isLoadingComparison}
+                        className={cn(
+                          "h-auto py-3 px-3 text-xs font-medium border-2 transition-all duration-200",
+                          theme.color,
+                          theme.hoverColor,
+                          selectedTheme === theme.label.toLowerCase() && "ring-2 ring-blue-500"
                         )}
-                        
-                        {/* Speaker Toggle Button */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => playMessageAudio(message)}
-                          className={cn(
-                            "w-6 h-6 p-0 opacity-70 hover:opacity-100 transition-opacity duration-200",
-                            playingMessageId === message.id ? "text-teal-600" : "text-gray-500 hover:text-teal-600"
-                          )}
-                          title={playingMessageId === message.id ? "Stop audio" : "Play audio"}
-                        >
-                          {playingMessageId === message.id ? (
-                            <Square className="w-3 h-3" />
-                          ) : (
-                            <Volume2 className="w-3 h-3" />
-                          )}
-                        </Button>
-                      </div>
+                      >
+                        <div className="flex flex-col items-center gap-1">
+                          <IconComponent className="h-4 w-4" />
+                          <span>{theme.label}</span>
+                        </div>
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Theme Input */}
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Or enter a custom theme (e.g., 'forgiveness', 'prayer')"
+                    value={customTheme}
+                    onChange={(e) => setCustomTheme(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleCustomThemeSubmit()}
+                    disabled={isLoadingComparison}
+                    className="text-sm"
+                  />
+                  <Button
+                    onClick={handleCustomThemeSubmit}
+                    disabled={!customTheme.trim() || isLoadingComparison}
+                    size="sm"
+                  >
+                    Compare
+                  </Button>
+                </div>
+
+                {isLoadingComparison && (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="text-sm text-blue-600 mt-2">Searching across religious traditions...</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Messages */}
+          <ScrollArea className="flex-1 p-4">
+            <div className="space-y-4">
+              {messagesLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-300 mx-auto"></div>
+                  <p className="text-sm text-gray-500 mt-2">Loading messages...</p>
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="text-center py-8">
+                  <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">
+                    {isCompareMode 
+                      ? "Select a theme above to compare perspectives across religious traditions"
+                      : "Start a conversation with a spiritual question"
+                    }
+                  </p>
+                </div>
+              ) : (
+                messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={cn(
+                      "flex gap-3 group",
+                      message.type === 'user' ? 'justify-end' : 'justify-start'
                     )}
+                  >
+                    <div
+                      className={cn(
+                        "max-w-[80%] rounded-lg p-4 shadow-sm border",
+                        message.type === 'user'
+                          ? 'bg-blue-500 text-white border-blue-600'
+                          : 'bg-white border-gray-200'
+                      )}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0">
+                          {message.type === 'user' ? (
+                            <User className="h-5 w-5" />
+                          ) : (
+                            <Bot className="h-5 w-5 text-blue-600" />
+                          )}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <ScriptureContent 
+                            content={message.content}
+                            onNavigateToVerse={onNavigateToVerse}
+                          />
+                          
+                          {/* AI Message Controls */}
+                          {message.type === 'ai' && (
+                            <div className="flex items-center gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <AudioPlaybackButton
+                                text={message.content}
+                                voiceId={selectedPersona?.elevenLabsVoice}
+                                voiceTone={selectedPersona?.name || 'scholarly'}
+                                size="sm"
+                              />
+                              <Badge variant="secondary" className="text-xs">
+                                {selectedPersona?.name || 'Universal Scholar'}
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+              
+              {/* Loading indicator for new messages */}
+              {sendMessageMutation.isPending && (
+                <div className="flex justify-start">
+                  <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <Bot className="h-5 w-5 text-blue-600" />
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
+              )}
+              
+              <div ref={messagesEndRef} />
+            </div>
+          </ScrollArea>
+
+          {/* Input Area */}
+          <div className="flex-none border-t bg-white">
+            {/* Text Input Mode */}
+            {showTextInput && (
+              <div className="p-4 border-b bg-gray-50">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Type your spiritual question..."
+                    value={textInputValue}
+                    onChange={(e) => setTextInputValue(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleTextSubmit()}
+                    disabled={sendMessageMutation.isPending}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={handleTextSubmit}
+                    disabled={!textInputValue.trim() || sendMessageMutation.isPending}
+                    size="sm"
+                  >
+                    Send
+                  </Button>
+                </div>
               </div>
-            ))
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-      </ScrollArea>
+            )}
 
-      {/* Voice Input Area */}
-      <div className="border-t border-gray-200 p-4">
-        {/* Browser Support Warning */}
-        {!isSupported && (
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-yellow-600" />
-            <p className="text-sm text-yellow-800">
-              Voice input not supported in this browser. Please use Chrome or Edge.
-            </p>
-          </div>
-        )}
-
-        {/* Permission Warning */}
-        {isSupported && !hasPermission && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-            <Headphones className="w-4 h-4 text-red-600" />
-            <p className="text-sm text-red-800">
-              Microphone access required for voice input. Please allow access and refresh.
-            </p>
-          </div>
-        )}
-
-        {/* Text Input with Isolation (Optional Alternative to Voice) */}
-        {showTextInput && (
-          <form onSubmit={handleTextSubmit} className="mb-4">
-            <div className={cn(
-              "flex gap-2 transition-all duration-300",
-              inputIsolated && "opacity-50 pointer-events-none"
-            )}>
-              <input
-                type="text"
-                value={textInputValue}
-                onChange={(e) => setTextInputValue(e.target.value)}
-                disabled={inputIsolated || isAudioIsolated || sendMessageMutation.isPending}
-                placeholder={
-                  inputIsolated ? "Input locked - AI is speaking..." : 
-                  isAudioIsolated ? "Audio isolated - Please wait..." : 
-                  "Type your spiritual question..."
-                }
-                className={cn(
-                  "flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm transition-all duration-300",
-                  "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent",
-                  (inputIsolated || isAudioIsolated) ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white text-gray-800"
-                )}
+            {/* Unified Voice Interface */}
+            <div className="p-4">
+              <UnifiedVoiceInterface
+                onSendMessage={handleVoiceMessage}
+                onInterrupt={handleVoiceInterrupt}
+                selectedPersona={selectedPersona}
+                isAIResponding={sendMessageMutation.isPending}
+                disabled={sendMessageMutation.isPending}
+                className="w-full"
               />
-              <Button
-                type="submit"
-                disabled={!textInputValue.trim() || inputIsolated || isAudioIsolated || sendMessageMutation.isPending}
-                className={cn(
-                  "px-4 py-2 transition-all duration-300",
-                  (inputIsolated || isAudioIsolated)
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed" 
-                    : "bg-teal-600 text-white hover:bg-teal-700"
-                )}
-              >
-                Send
-              </Button>
-            </div>
-            {inputIsolated && (
-              <p className="text-xs text-red-600 mt-1 animate-pulse">
-                🔒 Input isolated - AI is speaking. Wait for completion or interrupt to continue.
-              </p>
-            )}
-          </form>
-        )}
-
-        {/* Voice Controls */}
-        <div className="flex items-center justify-center gap-4">
-          {/* Main Voice Button */}
-          <div className="flex flex-col items-center">
-            <Button
-              onClick={toggleVoiceInput}
-              disabled={!isSupported || !hasPermission || sendMessageMutation.isPending || inputIsolated}
-              className={cn(
-                "w-16 h-16 rounded-full transition-all duration-300",
-                inputIsolated ? "bg-gray-300 cursor-not-allowed" :
-                voiceState === 'listening' 
-                  ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 animate-pulse"
-                  : voiceState === 'processing'
-                  ? "bg-gradient-to-br from-purple-500 to-purple-600 animate-spin"
-                  : voiceState === 'responding'
-                  ? "bg-gradient-to-br from-yellow-500 to-orange-600 animate-pulse"
-                  : voiceState === 'interrupted'
-                  ? "bg-gradient-to-br from-red-500 to-red-600 animate-ping shadow-lg shadow-red-500/50"
-                  : "bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700"
-              )}
-            >
-              {voiceState === 'processing' ? (
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : voiceState === 'listening' ? (
-                <Square className="w-6 h-6 text-white" />
-              ) : voiceState === 'responding' ? (
-                <Volume2 className="w-6 h-6 text-white" />
-              ) : voiceState === 'interrupted' ? (
-                <div className="w-6 h-6 text-white animate-pulse">⚡</div>
-              ) : inputIsolated ? (
-                <MicOff className="w-6 h-6 text-gray-500" />
-              ) : (
-                <Mic className="w-6 h-6 text-white" />
-              )}
-            </Button>
-            
-            {/* Status Text */}
-            <div className="mt-2 text-center">
-              {voiceState === 'listening' && (
-                <div className="text-xs text-red-600 font-medium animate-pulse">
-                  Listening...
-                </div>
-              )}
-              {voiceState === 'processing' && (
-                <div className="text-xs text-purple-600 font-medium">
-                  Processing...
-                </div>
-              )}
-              {voiceState === 'responding' && (
-                <div className="text-xs text-yellow-600 font-medium animate-pulse">
-                  AI Speaking...
-                </div>
-              )}
-              {voiceState === 'interrupted' && (
-                <div className="text-xs text-red-600 font-medium animate-pulse">
-                  🚨 Interrupted
-                </div>
-              )}
-              {voiceState === 'idle' && isSupported && hasPermission && !inputIsolated && (
-                <div className="text-xs text-gray-500">
-                  Click to speak
-                </div>
-              )}
-              {inputIsolated && (
-                <div className="text-xs text-red-600 font-medium animate-pulse">
-                  🔒 Inputs Locked
-                </div>
-              )}
-              {isAudioIsolated && (
-                <div className="text-xs text-amber-600 font-medium animate-pulse">
-                  🔇 Audio Isolated
-                </div>
-              )}
             </div>
           </div>
-
-          {/* Audio Waveform */}
-          {voiceState === 'listening' && (
-            <AudioWaveform 
-              isActive={true}
-              audioLevel={audioLevel}
-              size="md"
-              color="teal"
-            />
-          )}
         </div>
-
-        {/* Current Transcript Display */}
-        {currentTranscript && (
-          <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="text-xs text-gray-500 mb-1">Current transcript:</div>
-            <p className="text-sm text-gray-800">"{currentTranscript}"</p>
-            {confidence > 0 && (
-              <div className="text-xs text-gray-500 mt-1">
-                Confidence: {Math.round(confidence * 100)}%
-              </div>
-            )}
-          </div>
-        )}
       </div>
-
-      {/* Enhanced History Panel with Chat History and Progress Dashboard */}
-      {showHistoryPanel && (
-        <div className="fixed inset-y-0 right-0 w-96 bg-white border-l border-gray-200 shadow-xl z-50 animate-in slide-in-from-right duration-300">
-          <Tabs value={historyView} onValueChange={(value) => setHistoryView(value as 'chat' | 'progress')} className="h-full flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-teal-50 to-cyan-50">
-              <div className="flex items-center gap-2">
-                <HistoryIcon className="h-5 w-5 text-teal-600" />
-                <h2 className="font-semibold text-gray-900">History & Progress</h2>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => setShowHistoryPanel(false)}>
-                <User className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Tab Navigation */}
-            <TabsList className="grid w-full grid-cols-2 m-4 mb-0">
-              <TabsTrigger value="chat" className="flex items-center gap-2">
-                <MessageCircle className="w-4 h-4" />
-                Chat History
-              </TabsTrigger>
-              <TabsTrigger value="progress" className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4" />
-                Progress
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Tab Content */}
-            <div className="flex-1 overflow-hidden">
-              <TabsContent value="chat" className="h-full m-0 p-0">
-                <ChatHistoryManager
-                  isOpen={true}
-                  onClose={() => setShowHistoryPanel(false)}
-                  currentSessionId={sessionId}
-                  currentMessages={messages}
-                  currentPersona={selectedPersona}
-                  currentContext={context}
-                  onLoadSession={(entry) => {
-                    // Handle loading a previous chat session
-                    console.log('Loading chat session:', entry.sessionId);
-                    // You might want to emit an event or call a prop function here
-                    // to switch to the selected conversation
-                  }}
-                  onHighlightVerse={(religion, book, chapter) => {
-                    if (onNavigateToVerse) {
-                      onNavigateToVerse(religion as Religion, book, chapter);
-                    }
-                    setShowHistoryPanel(false);
-                  }}
-                />
-              </TabsContent>
-
-              <TabsContent value="progress" className="h-full m-0 p-0 overflow-auto">
-                <div className="p-4">
-                  <ProgressDashboard onClose={() => setShowHistoryPanel(false)} />
-                </div>
-              </TabsContent>
-            </div>
-          </Tabs>
-        </div>
-      )}
-    </Card>
+    </div>
   );
 }
