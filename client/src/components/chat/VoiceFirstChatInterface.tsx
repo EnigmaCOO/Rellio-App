@@ -139,23 +139,32 @@ export function VoiceFirstChatInterface({
   const [lastAIMessage, setLastAIMessage] = useState<string>('');
   const [lastVoiceActivity, setLastVoiceActivity] = useState<number>(0);
 
-  // BULLETPROOF transcript setter - completely blocks AI voice contamination
+  // BULLETPROOF transcript setter - blocks AI voice contamination but allows recovery
   const setCurrentTranscript = useCallback((transcript: string) => {
-    // QUADRUPLE CHECK: Never allow transcript updates during AI speech or isolation
+    // Check for AI isolation but allow during interruption recovery
     if (isAISpeaking || isTalkingBack || inputIsolated || isAudioIsolated) {
+      // CRITICAL EXCEPTION: Allow transcription if we're in recovery mode
+      if (voiceState === 'interrupted' || voiceState === 'listening') {
+        console.log('✅ RECOVERY EXCEPTION: Allowing user transcript during post-interruption recovery:', transcript);
+        if (transcript && transcript.trim().length > 0) {
+          setCurrentTranscriptState(transcript);
+        }
+        return;
+      }
+      
       console.log('🚫 BULLETPROOF BLOCK: Rejecting transcript - Voice isolation active:', {
-        isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated, 
+        isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated, voiceState,
         rejectedText: transcript.substring(0, 50) + '...'
       });
-      return; // Absolute block - no exceptions
+      return; // Block during active AI speech
     }
     
-    // Additional safety check - only update if transcript is genuinely from user
+    // Normal flow - update transcript when AI is silent
     if (transcript && transcript.trim().length > 0) {
-      console.log('✅ BULLETPROOF ALLOW: User transcript approved:', transcript);
+      console.log('✅ NORMAL FLOW: User transcript approved:', transcript);
       setCurrentTranscriptState(transcript);
     }
-  }, [isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated]);
+  }, [isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated, voiceState]);
   
   // Compare Mode state
   const [isCompareMode, setIsCompareMode] = useState(false);
@@ -993,13 +1002,19 @@ export function VoiceFirstChatInterface({
     };
   }, [isAISpeaking, inputIsolated, hasPermission, isSupported]);
 
-  // CRITICAL: Monitor AI speaking states and immediately clear transcripts for complete voice isolation
+  // CRITICAL: Monitor AI speaking states but don't clear during recovery
   useEffect(() => {
     if (isAISpeaking || isTalkingBack || inputIsolated || isAudioIsolated) {
+      // Don't clear transcript if we're recovering from interruption
+      if (voiceState === 'interrupted' || voiceState === 'listening') {
+        console.log('🎤 RECOVERY: Preserving transcript during post-interruption recovery');
+        return;
+      }
+      
       console.log('🧹 AI state change detected - FORCE clearing transcript for COMPLETE voice isolation');
       setCurrentTranscriptState(''); // Force clear bypassing protection
     }
-  }, [isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated]);
+  }, [isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated, voiceState]);
 
   // Voice Control Functions
   const startListening = useCallback(async () => {
