@@ -49,6 +49,7 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isInterruptedRef = useRef(false);
+  const activeRequestRef = useRef<string | null>(null); // Track active requests to prevent duplicates
 
   // Check browser support
   useEffect(() => {
@@ -276,6 +277,23 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
 
     // Clean text first to remove perspective tags and HTML
     const cleanedText = cleanTextForSpeech(text);
+    
+    // Create request ID for deduplication
+    const requestId = `${cleanedText.substring(0, 50)}_${voiceId}`;
+    
+    // Prevent duplicate requests
+    if (activeRequestRef.current === requestId) {
+      console.log('🚫 Duplicate request blocked:', requestId);
+      return;
+    }
+    
+    // Stop any existing audio and mark as active
+    if (isPlaying || isLoading) {
+      console.log('🛑 Stopping existing playback for new request');
+      stopPlayback();
+    }
+    
+    activeRequestRef.current = requestId;
     
     if (!cleanedText.trim()) {
       console.log('🔊 No readable text after cleaning');

@@ -15,6 +15,7 @@ export class ElevenLabsService {
   private apiKey: string;
   private baseUrl = 'https://api.elevenlabs.io/v1';
   private quotaCache: { remaining: number; lastChecked: number } | null = null;
+  private activeRequests: Map<string, Promise<Buffer>> = new Map(); // Request deduplication
 
   constructor() {
     this.apiKey = process.env.ELEVENLABS_API_KEY || '';
@@ -143,6 +144,35 @@ export class ElevenLabsService {
   }
 
   async generateSpeech(text: string, voiceId: string, options: {
+    stability?: number;
+    similarityBoost?: number;
+    style?: number;
+    useSpeakerBoost?: boolean;
+  } = {}): Promise<Buffer> {
+    // Create a request key for deduplication
+    const requestKey = `${voiceId}_${text.substring(0, 100)}`;
+    
+    // Check if this exact request is already in progress
+    if (this.activeRequests.has(requestKey)) {
+      console.log('🔄 Deduplicating concurrent request for:', text.substring(0, 50));
+      return this.activeRequests.get(requestKey)!;
+    }
+    
+    // Create the request promise
+    const requestPromise = this._generateSpeechInternal(text, voiceId, options);
+    
+    // Store it in active requests
+    this.activeRequests.set(requestKey, requestPromise);
+    
+    // Clean up when done
+    requestPromise.finally(() => {
+      this.activeRequests.delete(requestKey);
+    });
+    
+    return requestPromise;
+  }
+
+  private async _generateSpeechInternal(text: string, voiceId: string, options: {
     stability?: number;
     similarityBoost?: number;
     style?: number;

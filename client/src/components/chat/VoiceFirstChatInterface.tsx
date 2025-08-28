@@ -173,7 +173,7 @@ export function VoiceFirstChatInterface({
     autoSendDelay: 1500,
     confidenceThreshold: 0.8,
     voiceEnabled: true,
-    autoPlayAI: true, // Enable auto-play with smart safeguards
+    autoPlayAI: true, // Re-enabled with server-side deduplication protection
     interruptionSensitivity: 0.3,
     volume: 0.8
   });
@@ -838,35 +838,40 @@ export function VoiceFirstChatInterface({
       return;
     }
     
-    // Allow auto-play for both voice and text messages when auto-play is enabled
-    if (lastAIMessage && settings.autoPlayAI && messages.length > 0 && !isTalkingBack) {
+    // Prevent duplicate auto-play with message ID tracking
+    if (lastAIMessage && settings.autoPlayAI && messages.length > 0 && !isTalkingBack && !isAIPlaying) {
       const lastMessage = messages[messages.length - 1];
       if (lastMessage?.type === 'ai' && lastMessage.content === lastAIMessage) {
-        console.log('🔊 Auto-playing AI response...');
-        // Small delay to ensure message is rendered
-        setTimeout(async () => {
-          // Double-check voice state hasn't changed to actively listening
-          if (voiceState === 'listening' || inputIsolated) {
-            console.log('🚫 Auto-play CANCELLED - Voice became active during delay');
-            return;
-          }
+        // Use message ID to prevent duplicate auto-play
+        const messageId = `msg_${messages.length}_${lastAIMessage.substring(0, 20)}`;
+        
+        if (playingMessageId !== messageId) {
+          console.log('🔊 Auto-playing AI response (ID:', messageId, ')');
+          setPlayingMessageId(messageId); // Set before async operation
           
-          console.log('🔊 Auto-playing AI response:', lastAIMessage.substring(0, 50) + '...');
-          setIsTalkingBack(true);
-          setVoiceState('responding'); // Set proper voice state for AI speech
-          try {
-            await playAIText(lastAIMessage);
-            console.log('✅ Auto-play completed successfully');
-          } catch (error) {
-            console.error('🚨 Auto-play failed:', error);
-          } finally {
-            setIsTalkingBack(false);
-            setVoiceState('idle'); // Return to idle after AI speech
-          }
-        }, 1000);
+          // Small delay to ensure message is rendered
+          setTimeout(async () => {
+            // Double-check voice state and ensure no duplicate
+            if (voiceState === 'listening' || inputIsolated || playingMessageId !== messageId) {
+              console.log('🚫 Auto-play CANCELLED - conditions changed');
+              return;
+            }
+            
+            console.log('🔊 Starting single auto-play:', lastAIMessage.substring(0, 50) + '...');
+            try {
+              await playAIText(lastAIMessage);
+              console.log('✅ Auto-play completed successfully');
+            } catch (error) {
+              console.error('🚨 Auto-play failed:', error);
+              setPlayingMessageId(null); // Clear on error
+            }
+          }, 800);
+        } else {
+          console.log('🚫 Auto-play SKIPPED - Already playing this message');
+        }
       }
     }
-  }, [lastAIMessage, settings.autoPlayAI, messages, playAIText, isTalkingBack, voiceState, inputIsolated, lastVoiceActivity]);
+  }, [lastAIMessage, settings.autoPlayAI, messages, playAIText, isTalkingBack, isAIPlaying, voiceState, inputIsolated, lastVoiceActivity, playingMessageId]);
 
   // Enhanced message parsing for multi-perspective responses with colors and clickable references
   const parseMessageContent = useCallback((content: string) => {
