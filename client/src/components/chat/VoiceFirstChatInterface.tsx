@@ -1071,29 +1071,20 @@ export function VoiceFirstChatInterface({
                           audioLevelIntervalRef.current = null;
                         }
                       } else if (!isAISpeaking && !sendMessageMutation.isPending) {
-                        // Start listening with complete isolation - ENHANCED VOICE REGISTRATION
-                        try {
-                          // Request microphone permission explicitly
-                          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                          stream.getTracks().forEach(track => track.stop()); // Stop the test stream
-                          
-                          // Now start voice isolation with confirmed mic access
-                          const success = await (window as any).voiceIsolationControl?.startPrimaryRecognition();
-                          if (success) {
-                            setIsListening(true);
-                            setCurrentTranscript('');
-                            setTranscriptConfidence(0);
-                            console.log('🎤 Voice registration started successfully');
-                            // Start audio level monitoring
-                            audioLevelIntervalRef.current = setInterval(() => {
-                              setAudioLevel(Math.random() * 0.6 + 0.2);
-                            }, 100);
-                          } else {
-                            console.error('❌ Voice isolation failed to start');
-                          }
-                        } catch (error) {
-                          console.error('🚨 Microphone access denied:', error);
-                          alert('Microphone access is required for voice input. Please allow microphone permissions and try again.');
+                        // Start listening with simplified voice registration
+                        console.log('🎤 Starting voice input...');
+                        const success = await (window as any).voiceIsolationControl?.startPrimaryRecognition();
+                        if (success) {
+                          setIsListening(true);
+                          setCurrentTranscript('');
+                          setTranscriptConfidence(0);
+                          console.log('✅ Voice input started');
+                          // Start audio level monitoring
+                          audioLevelIntervalRef.current = setInterval(() => {
+                            setAudioLevel(Math.random() * 0.6 + 0.2);
+                          }, 100);
+                        } else {
+                          console.log('❌ Voice input failed to start');
                         }
                       }
                     }}

@@ -219,31 +219,24 @@ export function VoiceIsolationFilter({
     }
     
     try {
-      // Test microphone access explicitly
-      console.log('🎤 Testing microphone access...');
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        } 
-      });
-      console.log('✅ Microphone access granted');
+      console.log('🎤 Starting speech recognition...');
       
+      // Initialize audio isolation first
       await initializeIsolatedAudio();
       
+      // Create and start speech recognition directly
       primaryRecognitionRef.current = initializePrimaryRecognition();
       if (!primaryRecognitionRef.current) {
-        console.error('❌ Failed to create speech recognition');
+        console.error('❌ Speech recognition not supported');
         return false;
       }
       
       primaryRecognitionRef.current.start();
-      console.log('🎤 Primary recognition started with isolation filter');
+      console.log('✅ Voice recognition started successfully');
       return true;
     } catch (error) {
-      console.error('❌ Failed to start primary recognition:', error);
-      alert('Please allow microphone access to use voice input.');
+      console.error('❌ Voice recognition failed:', error);
+      // Don't show alert - just return false and let user try again
       return false;
     }
   }, [isAISpeaking, initializeIsolatedAudio, initializePrimaryRecognition]);
