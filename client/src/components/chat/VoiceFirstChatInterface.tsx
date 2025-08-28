@@ -194,29 +194,37 @@ export function VoiceFirstChatInterface({
     voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV', // Dynamic voice based on persona
     autoPlay: true,
     onStart: () => {
-      console.log('🔊 ElevenLabs started - AI speaking, interruption allowed');
+      console.log('🔊 ElevenLabs started - STOPPING voice recognition to prevent feedback');
       setVoiceState('responding');
-      setInputIsolated(false); // ALLOW interruption during AI speech
+      setInputIsolated(true); // BLOCK voice recognition during AI speech
       setIsAISpeaking(true);
       setIsTalkingBack(true);
       
-      // Keep voice recognition ACTIVE during AI speech to allow interruption
-      console.log('🎤 Voice recognition stays active for interruption capability');
+      // STOP voice recognition to prevent AI voice feedback (like Grok)
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+          console.log('🎤 Voice recognition STOPPED - preventing AI voice feedback');
+        } catch (error) {
+          console.warn('🎤 Recognition stop warning:', error);
+        }
+      }
     },
     onEnd: () => {
-      console.log('🔊 ElevenLabs finished - Voice isolation released');
+      console.log('🔊 ElevenLabs finished - Re-enabling voice recognition');
       setVoiceState('idle');
       setPlayingMessageId(null);
       setInputIsolated(false);
       setIsAISpeaking(false);
       setIsTalkingBack(false);
       
-      // Clean re-enable after delay
+      // IMMEDIATELY re-enable voice recognition after AI finishes (like Grok)
       setTimeout(() => {
         if (hasPermission && isSupported && !inputIsolated) {
-          console.log('🎤 Voice input re-enabled after AI speech');
+          console.log('🎤 Voice recognition RE-ENABLED - ready for next question');
+          // Don't auto-start listening, just make it available
         }
-      }, 800);
+      }, 300);
     },
     onInterrupted: () => {
       console.log('🚨 ElevenLabs interrupted by user');
@@ -611,10 +619,10 @@ export function VoiceFirstChatInterface({
           const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
           setAudioLevel(average / 255);
           
-          // GROK-STYLE interruption - instant response to any user speech
-          if ((voiceState === 'responding' || isAISpeaking) && average > 80) {
+          // GROK-STYLE interruption - only when voice recognition is NOT blocked
+          if ((voiceState === 'responding' || isAISpeaking) && !inputIsolated && average > 100) {
             console.log('🚨 GROK-STYLE INTERRUPTION! User detected, stopping AI instantly');
-            console.log(`🔊 Audio level: ${average}, Threshold: 80 (Grok-sensitive)`);
+            console.log(`🔊 Audio level: ${average}, Threshold: 100 (clean detection)`);
             
             // INSTANT AI stoppage like Grok
             if (stopAIPlayback) {
@@ -632,7 +640,7 @@ export function VoiceFirstChatInterface({
             setTimeout(() => {
               console.log('🎤 GROK-STYLE: Listening for new question immediately');
               startListening();
-            }, 50); // Minimal delay like Grok
+            }, 100);
           }
         }
         
