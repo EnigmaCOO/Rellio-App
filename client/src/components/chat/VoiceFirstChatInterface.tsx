@@ -119,32 +119,6 @@ export function VoiceFirstChatInterface({
   const audioLevelIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const interruptionCooldownRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Handle ISOLATED user voice detection (AI voice completely filtered out)
-  const handleUserVoiceDetected = useCallback((transcript: string, confidence: number) => {
-    console.log('👤 ISOLATED user voice detected (AI filtered):', { 
-      text: transcript.substring(0, 50) + '...',
-      confidence: Math.round(confidence * 100) + '%'
-    });
-    
-    setCurrentTranscript(transcript);
-    setTranscriptConfidence(confidence);
-    
-    // Clear existing auto-send timeout
-    if (autoSendTimeoutRef.current) {
-      clearTimeout(autoSendTimeoutRef.current);
-    }
-    
-    // Auto-send high-confidence speech after delay
-    if (confidence >= 0.7) {
-      autoSendTimeoutRef.current = setTimeout(() => {
-        if (transcript.trim().length > 3) {
-          console.log('🚀 Auto-sending high-confidence isolated user voice:', transcript);
-          handleVoiceMessage(transcript);
-        }
-      }, 1500);
-    }
-  }, []);
-
   // Handle interruption detection during AI speech (Grok-style)
   const handleInterruptionDetected = useCallback(() => {
     if (!isAISpeaking || interruptionCooldownRef.current) return;
@@ -432,8 +406,18 @@ export function VoiceFirstChatInterface({
       // Invalidate query to refresh messages
       await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
       
-      // Store AI message for potential interruption context
-      setLastAIMessage(data.content);
+      // Store AI message for potential interruption context and audio playback
+      if (data.aiMessage?.content) {
+        console.log('🤖 AI response received:', data.aiMessage.content.substring(0, 100) + '...');
+        setLastAIMessage(data.aiMessage.content);
+        
+        // Auto-play AI response with voice isolation if enabled
+        if (settings.autoPlayAI) {
+          setTimeout(() => {
+            playAIResponseWithIsolation(data.aiMessage.content);
+          }, 500); // Small delay to ensure UI updates first
+        }
+      }
       
       // Reset voice message flag
       setWasLastMessageVoice(false);
@@ -468,12 +452,93 @@ export function VoiceFirstChatInterface({
     }
   });
 
-  // Handle voice message submission
+  // Handle voice message submission (defined early for callbacks)
   const handleVoiceMessage = useCallback((message: string) => {
     console.log('🎤 Voice message received:', message);
     setWasLastMessageVoice(true);
     sendMessageMutation.mutate(message);
   }, [sendMessageMutation]);
+
+  // Handle ISOLATED user voice detection (AI voice completely filtered out)
+  const handleUserVoiceDetected = useCallback((transcript: string, confidence: number) => {
+    console.log('👤 ISOLATED user voice detected (AI filtered):', { 
+      text: transcript.substring(0, 50) + '...',
+      confidence: Math.round(confidence * 100) + '%'
+    });
+    
+    setCurrentTranscript(transcript);
+    setTranscriptConfidence(confidence);
+    
+    // Clear existing auto-send timeout
+    if (autoSendTimeoutRef.current) {
+      clearTimeout(autoSendTimeoutRef.current);
+    }
+    
+    // Auto-send high-confidence speech after delay
+    if (confidence >= 0.7) {
+      autoSendTimeoutRef.current = setTimeout(() => {
+        if (transcript.trim().length > 3) {
+          console.log('🚀 Auto-sending high-confidence isolated user voice:', transcript);
+          handleVoiceMessage(transcript);
+        }
+      }, 1500);
+    }
+  }, [handleVoiceMessage]);
+  
+  // Play AI response with complete voice isolation
+  const playAIResponseWithIsolation = useCallback(async (text: string) => {
+    if (!text || !text.trim()) return;
+    
+    console.log('🎙️ Playing AI response with COMPLETE voice isolation:', text.substring(0, 50) + '...');
+    
+    try {
+      setIsAISpeaking(true);
+      
+      const response = await fetch('/api/elevenlabs/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: text.trim(),
+          voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV',
+          settings: {
+            stability: 0.5,
+            similarity_boost: 0.8,
+            style: 0.0,
+            use_speaker_boost: true
+          }
+        })
+      });
+      
+      if (!response.ok) throw new Error('ElevenLabs API error');
+      
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      const audio = new Audio(audioUrl);
+      audio.volume = 0.8;
+      currentAudioRef.current = audio;
+      
+      audio.onended = () => {
+        console.log('🔊 AI speech finished - voice isolation restored');
+        setIsAISpeaking(false);
+        setIsInterrupted(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+      
+      audio.onerror = () => {
+        console.error('🚨 Audio playback error');
+        setIsAISpeaking(false);
+        setIsInterrupted(false);
+      };
+      
+      await audio.play();
+      console.log('🔊 AI speech started with voice isolation active');
+      
+    } catch (error) {
+      console.error('🚨 Failed to play AI response:', error);
+      setIsAISpeaking(false);
+    }
+  }, [selectedPersona]);
 
   // Handle text input submission
   const handleTextSubmit = () => {
@@ -976,9 +1041,7 @@ export function VoiceFirstChatInterface({
               <div className="flex items-center gap-3 p-4 bg-white dark:bg-gray-900 border rounded-lg shadow-sm">
                 {/* Grok-style Orb with State Indication */}
                 <div className="relative">
-                  <GrokStyleOrb 
-                    state={isInterrupted ? 'interrupted' : isAISpeaking ? 'responding' : isListening && currentTranscript ? 'processing' : isListening ? 'listening' : 'idle'} 
-                    size="lg" 
+                  <div
                     className="cursor-pointer transition-transform hover:scale-110"
                     onClick={async () => {
                       if (isListening) {
@@ -1005,7 +1068,12 @@ export function VoiceFirstChatInterface({
                         }
                       }
                     }}
-                  />
+                  >
+                    <GrokStyleOrb 
+                      state={isInterrupted ? 'interrupted' : isAISpeaking ? 'responding' : isListening && currentTranscript ? 'processing' : isListening ? 'listening' : 'idle'} 
+                      size="lg" 
+                    />
+                  </div>
                   
                   {/* State indicators */}
                   {isInterrupted && (
