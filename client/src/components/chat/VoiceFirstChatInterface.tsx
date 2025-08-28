@@ -876,7 +876,7 @@ export function VoiceFirstChatInterface({
     let backgroundRecognition: any = null;
 
     if (isAISpeaking && !inputIsolated) {
-      console.log('🎤 GROK-STYLE: Starting isolated background listening for interruption detection');
+      console.log('🎤 GROK-STYLE: Starting background interruption detection during AI speech');
       
       // Create separate recognition instance for background listening
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -899,80 +899,47 @@ export function VoiceFirstChatInterface({
           }
         };
         
-        // Interruption detection ONLY - never updates transcript
+        // CRITICAL: Interruption detection via speech start
         backgroundRecognition.onspeechstart = () => {
-          console.log('🚨 INTERRUPTION DETECTED via background recognition!');
+          console.log('🚨 USER INTERRUPTION DETECTED! Stopping AI immediately');
           
-          // IMMEDIATELY stop background recognition to prevent conflicts
+          // Stop background recognition first
           try {
             backgroundRecognition.stop();
-            console.log('🛑 Background recognition stopped');
           } catch (error) {
-            console.warn('Warning stopping background recognition:', error);
+            console.warn('Background recognition stop error:', error);
           }
           
-          // Fade-out and stop AI speech (300ms fade as requested)
-          if (audioContextRef.current && gainNodeRef.current) {
-            // Smooth fade-out over 300ms
-            const currentTime = audioContextRef.current.currentTime;
-            gainNodeRef.current.gain.setValueAtTime(1, currentTime);
-            gainNodeRef.current.gain.linearRampToValueAtTime(0, currentTime + 0.3);
-            
-            // Stop AI playback
-            if (stopAIPlayback) {
-              stopAIPlayback();
-            }
-            console.log('🛑 AI speech interrupted with 300ms fade-out');
+          // Stop AI playback with smooth fade
+          if (stopAIPlayback) {
+            stopAIPlayback();
+            console.log('🛑 AI playback stopped due to interruption');
           }
           
-          // Reset states for clean interruption recovery
-          setVoiceState('interrupted');
+          // Reset all AI states immediately
           setIsAISpeaking(false);
           setIsTalkingBack(false);
           setInputIsolated(false);
           setIsAudioIsolated(false);
+          setVoiceState('interrupted');
           
-          // Clear any existing transcript
+          // Clear transcript for clean slate
           setCurrentTranscriptState('');
           
-          // Start fresh recognition for user input transcription
+          // Start listening for user input immediately
           setTimeout(() => {
-            if (hasPermission && isSupported) {
-              try {
-                console.log('🎤 Starting fresh recognition for user transcription after interruption');
-                
-                // CRITICAL: Clear transcript first to ensure clean slate
-                setCurrentTranscriptState('');
-                
-                // Create completely fresh recognition instance
-                const freshRecognition = initializeRecognition();
-                recognitionRef.current = freshRecognition;
-                
-                // Start listening immediately for user input
-                freshRecognition.start();
-                setVoiceState('listening');
-                console.log('🎤✅ Fresh recognition active and listening for user voice');
-              } catch (error) {
-                console.error('🚨 CRITICAL: Failed to start recognition after interruption:', error);
-                setVoiceState('idle');
-                // Try one more time with different approach
-                setTimeout(() => {
-                  try {
-                    console.log('🎤 RETRY: Attempting recognition restart...');
-                    const retryRecognition = initializeRecognition();
-                    recognitionRef.current = retryRecognition;
-                    retryRecognition.start();
-                    setVoiceState('listening');
-                    console.log('🎤 RETRY SUCCESS: Recognition restarted after interruption');
-                  } catch (retryError) {
-                    console.error('🚨 RETRY FAILED:', retryError);
-                    // Force manual restart
-                    setVoiceState('idle');
-                  }
-                }, 500);
-              }
+            try {
+              console.log('🎤 Starting user recognition after interruption');
+              const userRecognition = initializeRecognition();
+              recognitionRef.current = userRecognition;
+              userRecognition.start();
+              setVoiceState('listening');
+              console.log('✅ User recognition active - ready for transcription');
+            } catch (error) {
+              console.error('Failed to start user recognition after interruption:', error);
+              setVoiceState('idle');
             }
-          }, 400); // Reduced delay for faster recovery
+          }, 300);
         };
 
         // Start background recognition with error handling
@@ -1007,7 +974,7 @@ export function VoiceFirstChatInterface({
         }
       }
     };
-  }, [isAISpeaking, inputIsolated, hasPermission, isSupported]);
+  }, [isAISpeaking, inputIsolated, hasPermission, isSupported, stopAIPlayback, initializeRecognition]);
 
   // GROK-STYLE: Proper isolation without breaking interruption
   useEffect(() => {
