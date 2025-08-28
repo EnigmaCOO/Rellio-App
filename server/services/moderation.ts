@@ -169,6 +169,30 @@ async function checkAIModerationAPI(text: string): Promise<ModerationResult> {
 
 // Main moderation function
 export async function moderateMessage(text: string, userId?: string): Promise<ModerationResult> {
+  console.log(`🔍 Moderating message: "${text}" for user: ${userId}`);
+  
+  // Check for spiritual content first - bypass all moderation for spiritual questions
+  const lowerText = text.toLowerCase();
+  const containsSpiritual = SPIRITUAL_ALLOWLIST.some(term => 
+    lowerText.includes(term.toLowerCase())
+  );
+  
+  const spiritualQuestionPatterns = [
+    /who\s+is\s+(god|allah|jesus|christ|buddha)/i,
+    /what\s+is\s+(god|faith|prayer|salvation|enlightenment)/i,
+    /how\s+to\s+(pray|meditate|find\s+god)/i,
+    /meaning\s+of\s+(life|love|peace)/i
+  ];
+  
+  const isSpiritualQuestion = spiritualQuestionPatterns.some(pattern => 
+    pattern.test(text)
+  );
+  
+  if (containsSpiritual || isSpiritualQuestion) {
+    console.log(`✅ Allowing spiritual content: "${text}"`);
+    return { isBlocked: false };
+  }
+  
   // Check if user is banned
   if (userId) {
     try {
@@ -176,6 +200,7 @@ export async function moderateMessage(text: string, userId?: string): Promise<Mo
       if (user && user.banned === 1) {
         const banExpired = user.banExpiresAt && new Date(user.banExpiresAt) < new Date();
         if (!banExpired) {
+          console.log(`❌ User ${userId} is banned`);
           return {
             isBlocked: true,
             reason: user.banReason || 'Your account has been suspended',
@@ -195,6 +220,8 @@ export async function moderateMessage(text: string, userId?: string): Promise<Mo
     await checkAIModerationAPI(text)
   ];
 
+  console.log(`🔍 Moderation results - Offensive: ${checks[0].isBlocked}, Bias: ${checks[1].isBlocked}, AI: ${checks[2].isBlocked}`);
+
   // Return the first blocking result
   for (const result of checks) {
     if (result.isBlocked) {
@@ -206,10 +233,12 @@ export async function moderateMessage(text: string, userId?: string): Promise<Mo
           reason: result.reason
         });
       }
+      console.log(`❌ Message blocked for user ${userId}: ${result.reason}`);
       return result;
     }
   }
 
+  console.log(`✅ Message allowed: "${text}"`);
   return { isBlocked: false };
 }
 
