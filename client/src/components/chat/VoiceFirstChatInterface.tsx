@@ -619,10 +619,10 @@ export function VoiceFirstChatInterface({
           const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
           setAudioLevel(average / 255);
           
-          // GROK-STYLE interruption - only when voice recognition is NOT blocked
-          if ((voiceState === 'responding' || isAISpeaking) && !inputIsolated && average > 100) {
+          // GROK-STYLE interruption - audio monitoring works even when speech recognition is blocked
+          if ((voiceState === 'responding' || isAISpeaking) && average > 120) {
             console.log('🚨 GROK-STYLE INTERRUPTION! User detected, stopping AI instantly');
-            console.log(`🔊 Audio level: ${average}, Threshold: 100 (clean detection)`);
+            console.log(`🔊 Audio level: ${average}, Threshold: 120 (interruption detection)`);
             
             // INSTANT AI stoppage like Grok
             if (stopAIPlayback) {
@@ -636,11 +636,19 @@ export function VoiceFirstChatInterface({
             setIsTalkingBack(false);
             setInputIsolated(false);
             
-            // IMMEDIATE listening mode - no delay like Grok
+            // IMMEDIATE speech recognition restart for new question
             setTimeout(() => {
-              console.log('🎤 GROK-STYLE: Listening for new question immediately');
-              startListening();
-            }, 100);
+              console.log('🎤 GROK-STYLE: Speech recognition restarted for interruption');
+              if (recognitionRef.current && hasPermission && isSupported) {
+                try {
+                  recognitionRef.current.start();
+                  setVoiceState('listening');
+                  console.log('🎤 Listening for interrupted question...');
+                } catch (error) {
+                  console.warn('🎤 Failed to restart recognition after interruption:', error);
+                }
+              }
+            }, 200);
           }
         }
         
