@@ -791,9 +791,9 @@ export function VoiceFirstChatInterface({
           }
           
           // Enhanced interruption detection (backup to onspeechstart)
-          if ((voiceState === 'responding' || isAISpeaking) && average > 80) {
+          if ((voiceState === 'responding' || isAISpeaking) && average > 50) {
             console.log('🚨 AUDIO-LEVEL INTERRUPTION! High audio detected during AI speech');
-            console.log(`🔊 Audio level: ${average}, Threshold: 80`);
+            console.log(`🔊 Audio level: ${average}, Threshold: 50`);
             
             // Trigger interruption
             if (stopAIPlayback) {
@@ -806,6 +806,7 @@ export function VoiceFirstChatInterface({
             setIsAISpeaking(false);
             setIsTalkingBack(false);
             setInputIsolated(false);
+            setIsAudioIsolated(false);
           }
         }
         
@@ -880,13 +881,16 @@ export function VoiceFirstChatInterface({
           }
           
           // Fade-out and stop AI speech (300ms fade as requested)
-          if (stopAIPlayback && audioContextRef.current && gainNodeRef.current) {
+          if (audioContextRef.current && gainNodeRef.current) {
             // Smooth fade-out over 300ms
             const currentTime = audioContextRef.current.currentTime;
             gainNodeRef.current.gain.setValueAtTime(1, currentTime);
             gainNodeRef.current.gain.linearRampToValueAtTime(0, currentTime + 0.3);
             
-            stopAIPlayback();
+            // Stop AI playback
+            if (stopAIPlayback) {
+              stopAIPlayback();
+            }
             console.log('🛑 AI speech interrupted with 300ms fade-out');
           }
           
@@ -934,12 +938,23 @@ export function VoiceFirstChatInterface({
           }, 600); // Allow time for AI to fully stop
         };
 
-        // Start background recognition
+        // Start background recognition with error handling
         try {
           backgroundRecognition.start();
           console.log('🎤 Background interruption listener started with audio isolation');
         } catch (error) {
           console.warn('🎤 Failed to start background recognition:', error);
+          // Try to restart after a brief delay
+          setTimeout(() => {
+            try {
+              if (backgroundRecognition && isAISpeaking && !inputIsolated) {
+                backgroundRecognition.start();
+                console.log('🎤 Background recognition restarted successfully');
+              }
+            } catch (retryError) {
+              console.error('🎤 Background recognition retry failed:', retryError);
+            }
+          }, 500);
         }
       }
     }
@@ -955,7 +970,7 @@ export function VoiceFirstChatInterface({
         }
       }
     };
-  }, [isAISpeaking, inputIsolated, hasPermission, isSupported, stopAIPlayback]);
+  }, [isAISpeaking, inputIsolated, hasPermission, isSupported]);
 
   // CRITICAL: Monitor AI speaking states and immediately clear transcripts for complete voice isolation
   useEffect(() => {
