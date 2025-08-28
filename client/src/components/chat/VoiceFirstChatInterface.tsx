@@ -905,7 +905,7 @@ export function VoiceFirstChatInterface({
     }
   }, [settings.volume, selectedPersona]);
 
-  // Auto-play new AI messages (DISABLED during voice input to prevent feedback loops)
+  // Auto-play new AI messages with smart voice isolation
   useEffect(() => {
     console.log('🔊 Auto-play check:', { 
       lastAIMessage: lastAIMessage?.substring(0, 50), 
@@ -913,48 +913,53 @@ export function VoiceFirstChatInterface({
       messagesCount: messages.length,
       isTalkingBack,
       voiceState,
-      inputIsolated
+      inputIsolated,
+      wasLastMessageVoice
     });
     
-    // CRITICAL: Never auto-play during voice input or when microphone is active
-    if (voiceState === 'listening' || voiceState === 'processing' || inputIsolated) {
+    // Only block during active listening - not during processing after message sent
+    if (voiceState === 'listening' || inputIsolated) {
       console.log('🚫 Auto-play BLOCKED - Voice input active, preventing feedback loop');
       return;
     }
     
-    // Additional safeguard: Check if user is currently speaking or microphone recently active
-    if (currentTranscript && currentTranscript.trim().length > 0) {
-      console.log('🚫 Auto-play BLOCKED - User transcript detected, preventing feedback');
+    // Allow during 'processing' if no current transcript (message already sent)
+    if (voiceState === 'processing' && currentTranscript && currentTranscript.trim().length > 0) {
+      console.log('🚫 Auto-play BLOCKED - Still processing voice input');
       return;
     }
     
-    // Cooldown period after voice activity
+    // Reduced cooldown period after voice activity (was 2000ms, now 800ms)
     const now = Date.now();
-    if (lastVoiceActivity && (now - lastVoiceActivity) < 2000) {
+    if (lastVoiceActivity && (now - lastVoiceActivity) < 800) {
       console.log('🚫 Auto-play BLOCKED - Recent voice activity cooldown');
       return;
     }
     
-    if (lastAIMessage && settings.autoPlayAI && messages.length > 0 && !isTalkingBack && wasLastMessageVoice) {
+    // Allow auto-play for both voice and text messages when auto-play is enabled
+    if (lastAIMessage && settings.autoPlayAI && messages.length > 0 && !isTalkingBack) {
       const lastMessage = messages[messages.length - 1];
       if (lastMessage?.type === 'ai' && lastMessage.content === lastAIMessage) {
         console.log('🔊 Auto-playing AI response...');
         // Small delay to ensure message is rendered
         setTimeout(async () => {
-          // Double-check voice state hasn't changed
-          if (voiceState === 'listening' || voiceState === 'processing' || inputIsolated) {
+          // Double-check voice state hasn't changed to actively listening
+          if (voiceState === 'listening' || inputIsolated) {
             console.log('🚫 Auto-play CANCELLED - Voice became active during delay');
             return;
           }
           
-          console.log('🔊 Calling playAIText with:', lastAIMessage.substring(0, 50) + '...');
+          console.log('🔊 Auto-playing AI response:', lastAIMessage.substring(0, 50) + '...');
           setIsTalkingBack(true);
+          setVoiceState('responding'); // Set proper voice state for AI speech
           try {
             await playAIText(lastAIMessage);
+            console.log('✅ Auto-play completed successfully');
           } catch (error) {
             console.error('🚨 Auto-play failed:', error);
           } finally {
             setIsTalkingBack(false);
+            setVoiceState('idle'); // Return to idle after AI speech
           }
         }, 1000);
       }
