@@ -1,0 +1,33 @@
+Implement an advanced interruption system for the “Universal Wisdom Explorer” chat in the right-hand column of Rellio’s three-column Scripture Reader page (Left: Navigation, Center: Verse Card, Right: Chat) to enable real-time user interruptions during AI talk-back, mimicking Grok’s voice mode. Build on the existing voice system (<VoiceModeHandler.tsx>, <VoiceInputControls.tsx>, <AudioPlaybackButton.tsx>) where listening/transcription works but lacks mid-speech detection—keep the microphone active in background mode during ElevenLabs playback to detect user speech, pause the AI audio mid-response, and seamlessly switch to processing the new input while retaining context. Use Web Speech API for continuous background listening, ElevenLabs for output, and ensure no loops or cut-offs. Maintain the white-themed UI (#FFFFFF, rounded corners 12px, shadow-md) with teal #00D5FF accents, purple-to-gold gradient (#4B0082 to #D4AF37, 10% opacity), and mandala art.
+
+**Key Features and Goals:**
+1. **Background Listening During AI Talk-Back:**
+   - While AI is speaking (ElevenLabs playback in <AudioPlaybackButton.tsx>), run Web Speech API in continuous, low-sensitivity background mode (interimResults=true, but muted audio input to avoid feedback).
+   - Detect user speech onset (e.g., onspeechstart event with volume > threshold 0.3 and confidence >0.7) to trigger interruption—ignore short noises or echoes.
+
+2. **Interruption Handling (Grok-Style):**
+   - On detection, immediately pause ElevenLabs audio (fade-out 300ms, stop stream); append interrupted response to chat history (shared/schema.ts chatMessages).
+   - Switch to listening mode: Show “Interrupted” tooltip (red orb flash in header, like Grok), process new transcription as follow-up query with full context (e.g., "You interrupted—now about your new question on love?").
+   - Resume Option: Add "Resume" button on interrupted bubble to continue from pause point.
+
+3. **Loop Prevention and Isolation:**
+   - Enhance echo cancellation (Web Audio API in <VoiceModeHandler.tsx>): Use createMediaStreamDestination with echoCancellation=true; mute mic input during playback or use noise suppression.
+   - Isolate Responses: Ensure AI output (text/audio) renders only in chat bubbles (right-aligned, white with border)—no interference with input field (lock/fade during talk-back).
+   - Auto-Play Safeguard: Keep auto-play opt-in (default OFF); block during active listening.
+
+4. **Context Retention and Flow:**
+   - Retain full history (last 5-10 turns) in useState or session storage; reference in new prompts (OpenAI/XAI) post-interruption for coherent continuation.
+   - Persona Sync: Interruption adapts to current persona (e.g., Mufti resumes authoritatively).
+
+5. **UI and Animation Enhancements:**
+   - Header Orb: Teal 24px pulses (purple processing, gold speaking, red interrupted).
+   - Visual Feedback: During interruption, bubble grays out with "Paused" label; waveform appears for new input.
+
+Deliverables:
+- Updated <VoiceModeHandler.tsx>: Add background recognition, interruption detection.
+- <InterruptionListener /> sub-component: For onspeechstart handling, ElevenLabs pause.
+- ElevenLabs/Web Speech updates: <VoiceInputControls.tsx> for continuous mode, <AudioPlaybackButton.tsx> for fade-pause.
+- Tailwind/CSS: Interruption styles (text-red-500, animate-fadeOut).
+- State/Hooks: useState for isSpeaking, interruptionPoint; useEffect for background listener (attach during isSpeaking).
+
+Provide React/TypeScript code with Tailwind classes, and describe state/effects. Ensure a mesmerizing, Grok-like voice experience where interruptions feel natural, with smart pause/resume and no loops for profound, uninterrupted spiritual conversations.

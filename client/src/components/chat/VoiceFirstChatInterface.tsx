@@ -516,10 +516,9 @@ export function VoiceFirstChatInterface({
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      // BLOCK transcription if AI is speaking (prevents feedback)
+      // Only process transcription during normal listening (not during AI speech)
       if (isAISpeaking || inputIsolated) {
-        console.log('🔇 BLOCKED transcription - AI is speaking, ignoring speech input');
-        return;
+        return; // Silently ignore during AI speech
       }
 
       let finalTranscript = '';
@@ -528,7 +527,7 @@ export function VoiceFirstChatInterface({
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
-        const currentConfidence = event.results[i][0].confidence || 0.8; // Default confidence
+        const currentConfidence = event.results[i][0].confidence || 0.8;
 
         if (event.results[i].isFinal) {
           finalTranscript += transcript;
@@ -538,29 +537,27 @@ export function VoiceFirstChatInterface({
         }
       }
 
-      // Show LIVE transcript as user speaks (interim + final)
+      // Show LIVE transcript as user speaks
       const fullTranscript = finalTranscript || interimTranscript;
-      console.log(`🎤 USER SPEECH: "${fullTranscript}" (interim: "${interimTranscript}", final: "${finalTranscript}")`);
+      console.log(`🎤 USER SPEECH: "${fullTranscript}" (confidence: ${maxConfidence})`);
       setCurrentTranscript(fullTranscript);
       setConfidence(maxConfidence);
 
-      // Track voice activity for cooldown system
+      // Track voice activity
       setLastVoiceActivity(Date.now());
 
-      // Auto-send logic with LOWER confidence threshold for better auto-send
-      if (finalTranscript && maxConfidence > 0.6) { // Lowered from 0.8 to 0.6
-        // Clear existing timeout
+      // Auto-send on final result
+      if (finalTranscript && maxConfidence > 0.6) {
         if (autoSendTimeoutRef.current) {
           clearTimeout(autoSendTimeoutRef.current);
         }
 
-        // SHORTER timeout for faster auto-send
         autoSendTimeoutRef.current = setTimeout(() => {
           console.log('🚀 AUTO-SENDING message:', finalTranscript.trim());
-          setWasLastMessageVoice(true); // Mark this as a voice-initiated message
+          setWasLastMessageVoice(true);
           handleSendMessage(finalTranscript.trim());
           stopListening();
-        }, 800); // Reduced from 1500ms to 800ms
+        }, 800);
       }
     };
 
@@ -632,37 +629,22 @@ export function VoiceFirstChatInterface({
             console.log(`🔊 DEBUG: Audio level: ${average}, AI speaking: ${isAISpeaking}, Voice state: ${voiceState}`);
           }
           
-          // GROK-STYLE interruption - VERY SENSITIVE during AI speech
-          if ((voiceState === 'responding' || isAISpeaking) && average > 60) {
-            console.log('🚨 GROK-STYLE INTERRUPTION! User detected, stopping AI instantly');
-            console.log(`🔊 Audio level: ${average}, Threshold: 60 (very sensitive)`);
-            console.log(`🔊 AI Speaking: ${isAISpeaking}, Voice State: ${voiceState}`);
+          // Enhanced interruption detection (backup to onspeechstart)
+          if ((voiceState === 'responding' || isAISpeaking) && average > 80) {
+            console.log('🚨 AUDIO-LEVEL INTERRUPTION! High audio detected during AI speech');
+            console.log(`🔊 Audio level: ${average}, Threshold: 80`);
             
-            // INSTANT AI stoppage like Grok
+            // Trigger interruption
             if (stopAIPlayback) {
               stopAIPlayback();
-              console.log('🛑 AI stopped instantly (Grok-style)');
+              console.log('🛑 AI interrupted via audio level detection');
             }
             
-            // Immediate state reset 
-            setVoiceState('idle');
+            // Reset states
+            setVoiceState('interrupted');
             setIsAISpeaking(false);
             setIsTalkingBack(false);
             setInputIsolated(false);
-            
-            // IMMEDIATE speech recognition restart for new question
-            setTimeout(() => {
-              console.log('🎤 GROK-STYLE: Speech recognition restarted for interruption');
-              if (recognitionRef.current && hasPermission && isSupported) {
-                try {
-                  recognitionRef.current.start();
-                  setVoiceState('listening');
-                  console.log('🎤 Listening for interrupted question...');
-                } catch (error) {
-                  console.warn('🎤 Failed to restart recognition after interruption:', error);
-                }
-              }
-            }, 200);
           }
         }
         
@@ -703,19 +685,73 @@ export function VoiceFirstChatInterface({
     };
   }, [initializeRecognition, initializeAudioContext]);
 
-  // CRITICAL: Stop speech recognition when AI is speaking to prevent feedback
+  // GROK-STYLE: Background listening during AI speech for interruption detection
   useEffect(() => {
-    if (isAISpeaking && recognitionRef.current && voiceState === 'listening') {
-      console.log('🔇 STOPPING speech recognition - AI is speaking (preventing feedback)');
-      try {
-        recognitionRef.current.stop();
-        setVoiceState('idle');
-        setCurrentTranscript(''); // Clear any partial transcript
-      } catch (error) {
-        console.warn('🔇 Failed to stop recognition:', error);
+    let backgroundRecognition: any = null;
+
+    if (isAISpeaking && !inputIsolated) {
+      console.log('🎤 GROK-STYLE: Starting background listening for interruption detection');
+      
+      // Create separate recognition instance for background listening
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        backgroundRecognition = new SpeechRecognition();
+        backgroundRecognition.continuous = true;
+        backgroundRecognition.interimResults = true;
+        backgroundRecognition.lang = 'en-US';
+        
+        // Lower sensitivity for background detection
+        backgroundRecognition.onspeechstart = () => {
+          console.log('🚨 INTERRUPTION DETECTED via onspeechstart!');
+          
+          // Immediate interruption
+          if (stopAIPlayback) {
+            stopAIPlayback();
+            console.log('🛑 AI speech interrupted instantly');
+          }
+          
+          // Reset states
+          setVoiceState('interrupted');
+          setIsAISpeaking(false);
+          setIsTalkingBack(false);
+          setInputIsolated(false);
+          
+          // Start normal listening for new question
+          setTimeout(() => {
+            if (recognitionRef.current && hasPermission && isSupported) {
+              try {
+                recognitionRef.current.start();
+                setVoiceState('listening');
+                console.log('🎤 Switched to normal listening after interruption');
+              } catch (error) {
+                console.warn('🎤 Failed to start normal recognition:', error);
+              }
+            }
+          }, 300);
+        };
+
+        // Start background recognition
+        try {
+          backgroundRecognition.start();
+          console.log('🎤 Background interruption listener started');
+        } catch (error) {
+          console.warn('🎤 Failed to start background recognition:', error);
+        }
       }
     }
-  }, [isAISpeaking, voiceState]);
+
+    // Cleanup background recognition
+    return () => {
+      if (backgroundRecognition) {
+        try {
+          backgroundRecognition.stop();
+          console.log('🎤 Background recognition stopped');
+        } catch (error) {
+          console.warn('🎤 Failed to stop background recognition:', error);
+        }
+      }
+    };
+  }, [isAISpeaking, inputIsolated, hasPermission, isSupported, stopAIPlayback]);
 
   // Voice Control Functions
   const startListening = useCallback(async () => {
@@ -1566,7 +1602,7 @@ export function VoiceFirstChatInterface({
                   : voiceState === 'responding'
                   ? "bg-gradient-to-br from-yellow-500 to-orange-600 animate-pulse"
                   : voiceState === 'interrupted'
-                  ? "bg-gradient-to-br from-red-400 to-rose-500 animate-bounce"
+                  ? "bg-gradient-to-br from-red-500 to-red-600 animate-ping shadow-lg shadow-red-500/50"
                   : "bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700"
               )}
             >
@@ -1576,6 +1612,8 @@ export function VoiceFirstChatInterface({
                 <Square className="w-6 h-6 text-white" />
               ) : voiceState === 'responding' ? (
                 <Volume2 className="w-6 h-6 text-white" />
+              ) : voiceState === 'interrupted' ? (
+                <div className="w-6 h-6 text-white animate-pulse">⚡</div>
               ) : inputIsolated ? (
                 <MicOff className="w-6 h-6 text-gray-500" />
               ) : (
@@ -1601,8 +1639,8 @@ export function VoiceFirstChatInterface({
                 </div>
               )}
               {voiceState === 'interrupted' && (
-                <div className="text-xs text-red-600 font-medium">
-                  Interrupted
+                <div className="text-xs text-red-600 font-medium animate-pulse">
+                  🚨 Interrupted
                 </div>
               )}
               {voiceState === 'idle' && isSupported && hasPermission && !inputIsolated && (
