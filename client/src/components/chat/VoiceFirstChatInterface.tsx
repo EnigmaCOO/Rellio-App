@@ -1023,7 +1023,7 @@ export function VoiceFirstChatInterface({
             )}
 
             {/* Enhanced Voice Interface with Complete Isolation */}
-            <div className="p-4 space-y-4">
+            <div className="p-2 space-y-2">
               {/* Voice Isolation Filter (headless component) */}
               <VoiceIsolationFilter
                 isAISpeaking={isAISpeaking}
@@ -1037,8 +1037,8 @@ export function VoiceFirstChatInterface({
                 }}
               />
               
-              {/* Voice Control Interface */}
-              <div className="flex items-center gap-3 p-4 bg-white dark:bg-gray-900 border rounded-lg shadow-sm">
+              {/* Voice Control Interface - Compact */}
+              <div className="flex items-center gap-2 p-3 bg-white dark:bg-gray-900 border rounded-md shadow-sm">
                 {/* Grok-style Orb with State Indication */}
                 <div className="relative">
                   <div
@@ -1096,50 +1096,50 @@ export function VoiceFirstChatInterface({
                   />
                 )}
                 
-                {/* Status and Transcript Display */}
-                <div className="flex-1 min-w-0 space-y-2">
+                {/* Status and Transcript Display - Compact */}
+                <div className="flex-1 min-w-0 space-y-1">
                   {/* Status Message */}
-                  <div className={cn("text-sm font-medium", 
+                  <div className={cn("text-xs font-medium", 
                     sendMessageMutation.isPending ? 'text-gray-400' :
                     isInterrupted ? 'text-red-500' :
                     isAISpeaking ? 'text-amber-600' :
                     isListening ? 'text-teal-600' : 'text-gray-600'
                   )}>
                     {sendMessageMutation.isPending ? 'Processing...' :
-                     isInterrupted ? 'Interrupted - Continue speaking' :
-                     isAISpeaking ? 'AI speaking (speak to interrupt)' :
-                     isListening && currentTranscript ? 'Processing your voice...' :
-                     isListening ? 'Listening (AI voice filtered out)' : 'Ready'}
+                     isInterrupted ? 'Interrupted' :
+                     isAISpeaking ? 'AI speaking' :
+                     isListening && currentTranscript ? 'Processing...' :
+                     isListening ? 'Listening' : 'Ready'}
                   </div>
                   
                   {/* User Transcript (COMPLETELY ISOLATED from AI voice) */}
                   {currentTranscript && (
                     <div className="space-y-1">
-                      <div className="text-sm text-gray-700 dark:text-gray-300 p-3 bg-gray-50 dark:bg-gray-800 rounded border">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Mic className="h-3 w-3 text-teal-600" />
-                          <span className="text-xs text-gray-500 uppercase tracking-wide font-medium">
-                            Your voice only (AI completely filtered)
+                      <div className="text-xs text-gray-700 dark:text-gray-300 p-2 bg-gray-50 dark:bg-gray-800 rounded border">
+                        <div className="flex items-center gap-1 mb-1">
+                          <Mic className="h-2 w-2 text-teal-600" />
+                          <span className="text-xs text-gray-500 font-medium">
+                            Your voice (isolated)
                           </span>
                         </div>
-                        <div className="text-gray-700 dark:text-gray-300">
+                        <div className="text-gray-700 dark:text-gray-300 truncate">
                           "{currentTranscript}"
                         </div>
                       </div>
                       
-                      {/* Confidence indicator */}
+                      {/* Confidence indicator - Compact */}
                       {transcriptConfidence > 0 && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                           <Badge 
                             variant={transcriptConfidence >= 0.7 ? "default" : "secondary"}
-                            className="text-xs"
+                            className="text-xs h-4"
                           >
-                            {Math.round(transcriptConfidence * 100)}% confident
+                            {Math.round(transcriptConfidence * 100)}%
                           </Badge>
                           
                           {transcriptConfidence >= 0.7 && (
-                            <span className="text-xs text-green-600 flex items-center gap-1">
-                              ✅ Auto-send ready
+                            <span className="text-xs text-green-600">
+                              ✅ Ready
                             </span>
                           )}
                         </div>
@@ -1147,11 +1147,11 @@ export function VoiceFirstChatInterface({
                     </div>
                   )}
                   
-                  {/* Interruption context */}
+                  {/* Interruption context - Compact */}
                   {isInterrupted && interruptedQuery && (
-                    <div className="text-xs text-orange-600 dark:text-orange-400 flex items-center gap-1 bg-red-100 dark:bg-red-900/20 p-2 rounded">
-                      <AlertTriangle className="h-3 w-3" />
-                      AI speech interrupted - continue with your question
+                    <div className="text-xs text-orange-600 dark:text-orange-400 flex items-center gap-1 bg-red-100 dark:bg-red-900/20 p-1 rounded">
+                      <AlertTriangle className="h-2 w-2" />
+                      Interrupted
                     </div>
                   )}
                 </div>
@@ -1203,7 +1203,7 @@ export function VoiceFirstChatInterface({
                     )}
                   </Button>
                   
-                  {/* Manual Send Button */}
+                  {/* Compact Action Buttons */}
                   {currentTranscript && (
                     <Button
                       variant="outline"
@@ -1215,13 +1215,13 @@ export function VoiceFirstChatInterface({
                           setTranscriptConfidence(0);
                         }
                       }}
-                      className="text-xs"
+                      className="text-xs h-6 px-2"
                     >
                       Send
                     </Button>
                   )}
                   
-                  {/* Resume Button (after interruption) */}
+                  {/* Resume Button (after interruption) - Compact */}
                   {isInterrupted && interruptedQuery && (
                     <Button
                       variant="outline"
@@ -1259,7 +1259,7 @@ export function VoiceFirstChatInterface({
                           setIsAISpeaking(false);
                         }
                       }}
-                      className="border-orange-200 text-orange-600 hover:bg-orange-50 text-xs"
+                      className="border-orange-200 text-orange-600 hover:bg-orange-50 text-xs h-6 px-2"
                     >
                       Resume
                     </Button>
@@ -1267,9 +1267,9 @@ export function VoiceFirstChatInterface({
                 </div>
               </div>
               
-              {/* Voice Isolation Status */}
-              <div className="text-xs text-center text-gray-500 flex items-center justify-center gap-1">
-                🛡️ Complete voice isolation active - AI speech BLOCKED from transcript
+              {/* Voice Isolation Status - Compact */}
+              <div className="text-xs text-center text-gray-500 py-1">
+                🛡️ Voice isolation active
               </div>
             </div>
           </div>
