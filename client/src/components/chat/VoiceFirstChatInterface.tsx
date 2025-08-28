@@ -118,20 +118,6 @@ export function VoiceFirstChatInterface({
   // Voice State Management
   const [voiceState, setVoiceState] = useState<VoiceFirstState>('idle');
   const [currentTranscript, setCurrentTranscriptState] = useState('');
-  
-  // PROTECTED transcript setter - completely blocks AI voice contamination
-  const setCurrentTranscript = useCallback((transcript: string) => {
-    // ABSOLUTE BLOCKING: Never allow transcript updates during AI speech
-    if (isAISpeaking || isTalkingBack || inputIsolated || isAudioIsolated) {
-      console.log('🚫 PROTECTED SETTER: Blocking transcript update - AI is active:', {
-        isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated, transcript
-      });
-      return;
-    }
-    
-    console.log('✅ PROTECTED SETTER: Allowing transcript update - AI is silent:', transcript);
-    setCurrentTranscriptState(transcript);
-  }, [isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated]);
   const [audioLevel, setAudioLevel] = useState(0);
   const [confidence, setConfidence] = useState(0);
   const [isSupported, setIsSupported] = useState(false);
@@ -148,9 +134,24 @@ export function VoiceFirstChatInterface({
   const [inputIsolated, setInputIsolated] = useState(false);
   const [isTalkingBack, setIsTalkingBack] = useState(false);
   const [isAISpeaking, setIsAISpeaking] = useState(false);
+  const [isAudioIsolated, setIsAudioIsolated] = useState(false);
   const [interruptedQuery, setInterruptedQuery] = useState<string>('');
   const [lastAIMessage, setLastAIMessage] = useState<string>('');
   const [lastVoiceActivity, setLastVoiceActivity] = useState<number>(0);
+
+  // PROTECTED transcript setter - completely blocks AI voice contamination
+  const setCurrentTranscript = useCallback((transcript: string) => {
+    // ABSOLUTE BLOCKING: Never allow transcript updates during AI speech
+    if (isAISpeaking || isTalkingBack || inputIsolated || isAudioIsolated) {
+      console.log('🚫 PROTECTED SETTER: Blocking transcript update - AI is active:', {
+        isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated, transcript
+      });
+      return;
+    }
+    
+    console.log('✅ PROTECTED SETTER: Allowing transcript update - AI is silent:', transcript);
+    setCurrentTranscriptState(transcript);
+  }, [isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated]);
   
   // Compare Mode state
   const [isCompareMode, setIsCompareMode] = useState(false);
@@ -183,7 +184,6 @@ export function VoiceFirstChatInterface({
   const destinationRef = useRef<MediaStreamAudioDestinationNode | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const elevenLabsStreamRef = useRef<any>(null);
-  const [isAudioIsolated, setIsAudioIsolated] = useState(false);
   
   // Settings and persona change tracking
   const [settings, setSettings] = useState({
@@ -1220,7 +1220,7 @@ export function VoiceFirstChatInterface({
             
             if (onNavigateToVerse && parsed) {
               // Navigate to the scripture location
-              onNavigateToVerse(parsed.religion, parsed.book, parsed.chapter, parsed.verse);
+              onNavigateToVerse(parsed.religion, parsed.book, parsed.chapter, parsed.verse || undefined);
             }
           }}
           className="inline-flex items-center gap-1 px-1 py-0.5 rounded text-xs bg-teal-100 text-teal-700 hover:bg-teal-200 transition-colors duration-200 border border-teal-200 hover:border-teal-300 cursor-pointer"
@@ -1864,7 +1864,7 @@ export function VoiceFirstChatInterface({
                   }}
                   onHighlightVerse={(religion, book, chapter) => {
                     if (onNavigateToVerse) {
-                      onNavigateToVerse(religion, book, chapter);
+                      onNavigateToVerse(religion as Religion, book, chapter);
                     }
                     setShowHistoryPanel(false);
                   }}
