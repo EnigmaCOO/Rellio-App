@@ -126,16 +126,48 @@ export function VoiceFirstChatInterface({
   const [textInputValue, setTextInputValue] = useState('');
   const [lastAIMessage, setLastAIMessage] = useState<string>('');
   
-  // Voice state and transcript
-  const [voiceState, setVoiceState] = useState<VoiceFirstState>('idle');
-  const [currentTranscript, setCurrentTranscriptState] = useState('');
-  const [confidence, setConfidence] = useState(0);
-  const [audioLevel, setAudioLevel] = useState(0);
+  // Voice recognition support states
+  const [isSupported, setIsSupported] = useState(false);
+  const [hasPermission, setHasPermission] = useState(false);
+  const [lastVoiceActivity, setLastVoiceActivity] = useState(0);
   const [isAISpeaking, setIsAISpeaking] = useState(false); // Tracks if AI is currently speaking
   const [isTalkingBack, setIsTalkingBack] = useState(false); // Tracks if AI is in a talk-back state
   const [inputIsolated, setInputIsolated] = useState(false); // Locks input during AI speech
   const [isAudioIsolated, setIsAudioIsolated] = useState(false); // Mutes mic during AI speech
   const [isProcessingVoice, setIsProcessingVoice] = useState<boolean>(false); // Tracks if voice processing is active
+
+  // Simplified ElevenLabs Integration (moved up to be available for handlers)
+  const {
+    isPlaying: isAIPlaying,
+    isLoading: isAILoading,
+    playText: playAIText,
+    stopPlayback: stopAIPlayback,
+    volume: aiVolume,
+    setVolume: setAIVolume
+  } = useElevenLabsStreaming({
+    voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV',
+    autoPlay: false, // Disable auto-play to prevent conflicts
+    onStart: () => {
+      console.log('🔊 AI started speaking');
+      setAISpeaking(true);
+      setPlayingMessageId(playingMessageId);
+    },
+    onEnd: () => {
+      console.log('🔊 AI finished speaking');
+      setAISpeaking(false);
+      setPlayingMessageId(null);
+    },
+    onInterrupted: () => {
+      console.log('🚨 AI speech interrupted');
+      setAISpeaking(false);
+      setPlayingMessageId(null);
+    },
+    onError: (error) => {
+      console.log('🔊 AI speech error:', error);
+      setAISpeaking(false);
+      setPlayingMessageId(null);
+    }
+  });
 
   // Voice event handlers for SimplifiedVoiceHandler
   const handleVoiceMessage = useCallback((text: string) => {
@@ -162,8 +194,6 @@ export function VoiceFirstChatInterface({
     stopListening,
     toggleListening,
     setAISpeaking,
-    isSupported,
-    hasPermission,
     interruptAI
   } = useConsolidatedVoiceHandler({
     onTranscript: (text, isInterim) => {
@@ -183,7 +213,6 @@ export function VoiceFirstChatInterface({
   // Simplified transcript handling
   const handleTranscriptUpdate = useCallback((transcript: string) => {
     console.log('📝 Transcript update:', transcript);
-    setCurrentTranscriptState(transcript);
     setIsProcessingVoice(transcript.length > 0);
   }, []);
 
@@ -293,38 +322,6 @@ export function VoiceFirstChatInterface({
   const [previousPersona, setPreviousPersona] = useState<string | null>(null);
   const [previousContext, setPreviousContext] = useState<{religion: Religion | null, book: string} | null>(null);
 
-  // Simplified ElevenLabs Integration
-  const {
-    isPlaying: isAIPlaying,
-    isLoading: isAILoading,
-    playText: playAIText,
-    stopPlayback: stopAIPlayback,
-    volume: aiVolume,
-    setVolume: setAIVolume
-  } = useElevenLabsStreaming({
-    voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV',
-    autoPlay: false, // Disable auto-play to prevent conflicts
-    onStart: () => {
-      console.log('🔊 AI started speaking');
-      setAISpeaking(true);
-      setPlayingMessageId(playingMessageId);
-    },
-    onEnd: () => {
-      console.log('🔊 AI finished speaking');
-      setAISpeaking(false);
-      setPlayingMessageId(null);
-    },
-    onInterrupted: () => {
-      console.log('🚨 AI speech interrupted');
-      setAISpeaking(false);
-      setPlayingMessageId(null);
-    },
-    onError: (error) => {
-      console.log('🔊 AI speech error:', error);
-      setAISpeaking(false);
-      setPlayingMessageId(null);
-    }
-  });
 
   // Clear chat function
   const clearChat = useCallback(async () => {
@@ -339,7 +336,6 @@ export function VoiceFirstChatInterface({
         await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
 
         // Clear local state
-        setCurrentTranscriptState(''); // Force clear
         setTextInputValue('');
         setWasLastMessageVoice(false);
         setLastAIMessage('');
@@ -489,7 +485,6 @@ export function VoiceFirstChatInterface({
   // Send Message with Enhanced Voice Integration
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
-      setVoiceState('processing');
 
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -534,12 +529,10 @@ export function VoiceFirstChatInterface({
       // Reset voice message flag
       setWasLastMessageVoice(false);
 
-      // Clear transcript after successful send
-      setCurrentTranscriptState(''); // Force clear
+      // Transcript is managed by the voice handler
     },
     onError: async (error: any) => {
       console.error('🚨 Send message error:', error);
-      setVoiceState('idle');
 
       // Handle moderation blocks specifically
       if (error.status === 400) {
@@ -587,7 +580,6 @@ export function VoiceFirstChatInterface({
 
     recognition.onstart = () => {
       console.log('🎤 Speech recognition started');
-      setVoiceState('listening');
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -642,8 +634,6 @@ export function VoiceFirstChatInterface({
       }
 
       console.log(`🎤 USER SPEECH (AI Silent): "${fullTranscript}" (confidence: ${maxConfidence})`);
-      setCurrentTranscriptState(fullTranscript);
-      setConfidence(maxConfidence);
 
       // Track voice activity
       setLastVoiceActivity(Date.now());
@@ -677,7 +667,6 @@ export function VoiceFirstChatInterface({
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error('🚨 Speech recognition error:', event.error);
-      setVoiceState('idle');
 
       if (event.error === 'not-allowed') {
         setHasPermission(false);
@@ -691,9 +680,6 @@ export function VoiceFirstChatInterface({
 
     recognition.onend = () => {
       console.log('🎤 Speech recognition ended');
-      if (voiceState === 'listening') {
-        setVoiceState('idle');
-      }
     };
 
     return recognition;
@@ -706,7 +692,6 @@ export function VoiceFirstChatInterface({
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
-          echoCancellationType: 'system',
           noiseSuppression: true,
           autoGainControl: false, // Disable auto gain to prevent AI audio amplification
           channelCount: 1,
@@ -753,7 +738,7 @@ export function VoiceFirstChatInterface({
           analyserRef.current.getByteFrequencyData(dataArray);
 
           const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-          setAudioLevel(average / 255);
+          // Audio level is managed by voice handler
 
           // DEBUG: Log audio levels when AI is speaking
           if (isAISpeaking) {
@@ -761,7 +746,7 @@ export function VoiceFirstChatInterface({
           }
 
           // Enhanced interruption detection (backup to onspeechstart)
-          if ((voiceState === 'responding' || isAISpeaking) && average > 50) {
+          if ((voiceState === 'ai_speaking' || isAISpeaking) && average > 50) {
             console.log('🚨 AUDIO-LEVEL INTERRUPTION! High audio detected during AI speech');
             console.log(`🔊 Audio level: ${average}, Threshold: 50`);
 
@@ -771,8 +756,7 @@ export function VoiceFirstChatInterface({
               console.log('🛑 AI interrupted via audio level detection');
             }
 
-            // Reset states
-            setVoiceState('interrupted');
+            // Voice state is managed by voice handler
             setIsAISpeaking(false);
             setIsTalkingBack(false);
             setInputIsolated(false);
@@ -880,10 +864,8 @@ export function VoiceFirstChatInterface({
           setIsTalkingBack(false);
           setInputIsolated(false);
           setIsAudioIsolated(false);
-          setVoiceState('interrupted');
 
-          // Clear transcript for clean slate
-          setCurrentTranscriptState('');
+          // Voice state and transcript managed by voice handler
 
           // Start listening for user input immediately
           setTimeout(() => {
@@ -892,11 +874,11 @@ export function VoiceFirstChatInterface({
               const userRecognition = initializeRecognition();
               recognitionRef.current = userRecognition;
               userRecognition.start();
-              setVoiceState('listening');
+              // Voice state managed by voice handler
               console.log('✅ User recognition active - ready for transcription');
             } catch (error) {
               console.error('Failed to start user recognition after interruption:', error);
-              setVoiceState('idle');
+              // Voice state managed by voice handler
             }
           }, 300);
         };
@@ -932,24 +914,14 @@ export function VoiceFirstChatInterface({
         gainNodeRef.current.gain.setValueAtTime(0, currentTime);
         console.log('🔇 MICROPHONE MUTED: Preventing AI audio feedback');
 
-        // Set AI speaking state
-        if (voiceState !== 'interrupted') {
-          setVoiceState('ai_speaking');
-        }
-
-        // Clear transcript during AI speech (except during recovery)
-        if (voiceState !== 'interrupted' && voiceState !== 'listening') {
-          console.log('🧹 Clearing transcript during AI speech');
-          setCurrentTranscriptState('');
-        }
+        // Voice state and transcript managed by voice handler
       } else {
         // UNMUTE microphone when AI is silent
         gainNodeRef.current.gain.setValueAtTime(1, currentTime);
         console.log('🎤 MICROPHONE UNMUTED: Ready for user input');
 
-        // Reset to idle when AI is completely silent
+        // Voice state is managed by voice handler
         if (voiceState === 'ai_speaking') {
-          setVoiceState('idle');
           console.log('🎤 AI finished - ready for user input');
         }
       }
