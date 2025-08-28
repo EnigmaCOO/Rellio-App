@@ -197,11 +197,15 @@ export function VoiceFirstChatInterface({
     voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV', // Dynamic voice based on persona
     autoPlay: true,
     onStart: () => {
-      console.log('🔊 ElevenLabs started - STOPPING voice recognition to prevent feedback');
+      console.log('🔊 ElevenLabs started - COMPLETE isolation mode activated');
       setVoiceState('responding');
       setInputIsolated(true); // BLOCK voice recognition during AI speech
       setIsAISpeaking(true);
       setIsTalkingBack(true);
+      
+      // CLEAR any existing transcript to prevent AI voice contamination
+      setCurrentTranscript('');
+      console.log('🧹 Transcript cleared - AI voice isolation active');
       
       // MUTE microphone gain during AI playback (Web Audio API isolation)
       if (gainNodeRef.current) {
@@ -251,6 +255,10 @@ export function VoiceFirstChatInterface({
       setIsAISpeaking(false);
       setIsTalkingBack(false);
       
+      // CLEAR transcript on interruption to prevent any AI voice remnants
+      setCurrentTranscript('');
+      console.log('🧹 Transcript cleared on interruption');
+      
       // RESTORE microphone gain immediately on interruption
       if (gainNodeRef.current) {
         gainNodeRef.current.gain.setValueAtTime(1, audioContextRef.current?.currentTime || 0);
@@ -267,6 +275,10 @@ export function VoiceFirstChatInterface({
       setIsAudioIsolated(false);
       setIsAISpeaking(false);
       setIsTalkingBack(false);
+      
+      // CLEAR transcript on error to prevent any AI voice remnants
+      setCurrentTranscript('');
+      console.log('🧹 Transcript cleared on error recovery');
       
       // RESTORE microphone gain on error
       if (gainNodeRef.current) {
@@ -547,9 +559,10 @@ export function VoiceFirstChatInterface({
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      // Only process transcription during normal listening (not during AI speech)
-      if (isAISpeaking || inputIsolated) {
-        return; // Silently ignore during AI speech
+      // CRITICAL: Completely block all transcription during AI speech
+      if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
+        console.log('🚫 BLOCKING all transcription - AI is speaking (no voice mixing!)');
+        return; // Completely block during AI speech
       }
 
       let finalTranscript = '';
@@ -568,17 +581,29 @@ export function VoiceFirstChatInterface({
         }
       }
 
-      // Show LIVE transcript as user speaks
+      // Double-check isolation before showing transcript
+      if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
+        console.log('🚫 DOUBLE-CHECK: Still blocking - AI is speaking');
+        return;
+      }
+
+      // Show LIVE transcript as user speaks (ONLY when AI is not speaking)
       const fullTranscript = finalTranscript || interimTranscript;
-      console.log(`🎤 USER SPEECH: "${fullTranscript}" (confidence: ${maxConfidence})`);
+      console.log(`🎤 USER SPEECH (AI Silent): "${fullTranscript}" (confidence: ${maxConfidence})`);
       setCurrentTranscript(fullTranscript);
       setConfidence(maxConfidence);
 
       // Track voice activity
       setLastVoiceActivity(Date.now());
 
-      // Auto-send on final result
+      // Auto-send on final result (triple-check isolation)
       if (finalTranscript && maxConfidence > 0.6) {
+        // Final check before auto-send
+        if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
+          console.log('🚫 FINAL CHECK: Blocking auto-send - AI is speaking');
+          return;
+        }
+
         if (autoSendTimeoutRef.current) {
           clearTimeout(autoSendTimeoutRef.current);
         }
@@ -801,6 +826,14 @@ export function VoiceFirstChatInterface({
       }
     };
   }, [isAISpeaking, inputIsolated, hasPermission, isSupported, stopAIPlayback]);
+
+  // CRITICAL: Monitor AI speaking states and immediately clear transcripts for complete voice isolation
+  useEffect(() => {
+    if (isAISpeaking || isTalkingBack || inputIsolated || isAudioIsolated) {
+      console.log('🧹 AI state change detected - clearing transcript for COMPLETE voice isolation');
+      setCurrentTranscript('');
+    }
+  }, [isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated]);
 
   // Voice Control Functions
   const startListening = useCallback(async () => {
