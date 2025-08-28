@@ -1,0 +1,45 @@
+Refactor the voice system in the Universal Wisdom Explorer chat (client/src/components/chat/VoiceFirstChatInterface.tsx, VoiceModeHandler.tsx, useElevenLabsStreaming.ts) to resolve interruption issues from overlapping handlers, state conflicts, multiple recognition instances, complex isolation, race conditions, and aggressive feedback prevention. Consolidate into a single voice handler for simplicity, ensuring seamless Grok-like interruptions during AI talk-back. Use Web Speech API for input, ElevenLabs for output (matching persona voices), and maintain integration with OpenAI/XAI for responses. Preserve the white-themed UI (#FFFFFF, rounded corners 12px, shadow-md) with teal #00D5FF accents, purple-to-gold gradient (#4B0082 to #D4AF37, 10% opacity), and mandala art in the right-hand column of the three-column Scripture Reader page.
+Key Features and Goals:
+
+Consolidated Voice Handler:
+
+Merge logic from VoiceModeHandler.tsx, VoiceFirstChatInterface.tsx, and useElevenLabsStreaming.ts into a single <unifiedvoicehandler> component: Use a simple state machine (IDLE, LISTENING, PROCESSING, SPEAKING) with useReducer to eliminate conflicts.</unifiedvoicehandler>
+Reduce timeouts: Use a single debounced auto-send (1.5s silence via onspeechend, confidence >0.85) and remove redundant timers.
+
+
+Interruption Handling (Grok-Style):
+
+During AI speak-back (ElevenLabs playback), run a single background SpeechRecognition instance (continuous=true, interimResults=false, low sensitivity 0.3) to detect user speech (onspeechstart with volume > threshold).
+On detection, pause ElevenLabs (fade-out 300ms, stop stream), clear current response buffer, append interrupted text to history, and switch to LISTENING state for new input—retain context (last 5 turns) for continuation (e.g., "You interrupted—now about your new query?").
+Visual: Teal orb (24px header) flashes red on interruption ("Interrupted" tooltip); add "Resume" button on bubble.
+
+
+Voice Isolation and Loop Prevention:
+
+Isolate input/output: Mute mic stream during SPEAKING state using Web Audio API (gainNode.gain.value = 0 on playback start, reset on end); enhance echo cancellation (createMediaStreamDestination with echoCancellation=true) to block AI audio feedback.
+Aggressive Prevention Fix: Reduce sensitivity during playback; add 1s cooldown post-interruption to avoid race conditions; disable auto-play if mic active or recent loop detected (log warnings).
+No Mixing: Ensure transcription ignores AI output by pausing recognition during playback and resuming only on user intent (e.g., manual mic tap or auto-detect).
+
+
+Persona and UI Sync:
+
+Sync interruptions with personas (e.g., Mufti resumes interpretively); update ElevenLabs voice ID dynamically (e.g., DEFAULT_VOICES[persona]).
+UI: Waveform during input (teal bars keyframes); orb pulses (purple processing, gold speaking, red interrupted).
+
+
+Backend Sync (server/services/elevenlabs.ts, voiceHandler.ts):
+
+Optimize ElevenLabs calls for streaming (low-latency chunks); add interruption endpoint to stop server-side streams.
+
+
+
+Deliverables:
+
+New <unifiedvoicehandler> component: Consolidate logic, state machine.</unifiedvoicehandler>
+Updated VoiceFirstChatInterface.tsx: Import/use new handler.
+Remove/merge redundant files (VoiceModeHandler.tsx, useElevenLabsStreaming.ts).
+ElevenLabs/Web Speech updates: Extend for mute/isolation in playback.
+Tailwind/CSS: Interruption styles (text-red-500, animate-fadeOut), orb (animate-pulse).
+State/Hooks: useReducer for voiceState; useEffect for background recognition (attach during SPEAKING), interruption events.
+
+Provide React/TypeScript code with Tailwind classes, and describe state/effects. Ensure a mesmerizing, loop-free voice experience with precise interruptions and isolation for profound spiritual conversations.
