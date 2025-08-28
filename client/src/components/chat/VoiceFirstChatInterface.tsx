@@ -757,14 +757,15 @@ export function VoiceFirstChatInterface({
   // Initialize Audio Context with Echo Cancellation for Level Detection
   const initializeAudioContext = useCallback(async () => {
     try {
-      // Enhanced getUserMedia with echo cancellation to prevent self-feedback
+      // AGGRESSIVE echo cancellation to prevent AI audio feedback
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
+          echoCancellationType: 'system',
           noiseSuppression: true,
-          autoGainControl: true,
+          autoGainControl: false, // Disable auto gain to prevent AI audio amplification
           channelCount: 1,
-          sampleRate: 44100,
+          sampleRate: 16000, // Lower sample rate for better echo cancellation
           sampleSize: 16
         } 
       });
@@ -789,9 +790,9 @@ export function VoiceFirstChatInterface({
       gainNode.connect(analyser);
       gainNode.connect(destination);
       
-      // CRITICAL: Set initial gain to 0 to prevent any AI audio leakage
-      gainNode.gain.value = 0;
-      console.log('🔇 Microphone gain initialized to 0 for complete AI isolation');
+      // CRITICAL: Start with microphone unmuted for normal operation
+      gainNode.gain.value = 1;
+      console.log('🎤 Microphone initialized and ready');
       
       audioContextRef.current = audioContext;
       analyserRef.current = analyser;
@@ -874,8 +875,9 @@ export function VoiceFirstChatInterface({
   // GROK-STYLE: Background listening during AI speech for interruption detection
   useEffect(() => {
     let backgroundRecognition: any = null;
+    let startDelay: NodeJS.Timeout | null = null;
 
-    if (isAISpeaking && !inputIsolated) {
+    if (isAISpeaking && !inputIsolated && hasPermission && isSupported) {
       console.log('🎤 GROK-STYLE: Starting background interruption detection during AI speech');
       
       // Create separate recognition instance for background listening
@@ -883,8 +885,20 @@ export function VoiceFirstChatInterface({
       if (SpeechRecognition) {
         backgroundRecognition = new SpeechRecognition();
         backgroundRecognition.continuous = true;
-        backgroundRecognition.interimResults = false; // No interim results for interruption detection
+        backgroundRecognition.interimResults = false;
         backgroundRecognition.lang = 'en-US';
+        
+        // CRITICAL: Add delay to prevent immediate AI audio detection
+        startDelay = setTimeout(() => {
+          if (backgroundRecognition && isAISpeaking && !inputIsolated) {
+            try {
+              backgroundRecognition.start();
+              console.log('🎤 Background recognition started after delay to avoid AI audio');
+            } catch (error) {
+              console.warn('Delayed start failed:', error);
+            }
+          }
+        }, 1000); // Wait 1 second for AI audio to settle
         
         // CRITICAL: Block ALL transcript updates from background recognition
         backgroundRecognition.onresult = (event: any) => {
@@ -942,29 +956,16 @@ export function VoiceFirstChatInterface({
           }, 300);
         };
 
-        // Start background recognition with error handling
-        try {
-          backgroundRecognition.start();
-          console.log('🎤 Background interruption listener started with audio isolation');
-        } catch (error) {
-          console.warn('🎤 Failed to start background recognition:', error);
-          // Try to restart after a brief delay
-          setTimeout(() => {
-            try {
-              if (backgroundRecognition && isAISpeaking && !inputIsolated) {
-                backgroundRecognition.start();
-                console.log('🎤 Background recognition restarted successfully');
-              }
-            } catch (retryError) {
-              console.error('🎤 Background recognition retry failed:', retryError);
-            }
-          }, 500);
-        }
+        // Background recognition now starts with delay above
+        // No immediate start to prevent AI audio detection
       }
     }
 
-    // Cleanup background recognition
+    // Cleanup background recognition and timers
     return () => {
+      if (startDelay) {
+        clearTimeout(startDelay);
+      }
       if (backgroundRecognition) {
         try {
           backgroundRecognition.stop();
@@ -976,24 +977,36 @@ export function VoiceFirstChatInterface({
     };
   }, [isAISpeaking, inputIsolated, hasPermission, isSupported, stopAIPlayback, initializeRecognition]);
 
-  // GROK-STYLE: Proper isolation without breaking interruption
+  // HARDWARE AUDIO ISOLATION: Mute microphone during AI speech
   useEffect(() => {
-    if (isAISpeaking || isTalkingBack || inputIsolated || isAudioIsolated) {
-      // Set AI speaking state but don't kill main recognition yet
-      if (voiceState !== 'interrupted') {
-        setVoiceState('ai_speaking');
-      }
+    if (gainNodeRef.current && audioContextRef.current) {
+      const currentTime = audioContextRef.current.currentTime;
       
-      // Clear transcript during AI speech (except during recovery)
-      if (voiceState !== 'interrupted' && voiceState !== 'listening') {
-        console.log('🧹 Clearing transcript during AI speech');
-        setCurrentTranscriptState('');
-      }
-    } else {
-      // Reset to idle when AI is completely silent
-      if (voiceState === 'ai_speaking') {
-        setVoiceState('idle');
-        console.log('🎤 AI finished - ready for user input');
+      if (isAISpeaking || isTalkingBack || inputIsolated || isAudioIsolated) {
+        // MUTE microphone during AI speech to prevent feedback
+        gainNodeRef.current.gain.setValueAtTime(0, currentTime);
+        console.log('🔇 MICROPHONE MUTED: Preventing AI audio feedback');
+        
+        // Set AI speaking state
+        if (voiceState !== 'interrupted') {
+          setVoiceState('ai_speaking');
+        }
+        
+        // Clear transcript during AI speech (except during recovery)
+        if (voiceState !== 'interrupted' && voiceState !== 'listening') {
+          console.log('🧹 Clearing transcript during AI speech');
+          setCurrentTranscriptState('');
+        }
+      } else {
+        // UNMUTE microphone when AI is silent
+        gainNodeRef.current.gain.setValueAtTime(1, currentTime);
+        console.log('🎤 MICROPHONE UNMUTED: Ready for user input');
+        
+        // Reset to idle when AI is completely silent
+        if (voiceState === 'ai_speaking') {
+          setVoiceState('idle');
+          console.log('🎤 AI finished - ready for user input');
+        }
       }
     }
   }, [isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated, voiceState]);
