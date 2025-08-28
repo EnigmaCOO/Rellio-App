@@ -194,23 +194,14 @@ export function VoiceFirstChatInterface({
     voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV', // Dynamic voice based on persona
     autoPlay: true,
     onStart: () => {
-      console.log('🔊 ElevenLabs started - Full voice isolation activated');
+      console.log('🔊 ElevenLabs started - AI speaking, interruption allowed');
       setVoiceState('responding');
-      setInputIsolated(true);
+      setInputIsolated(false); // ALLOW interruption during AI speech
       setIsAISpeaking(true);
       setIsTalkingBack(true);
       
-      // ElevenLabs ONLY - no other voice systems to stop
-      
-      // Stop speech recognition to prevent feedback
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-          console.log('🎤 Speech recognition stopped for voice isolation');
-        } catch (error) {
-          console.warn('🎤 Recognition stop warning:', error);
-        }
-      }
+      // Keep voice recognition ACTIVE during AI speech to allow interruption
+      console.log('🎤 Voice recognition stays active for interruption capability');
     },
     onEnd: () => {
       console.log('🔊 ElevenLabs finished - Voice isolation released');
@@ -668,12 +659,13 @@ export function VoiceFirstChatInterface({
 
   // Voice Control Functions
   const startListening = useCallback(async () => {
-    if (!recognitionRef.current || !isSupported || !hasPermission || inputIsolated) {
-      if (inputIsolated) {
-        console.log('🔒 Voice input blocked due to input isolation (AI speaking)');
-        return;
-      }
+    if (!recognitionRef.current || !isSupported || !hasPermission) {
       return;
+    }
+    
+    // Allow starting while AI is speaking (for interruption)
+    if (isAISpeaking) {
+      console.log('🎤 Starting voice input to interrupt AI speech');
     }
     
     try {
