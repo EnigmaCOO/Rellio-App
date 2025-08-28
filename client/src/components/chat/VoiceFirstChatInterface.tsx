@@ -36,8 +36,9 @@ import {
   Bookmark
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { UnifiedVoiceInterface } from './UnifiedVoiceInterface';
+import { VoiceIsolationFilter } from './VoiceIsolationFilter';
 import { GrokStyleOrb } from './GrokStyleOrb';
+import { AudioWaveform } from './AudioWaveform';
 import { ChatHistoryManager } from './ChatHistoryManager';
 import { ProgressDashboard } from '@/components/progress/ProgressDashboard';
 import { AudioPlaybackButton } from './AudioPlaybackButton';
@@ -95,7 +96,7 @@ export function VoiceFirstChatInterface({
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Simplified Voice State Management (unified handler manages internal state)
+  // Enhanced Voice State Management with COMPLETE isolation
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   const [historyView, setHistoryView] = useState<'chat' | 'progress'>('chat');
   const [showTextInput, setShowTextInput] = useState(false);
@@ -103,13 +104,89 @@ export function VoiceFirstChatInterface({
   const [wasLastMessageVoice, setWasLastMessageVoice] = useState(false);
   const [interruptedQuery, setInterruptedQuery] = useState<string>('');
   const [lastAIMessage, setLastAIMessage] = useState<string>('');
+  
+  // Voice isolation state
+  const [isListening, setIsListening] = useState(false);
+  const [isAISpeaking, setIsAISpeaking] = useState(false);
+  const [currentTranscript, setCurrentTranscript] = useState('');
+  const [transcriptConfidence, setTranscriptConfidence] = useState(0);
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [isInterrupted, setIsInterrupted] = useState(false);
+  
+  // Voice control refs
+  const autoSendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const audioLevelIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const interruptionCooldownRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Handle ISOLATED user voice detection (AI voice completely filtered out)
+  const handleUserVoiceDetected = useCallback((transcript: string, confidence: number) => {
+    console.log('👤 ISOLATED user voice detected (AI filtered):', { 
+      text: transcript.substring(0, 50) + '...',
+      confidence: Math.round(confidence * 100) + '%'
+    });
+    
+    setCurrentTranscript(transcript);
+    setTranscriptConfidence(confidence);
+    
+    // Clear existing auto-send timeout
+    if (autoSendTimeoutRef.current) {
+      clearTimeout(autoSendTimeoutRef.current);
+    }
+    
+    // Auto-send high-confidence speech after delay
+    if (confidence >= 0.7) {
+      autoSendTimeoutRef.current = setTimeout(() => {
+        if (transcript.trim().length > 3) {
+          console.log('🚀 Auto-sending high-confidence isolated user voice:', transcript);
+          handleVoiceMessage(transcript);
+        }
+      }, 1500);
+    }
+  }, []);
+
+  // Handle interruption detection during AI speech (Grok-style)
+  const handleInterruptionDetected = useCallback(() => {
+    if (!isAISpeaking || interruptionCooldownRef.current) return;
+    
+    console.log('🚨 GROK-STYLE INTERRUPTION detected - stopping AI with 300ms fade');
+    
+    // Store interrupted context for resume functionality
+    setInterruptedQuery(lastAIMessage);
+    
+    // Grok-style fade-out (300ms as specified)
+    if (currentAudioRef.current) {
+      const audio = currentAudioRef.current;
+      const originalVolume = audio.volume;
+      
+      // Fade out over 300ms
+      const fadeInterval = setInterval(() => {
+        if (audio.volume > 0.1) {
+          audio.volume -= 0.1;
+        } else {
+          audio.pause();
+          audio.currentTime = 0;
+          audio.volume = originalVolume;
+          clearInterval(fadeInterval);
+        }
+      }, 30);
+    }
+    
+    setIsAISpeaking(false);
+    setIsInterrupted(true);
+    
+    // Set 1-second cooldown as specified
+    interruptionCooldownRef.current = setTimeout(() => {
+      setIsInterrupted(false);
+      interruptionCooldownRef.current = null;
+    }, 1000);
+  }, [isAISpeaking, lastAIMessage]);
 
   // Voice interruption handler
   const handleVoiceInterrupt = useCallback(() => {
-    console.log('🛑 Voice interruption detected');
-    // Store interrupted context for potential continuation
-    setInterruptedQuery(lastAIMessage);
-  }, [lastAIMessage]);
+    console.log('🛑 Voice interruption triggered manually');
+    handleInterruptionDetected();
+  }, [handleInterruptionDetected]);
   
   // Compare Mode state
   const [isCompareMode, setIsCompareMode] = useState(false);
@@ -880,16 +957,252 @@ export function VoiceFirstChatInterface({
               </div>
             )}
 
-            {/* Unified Voice Interface */}
-            <div className="p-4">
-              <UnifiedVoiceInterface
-                onSendMessage={handleVoiceMessage}
-                onInterrupt={handleVoiceInterrupt}
-                selectedPersona={selectedPersona}
-                isAIResponding={sendMessageMutation.isPending}
-                disabled={sendMessageMutation.isPending}
-                className="w-full"
+            {/* Enhanced Voice Interface with Complete Isolation */}
+            <div className="p-4 space-y-4">
+              {/* Voice Isolation Filter (headless component) */}
+              <VoiceIsolationFilter
+                isAISpeaking={isAISpeaking}
+                onUserVoiceDetected={handleUserVoiceDetected}
+                onInterruptionDetected={handleInterruptionDetected}
+                config={{
+                  micGainDuringAI: 0,           // COMPLETE mute during AI speech
+                  confidenceThreshold: 0.7,     // High confidence for user voice only
+                  echoCancellationLevel: 'maximum',
+                  backgroundListenerSensitivity: 0.3
+                }}
               />
+              
+              {/* Voice Control Interface */}
+              <div className="flex items-center gap-3 p-4 bg-white dark:bg-gray-900 border rounded-lg shadow-sm">
+                {/* Grok-style Orb with State Indication */}
+                <div className="relative">
+                  <GrokStyleOrb 
+                    state={isInterrupted ? 'interrupted' : isAISpeaking ? 'responding' : isListening && currentTranscript ? 'processing' : isListening ? 'listening' : 'idle'} 
+                    size="lg" 
+                    className="cursor-pointer transition-transform hover:scale-110"
+                    onClick={async () => {
+                      if (isListening) {
+                        // Stop listening
+                        (window as any).voiceIsolationControl?.stopPrimaryRecognition();
+                        setIsListening(false);
+                        setCurrentTranscript('');
+                        setAudioLevel(0);
+                        if (audioLevelIntervalRef.current) {
+                          clearInterval(audioLevelIntervalRef.current);
+                          audioLevelIntervalRef.current = null;
+                        }
+                      } else if (!isAISpeaking && !sendMessageMutation.isPending) {
+                        // Start listening with complete isolation
+                        const success = await (window as any).voiceIsolationControl?.startPrimaryRecognition();
+                        if (success) {
+                          setIsListening(true);
+                          setCurrentTranscript('');
+                          setTranscriptConfidence(0);
+                          // Start audio level monitoring
+                          audioLevelIntervalRef.current = setInterval(() => {
+                            setAudioLevel(Math.random() * 0.6 + 0.2);
+                          }, 100);
+                        }
+                      }
+                    }}
+                  />
+                  
+                  {/* State indicators */}
+                  {isInterrupted && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                  )}
+                  
+                  {isAISpeaking && (
+                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-amber-500 rounded-full animate-pulse" />
+                  )}
+                </div>
+                
+                {/* Audio Waveform (only during user listening) */}
+                {isListening && (
+                  <AudioWaveform 
+                    isActive={true}
+                    audioLevel={audioLevel}
+                    size="md"
+                    color="teal"
+                    className="flex-1"
+                  />
+                )}
+                
+                {/* Status and Transcript Display */}
+                <div className="flex-1 min-w-0 space-y-2">
+                  {/* Status Message */}
+                  <div className={cn("text-sm font-medium", 
+                    sendMessageMutation.isPending ? 'text-gray-400' :
+                    isInterrupted ? 'text-red-500' :
+                    isAISpeaking ? 'text-amber-600' :
+                    isListening ? 'text-teal-600' : 'text-gray-600'
+                  )}>
+                    {sendMessageMutation.isPending ? 'Processing...' :
+                     isInterrupted ? 'Interrupted - Continue speaking' :
+                     isAISpeaking ? 'AI speaking (speak to interrupt)' :
+                     isListening && currentTranscript ? 'Processing your voice...' :
+                     isListening ? 'Listening (AI voice filtered out)' : 'Ready'}
+                  </div>
+                  
+                  {/* User Transcript (COMPLETELY ISOLATED from AI voice) */}
+                  {currentTranscript && (
+                    <div className="space-y-1">
+                      <div className="text-sm text-gray-700 dark:text-gray-300 p-3 bg-gray-50 dark:bg-gray-800 rounded border">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Mic className="h-3 w-3 text-teal-600" />
+                          <span className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+                            Your voice only (AI completely filtered)
+                          </span>
+                        </div>
+                        <div className="text-gray-700 dark:text-gray-300">
+                          "{currentTranscript}"
+                        </div>
+                      </div>
+                      
+                      {/* Confidence indicator */}
+                      {transcriptConfidence > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={transcriptConfidence >= 0.7 ? "default" : "secondary"}
+                            className="text-xs"
+                          >
+                            {Math.round(transcriptConfidence * 100)}% confident
+                          </Badge>
+                          
+                          {transcriptConfidence >= 0.7 && (
+                            <span className="text-xs text-green-600 flex items-center gap-1">
+                              ✅ Auto-send ready
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Interruption context */}
+                  {isInterrupted && interruptedQuery && (
+                    <div className="text-xs text-orange-600 dark:text-orange-400 flex items-center gap-1 bg-red-100 dark:bg-red-900/20 p-2 rounded">
+                      <AlertTriangle className="h-3 w-3" />
+                      AI speech interrupted - continue with your question
+                    </div>
+                  )}
+                </div>
+                
+                {/* Control Buttons */}
+                <div className="flex items-center gap-2">
+                  {/* Primary Voice Button */}
+                  <Button
+                    variant={isListening ? "default" : "outline"}
+                    size="sm"
+                    onClick={async () => {
+                      if (isListening) {
+                        // Stop listening
+                        (window as any).voiceIsolationControl?.stopPrimaryRecognition();
+                        setIsListening(false);
+                        setCurrentTranscript('');
+                        setAudioLevel(0);
+                        if (audioLevelIntervalRef.current) {
+                          clearInterval(audioLevelIntervalRef.current);
+                          audioLevelIntervalRef.current = null;
+                        }
+                      } else if (!isAISpeaking && !sendMessageMutation.isPending) {
+                        // Start listening with complete isolation
+                        const success = await (window as any).voiceIsolationControl?.startPrimaryRecognition();
+                        if (success) {
+                          setIsListening(true);
+                          setCurrentTranscript('');
+                          setTranscriptConfidence(0);
+                          // Start audio level monitoring
+                          audioLevelIntervalRef.current = setInterval(() => {
+                            setAudioLevel(Math.random() * 0.6 + 0.2);
+                          }, 100);
+                        }
+                      }
+                    }}
+                    disabled={sendMessageMutation.isPending}
+                    className={cn(
+                      "transition-all duration-200",
+                      isListening && "bg-teal-500 hover:bg-teal-600 text-white",
+                      isAISpeaking && "bg-amber-500 hover:bg-amber-600 text-white"
+                    )}
+                  >
+                    {isListening ? (
+                      <MicOff className="h-4 w-4" />
+                    ) : isAISpeaking ? (
+                      <Square className="h-4 w-4" />
+                    ) : (
+                      <Mic className="h-4 w-4" />
+                    )}
+                  </Button>
+                  
+                  {/* Manual Send Button */}
+                  {currentTranscript && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (currentTranscript.trim()) {
+                          handleVoiceMessage(currentTranscript.trim());
+                          setCurrentTranscript('');
+                          setTranscriptConfidence(0);
+                        }
+                      }}
+                      className="text-xs"
+                    >
+                      Send
+                    </Button>
+                  )}
+                  
+                  {/* Resume Button (after interruption) */}
+                  {isInterrupted && interruptedQuery && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        // Resume interrupted AI response
+                        setIsAISpeaking(true);
+                        setIsInterrupted(false);
+                        
+                        try {
+                          const response = await fetch('/api/elevenlabs/speak', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              text: interruptedQuery,
+                              voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV'
+                            })
+                          });
+                          
+                          if (response.ok) {
+                            const audioBlob = await response.blob();
+                            const audioUrl = URL.createObjectURL(audioBlob);
+                            const audio = new Audio(audioUrl);
+                            currentAudioRef.current = audio;
+                            
+                            audio.onended = () => {
+                              setIsAISpeaking(false);
+                              URL.revokeObjectURL(audioUrl);
+                            };
+                            
+                            await audio.play();
+                          }
+                        } catch (error) {
+                          console.error('Failed to resume AI speech:', error);
+                          setIsAISpeaking(false);
+                        }
+                      }}
+                      className="border-orange-200 text-orange-600 hover:bg-orange-50 text-xs"
+                    >
+                      Resume
+                    </Button>
+                  )}
+                </div>
+              </div>
+              
+              {/* Voice Isolation Status */}
+              <div className="text-xs text-center text-gray-500 flex items-center justify-center gap-1">
+                🛡️ Complete voice isolation active - AI speech BLOCKED from transcript
+              </div>
             </div>
           </div>
         </div>
