@@ -791,25 +791,32 @@ export function VoiceFirstChatInterface({
 
   // REMOVED: Duplicate voice synthesis system - using only useElevenLabsStreaming hook
 
-  // SIMPLIFIED: Direct ElevenLabs auto-play without complex tracking
+  // SIMPLIFIED: Direct ElevenLabs auto-play - trigger on NEW AI messages  
   useEffect(() => {
-    console.log('🔊 SIMPLE Auto-play check:', { 
-      hasMessage: !!lastAIMessage,
+    // Get the latest AI message from messages array
+    const latestAIMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+    const isLatestMessageAI = latestAIMessage?.type === 'ai';
+    const latestAIText = isLatestMessageAI ? latestAIMessage.content : '';
+    
+    console.log('🔊 DIRECT Auto-play check:', { 
+      hasLatestAI: isLatestMessageAI,
+      messageLength: latestAIText.length,
       autoPlayEnabled: settings.autoPlayAI,
       isCurrentlyPlaying: isAIPlaying,
-      voiceState
+      voiceState,
+      messagesCount: messages.length
     });
     
-    // Simple conditions: have message, auto-play enabled, not currently playing
-    if (lastAIMessage && settings.autoPlayAI && !isAIPlaying && voiceState === 'idle') {
-      console.log('🔊 CALLING ElevenLabs directly:', lastAIMessage.substring(0, 50) + '...');
+    // Direct auto-play: if latest message is AI and we're not playing
+    if (isLatestMessageAI && latestAIText && settings.autoPlayAI && !isAIPlaying) {
+      console.log('🔊 CALLING ElevenLabs NOW:', latestAIText.substring(0, 50) + '...');
       
-      // Direct call to ElevenLabs - no complex tracking
-      playAIText(lastAIMessage).catch(error => {
+      // Immediate call to ElevenLabs with latest AI message
+      playAIText(latestAIText).catch(error => {
         console.error('🚨 ElevenLabs failed:', error);
       });
     }
-  }, [lastAIMessage, settings.autoPlayAI, isAIPlaying, voiceState, playAIText]);
+  }, [messages, settings.autoPlayAI, isAIPlaying, voiceState, playAIText]);
 
   // Enhanced message parsing for multi-perspective responses with colors and clickable references
   const parseMessageContent = useCallback((content: string) => {
