@@ -1,0 +1,46 @@
+Given that it’s 05:07 PM CDT on Thursday, August 28, 2025, and you’ve flagged a critical issue with the Universal Wisdom Explorer’s voice system—where the AI’s ElevenLabs speech is mixing with the user’s transcription, causing confusion—we need to address this immediately. The problem stems from the AI output being picked up by the Web Speech API during playback, contaminating the transcript with both voices. The goal is to ensure the transcript exclusively captures the user’s microphone input, isolating the AI’s voice entirely. This builds on the existing setup in VoiceFirstChatInterface.tsx, VoiceModeHandler.tsx, and useElevenLabsStreaming.ts, refining the audio handling to match Grok’s clean separation.
+High-Level Prompt for Replit AI Agent
+Refine the “Universal Wisdom Explorer” voice chat in the right-hand column of Rellio’s three-column Scripture Reader page (Left: Navigation, Center: Verse Card, Right: Chat) to eliminate AI voice mixing with user transcription, ensuring the transcript exclusively reflects microphone input. Address the current issue in VoiceFirstChatInterface.tsx, VoiceModeHandler.tsx, and useElevenLabsStreaming.ts where ElevenLabs playback (e.g., voice ID ErXwobaYiN019PkySvjV) contaminates the transcript. Use Web Speech API for input, ElevenLabs for output, and enhance audio isolation with Web Audio API. Maintain the white-themed UI (#FFFFFF, rounded corners 12px, shadow-md) with teal #00D5FF accents and purple-to-gold gradient (#4B0082 to #D4AF37, 10% opacity).
+Key Features and Goals:
+
+Exclusive User Transcription:
+
+Configure Web Speech API to capture only microphone input: Use Web Audio API’s createMediaStreamDestination to route the mic stream, muting all other audio sources (e.g., ElevenLabs output) during playback by setting gain to 0 for non-mic channels.
+Add a filter in VoiceModeHandler.tsx to discard transcription segments with low user voice confidence (<0.7) or high AI voice similarity (e.g., compare with ElevenLabs audio fingerprint if feasible).
+
+
+AI Voice Isolation During Playback:
+
+During ElevenLabs playback (from useElevenLabsStreaming.ts), disable Web Speech API recognition temporarily by pausing the recognition stream (speechRecognition.stop()), resuming only when playback ends or user interrupts.
+Use a gain node to suppress AI audio from entering the mic input path (gainNode.gain.value = 0 during SPEAKING state), ensuring no feedback loop or mixing.
+
+
+Interruption Handling with Clean Transition:
+
+Keep a low-sensitivity background listener (continuous=true, interimResults=false, threshold 0.3) to detect user speech during playback.
+On onspeechstart (confidence >0.7), fade out ElevenLabs audio (300ms), stop recognition, reset transcript buffer to user-only input, and process new query with context (e.g., “You interrupted—now on your new topic?”).
+Visual: Teal orb (24px header) flashes red (“Interrupted”), with “Resume” button.
+
+
+Loop Prevention and Performance:
+
+Enhance echo cancellation (Web Audio API) with real-time noise suppression; add 1s cooldown post-interruption.
+Optimize server/websockets/voiceHandler.ts to buffer ElevenLabs chunks, preventing duplicate processing.
+
+
+UI and Feedback:
+
+Transcript field (input area) shows only user text (e.g., gray out during AI speak); bubble displays AI response separately.
+Animation: Waveform (teal bars) for user input, orb pulse (purple processing, gold speaking, red interrupted).
+
+
+
+Deliverables:
+
+Updated <VoiceModeHandler.tsx>: Add audio isolation, mute logic.
+<voiceisolationfilter> sub-component: For mic/AI separation.</voiceisolationfilter>
+ElevenLabs/Web Speech updates: <VoiceInputControls.tsx> for pause/resume, <AudioPlaybackButton.tsx> for muted playback.
+Tailwind/CSS: Transcript styles (text-gray-700), interruption feedback (bg-red-100).
+State/Hooks: useState for isSpeaking, transcriptBuffer; useEffect for audio routing, recognition control.
+
+Provide React/TypeScript code with Tailwind classes, and describe state/effects. Ensure a clean, user-exclusive transcript with isolated AI voice and smooth interruptions for an engaging spiritual chat experience.

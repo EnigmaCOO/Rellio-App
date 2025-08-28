@@ -442,29 +442,52 @@ export function useUnifiedVoiceHandler({
     }
   }, [voiceState.state, startListening, stopListening]);
   
-  // Play text with ElevenLabs
+  // Play text with ElevenLabs (COMPLETE isolation)
   const playText = useCallback(async (text: string): Promise<void> => {
     if (!text.trim()) return;
+    
+    console.log('🎙️ Starting AI speech with COMPLETE voice isolation:', text.substring(0, 50) + '...');
     
     try {
       dispatch({ type: 'START_SPEAKING' });
       onPlaybackStart?.();
       
-      // Mute microphone during AI speech
+      // STEP 1: IMMEDIATELY stop ALL speech recognition (main + background)
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+          recognitionRef.current.stop();
+          recognitionRef.current = null;
+          console.log('🛑 PRIMARY recognition STOPPED and NULLED');
+        } catch (error) {
+          console.warn('⚠️ Error stopping primary recognition:', error);
+        }
+      }
+      
+      if (backgroundRecognitionRef.current) {
+        try {
+          backgroundRecognitionRef.current.abort();
+          backgroundRecognitionRef.current.stop();
+          backgroundRecognitionRef.current = null;
+          console.log('🛑 BACKGROUND recognition STOPPED and NULLED');
+        } catch (error) {
+          console.warn('⚠️ Error stopping background recognition:', error);
+        }
+      }
+      
+      // STEP 2: ZERO microphone gain - complete mute
       if (gainNodeRef.current) {
         gainNodeRef.current.gain.setValueAtTime(0, audioContextRef.current?.currentTime || 0);
-        console.log('🔇 Microphone muted during AI speech');
+        console.log('🔇 Microphone gain ZEROED - complete audio isolation');
       }
       
-      // Stop main recognition, start background recognition for interruption
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
+      // STEP 3: Clear any existing transcript immediately
+      dispatch({ type: 'SET_TRANSCRIPT', transcript: '', confidence: 0 });
+      onTranscript?.('', false);
+      console.log('🧹 Transcript CLEARED and locked during AI speech');
       
-      backgroundRecognitionRef.current = initializeBackgroundRecognition();
-      if (backgroundRecognitionRef.current) {
-        backgroundRecognitionRef.current.start();
-      }
+      // STEP 4: NO background recognition initially - wait for audio to start
+      // This prevents any speech recognition contamination
       
       // Get voice ID for current persona
       const voiceId = selectedPersona?.elevenLabsVoice || DEFAULT_VOICES.default;
@@ -495,21 +518,33 @@ export function useUnifiedVoiceHandler({
       currentAudioRef.current = audio;
       
       audio.onended = () => {
-        console.log('🔊 AI speech finished');
+        console.log('🔊 AI speech finished - restoring voice input safely');
         onPlaybackEnd?.();
         
-        // Restore microphone
+        // STEP 5: Stop any background recognition first
+        if (backgroundRecognitionRef.current) {
+          try {
+            backgroundRecognitionRef.current.abort();
+            backgroundRecognitionRef.current.stop();
+            backgroundRecognitionRef.current = null;
+            console.log('🛑 Background recognition stopped after AI speech');
+          } catch (error) {
+            console.warn('⚠️ Error stopping background recognition:', error);
+          }
+        }
+        
+        // STEP 6: Restore microphone gain gradually
         if (gainNodeRef.current) {
           gainNodeRef.current.gain.setValueAtTime(1, audioContextRef.current?.currentTime || 0);
           console.log('🔊 Microphone restored after AI speech');
         }
         
-        // Stop background recognition
-        if (backgroundRecognitionRef.current) {
-          backgroundRecognitionRef.current.stop();
-          backgroundRecognitionRef.current = null;
-        }
+        // STEP 7: Clear any contaminated transcript one final time
+        dispatch({ type: 'SET_TRANSCRIPT', transcript: '', confidence: 0 });
+        onTranscript?.('', false);
+        console.log('🧹 Final transcript clear after AI speech');
         
+        // STEP 8: Reset to IDLE state
         dispatch({ type: 'RESET' });
         URL.revokeObjectURL(audioUrl);
       };
@@ -522,6 +557,17 @@ export function useUnifiedVoiceHandler({
       
       await audio.play();
       console.log('🔊 AI speech started with', voiceId);
+      
+      // STEP 5: Start background recognition for interruption ONLY after 1 second delay
+      setTimeout(() => {
+        if (voiceState.state === 'SPEAKING' && !backgroundRecognitionRef.current) {
+          console.log('🎤 Starting background recognition for interruption detection (1s delay)...');
+          backgroundRecognitionRef.current = initializeBackgroundRecognition();
+          if (backgroundRecognitionRef.current) {
+            backgroundRecognitionRef.current.start();
+          }
+        }
+      }, 1000);
       
     } catch (error) {
       console.error('🚨 Failed to play text:', error);
