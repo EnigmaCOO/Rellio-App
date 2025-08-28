@@ -155,43 +155,58 @@ export function VoiceIsolationFilter({
     return recognition;
   }, [finalConfig.confidenceThreshold, onUserVoiceDetected]);
   
-  // Initialize background recognition for interruption detection
+  // Initialize background recognition for interruption detection (ENHANCED)
   const initializeBackgroundRecognition = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return null;
     
     const bgRecognition = new SpeechRecognition() as any;
     bgRecognition.continuous = true;
-    bgRecognition.interimResults = false;  // Final results only for interruptions
+    bgRecognition.interimResults = true;  // Enable interim results for faster interruption
     bgRecognition.lang = 'en-US';
+    bgRecognition.maxAlternatives = 1;
     
+    // CRITICAL: Use speech start for immediate interruption detection
     bgRecognition.onspeechstart = () => {
-      // Detect speech start during AI playback for interruption
-      console.log('🎤 Background listener detected speech during AI playback');
+      console.log('🚨 IMMEDIATE interruption detected - speech started during AI playback');
       onInterruptionDetected();
     };
     
+    // Also use results for additional confidence checking
     bgRecognition.onresult = (event: any) => {
-      const result = event.results[event.results.length - 1];
-      if (result.isFinal) {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
         const confidence = result[0].confidence || 0;
         
-        // Only trigger interruption on high-confidence user speech
+        // Trigger interruption on any detectable speech during AI playback
         if (confidence >= finalConfig.backgroundListenerSensitivity) {
-          console.log('🚨 INTERRUPTION detected with confidence:', Math.round(confidence * 100) + '%');
+          console.log('🚨 CONFIRMED interruption with confidence:', Math.round(confidence * 100) + '%');
           onInterruptionDetected();
+          break;
         }
       }
     };
     
     bgRecognition.onerror = (event: any) => {
-      if (event.error !== 'no-speech') {
+      if (event.error !== 'no-speech' && event.error !== 'audio-capture') {
         console.warn('🎤 Background recognition error:', event.error);
       }
     };
     
+    bgRecognition.onend = () => {
+      // Auto-restart background recognition during AI speech
+      if (isAISpeaking && backgroundRecognitionRef.current) {
+        try {
+          bgRecognition.start();
+          console.log('🔄 Background recognition restarted during AI speech');
+        } catch (error) {
+          console.warn('⚠️ Could not restart background recognition:', error);
+        }
+      }
+    };
+    
     return bgRecognition;
-  }, [finalConfig.backgroundListenerSensitivity, onInterruptionDetected]);
+  }, [finalConfig.backgroundListenerSensitivity, onInterruptionDetected, isAISpeaking]);
   
   // Public methods for controlling recognition
   const startPrimaryRecognition = useCallback(async (): Promise<boolean> => {
@@ -229,16 +244,36 @@ export function VoiceIsolationFilter({
   }, []);
   
   const startBackgroundRecognition = useCallback(() => {
-    if (!isAISpeaking) return;
+    if (!isAISpeaking) {
+      console.log('🚫 Not starting background recognition - AI not speaking');
+      return;
+    }
     
     try {
+      // Stop any existing background recognition first
+      if (backgroundRecognitionRef.current) {
+        try {
+          backgroundRecognitionRef.current.abort();
+          backgroundRecognitionRef.current.stop();
+        } catch (error) {
+          console.warn('⚠️ Error stopping existing background recognition:', error);
+        }
+      }
+      
+      // Start new background recognition for interruption
       backgroundRecognitionRef.current = initializeBackgroundRecognition();
       if (backgroundRecognitionRef.current) {
         backgroundRecognitionRef.current.start();
-        console.log('🎤 Background recognition started for interruption detection');
+        console.log('🎤 ENHANCED background recognition started for interruption detection');
       }
     } catch (error) {
       console.error('❌ Failed to start background recognition:', error);
+      // Retry after short delay
+      setTimeout(() => {
+        if (isAISpeaking) {
+          startBackgroundRecognition();
+        }
+      }, 500);
     }
   }, [isAISpeaking, initializeBackgroundRecognition]);
   

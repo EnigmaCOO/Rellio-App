@@ -415,7 +415,7 @@ export function VoiceFirstChatInterface({
         if (settings.autoPlayAI) {
           setTimeout(() => {
             playAIResponseWithIsolation(data.aiMessage.content);
-          }, 500); // Small delay to ensure UI updates first
+          }, 1000); // Longer delay to ensure messages display first
         }
       }
       
@@ -533,6 +533,11 @@ export function VoiceFirstChatInterface({
       
       await audio.play();
       console.log('🔊 AI speech started with voice isolation active');
+      
+      // Start background recognition for interruption detection
+      setTimeout(() => {
+        (window as any).voiceIsolationControl?.startBackgroundRecognition();
+      }, 100);
       
     } catch (error) {
       console.error('🚨 Failed to play AI response:', error);
@@ -997,8 +1002,8 @@ export function VoiceFirstChatInterface({
             </div>
           </ScrollArea>
 
-          {/* Input Area */}
-          <div className="flex-none border-t bg-white">
+          {/* Input Area - Fixed Layout */}
+          <div className="flex-none border-t bg-white overflow-visible">
             {/* Text Input Mode */}
             {showTextInput && (
               <div className="p-4 border-b bg-gray-50">
@@ -1037,8 +1042,8 @@ export function VoiceFirstChatInterface({
                 }}
               />
               
-              {/* Voice Control Interface - Compact */}
-              <div className="flex items-center gap-2 p-3 bg-white dark:bg-gray-900 border rounded-md shadow-sm">
+              {/* Voice Control Interface - Fixed Layout */}
+              <div className="flex items-start gap-2 p-3 bg-white dark:bg-gray-900 border rounded-md shadow-sm overflow-visible">
                 {/* Grok-style Orb with State Indication */}
                 <div className="relative">
                   <div
@@ -1156,8 +1161,8 @@ export function VoiceFirstChatInterface({
                   )}
                 </div>
                 
-                {/* Control Buttons */}
-                <div className="flex items-center gap-2">
+                {/* Control Buttons - Prevent Cutoff */}
+                <div className="flex items-center gap-1 flex-shrink-0">
                   {/* Primary Voice Button */}
                   <Button
                     variant={isListening ? "default" : "outline"}
@@ -1215,7 +1220,7 @@ export function VoiceFirstChatInterface({
                           setTranscriptConfidence(0);
                         }
                       }}
-                      className="text-xs h-6 px-2"
+                      className="text-xs h-7 px-3 whitespace-nowrap"
                     >
                       Send
                     </Button>
