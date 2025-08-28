@@ -1490,7 +1490,12 @@ export function VoiceFirstChatInterface({
                         <div className="p-2 rounded-xl bg-white/50 backdrop-blur-sm group-hover:bg-white/70 transition-all duration-300">
                           <IconComponent className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
                         </div>
-                        <span className="text-sm font-semibold text-center leading-tight group-hover:font-bold transition-all duration-300">
+                        <span className={cn(
+                          "font-semibold text-center leading-tight group-hover:font-bold transition-all duration-300",
+                          // Responsive font sizing for longer labels
+                          theme.label.length > 12 ? "text-xs" : 
+                          theme.label.length > 9 ? "text-xs" : "text-sm"
+                        )}>
                           {theme.label}
                         </span>
                       </div>
