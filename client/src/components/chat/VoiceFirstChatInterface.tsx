@@ -174,7 +174,7 @@ export function VoiceFirstChatInterface({
     confidenceThreshold: 0.8,
     voiceEnabled: true,
     autoPlayAI: true, // Re-enabled with server-side deduplication protection
-    interruptionSensitivity: 0.25, // Grok-style: Sensitive like real conversation
+    interruptionSensitivity: 0.2, // Very sensitive for interruption testing
     volume: 0.8
   });
 
@@ -619,10 +619,16 @@ export function VoiceFirstChatInterface({
           const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
           setAudioLevel(average / 255);
           
-          // GROK-STYLE interruption - audio monitoring works even when speech recognition is blocked
-          if ((voiceState === 'responding' || isAISpeaking) && average > 120) {
+          // DEBUG: Log audio levels when AI is speaking
+          if (isAISpeaking) {
+            console.log(`🔊 DEBUG: Audio level: ${average}, AI speaking: ${isAISpeaking}, Voice state: ${voiceState}`);
+          }
+          
+          // GROK-STYLE interruption - VERY SENSITIVE during AI speech
+          if ((voiceState === 'responding' || isAISpeaking) && average > 60) {
             console.log('🚨 GROK-STYLE INTERRUPTION! User detected, stopping AI instantly');
-            console.log(`🔊 Audio level: ${average}, Threshold: 120 (interruption detection)`);
+            console.log(`🔊 Audio level: ${average}, Threshold: 60 (very sensitive)`);
+            console.log(`🔊 AI Speaking: ${isAISpeaking}, Voice State: ${voiceState}`);
             
             // INSTANT AI stoppage like Grok
             if (stopAIPlayback) {
