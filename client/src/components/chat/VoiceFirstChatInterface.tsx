@@ -1075,61 +1075,84 @@ export function VoiceFirstChatInterface({
                           audioLevelIntervalRef.current = null;
                         }
                       } else if (!isAISpeaking && !sendMessageMutation.isPending) {
-                        // SIMPLE VOICE INPUT - Like Grok
-                        try {
-                          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                        // DIRECT VOICE INPUT - Working like Grok
+                        const startVoiceInput = () => {
+                          const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+                          
                           if (!SpeechRecognition) {
-                            alert('Speech recognition not supported in this browser');
+                            alert('Voice recognition not supported. Please use Chrome or Edge.');
                             return;
                           }
 
                           const recognition = new SpeechRecognition();
+                          
+                          // Simple, reliable configuration
                           recognition.continuous = false;
                           recognition.interimResults = true;
                           recognition.lang = 'en-US';
-
+                          
                           recognition.onstart = () => {
-                            console.log('🎤 Voice recognition started');
+                            console.log('🎤 VOICE INPUT STARTED');
                             setIsListening(true);
-                            setCurrentTranscript('');
+                            setCurrentTranscript('Listening...');
                           };
 
-                          recognition.onresult = (event) => {
-                            let transcript = '';
-                            for (let i = 0; i < event.results.length; i++) {
-                              transcript += event.results[i][0].transcript;
-                            }
-                            console.log('🎤 Heard:', transcript);
-                            setCurrentTranscript(transcript);
-                            setTranscriptConfidence(event.results[0][0].confidence || 0.8);
+                          recognition.onresult = (event: any) => {
+                            let finalTranscript = '';
+                            let interimTranscript = '';
                             
-                            // Auto-send when final result
-                            if (event.results[event.results.length - 1].isFinal) {
-                              setTimeout(() => {
-                                if (transcript.trim()) {
-                                  handleVoiceMessage(transcript.trim());
-                                  setIsListening(false);
-                                  setCurrentTranscript('');
-                                }
-                              }, 500);
+                            for (let i = 0; i < event.results.length; i++) {
+                              const transcript = event.results[i][0].transcript;
+                              if (event.results[i].isFinal) {
+                                finalTranscript += transcript;
+                              } else {
+                                interimTranscript += transcript;
+                              }
+                            }
+                            
+                            const displayText = finalTranscript || interimTranscript;
+                            console.log('🎤 HEARD:', displayText);
+                            setCurrentTranscript(displayText);
+                            
+                            // Send final transcript immediately
+                            if (finalTranscript.trim()) {
+                              console.log('🚀 SENDING VOICE MESSAGE:', finalTranscript);
+                              setIsListening(false);
+                              setCurrentTranscript('');
+                              handleVoiceMessage(finalTranscript.trim());
                             }
                           };
 
-                          recognition.onerror = (event) => {
-                            console.error('Voice recognition error:', event.error);
+                          recognition.onerror = (event: any) => {
+                            console.error('🚫 VOICE ERROR:', event.error);
                             setIsListening(false);
+                            setCurrentTranscript('');
+                            if (event.error === 'not-allowed') {
+                              alert('Please allow microphone access and try again.');
+                            }
                           };
 
                           recognition.onend = () => {
-                            console.log('Voice recognition ended');
+                            console.log('🛑 VOICE INPUT ENDED');
                             setIsListening(false);
+                            if (currentTranscript && currentTranscript !== 'Listening...') {
+                              // If we have partial transcript, send it
+                              handleVoiceMessage(currentTranscript.trim());
+                            }
+                            setCurrentTranscript('');
                           };
 
-                          recognition.start();
-                        } catch (error) {
-                          console.error('Failed to start voice recognition:', error);
-                          alert('Could not start voice recognition. Please check microphone permissions.');
-                        }
+                          try {
+                            recognition.start();
+                            console.log('🎤 Voice recognition start requested');
+                          } catch (error) {
+                            console.error('Failed to start recognition:', error);
+                            setIsListening(false);
+                            alert('Voice input failed. Please check microphone permissions.');
+                          }
+                        };
+                        
+                        startVoiceInput();
                       }
                     }}
                   >
