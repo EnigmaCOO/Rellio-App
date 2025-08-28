@@ -170,8 +170,8 @@ export function VoiceFirstChatInterface({
   
   // Settings and persona change tracking
   const [settings, setSettings] = useState({
-    autoSendDelay: 1500,
-    confidenceThreshold: 0.8,
+    autoSendDelay: 800, // Faster auto-send for better voice UX
+    confidenceThreshold: 0.6, // Lower threshold for better auto-send
     voiceEnabled: true,
     autoPlayAI: true, // Re-enabled with server-side deduplication protection
     interruptionSensitivity: 0.2, // Very sensitive for interruption testing
@@ -522,7 +522,7 @@ export function VoiceFirstChatInterface({
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
-        const currentConfidence = event.results[i][0].confidence || 0;
+        const currentConfidence = event.results[i][0].confidence || 0.8; // Default confidence
 
         if (event.results[i].isFinal) {
           finalTranscript += transcript;
@@ -532,27 +532,29 @@ export function VoiceFirstChatInterface({
         }
       }
 
+      // Show LIVE transcript as user speaks (interim + final)
       const fullTranscript = finalTranscript || interimTranscript;
+      console.log(`🎤 LIVE: "${fullTranscript}" (interim: "${interimTranscript}", final: "${finalTranscript}")`);
       setCurrentTranscript(fullTranscript);
       setConfidence(maxConfidence);
 
       // Track voice activity for cooldown system
       setLastVoiceActivity(Date.now());
 
-      // Auto-send logic with confidence threshold
-      if (finalTranscript && maxConfidence > settings.confidenceThreshold) {
+      // Auto-send logic with LOWER confidence threshold for better auto-send
+      if (finalTranscript && maxConfidence > 0.6) { // Lowered from 0.8 to 0.6
         // Clear existing timeout
         if (autoSendTimeoutRef.current) {
           clearTimeout(autoSendTimeoutRef.current);
         }
 
-        // Set new timeout for auto-send
+        // SHORTER timeout for faster auto-send
         autoSendTimeoutRef.current = setTimeout(() => {
-          console.log('🚀 Auto-sending message:', finalTranscript);
+          console.log('🚀 AUTO-SENDING message:', finalTranscript.trim());
           setWasLastMessageVoice(true); // Mark this as a voice-initiated message
           handleSendMessage(finalTranscript.trim());
           stopListening();
-        }, settings.autoSendDelay);
+        }, 800); // Reduced from 1500ms to 800ms
       }
     };
 
