@@ -18,7 +18,21 @@ import { cn } from "@/lib/utils";
 import type { Religion, Scripture } from "@shared/schema";
 
 export default function Dashboard() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedReligion, setSelectedReligion] = useState<Religion | null>(null);
+
+  // Initialize component
+  useEffect(() => {
+    try {
+      console.log('📱 Dashboard initializing...');
+      setIsLoading(false);
+    } catch (err) {
+      console.error('❌ Dashboard initialization error:', err);
+      setError('Failed to initialize dashboard');
+      setIsLoading(false);
+    }
+  }, []);
   const [selectedBook, setSelectedBook] = useState<string>('');
   const [selectedChapter, setSelectedChapter] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -326,6 +340,35 @@ export default function Dashboard() {
       console.log("No verse provided for highlighting");
     }
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading Dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600"
+          >
+            Reload Page
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
