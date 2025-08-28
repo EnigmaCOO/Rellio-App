@@ -227,12 +227,11 @@ export function VoiceFirstChatInterface({
         console.log('🔇 Microphone gain set to 0 (muted during AI speech)');
       }
       
-      // COMPLETELY STOP voice recognition to prevent AI voice feedback (like Grok)
+      // STOP voice recognition to prevent AI voice feedback (like Grok)
       if (recognitionRef.current) {
         try {
           recognitionRef.current.abort();
-          recognitionRef.current = null; // Completely destroy recognition instance
-          console.log('🎤 Voice recognition STOPPED and DESTROYED - preventing AI voice feedback');
+          console.log('🎤 Voice recognition STOPPED - preventing AI voice feedback');
         } catch (error) {
           console.warn('🎤 Recognition stop warning:', error);
         }
@@ -253,11 +252,11 @@ export function VoiceFirstChatInterface({
         console.log('🔊 Microphone gain restored to 1 (unmuted after AI speech)');
       }
       
-      // RECREATE and re-enable voice recognition after AI finishes (like Grok)
+      // RE-ENABLE voice recognition after AI finishes (like Grok)
       setTimeout(() => {
         if (hasPermission && isSupported && !inputIsolated) {
-          console.log('🎤 RECREATING Voice recognition - ready for next question');
-          initializeRecognition(); // Recreate fresh recognition instance
+          console.log('🎤 Voice recognition RE-ENABLED - ready for next question');
+          // Don't auto-start, just make it available for interruption
         }
       }, 300);
     },
@@ -274,30 +273,11 @@ export function VoiceFirstChatInterface({
       setCurrentTranscriptState('');
       console.log('🧹 Transcript FORCE cleared on interruption');
       
-      // RECREATE recognition instance on interruption
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-          recognitionRef.current = null;
-          console.log('🎤 Recognition instance destroyed on interruption');
-        } catch (error) {
-          console.warn('🎤 Error destroying recognition:', error);
-        }
-      }
-      
       // RESTORE microphone gain immediately on interruption
       if (gainNodeRef.current) {
         gainNodeRef.current.gain.setValueAtTime(1, audioContextRef.current?.currentTime || 0);
         console.log('🔊 Microphone gain restored to 1 (interruption detected)');
       }
-      
-      // Recreate recognition after brief delay
-      setTimeout(() => {
-        if (hasPermission && isSupported) {
-          initializeRecognition();
-          console.log('🎤 Fresh recognition instance created after interruption');
-        }
-      }, 500);
       
       // ElevenLabs ONLY - no other voice systems to stop
     },
@@ -837,15 +817,21 @@ export function VoiceFirstChatInterface({
           setInputIsolated(false);
           setIsAudioIsolated(false);
           
-          // Start normal listening for new question
+          // Start normal listening for new question with fresh recognition
           setTimeout(() => {
-            if (recognitionRef.current && hasPermission && isSupported) {
+            if (hasPermission && isSupported) {
               try {
+                // Ensure we have a fresh recognition instance
+                if (!recognitionRef.current) {
+                  recognitionRef.current = initializeRecognition();
+                }
                 recognitionRef.current.start();
                 setVoiceState('listening');
                 console.log('🎤 Switched to normal listening after interruption');
               } catch (error) {
                 console.warn('🎤 Failed to start normal recognition:', error);
+                // Try to recreate if failed
+                recognitionRef.current = initializeRecognition();
               }
             }
           }, 300);
