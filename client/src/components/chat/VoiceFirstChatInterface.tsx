@@ -171,7 +171,7 @@ export function VoiceFirstChatInterface({
   // Settings and persona change tracking
   const [settings, setSettings] = useState({
     autoSendDelay: 800, // Faster auto-send for better voice UX
-    confidenceThreshold: 0.6, // Lower threshold for better auto-send
+    confidenceThreshold: 0.4, // VERY low threshold for maximum sensitivity
     voiceEnabled: true,
     autoPlayAI: true, // Re-enabled with server-side deduplication protection
     interruptionSensitivity: 0.2, // Very sensitive for interruption testing
@@ -508,7 +508,12 @@ export function VoiceFirstChatInterface({
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
-    recognition.maxAlternatives = 3;
+    recognition.maxAlternatives = 5; // More alternatives for better detection
+    
+    // Experimental: Try to make recognition more sensitive
+    if ('grammars' in recognition) {
+      recognition.grammars = null; // Remove grammar restrictions
+    }
 
     recognition.onstart = () => {
       console.log('🎤 Speech recognition started');
@@ -528,7 +533,7 @@ export function VoiceFirstChatInterface({
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
-        const currentConfidence = event.results[i][0].confidence || 0.8; // Default confidence
+        const currentConfidence = event.results[i][0].confidence || 0.9; // Higher default confidence
 
         if (event.results[i].isFinal) {
           finalTranscript += transcript;
@@ -547,8 +552,8 @@ export function VoiceFirstChatInterface({
       // Track voice activity for cooldown system
       setLastVoiceActivity(Date.now());
 
-      // Auto-send logic with LOWER confidence threshold for better auto-send
-      if (finalTranscript && maxConfidence > 0.6) { // Lowered from 0.8 to 0.6
+      // Auto-send logic with VERY LOW confidence threshold for maximum sensitivity
+      if (finalTranscript && maxConfidence > 0.3) { // Super low for better voice detection
         // Clear existing timeout
         if (autoSendTimeoutRef.current) {
           clearTimeout(autoSendTimeoutRef.current);
@@ -591,15 +596,16 @@ export function VoiceFirstChatInterface({
   // Initialize Audio Context with Echo Cancellation for Level Detection
   const initializeAudioContext = useCallback(async () => {
     try {
-      // Enhanced getUserMedia with echo cancellation to prevent self-feedback
+      // MAXIMUM SENSITIVITY getUserMedia for better voice detection
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
-          noiseSuppression: true,
+          noiseSuppression: false, // Turn OFF to increase sensitivity
           autoGainControl: true,
           channelCount: 1,
           sampleRate: 44100,
-          sampleSize: 16
+          sampleSize: 16,
+          volume: 1.0 // Request maximum volume
         } 
       });
       streamRef.current = stream;
@@ -627,9 +633,9 @@ export function VoiceFirstChatInterface({
           const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
           setAudioLevel(average / 255);
           
-          // DEBUG: Log audio levels when AI is speaking
-          if (isAISpeaking) {
-            console.log(`🔊 DEBUG: Audio level: ${average}, AI speaking: ${isAISpeaking}, Voice state: ${voiceState}`);
+          // DEBUG: Show microphone levels for voice detection debugging
+          if (average > 5) { // Show any detectable audio activity
+            console.log(`🎤 MICROPHONE: Level ${average.toFixed(1)} | Voice State: ${voiceState} | AI Speaking: ${isAISpeaking}`);
           }
           
           // GROK-STYLE interruption - VERY SENSITIVE during AI speech
