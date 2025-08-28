@@ -174,7 +174,7 @@ export function VoiceFirstChatInterface({
     confidenceThreshold: 0.8,
     voiceEnabled: true,
     autoPlayAI: true, // Re-enabled with server-side deduplication protection
-    interruptionSensitivity: 0.4, // Balanced - detects speech but ignores background noise
+    interruptionSensitivity: 0.25, // Grok-style: Sensitive like real conversation
     volume: 0.8
   });
 
@@ -611,25 +611,28 @@ export function VoiceFirstChatInterface({
           const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
           setAudioLevel(average / 255);
           
-          // BALANCED interruption - detects actual speech but ignores background noise  
-          if ((voiceState === 'responding' || isAISpeaking) && average > 120) {
-            console.log('🚨 INTERRUPTION! User speaking detected, stopping AI NOW');
-            console.log(`🔊 Audio level: ${average}, Threshold: 120 (balanced for speech)`);
-            console.log(`🔊 Voice state: ${voiceState}, AI speaking: ${isAISpeaking}`);
+          // GROK-STYLE interruption - instant response to any user speech
+          if ((voiceState === 'responding' || isAISpeaking) && average > 80) {
+            console.log('🚨 GROK-STYLE INTERRUPTION! User detected, stopping AI instantly');
+            console.log(`🔊 Audio level: ${average}, Threshold: 80 (Grok-sensitive)`);
             
-            // IMMEDIATE AI stoppage
+            // INSTANT AI stoppage like Grok
             if (stopAIPlayback) {
               stopAIPlayback();
-              console.log('🛑 AI playback stopped immediately');
+              console.log('🛑 AI stopped instantly (Grok-style)');
             }
             
-            handleInterruption();
+            // Immediate state reset 
+            setVoiceState('idle');
+            setIsAISpeaking(false);
+            setIsTalkingBack(false);
+            setInputIsolated(false);
             
-            // Quick transition to listening for new question
+            // IMMEDIATE listening mode - no delay like Grok
             setTimeout(() => {
-              console.log('🎤 Ready to listen for new question after interruption');
+              console.log('🎤 GROK-STYLE: Listening for new question immediately');
               startListening();
-            }, 100);
+            }, 50); // Minimal delay like Grok
           }
         }
         
