@@ -164,18 +164,78 @@ export function VoiceFirstChatInterface({
   const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null);
   const [isLoadingComparison, setIsLoadingComparison] = useState(false);
 
-  // Predefined themes for Compare Mode
+  // Predefined themes for Compare Mode with modern styling
   const PREDEFINED_THEMES = [
-    { id: 'love', label: 'Love', icon: Heart, color: 'bg-red-100 text-red-700 border-red-200' },
-    { id: 'compassion', label: 'Compassion', icon: Heart, color: 'bg-pink-100 text-pink-700 border-pink-200' },
-    { id: 'wisdom', label: 'Wisdom', icon: Brain, color: 'bg-purple-100 text-purple-700 border-purple-200' },
-    { id: 'faith', label: 'Faith', icon: Star, color: 'bg-blue-100 text-blue-700 border-blue-200' },
-    { id: 'hope', label: 'Hope', icon: Sparkles, color: 'bg-green-100 text-green-700 border-green-200' },
-    { id: 'justice', label: 'Justice', icon: Scale, color: 'bg-gray-100 text-gray-700 border-gray-200' },
-    { id: 'redemption', label: 'Redemption', icon: Flame, color: 'bg-orange-100 text-orange-700 border-orange-200' },
-    { id: 'soul', label: 'Soul', icon: Eye, color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
-    { id: 'afterlife', label: 'Afterlife', icon: Crown, color: 'bg-violet-100 text-violet-700 border-violet-200' },
-    { id: 'meaning of life', label: 'Meaning of Life', icon: Compass, color: 'bg-cyan-100 text-cyan-700 border-cyan-200' }
+    { 
+      id: 'love', 
+      label: 'Love', 
+      icon: Heart, 
+      color: 'bg-gradient-to-br from-rose-50 to-pink-100 text-rose-700 border-rose-200 shadow-rose-100',
+      hoverColor: 'hover:from-rose-100 hover:to-pink-200 hover:shadow-rose-200'
+    },
+    { 
+      id: 'compassion', 
+      label: 'Compassion', 
+      icon: Heart, 
+      color: 'bg-gradient-to-br from-pink-50 to-rose-100 text-pink-700 border-pink-200 shadow-pink-100',
+      hoverColor: 'hover:from-pink-100 hover:to-rose-200 hover:shadow-pink-200'
+    },
+    { 
+      id: 'wisdom', 
+      label: 'Wisdom', 
+      icon: Brain, 
+      color: 'bg-gradient-to-br from-purple-50 to-violet-100 text-purple-700 border-purple-200 shadow-purple-100',
+      hoverColor: 'hover:from-purple-100 hover:to-violet-200 hover:shadow-purple-200'
+    },
+    { 
+      id: 'faith', 
+      label: 'Faith', 
+      icon: Star, 
+      color: 'bg-gradient-to-br from-blue-50 to-indigo-100 text-blue-700 border-blue-200 shadow-blue-100',
+      hoverColor: 'hover:from-blue-100 hover:to-indigo-200 hover:shadow-blue-200'
+    },
+    { 
+      id: 'hope', 
+      label: 'Hope', 
+      icon: Sparkles, 
+      color: 'bg-gradient-to-br from-emerald-50 to-teal-100 text-emerald-700 border-emerald-200 shadow-emerald-100',
+      hoverColor: 'hover:from-emerald-100 hover:to-teal-200 hover:shadow-emerald-200'
+    },
+    { 
+      id: 'justice', 
+      label: 'Justice', 
+      icon: Scale, 
+      color: 'bg-gradient-to-br from-slate-50 to-gray-100 text-slate-700 border-slate-200 shadow-slate-100',
+      hoverColor: 'hover:from-slate-100 hover:to-gray-200 hover:shadow-slate-200'
+    },
+    { 
+      id: 'redemption', 
+      label: 'Redemption', 
+      icon: Flame, 
+      color: 'bg-gradient-to-br from-orange-50 to-amber-100 text-orange-700 border-orange-200 shadow-orange-100',
+      hoverColor: 'hover:from-orange-100 hover:to-amber-200 hover:shadow-orange-200'
+    },
+    { 
+      id: 'soul', 
+      label: 'Soul', 
+      icon: Eye, 
+      color: 'bg-gradient-to-br from-indigo-50 to-blue-100 text-indigo-700 border-indigo-200 shadow-indigo-100',
+      hoverColor: 'hover:from-indigo-100 hover:to-blue-200 hover:shadow-indigo-200'
+    },
+    { 
+      id: 'afterlife', 
+      label: 'Afterlife', 
+      icon: Crown, 
+      color: 'bg-gradient-to-br from-violet-50 to-purple-100 text-violet-700 border-violet-200 shadow-violet-100',
+      hoverColor: 'hover:from-violet-100 hover:to-purple-200 hover:shadow-violet-200'
+    },
+    { 
+      id: 'meaning of life', 
+      label: 'Meaning of Life', 
+      icon: Compass, 
+      color: 'bg-gradient-to-br from-cyan-50 to-sky-100 text-cyan-700 border-cyan-200 shadow-cyan-100',
+      hoverColor: 'hover:from-cyan-100 hover:to-sky-200 hover:shadow-cyan-200'
+    }
   ];
   
   // Speech Recognition Setup
@@ -1406,7 +1466,7 @@ export function VoiceFirstChatInterface({
               </h3>
               
               {/* Predefined Themes */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 {PREDEFINED_THEMES.map((theme) => {
                   const IconComponent = theme.icon;
                   return (
@@ -1416,15 +1476,27 @@ export function VoiceFirstChatInterface({
                       onClick={() => handleThemeSelect(theme.label.toLowerCase())}
                       disabled={isLoadingComparison}
                       className={cn(
-                        "h-auto py-3 px-3 flex flex-col items-center gap-2 border-2 transition-all duration-200",
+                        "h-auto py-4 px-4 flex flex-col items-center gap-3 border-2 transition-all duration-300 ease-out",
+                        "rounded-2xl backdrop-blur-sm",
                         theme.color,
-                        "hover:scale-105 hover:shadow-md"
+                        theme.hoverColor,
+                        "hover:scale-105 hover:shadow-lg hover:-translate-y-1",
+                        "active:scale-95 active:translate-y-0",
+                        "disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none",
+                        "group relative overflow-hidden"
                       )}
                     >
-                      <IconComponent className="w-5 h-5" />
-                      <span className="text-xs font-medium text-center leading-tight">
-                        {theme.label}
-                      </span>
+                      <div className="relative z-10 flex flex-col items-center gap-2">
+                        <div className="p-2 rounded-xl bg-white/50 backdrop-blur-sm group-hover:bg-white/70 transition-all duration-300">
+                          <IconComponent className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
+                        </div>
+                        <span className="text-sm font-semibold text-center leading-tight group-hover:font-bold transition-all duration-300">
+                          {theme.label}
+                        </span>
+                      </div>
+                      
+                      {/* Subtle shine effect on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
                     </Button>
                   );
                 })}
