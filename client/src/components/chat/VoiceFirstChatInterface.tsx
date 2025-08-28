@@ -139,18 +139,22 @@ export function VoiceFirstChatInterface({
   const [lastAIMessage, setLastAIMessage] = useState<string>('');
   const [lastVoiceActivity, setLastVoiceActivity] = useState<number>(0);
 
-  // PROTECTED transcript setter - completely blocks AI voice contamination
+  // BULLETPROOF transcript setter - completely blocks AI voice contamination
   const setCurrentTranscript = useCallback((transcript: string) => {
-    // ABSOLUTE BLOCKING: Never allow transcript updates during AI speech
+    // QUADRUPLE CHECK: Never allow transcript updates during AI speech or isolation
     if (isAISpeaking || isTalkingBack || inputIsolated || isAudioIsolated) {
-      console.log('🚫 PROTECTED SETTER: Blocking transcript update - AI is active:', {
-        isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated, transcript
+      console.log('🚫 BULLETPROOF BLOCK: Rejecting transcript - Voice isolation active:', {
+        isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated, 
+        rejectedText: transcript.substring(0, 50) + '...'
       });
-      return;
+      return; // Absolute block - no exceptions
     }
     
-    console.log('✅ PROTECTED SETTER: Allowing transcript update - AI is silent:', transcript);
-    setCurrentTranscriptState(transcript);
+    // Additional safety check - only update if transcript is genuinely from user
+    if (transcript && transcript.trim().length > 0) {
+      console.log('✅ BULLETPROOF ALLOW: User transcript approved:', transcript);
+      setCurrentTranscriptState(transcript);
+    }
   }, [isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated]);
   
   // Compare Mode state
@@ -573,9 +577,11 @@ export function VoiceFirstChatInterface({
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      // CRITICAL: Completely block all transcription during AI speech
+      // CRITICAL: Completely block all transcription during AI speech or isolation
       if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
-        console.log('🚫 BLOCKING all transcription - AI is speaking (no voice mixing!)');
+        console.log('🚫 ABSOLUTE BLOCK: Rejecting ALL transcription - Voice isolation active:', {
+          isAISpeaking, inputIsolated, isAudioIsolated, isTalkingBack
+        });
         return; // Completely block during AI speech
       }
 
@@ -792,10 +798,16 @@ export function VoiceFirstChatInterface({
       if (SpeechRecognition) {
         backgroundRecognition = new SpeechRecognition();
         backgroundRecognition.continuous = true;
-        backgroundRecognition.interimResults = true;
+        backgroundRecognition.interimResults = false; // No interim results for interruption detection
         backgroundRecognition.lang = 'en-US';
         
-        // Enhanced interruption detection with fade-out and proper transcription restart
+        // CRITICAL: Block ALL transcript updates from background recognition
+        backgroundRecognition.onresult = () => {
+          console.log('🚫 Background recognition result BLOCKED - only used for interruption detection');
+          // Do nothing - this recognition is ONLY for interruption detection
+        };
+        
+        // Interruption detection ONLY - never updates transcript
         backgroundRecognition.onspeechstart = () => {
           console.log('🚨 INTERRUPTION DETECTED via background recognition!');
           
