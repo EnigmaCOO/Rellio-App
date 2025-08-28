@@ -5,6 +5,19 @@ import { storage } from '../storage';
 // Initialize bad-words filter
 const filter = new Filter();
 
+// Allow spiritual/religious terms that should never be blocked
+const SPIRITUAL_ALLOWLIST = [
+  'god', 'allah', 'jesus', 'christ', 'buddha', 'krishna', 'vishnu', 'shiva',
+  'prophet', 'prayer', 'faith', 'sacred', 'holy', 'divine', 'spiritual',
+  'worship', 'blessed', 'salvation', 'enlightenment', 'meditation', 'scripture',
+  'bible', 'quran', 'torah', 'vedas', 'dharma', 'karma', 'nirvana', 'heaven',
+  'soul', 'spirit', 'angel', 'miracle', 'blessing', 'grace', 'mercy', 'love',
+  'peace', 'wisdom', 'truth', 'light', 'eternal', 'infinite', 'creator'
+];
+
+// Remove spiritual terms from bad-words filter
+filter.removeWords(...SPIRITUAL_ALLOWLIST);
+
 // Religious bias keywords and hate speech patterns
 const RELIGIOUS_BIAS_KEYWORDS = [
   'superior religion', 'false god', 'fake religion', 'heretic', 'infidel',
@@ -45,6 +58,18 @@ export interface ModerationResult {
 
 // Check for offensive language using bad-words filter
 function checkOffensiveLanguage(text: string): ModerationResult {
+  const lowerText = text.toLowerCase();
+  
+  // Skip moderation if text contains spiritual/religious terms
+  const containsSpiritual = SPIRITUAL_ALLOWLIST.some(term => 
+    lowerText.includes(term.toLowerCase())
+  );
+  
+  if (containsSpiritual) {
+    // Allow spiritual discussions without profanity filtering
+    return { isBlocked: false };
+  }
+  
   if (filter.isProfane(text)) {
     return {
       isBlocked: true,
@@ -90,6 +115,30 @@ function checkReligiousBias(text: string): ModerationResult {
 // Use OpenAI moderation API for advanced detection
 async function checkAIModerationAPI(text: string): Promise<ModerationResult> {
   try {
+    const lowerText = text.toLowerCase();
+    
+    // Skip AI moderation for spiritual questions and discussions
+    const containsSpiritual = SPIRITUAL_ALLOWLIST.some(term => 
+      lowerText.includes(term.toLowerCase())
+    );
+    
+    // Also allow common spiritual question patterns
+    const spiritualQuestionPatterns = [
+      /who\s+is\s+(god|allah|jesus|christ|buddha)/i,
+      /what\s+is\s+(god|faith|prayer|salvation|enlightenment)/i,
+      /how\s+to\s+(pray|meditate|find\s+god)/i,
+      /meaning\s+of\s+(life|love|peace)/i
+    ];
+    
+    const isSpiritualQuestion = spiritualQuestionPatterns.some(pattern => 
+      pattern.test(text)
+    );
+    
+    if (containsSpiritual || isSpiritualQuestion) {
+      // Allow legitimate spiritual discussions
+      return { isBlocked: false };
+    }
+    
     const response = await openai.moderations.create({
       input: text,
     });
