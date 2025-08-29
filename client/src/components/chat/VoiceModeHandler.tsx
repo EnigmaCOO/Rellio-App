@@ -164,17 +164,21 @@ export function useVoiceModeHandler({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const activeRequestRef = useRef<string | null>(null);
 
-  // Check support and permissions on mount
+  // Check support and permissions on mount - STABLE VERSION TO PREVENT LOOPS
   useEffect(() => {
+    let isMounted = true;
+    
     const checkSupportAndPermissions = async () => {
-      console.log('🔍 Checking speech recognition support and permissions...');
+      if (!isMounted) return;
+      
+      console.log('🔍 Checking speech recognition support and permissions (STABLE)...');
       
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const supported = !!SpeechRecognition;
       
       console.log('🎤 Speech Recognition API available:', supported);
-      console.log('🎤 SpeechRecognition:', !!window.SpeechRecognition);
-      console.log('🎤 webkitSpeechRecognition:', !!window.webkitSpeechRecognition);
+      
+      if (!isMounted) return;
       
       if (!supported) {
         console.error('🚨 Speech recognition not supported in this browser');
@@ -182,33 +186,25 @@ export function useVoiceModeHandler({
         return;
       }
       
-      // Check microphone permissions
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        try {
-          console.log('🎤 Requesting microphone permission...');
-          await navigator.mediaDevices.getUserMedia({ audio: true });
-          console.log('✅ Microphone permission granted');
-          dispatch({ type: 'SET_SUPPORT', payload: { supported: true, permission: true } });
-        } catch (error) {
-          console.error('🚨 Microphone permission denied:', error);
-          dispatch({ type: 'SET_SUPPORT', payload: { supported: true, permission: false } });
-        }
-      } else {
-        console.error('🚨 getUserMedia not available');
-        dispatch({ type: 'SET_SUPPORT', payload: { supported: true, permission: false } });
-      }
+      // Don't request permission automatically - let user click button first
+      console.log('✅ Speech recognition supported - waiting for user interaction');
+      dispatch({ type: 'SET_SUPPORT', payload: { supported: true, permission: false } });
     };
     
     checkSupportAndPermissions();
-  }, []);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []); // EMPTY DEPENDENCY ARRAY TO PREVENT LOOPS
 
   const updateVoiceState = useCallback((newState: VoiceState) => {
     console.log('🎤 State change:', state.voiceState, '->', newState);
     dispatch({ type: 'SET_STATE', payload: newState });
     onStateChange(newState);
-  }, [state.voiceState, onStateChange]);
+  }, [onStateChange]); // REMOVED state.voiceState dependency to prevent loops
 
-  // Enhanced cleanup function with background recognition cleanup
+  // STABLE cleanup function to prevent infinite loops
   const cleanup = useCallback(() => {
     console.log('🧹 Cleaning up voice handler');
     
@@ -256,8 +252,9 @@ export function useVoiceModeHandler({
     }
 
     dispatch({ type: 'SET_LISTENING', payload: false });
-    updateVoiceState('idle');
-  }, [updateVoiceState]);
+    dispatch({ type: 'SET_STATE', payload: 'idle' });
+    onStateChange('idle');
+  }, []); // STABLE - no dependencies to prevent loops
 
   // Enhanced audio context initialization with maximum echo cancellation
   const initializeAudioContext = useCallback(async () => {
