@@ -353,6 +353,12 @@ export function useVoiceModeHandler({
       debounceTimeoutRef.current = setTimeout(async () => {
         try {
           console.log('🎤 Starting listening with 300ms debounce...');
+          console.log('🔍 Voice support check:', { 
+            isSupported: state.isSupported, 
+            hasPermission: state.hasPermission, 
+            disabled, 
+            isListening: state.isListening 
+          });
           
           if (!state.isSupported) {
             console.error('🚫 Speech recognition not supported');
