@@ -1,0 +1,39 @@
+You are a senior full-stack engineer tasked with debugging and fixing the voice system browser compatibility issues in Rellio's Universal Wisdom Explorer chat, ensuring it works seamlessly in supported browsers (Chrome/Edge) and falls back gracefully in unsupported ones (e.g., Firefox), without breaking other functionality or logic.
+
+Do not alter routing, APIs, state schemas, or IDs used by analytics/tests.
+Keep all existing component props and exported names.
+Modify only voice-related code in <VoiceFirstChatInterface.tsx>, <VoiceModeHandler.tsx>, and related files to handle unsupported browsers.
+Write accessible, responsive, and performant code.
+Prefer Tailwind CSS for any UI tweaks.
+Use semantic HTML and ARIA where relevant.
+Produce a single PR with clear commits (e.g., "fix(voice): handle browser compatibility for Web Speech API", "feat(voice): add fallback UI for unsupported browsers").
+Test for errors in Firefox/Safari (show warnings), and confirm functionality in Chrome/Edge.
+
+TASK BRIEF (paste after system block)
+Goal: Fix the voice system errors in Rellio's Universal Wisdom Explorer chat (client/src/components/chat/VoiceFirstChatInterface.tsx) where Web Speech API fails in unsupported browsers (e.g., Firefox/Mozilla/5.0, Safari), showing "Voice Input Not Available" and "Override Failed". The issue is browser compatibility—Web Speech API is only reliably supported in Chrome/Edge. Enhance detection, disable voice features gracefully in unsupported browsers, add fallback to text input, and improve user messaging to reduce frustration. Maintain the white-themed UI (#FFFFFF, rounded corners 12px, shadow-md) with teal #00D5FF accents and purple-to-gold gradient (#4B0082 to #D4AF37, 10% opacity).
+Key Features and Goals:
+
+Browser Compatibility Detection and Handling:
+
+In <VoiceModeHandler.tsx>, detect Web Speech API support early: Check if window.SpeechRecognition || window.webkitSpeechRecognition exists and is functional (try-catch a test instance).
+Set isSupported false for Firefox/Safari/iOS (user-agent sniffing as fallback: navigator.userAgent.includes('Firefox') or 'Safari' but not 'Chrome').
+Remove "Force Enable Voice" button—it fails because the API isn't supported; replace with a browser recommendation toast/message.
+
+
+Graceful Fallback in Unsupported Browsers:
+
+If !isSupported, disable mic button (grayed-out with tooltip "Voice not supported in this browser—use text input or switch to Chrome/Edge").
+Auto-switch to text input mode (setShowTextInput(true) with a persistent banner: "Voice features limited—recommend Chrome for full experience."
+For ElevenLabs output, fallback to browser SpeechSynthesis API if needed, but prioritize text responses with manual play button.
+
+
+User-Friendly Messaging and Prompts:
+
+Show a yellow warning card (bg-yellow-50, border-yellow-200) on load if !isSupported: "Voice Input Not Available. Speech recognition requires a compatible browser: Chrome (recommended), Microsoft Edge, Safari (iOS/macOS—partial). Current: [navigator.userAgent]. Try manual text input or switch browsers."
+On button click in unsupported browsers, toast: "Voice unavailable—please use text or open in Chrome/Edge."
+
+
+Interruption and Functionality in Supported Browsers:
+
+Ensure interruptions work in Chrome/Edge: Background listening during playback (onspeechstart >0.7 confidence) pauses ElevenLabs (fade-out 300ms).
+Fix any state conflicts from previous refactors—ensure cleanup in useEffect stops all instances.
