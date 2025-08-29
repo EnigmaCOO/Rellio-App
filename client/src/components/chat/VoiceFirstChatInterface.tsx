@@ -169,7 +169,7 @@ function VoiceFirstChatInterfaceInner({
     }
   });
 
-  // Settings and persona change tracking (moved up to fix hoisting issue)
+  // Settings and persona change tracking
   const [settings, setSettings] = useState({
     autoSendDelay: 800, // Faster auto-send for better voice UX
     confidenceThreshold: 0.6, // Lower threshold for better auto-send
@@ -178,41 +178,6 @@ function VoiceFirstChatInterfaceInner({
     interruptionSensitivity: 0.2, // Very sensitive for interruption testing
     volume: 0.8
   });
-
-  // Auto-enable text input and show warnings when voice is not supported
-  useEffect(() => {
-    if (!isSupported) {
-      if (!showTextInput) {
-        setShowTextInput(true);
-        console.log('📝 Auto-enabled text input - voice not supported in this browser');
-      }
-
-      // Show browser compatibility warning toast
-      if (browserInfo) {
-        const browserMessage = browserInfo.isFirefox 
-          ? "Firefox doesn't support Web Speech API. Use text input or try Chrome/Edge for voice features."
-          : browserInfo.isSafari 
-          ? "Safari has limited voice support. Use text input or try Chrome/Edge for best experience."
-          : `${browserInfo.name} may not support voice features. Try Chrome or Microsoft Edge for full voice experience.`;
-
-        console.log('⚠️ Browser compatibility warning:', browserMessage);
-        
-        // Only show toast once per session to avoid annoyance
-        const warningShown = sessionStorage.getItem('voice-warning-shown');
-        if (!warningShown) {
-          setTimeout(() => {
-            toast({
-              title: "Voice Features Limited",
-              description: browserMessage,
-              variant: "default",
-              duration: 8000
-            });
-            sessionStorage.setItem('voice-warning-shown', 'true');
-          }, 2000); // Delay to avoid overwhelming user on load
-        }
-      }
-    }
-  }, [isSupported, showTextInput, browserInfo, toast]);
 
   // Use the working VoiceModeHandler with error boundary protection
   const voiceHandlerResult = (() => {
@@ -318,8 +283,7 @@ function VoiceFirstChatInterfaceInner({
     isPlaying: voiceIsPlaying,
     isLoading: voiceIsLoading,
     volume: voiceVolume,
-    setVolume: setVoiceVolume,
-    browserInfo
+    setVolume: setVoiceVolume
   } = voiceHandlerResult;
 
   // Compare Mode state

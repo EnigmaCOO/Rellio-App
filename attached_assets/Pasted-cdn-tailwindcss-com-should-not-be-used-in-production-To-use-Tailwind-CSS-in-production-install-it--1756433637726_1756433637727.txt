@@ -1,0 +1,60 @@
+cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation
+Chat panel size: 
+Object {width: "300px", height: "500px"}
+[vite] connecting...
+DOMException {}
+
+Chat panel initialized with static design
+Chat panel size: 
+Object {width: "300px", height: "500px"}
+📱 Dashboard initializing...
+Panel state: 
+Object {navigationVisible: true, chatVisible: true}
+Top left bubble removed or not found
+🎭 Outside books - Universal Scholar activated
+Cannot access 'isSupported' before initialization
+Cannot access 'isSupported' before initialization
+The above error occurred in the <VoiceFirstChatInterfaceInner> component:
+
+    at VoiceFirstChatInterfaceInner (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/src/components/chat/VoiceFirstChatInterface.tsx?t=1756433568404:62:3)
+    at VoiceErrorBoundary (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/src/components/chat/VoiceErrorBoundary.tsx:10:5)
+    at VoiceFirstChatInterface
+    at div
+    at div
+    at div
+    at div
+    at div
+    at Dashboard (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/src/pages/dashboard.tsx?t=1756433568404:36:37)
+    at Route (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=fcc1aee0:323:16)
+    at Switch (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=fcc1aee0:379:17)
+    at Router (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/src/App.tsx?t=1756433568404&v=9_zd68GY8MmgK-EKxr4uk:35:48)
+    at div
+    at Provider (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=fcc1aee0:38:15)
+    at TooltipProvider (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=fcc1aee0:955:5)
+    at QueryClientProvider (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=fcc1aee0:2805:3)
+    at App (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/src/App.tsx?t=1756433568404&v=9_zd68GY8MmgK-EKxr4uk:106:39)
+
+React will try to recreate this component tree from scratch using the error boundary you provided, VoiceErrorBoundary.
+
+at VoiceFirstChatInterfaceInner (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/src/components/chat/VoiceFirstChatInterface.tsx?t=1756433568404:62:3)
+at VoiceErrorBoundary (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/src/components/chat/VoiceErrorBoundary.tsx:10:5)
+at VoiceFirstChatInterface
+at div
+at div
+at div
+at div
+at div
+at Dashboard (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/src/pages/dashboard.tsx?t=1756433568404:36:37)
+at Route (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=fcc1aee0:323:16)
+at Switch (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=fcc1aee0:379:17)
+at Router (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/src/App.tsx?t=1756433568404&amp;v=9_zd68GY8MmgK-EKxr4uk:35:48)
+at div
+at Provider (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=fcc1aee0:38:15)
+at TooltipProvider (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=fcc1aee0:955:5)
+at QueryClientProvider (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=fcc1aee0:2805:3)
+at App (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/src/App.tsx?t=1756433568404&amp;v=9_zd68GY8MmgK-EKxr4uk:106:39)
+
+React will try to recreate this component tree from scratch using the error boundary you provided, VoiceErrorBoundary.
+at t.value (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://9816ff7a-9cd5-46b4-83af-781856c2a5f8-00-3m2rfdhryerx.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://9816ff7a-9cd5-46b4

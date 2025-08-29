@@ -403,7 +403,7 @@ export function useVoiceModeHandler({
     };
 
     updateLevel();
-  }, [state.voiceState, isAIResponding, interruptAI, hasError]);
+  }, [state.voiceState, isAIResponding, hasError]);
 
   // Simplified duplicate prevention - only block rapid successive identical requests
   const isDuplicateRequest = useCallback((text: string): boolean => {
