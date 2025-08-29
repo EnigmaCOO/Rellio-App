@@ -178,13 +178,40 @@ function VoiceFirstChatInterfaceInner({
     volume: 0.8
   });
 
-  // Auto-enable text input when voice is not supported
+  // Auto-enable text input and show warnings when voice is not supported
   useEffect(() => {
-    if (!isSupported && !showTextInput) {
-      setShowTextInput(true);
-      console.log('📝 Auto-enabled text input - voice not supported in this browser');
+    if (!isSupported) {
+      if (!showTextInput) {
+        setShowTextInput(true);
+        console.log('📝 Auto-enabled text input - voice not supported in this browser');
+      }
+
+      // Show browser compatibility warning toast
+      if (browserInfo) {
+        const browserMessage = browserInfo.isFirefox 
+          ? "Firefox doesn't support Web Speech API. Use text input or try Chrome/Edge for voice features."
+          : browserInfo.isSafari 
+          ? "Safari has limited voice support. Use text input or try Chrome/Edge for best experience."
+          : `${browserInfo.name} may not support voice features. Try Chrome or Microsoft Edge for full voice experience.`;
+
+        console.log('⚠️ Browser compatibility warning:', browserMessage);
+        
+        // Only show toast once per session to avoid annoyance
+        const warningShown = sessionStorage.getItem('voice-warning-shown');
+        if (!warningShown) {
+          setTimeout(() => {
+            toast({
+              title: "Voice Features Limited",
+              description: browserMessage,
+              variant: "default",
+              duration: 8000
+            });
+            sessionStorage.setItem('voice-warning-shown', 'true');
+          }, 2000); // Delay to avoid overwhelming user on load
+        }
+      }
     }
-  }, [isSupported, showTextInput]);
+  }, [isSupported, showTextInput, browserInfo, toast]);
 
   // Use the working VoiceModeHandler with error boundary protection
   const voiceHandlerResult = (() => {
@@ -1560,41 +1587,60 @@ function VoiceFirstChatInterfaceInner({
           </div>
         )}
 
-        {/* Permission Warning with Retry */}
+        {/* Browser Compatibility Warning for Unsupported Browsers */}
+        {!isSupported && (
+          <div className="mb-4 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-xl shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-yellow-100 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-yellow-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-yellow-900 mb-2">
+                  Voice Input Not Available
+                </h4>
+                
+                <p className="text-xs text-yellow-800 mb-3 leading-relaxed">
+                  Speech recognition requires a compatible browser. Please try:
+                </p>
+                
+                <div className="space-y-2 mb-3">
+                  <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-yellow-200">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <p className="text-xs text-yellow-800 font-medium">Chrome (recommended)</p>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-yellow-200">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <p className="text-xs text-yellow-800 font-medium">Microsoft Edge</p>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-yellow-200">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                    <p className="text-xs text-yellow-800 font-medium">Safari (iOS/macOS)</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2 p-2 bg-yellow-100 rounded-lg border border-yellow-300">
+                  <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
+                  <p className="text-xs text-yellow-800">
+                    <strong>Current:</strong> {browserInfo?.name || 'Unknown'} - Voice features will be disabled.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Permission Warning for Supported Browsers */}
         {isSupported && !hasPermission && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
-              <Headphones className="w-4 h-4 text-red-600" />
-              <p className="text-sm text-red-800 font-medium">
+              <Headphones className="w-4 h-4 text-blue-600" />
+              <p className="text-sm text-blue-800 font-medium">
                 Microphone Access Required
               </p>
             </div>
-            <p className="text-xs text-red-700 mb-3">
-              Voice input needs microphone permission. Click "Request Permission" below, then allow access in your browser.
+            <p className="text-xs text-blue-700 mb-3">
+              Voice input needs microphone permission. Click the microphone button below to request access.
             </p>
-            <Button
-              onClick={async () => {
-                console.log('🎤 Manual permission request triggered');
-                const result = await toggleListening();
-                if (result) {
-                  toast({
-                    title: "Permission Granted",
-                    description: "Microphone access enabled! You can now use voice input.",
-                    variant: "default"
-                  });
-                } else {
-                  toast({
-                    title: "Permission Required",
-                    description: "Please allow microphone access in your browser settings to use voice input.",
-                    variant: "destructive"
-                  });
-                }
-              }}
-              className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 h-auto"
-            >
-              <Mic className="w-3 h-3 mr-1" />
-              Request Permission
-            </Button>
           </div>
         )}
 
@@ -1663,6 +1709,16 @@ function VoiceFirstChatInterfaceInner({
                     e.preventDefault();
                     e.stopPropagation();
 
+                    // Check browser support first
+                    if (!isSupported) {
+                      toast({
+                        title: "Voice Unavailable",
+                        description: `Voice input is not supported in ${browserInfo?.name || 'this browser'}. Please use text input or switch to Chrome/Edge.`,
+                        variant: "default"
+                      });
+                      return;
+                    }
+
                     try {
                       // Handle permission requests
                       if (!hasPermission) {
@@ -1707,30 +1763,40 @@ function VoiceFirstChatInterfaceInner({
                       });
                     }
                   }}
-                  disabled={false}
+                  disabled={!isSupported}
                   className={cn(
-                    "w-16 h-16 rounded-full transition-all duration-300 transform hover:scale-105 focus:scale-105 active:scale-95 shadow-md",
-                    // Grok-like button states with enhanced visual feedback
-                    voiceState === 'listening'
-                      ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 animate-pulse shadow-lg shadow-red-500/50 ring-2 ring-red-400 ring-opacity-75"
-                      : voiceState === 'processing'
-                      ? "bg-gradient-to-br from-purple-500 to-purple-600 animate-spin shadow-lg shadow-purple-500/50"
-                      : voiceState === 'speaking' || isAISpeaking
-                      ? "bg-gradient-to-br from-yellow-500 to-orange-600 animate-pulse shadow-lg shadow-yellow-500/50"
-                      : voiceState === 'interrupted'
-                      ? "bg-gradient-to-br from-red-500 to-red-600 animate-ping shadow-lg shadow-red-500/50 ring-4 ring-red-400 ring-opacity-75"
+                    "w-16 h-16 rounded-full transition-all duration-300 transform shadow-md",
+                    // Disabled state for unsupported browsers
+                    !isSupported
+                      ? "bg-gray-300 cursor-not-allowed opacity-60 hover:scale-100"
                       : inputIsolated
-                      ? "bg-gray-400 cursor-not-allowed opacity-50"
-                      : "bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 hover:shadow-lg hover:shadow-teal-500/30 focus:ring-2 focus:ring-teal-400 focus:ring-opacity-75"
+                      ? "bg-gray-400 cursor-not-allowed opacity-50 hover:scale-100"
+                      : "hover:scale-105 focus:scale-105 active:scale-95",
+                    // Grok-like button states with enhanced visual feedback (only when supported)
+                    isSupported && voiceState === 'listening'
+                      ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 animate-pulse shadow-lg shadow-red-500/50 ring-2 ring-red-400 ring-opacity-75"
+                      : isSupported && voiceState === 'processing'
+                      ? "bg-gradient-to-br from-purple-500 to-purple-600 animate-spin shadow-lg shadow-purple-500/50"
+                      : isSupported && (voiceState === 'speaking' || isAISpeaking)
+                      ? "bg-gradient-to-br from-yellow-500 to-orange-600 animate-pulse shadow-lg shadow-yellow-500/50"
+                      : isSupported && voiceState === 'interrupted'
+                      ? "bg-gradient-to-br from-red-500 to-red-600 animate-ping shadow-lg shadow-red-500/50 ring-4 ring-red-400 ring-opacity-75"
+                      : isSupported && !inputIsolated
+                      ? "bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 hover:shadow-lg hover:shadow-teal-500/30 focus:ring-2 focus:ring-teal-400 focus:ring-opacity-75"
+                      : ""
                   )}
                   title={
+                    !isSupported ? `Voice not supported in ${browserInfo?.name || 'this browser'} - use text input or switch to Chrome/Edge` :
                     !hasPermission ? "Click to request microphone permission" :
                     voiceState === 'listening' ? "Listening... Click to stop" :
                     voiceState === 'speaking' ? "AI is speaking... Click to interrupt" :
+                    inputIsolated ? "Input locked during AI speech" :
                     "Click to speak - Grok-style voice input"
                   }
                 >
-                  {voiceState === 'processing' ? (
+                  {!isSupported ? (
+                    <MicOff className="w-6 h-6 text-gray-500" />
+                  ) : voiceState === 'processing' ? (
                     <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : voiceState === 'listening' ? (
                     <Square className="w-6 h-6 text-white" />
@@ -1747,33 +1813,33 @@ function VoiceFirstChatInterfaceInner({
 
                 {/* Status Text */}
                 <div className="mt-2 text-center">
-                  {voiceState === 'listening' && (
+                  {!isSupported ? (
+                    <div className="text-xs text-gray-500">
+                      Voice Not Supported
+                    </div>
+                  ) : voiceState === 'listening' ? (
                     <div className="text-xs text-red-600 font-medium animate-pulse">
                       Listening...
                     </div>
-                  )}
-                  {voiceState === 'processing' && (
+                  ) : voiceState === 'processing' ? (
                     <div className="text-xs text-purple-600 font-medium">
                       Processing...
                     </div>
-                  )}
-                  {(voiceState === 'speaking' || isAISpeaking) && (
+                  ) : (voiceState === 'speaking' || isAISpeaking) ? (
                     <div className="text-xs text-yellow-600 font-medium animate-pulse">
                       AI Speaking...
                     </div>
-                  )}
-                  {voiceState === 'interrupted' && (
+                  ) : voiceState === 'interrupted' ? (
                     <div className="text-xs text-red-600 font-medium animate-pulse">
                       🚨 Interrupted
                     </div>
-                  )}
-                  {voiceState === 'idle' && (
+                  ) : voiceState === 'idle' ? (
                     <div className="text-xs text-gray-500">
                       {!hasPermission ? "Need Permission" : 
                        inputIsolated ? "Inputs Locked" :
                        "Click to speak"}
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
 

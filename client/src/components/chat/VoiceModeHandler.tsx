@@ -183,13 +183,13 @@ export function useVoiceModeHandler({
   const activeRequestRef = useRef<string | null>(null);
   const elevenLabsStreamingRef = useRef<any>(null); // For ElevenLabs TTS
 
-  // Enhanced support and permission check on mount
+  // Enhanced support and permission check on mount with strict browser compatibility
   useEffect(() => {
     const checkSupportAndPermissions = async () => {
       const userAgent = navigator.userAgent.toLowerCase();
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       
-      // Detailed browser detection
+      // Detailed browser detection with strict rules
       const browserInfo = {
         isChrome: userAgent.includes('chrome') && !userAgent.includes('edge') && !userAgent.includes('opr'),
         isEdge: userAgent.includes('edge') || userAgent.includes('edg/'),
@@ -198,30 +198,47 @@ export function useVoiceModeHandler({
         isOpera: userAgent.includes('opr') || userAgent.includes('opera'),
         hasAPI: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
         isHTTPS: window.location.protocol === 'https:',
-        userAgent: navigator.userAgent
+        userAgent: navigator.userAgent,
+        name: userAgent.includes('firefox') ? 'Firefox' :
+              userAgent.includes('safari') && !userAgent.includes('chrome') ? 'Safari' :
+              userAgent.includes('edge') || userAgent.includes('edg/') ? 'Microsoft Edge' :
+              userAgent.includes('chrome') ? 'Chrome' : 'Unknown Browser'
       };
 
       console.log('🔍 Browser detection:', browserInfo);
 
       let supported = false;
 
-      // Only enable voice for truly supported browsers
+      // Strict browser compatibility - only Chrome and Edge fully supported
       if (SpeechRecognition && (browserInfo.isChrome || browserInfo.isEdge)) {
-        supported = true;
-        console.log('✅ Voice input enabled - Chrome/Edge with Speech API detected');
-      } else if (SpeechRecognition && browserInfo.isSafari) {
-        // Safari has limited support - enable with warning
-        supported = true;
-        console.log('⚠️ Voice input enabled with limited Safari support');
+        // Test if the API actually works by creating a test instance
+        try {
+          const testRecognition = new SpeechRecognition();
+          testRecognition.continuous = false;
+          testRecognition.interimResults = false;
+          
+          // If we can create it without errors, consider it supported
+          supported = true;
+          console.log('✅ Voice input fully supported - Chrome/Edge with working Speech API');
+          
+          // Clean up test instance immediately
+          testRecognition.abort?.();
+        } catch (testError) {
+          console.warn('⚠️ Speech API exists but failed test:', testError);
+          supported = false;
+        }
+      } else if (browserInfo.isFirefox) {
+        supported = false;
+        console.log('❌ Voice disabled - Firefox does not support Web Speech API');
+      } else if (browserInfo.isSafari) {
+        supported = false;
+        console.log('❌ Voice disabled - Safari has limited/unreliable Web Speech API support');
+      } else if (!SpeechRecognition) {
+        supported = false;
+        console.log('❌ Voice disabled - No Speech Recognition API available');
       } else {
         supported = false;
-        if (browserInfo.isFirefox) {
-          console.log('❌ Voice disabled - Firefox does not support Web Speech API');
-        } else if (!SpeechRecognition) {
-          console.log('❌ Voice disabled - No Speech Recognition API available');
-        } else {
-          console.log('❌ Voice disabled - Unsupported browser for reliable voice input');
-        }
+        console.log('❌ Voice disabled - Browser not in supported list (Chrome/Edge only)');
       }
 
       let hasPermission = false;
@@ -247,13 +264,13 @@ export function useVoiceModeHandler({
         }
       }
 
-      // Force enable if we detect any speech recognition API
-      if ((window.SpeechRecognition || window.webkitSpeechRecognition) && !supported) {
-        console.log('🔧 FORCE ENABLING: Speech API detected but not marked as supported');
-        supported = true;
-      }
-
-      console.log('🎤 Final support status:', { supported, hasPermission });
+      console.log('🎤 Final support status:', { 
+        supported, 
+        hasPermission, 
+        browserName: browserInfo.name,
+        hasAPI: browserInfo.hasAPI
+      });
+      
       dispatch({ type: 'SET_SUPPORT', payload: { supported, permission: hasPermission } });
     };
 
@@ -971,10 +988,14 @@ export function useVoiceModeHandler({
     isEdge: userAgent.includes('edge') || userAgent.includes('edg/'),
     isSafari: userAgent.includes('safari') && !userAgent.includes('chrome'),
     isFirefox: userAgent.includes('firefox'),
+    isOpera: userAgent.includes('opr') || userAgent.includes('opera'),
+    hasAPI: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
     name: userAgent.includes('firefox') ? 'Firefox' :
           userAgent.includes('safari') && !userAgent.includes('chrome') ? 'Safari' :
           userAgent.includes('edge') || userAgent.includes('edg/') ? 'Microsoft Edge' :
-          userAgent.includes('chrome') ? 'Chrome' : 'Unknown Browser'
+          userAgent.includes('chrome') ? 'Chrome' : 
+          userAgent.includes('opr') || userAgent.includes('opera') ? 'Opera' : 'Unknown Browser',
+    fullUserAgent: navigator.userAgent
   };
 
   // Early return if in error state
