@@ -44,7 +44,7 @@ import { ChatHistoryManager } from './ChatHistoryManager';
 import { ProgressDashboard } from '@/components/progress/ProgressDashboard';
 import { AudioPlaybackButton } from './AudioPlaybackButton';
 import { Input } from '@/components/ui/input';
-import { useConsolidatedVoiceHandler } from './ConsolidatedVoiceHandler';
+import { useVoiceModeHandler } from './VoiceModeHandler';
 import { apiRequest } from '@/lib/queryClient';
 import type { Religion, ChatMessage } from '@shared/schema';
 import type { ScholarPersona } from './ScholarPersonas';
@@ -206,7 +206,7 @@ export function VoiceFirstChatInterface({
     }
   });
 
-  // Consolidated voice handler initialization
+  // Use the working VoiceModeHandler instead of ConsolidatedVoiceHandler
   const {
     isListening,
     currentTranscript,
@@ -216,54 +216,47 @@ export function VoiceFirstChatInterface({
     startListening,
     stopListening,
     toggleListening,
-    setAISpeaking: setVoiceHandlerAISpeaking, // Alias to avoid conflict
-    interruptAI
-  } = useConsolidatedVoiceHandler({
+    isSupported,
+    hasPermission,
+    interruptAI,
+    playText,
+    stopPlayback,
+    isPlaying: voiceIsPlaying,
+    isLoading: voiceIsLoading,
+    volume: voiceVolume,
+    setVolume: setVoiceVolume
+  } = useVoiceModeHandler({
     onTranscript: (text, isInterim) => {
-      // Handle transcript updates here if needed, but primarily managed by the handler's internal state
-      setIsProcessingVoice(text.length > 0); // Update processing state based on transcript
+      console.log('📝 Voice transcript:', text, 'isInterim:', isInterim);
+      setIsProcessingVoice(text.length > 0);
     },
     onAutoSend: (text) => {
-      console.log('📤 Voice message received via auto-send:', text);
+      console.log('🚀 Voice auto-send:', text);
       setWasLastMessageVoice(true);
       handleSendMessage(text);
     },
     onStateChange: (state) => {
       console.log('🎤 Voice state changed:', state);
-      // Update component's internal state based on voice handler state
-      // This mapping might need refinement based on the exact states exposed by useConsolidatedVoiceHandler
-      if (state === 'listening') {
-        // Already handled by toggleListening and startListening calls
-      } else if (state === 'idle') {
-        // Potentially reset listening state if it wasn't explicitly stopped
-      } else if (state === 'processing') {
-        setIsProcessingVoice(true);
-      } else if (state === 'ai_speaking') {
-        setVoiceHandlerAISpeaking(true); // Propagate AI speaking state
-        setIsAISpeaking(true); // Also update the component's direct state
-      } else if (state === 'interrupted') {
-        // Handle interruption state if needed, e.g., stop AI playback
-        if (isAIPlaying) {
-          stopAIPlayback();
-        }
-        setVoiceHandlerAISpeaking(false);
+      if (state === 'speaking') {
+        setIsAISpeaking(true);
+      } else if (state === 'idle' || state === 'interrupted') {
         setIsAISpeaking(false);
+        setIsProcessingVoice(false);
       }
     },
     onInterrupt: () => {
-      console.log('🚨 Voice interruption triggered by handler');
+      console.log('🚨 Voice interrupted AI');
       if (isAIPlaying) {
         stopAIPlayback();
       }
-      // Ensure relevant states are reset upon interruption
-      setVoiceHandlerAISpeaking(false);
       setIsAISpeaking(false);
       setPlayingMessageId(null);
     },
-    disabled: false, // This should be dynamically managed if needed
-    isAIResponding: isAIPlaying, // Inform handler if AI is currently speaking
-    autoSendDelay: 2000, // Example delay
-    confidenceThreshold: 0.7 // Example threshold
+    disabled: false,
+    isAIResponding: isAIPlaying,
+    autoSendDelay: settings.autoSendDelay,
+    confidenceThreshold: settings.confidenceThreshold,
+    voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV'
   });
 
   // Compare Mode state
@@ -604,132 +597,7 @@ export function VoiceFirstChatInterface({
     }
   }, [sendMessageMutation, showTextInput]);
 
-  // Initialize Speech Recognition with Enhanced Features
-  const initializeRecognition = useCallback(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      setIsSupported(false);
-      return null;
-    }
-
-    setIsSupported(true);
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-    recognition.maxAlternatives = 3;
-
-    recognition.onstart = () => {
-      console.log('🎤 Speech recognition started');
-      // Should not directly set isListening here, useConsolidatedVoiceHandler manages this
-    };
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      // Block during active AI speech but allow post-interruption recovery
-      if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
-        // EXCEPTION: Allow if we successfully interrupted and are now listening to user
-        if (voiceState === 'interrupted' || voiceState === 'listening') {
-          console.log('✅ POST-INTERRUPTION RECOVERY: Processing user voice after interruption');
-        } else {
-          console.log('🚫 BLOCKING AI CONTAMINATION: Active AI speech detected, blocking recognition');
-          return;
-        }
-      }
-
-      let finalTranscript = '';
-      let interimTranscript = '';
-      let maxConfidence = 0;
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        const currentConfidence = event.results[i][0].confidence || 0.8;
-
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
-          maxConfidence = Math.max(maxConfidence, currentConfidence);
-        } else {
-          interimTranscript += transcript;
-        }
-      }
-
-      // Safety check but allow post-interruption transcription
-      if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
-        if (voiceState === 'interrupted' || voiceState === 'listening') {
-          console.log('✅ RECOVERY MODE: Allowing post-interruption transcription');
-        } else {
-          console.log('🚫 BLOCKING: AI is active, preventing contamination');
-          return;
-        }
-      }
-
-      // Show LIVE transcript as user speaks (ONLY when AI is not speaking)
-      const fullTranscript = finalTranscript || interimTranscript;
-
-      // Final safety check with recovery exception
-      if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
-        if (voiceState === 'interrupted' || voiceState === 'listening') {
-          console.log('✅ FINAL RECOVERY: User voice approved after interruption');
-        } else {
-          console.log('🚫 FINAL BLOCK: Preventing AI voice contamination');
-          return;
-        }
-      }
-
-      console.log(`🎤 USER SPEECH (AI Silent): "${fullTranscript}" (confidence: ${maxConfidence})`);
-
-      // Track voice activity
-      setLastVoiceActivity(Date.now());
-
-      // Auto-send on final result (triple-check isolation)
-      if (finalTranscript && maxConfidence > 0.6) {
-        // Final check before auto-send
-        if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
-          console.log('🚫 FINAL CHECK: Blocking auto-send - AI is speaking');
-          return;
-        }
-
-        if (autoSendTimeoutRef.current) {
-          clearTimeout(autoSendTimeoutRef.current);
-        }
-
-        autoSendTimeoutRef.current = setTimeout(() => {
-          // FINAL ISOLATION CHECK before sending
-          if (isAISpeaking || inputIsolated || isAudioIsolated || isTalkingBack) {
-            console.log('🚫 BLOCKING auto-send at timeout - AI is still active');
-            return;
-          }
-
-          console.log('🚀 AUTO-SENDING message:', finalTranscript.trim());
-          setWasLastMessageVoice(true);
-          handleSendMessage(finalTranscript.trim());
-          stopListening(); // Stop listening after auto-sending
-        }, 800); // Use the configured autoSendDelay from settings
-      }
-    };
-
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error('🚨 Speech recognition error:', event.error);
-
-      if (event.error === 'not-allowed') {
-        setHasPermission(false);
-        toast({
-          title: "Microphone Access Denied",
-          description: "Please allow microphone access for voice input",
-          variant: "destructive"
-        });
-      }
-      // Additional error handling might be needed here
-    };
-
-    recognition.onend = () => {
-      console.log('🎤 Speech recognition ended');
-      // Handled by useConsolidatedVoiceHandler
-    };
-
-    return recognition;
-  }, [voiceState, settings.confidenceThreshold, settings.autoSendDelay, isAISpeaking, inputIsolated, isAudioIsolated, isTalkingBack, handleSendMessage, stopListening]);
+  // Speech recognition is now handled by VoiceModeHandler
 
   // Initialize Audio Context with Echo Cancellation for Level Detection
   const initializeAudioContext = useCallback(async () => {
@@ -819,32 +687,10 @@ export function VoiceFirstChatInterface({
     }
   }, [voiceState, settings.interruptionSensitivity, isAISpeaking, stopAIPlayback]); // Added stopAIPlayback as dependency
 
-  // Check Support and Initialize
+  // Voice initialization is handled by VoiceModeHandler
   useEffect(() => {
-    const recognition = initializeRecognition();
-    recognitionRef.current = recognition;
-
-    // Initialize audio context
-    if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
-      initializeAudioContext();
-    }
-
-    // Cleanup function
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-      if (autoSendTimeoutRef.current) {
-        clearTimeout(autoSendTimeoutRef.current);
-      }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-    };
-  }, [initializeRecognition, initializeAudioContext]); // Ensure dependencies are correct
+    console.log('🎤 VoiceFirstChatInterface mounted with voice support:', { isSupported, hasPermission });
+  }, [isSupported, hasPermission]);
 
   // HARDWARE AUDIO ISOLATION: Mute microphone during AI speech
   useEffect(() => {
@@ -902,18 +748,50 @@ export function VoiceFirstChatInterface({
   }, [textInputValue, inputIsolated, handleSendMessage]);
 
   // Toggle voice input based on current state
-  const toggleVoiceInput = useCallback(() => {
+  const toggleVoiceInput = useCallback(async () => {
+    console.log('🎤 Toggle voice input clicked - current state:', voiceState);
+    console.log('🎤 Voice support:', { isSupported, hasPermission });
+    
+    if (!isSupported) {
+      console.error('🚨 Speech recognition not supported');
+      toast({
+        title: "Voice Not Supported",
+        description: "Speech recognition is not supported in this browser",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!hasPermission) {
+      console.error('🚨 Microphone permission not granted');
+      toast({
+        title: "Microphone Access Required",
+        description: "Please allow microphone access to use voice input",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (voiceState === 'listening') {
-      stopListening(); // If currently listening, stop
-    } else if (voiceState === 'ai_speaking' || isAIPlaying) {
-      // If AI is speaking (or playing), interrupt
+      console.log('🛑 Stopping listening');
+      stopListening();
+    } else if (voiceState === 'speaking' || isAIPlaying || voiceIsPlaying) {
+      console.log('🛑 Interrupting AI speech');
       handleInterruption();
     } else {
-      // Otherwise, start listening
+      console.log('🎤 Starting listening');
       setWasLastMessageVoice(true);
-      startListening();
+      const success = await startListening();
+      if (!success) {
+        console.error('🚨 Failed to start listening');
+        toast({
+          title: "Voice Input Failed",
+          description: "Could not start voice recognition",
+          variant: "destructive"
+        });
+      }
     }
-  }, [voiceState, stopListening, startListening, handleInterruption, isAIPlaying]); // Added isAIPlaying dependency
+  }, [voiceState, stopListening, startListening, handleInterruption, isAIPlaying, voiceIsPlaying, isSupported, hasPermission, toast]);
 
   // Auto-scroll to bottom
   useEffect(() => {
