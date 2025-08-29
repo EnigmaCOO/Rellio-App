@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { VoiceErrorBoundary } from './VoiceErrorBoundary';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -48,43 +49,6 @@ import { useVoiceModeHandler } from './VoiceModeHandler';
 import { apiRequest } from '@/lib/queryClient';
 import type { Religion, ChatMessage } from '@shared/schema';
 import type { ScholarPersona } from './ScholarPersonas';
-
-// Define a basic Error Boundary component for voice-related errors
-class VoiceErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("VoiceErrorBoundary caught an error:", error, errorInfo);
-    // You can also log the error to an error reporting service here
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="flex flex-col items-center justify-center p-4 border border-red-300 bg-red-50 rounded-lg text-red-800">
-          <AlertTriangle className="w-6 h-6 mb-2" />
-          <p className="text-sm font-medium">Voice system encountered an error.</p>
-          <p className="text-xs mt-1">Please try again or refresh the page.</p>
-          {/* Optionally, show more details or a "report issue" button */}
-          {/* <details className="mt-2 text-xs">
-            <summary>Error Details</summary>
-            {this.state.error?.message}
-          </details> */}
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
 
 // Compare Mode interfaces
 interface ComparisonVerse {
@@ -140,7 +104,7 @@ declare global {
   }
 }
 
-export function VoiceFirstChatInterface({
+function VoiceFirstChatInterfaceInner({
   sessionId,
   context,
   selectedPersona,
@@ -1801,5 +1765,13 @@ export function VoiceFirstChatInterface({
         </div>
       )}
     </Card>
+  );
+}
+
+export function VoiceFirstChatInterface(props: VoiceFirstChatInterfaceProps) {
+  return (
+    <VoiceErrorBoundary>
+      <VoiceFirstChatInterfaceInner {...props} />
+    </VoiceErrorBoundary>
   );
 }

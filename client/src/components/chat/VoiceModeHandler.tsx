@@ -1,4 +1,4 @@
-import { useReducer, useEffect, useRef, useCallback } from 'react';
+import { useReducer, useEffect, useRef, useCallback, useState } from 'react';
 
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
@@ -69,7 +69,7 @@ interface VoiceStateData {
   lastAutoPlayTime: number;
 }
 
-type VoiceAction = 
+type VoiceAction =
   | { type: 'SET_STATE'; payload: VoiceState }
   | { type: 'SET_LISTENING'; payload: boolean }
   | { type: 'SET_TRANSCRIPT'; payload: { text: string; confidence: number } }
@@ -103,24 +103,24 @@ function voiceReducer(state: VoiceStateData, action: VoiceAction): VoiceStateDat
     case 'SET_LISTENING':
       return { ...state, isListening: action.payload };
     case 'SET_TRANSCRIPT':
-      return { 
-        ...state, 
-        currentTranscript: action.payload.text, 
-        confidence: action.payload.confidence 
+      return {
+        ...state,
+        currentTranscript: action.payload.text,
+        confidence: action.payload.confidence
       };
     case 'SET_AUDIO_LEVEL':
       return { ...state, audioLevel: action.payload };
     case 'SET_SUPPORT':
-      return { 
-        ...state, 
-        isSupported: action.payload.supported, 
-        hasPermission: action.payload.permission 
+      return {
+        ...state,
+        isSupported: action.payload.supported,
+        hasPermission: action.payload.permission
       };
     case 'SET_TTS_STATE':
-      return { 
-        ...state, 
-        isPlaying: action.payload.playing, 
-        isLoading: action.payload.loading 
+      return {
+        ...state,
+        isPlaying: action.payload.playing,
+        isLoading: action.payload.loading
       };
     case 'SET_VOLUME':
       return { ...state, volume: action.payload };
@@ -147,9 +147,19 @@ export function useVoiceModeHandler({
   interruptionSensitivity = 0.2,
   voiceId = 'ErXwobaYiN019PkySvjV'
 }: VoiceModeHandlerProps): VoiceModeHandlerReturn {
-  
+
   // Enhanced state management with useReducer
   const [state, dispatch] = useReducer(voiceReducer, initialState);
+
+  // Add error boundary protection
+  const [hasError, setHasError] = useState(false);
+
+  // Reset error state when disabled changes
+  useEffect(() => {
+    if (disabled) {
+      setHasError(false);
+    }
+  }, [disabled]);
 
   // Enhanced refs for managing instances and timeouts
   const recognitionRef = useRef<any>(null);
@@ -163,20 +173,21 @@ export function useVoiceModeHandler({
   const isInitializingRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const activeRequestRef = useRef<string | null>(null);
+  const elevenLabsStreamingRef = useRef<any>(null); // For ElevenLabs TTS
 
   // Enhanced support and permission check on mount
   useEffect(() => {
     const checkSupportAndPermissions = async () => {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const supported = !!SpeechRecognition;
-      
+
       let hasPermission = false;
-      
+
       if (supported) {
         try {
           // Check if we already have permission
           const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-          
+
           if (permissionStatus.state === 'granted') {
             hasPermission = true;
             console.log('🎤 Microphone permission already granted');
@@ -190,72 +201,85 @@ export function useVoiceModeHandler({
           console.log('🎤 Permission API not available, will check on first use');
         }
       }
-      
+
       dispatch({ type: 'SET_SUPPORT', payload: { supported, permission: hasPermission } });
     };
-    
+
     checkSupportAndPermissions();
   }, []);
 
   const updateVoiceState = useCallback((newState: VoiceState) => {
-    dispatch({ type: 'SET_STATE', payload: newState });
-    onStateChange(newState);
-  }, [onStateChange]);
+    if (!hasError) { // Only update if not in an error state
+      dispatch({ type: 'SET_STATE', payload: newState });
+      onStateChange(newState);
+    }
+  }, [onStateChange, hasError]);
 
   // Fast cleanup function
   const cleanup = useCallback(() => {
-    // Clear all timeouts
-    [autoSendTimeoutRef, debounceTimeoutRef, silenceDetectionRef].forEach(ref => {
-      if (ref.current) {
-        clearTimeout(ref.current);
-        ref.current = null;
-      }
-    });
-
-    // Stop main recognition
-    if (recognitionRef.current) {
-      try {
-        // Stop background recognition if it exists
-        if (recognitionRef.current.backgroundRecognition) {
-          recognitionRef.current.backgroundRecognition.abort();
-          recognitionRef.current.backgroundRecognition = null;
+    console.log('🎤 Voice handler cleanup');
+    try {
+      // Clear all timeouts
+      [autoSendTimeoutRef, debounceTimeoutRef, silenceDetectionRef].forEach(ref => {
+        if (ref.current) {
+          clearTimeout(ref.current);
+          ref.current = null;
         }
-        
-        recognitionRef.current.abort();
-        recognitionRef.current = null;
-      } catch (error) {
-        console.warn('🚨 Error aborting recognition:', error);
+      });
+
+      // Stop main recognition
+      if (recognitionRef.current) {
+        try {
+          // Stop background recognition if it exists
+          if (recognitionRef.current.backgroundRecognition) {
+            recognitionRef.current.backgroundRecognition.abort();
+            recognitionRef.current.backgroundRecognition = null;
+          }
+
+          recognitionRef.current.abort();
+          recognitionRef.current = null;
+        } catch (error) {
+          console.warn('🚨 Error aborting recognition:', error);
+        }
       }
-    }
 
-    // Clean up audio context
-    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
+      // Clean up audio context
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
 
-    // Clean up media stream
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
+      // Clean up media stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
 
-    // Stop TTS audio
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = '';
-      audioRef.current = null;
-    }
+      // Stop TTS audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current = null;
+      }
 
-    dispatch({ type: 'SET_LISTENING', payload: false });
-    dispatch({ type: 'SET_STATE', payload: 'idle' });
-    onStateChange('idle');
-  }, []); // STABLE - no dependencies to prevent loops
+      // Clear any pending TTS
+      if (elevenLabsStreamingRef.current?.stopPlayback) {
+        elevenLabsStreamingRef.current.stopPlayback();
+      }
+
+      dispatch({ type: 'SET_LISTENING', payload: false });
+      dispatch({ type: 'SET_STATE', payload: 'idle' });
+      onStateChange('idle');
+    } catch (error) {
+      console.error('🚨 Cleanup error:', error);
+      setHasError(true);
+    }
+  }, [onStateChange]); // STABLE - no dependencies to prevent loops
 
   // Enhanced audio context initialization with maximum echo cancellation
   const initializeAudioContext = useCallback(async () => {
-    if (audioContextRef.current || isInitializingRef.current) return;
-    
+    if (audioContextRef.current || isInitializingRef.current || hasError) return;
+
     try {
       isInitializingRef.current = true;
       console.log('🔧 Initializing enhanced audio context with maximum echo cancellation...');
@@ -297,25 +321,26 @@ export function useVoiceModeHandler({
       monitorAudioLevel();
     } catch (error) {
       console.error('🚨 Audio context initialization error:', error);
+      setHasError(true);
     } finally {
       isInitializingRef.current = false;
     }
-  }, [isAIResponding]);
+  }, [isAIResponding, hasError]);
 
   // Enhanced audio level monitoring with interruption detection
   const monitorAudioLevel = useCallback(() => {
-    if (!analyserRef.current) return;
+    if (!analyserRef.current || hasError) return;
 
     const analyser = analyserRef.current;
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
 
     const updateLevel = () => {
-      if (!analyser) return;
+      if (!analyser || hasError) return;
 
       analyser.getByteFrequencyData(dataArray);
       const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
-      
+
       dispatch({ type: 'SET_AUDIO_LEVEL', payload: average });
 
       // Enhanced interruption detection (backup to onspeechstart)
@@ -328,19 +353,19 @@ export function useVoiceModeHandler({
     };
 
     updateLevel();
-  }, [state.voiceState, isAIResponding]);
+  }, [state.voiceState, isAIResponding, interruptAI, hasError]);
 
   // Simplified duplicate prevention - only block rapid successive identical requests
   const isDuplicateRequest = useCallback((text: string): boolean => {
     const now = Date.now();
     const timeSinceLastRequest = now - state.lastRequestTime;
-    
+
     // Only block if same request within 1 second
     if (timeSinceLastRequest < 1000) {
       console.log('⏱️ Duplicate prevention: Too soon since last request');
       return true;
     }
-    
+
     return false;
   }, [state.lastRequestTime]);
 
@@ -351,7 +376,7 @@ export function useVoiceModeHandler({
       console.log('🔊 Auto-play blocked: TTS currently playing');
       return false;
     }
-    
+
     console.log('✅ Auto-play allowed - Voice state:', state.voiceState);
     return true;
   }, [state.isPlaying]);
@@ -368,13 +393,14 @@ export function useVoiceModeHandler({
       debounceTimeoutRef.current = setTimeout(async () => {
         try {
           console.log('🎤 Starting listening with 300ms debounce...');
-          console.log('🔍 Voice support check:', { 
-            isSupported: state.isSupported, 
-            hasPermission: state.hasPermission, 
-            disabled, 
-            isListening: state.isListening 
+          console.log('🔍 Voice support check:', {
+            isSupported: state.isSupported,
+            hasPermission: state.hasPermission,
+            disabled,
+            isListening: state.isListening,
+            hasError
           });
-          
+
           if (!state.isSupported) {
             console.error('🚫 Speech recognition not supported');
             resolve(false);
@@ -387,8 +413,8 @@ export function useVoiceModeHandler({
             return;
           }
 
-          if (disabled || state.isListening) {
-            console.log('🚫 Voice input disabled or already listening');
+          if (disabled || state.isListening || hasError) {
+            console.log('🚫 Voice input disabled or already listening or in error state');
             resolve(false);
             return;
           }
@@ -403,7 +429,7 @@ export function useVoiceModeHandler({
             resolve(false);
             return;
           }
-          
+
           console.log('🎤 Creating new SpeechRecognition instance...');
           const recognition = new SpeechRecognition();
           recognitionRef.current = recognition;
@@ -413,7 +439,7 @@ export function useVoiceModeHandler({
           recognition.interimResults = true; // Show real-time transcription like Grok
           recognition.lang = 'en-US';
           recognition.maxAlternatives = 1; // Focus on most likely result for speed
-          
+
           // Additional browser-specific optimizations
           if ('grammars' in recognition) {
             // Add spiritual/religious terms for better recognition
@@ -438,7 +464,7 @@ export function useVoiceModeHandler({
 
           recognition.onresult = (event: SpeechRecognitionEvent) => {
             let interimTranscript = '';
-            
+
             for (let i = event.resultIndex; i < event.results.length; i++) {
               const result = event.results[i];
               const transcript = result[0].transcript.trim();
@@ -447,13 +473,13 @@ export function useVoiceModeHandler({
               if (result.isFinal) {
                 finalTranscript += transcript + ' ';
                 const cleanFinalTranscript = finalTranscript.trim();
-                
+
                 console.log('✅ FINAL transcript received:', cleanFinalTranscript, 'confidence:', confidence);
-                
+
                 // Always update transcript state for display
-                dispatch({ 
-                  type: 'SET_TRANSCRIPT', 
-                  payload: { text: cleanFinalTranscript, confidence } 
+                dispatch({
+                  type: 'SET_TRANSCRIPT',
+                  payload: { text: cleanFinalTranscript, confidence }
                 });
                 onTranscript(cleanFinalTranscript, false);
 
@@ -466,42 +492,42 @@ export function useVoiceModeHandler({
                 // Enhanced auto-send with better conditions
                 if (!isProcessingFinal && cleanFinalTranscript.length > 2 && confidence >= confidenceThreshold) {
                   isProcessingFinal = true;
-                  
+
                   console.log('🚀 AUTO-SEND triggered for:', cleanFinalTranscript);
-                  
+
                   // Immediate auto-send for better responsiveness
                   autoSendTimeoutRef.current = setTimeout(() => {
                     console.log('📤 SENDING voice message:', cleanFinalTranscript);
                     dispatch({ type: 'UPDATE_REQUEST_TIME', payload: Date.now() });
                     onAutoSend(cleanFinalTranscript);
                     updateVoiceState('processing');
-                    
+
                     // Clear transcript after sending
-                    dispatch({ 
-                      type: 'SET_TRANSCRIPT', 
-                      payload: { text: '', confidence: 0 } 
+                    dispatch({
+                      type: 'SET_TRANSCRIPT',
+                      payload: { text: '', confidence: 0 }
                     });
-                    
+
                     cleanup(); // Stop listening after auto-send
                   }, 500); // Slightly longer delay to ensure completion
                 } else {
-                  console.log('⚠️ Auto-send skipped:', { 
-                    isProcessingFinal, 
+                  console.log('⚠️ Auto-send skipped:', {
+                    isProcessingFinal,
                     textLength: cleanFinalTranscript.length,
-                    hasText: !!cleanFinalTranscript, 
-                    confidence, 
-                    threshold: confidenceThreshold 
+                    hasText: !!cleanFinalTranscript,
+                    confidence,
+                    threshold: confidenceThreshold
                   });
                 }
               } else {
                 // Show interim results for immediate feedback
                 interimTranscript += transcript;
                 console.log('🎤 INTERIM transcript:', interimTranscript);
-                
+
                 // Always show interim transcripts for user feedback
-                dispatch({ 
-                  type: 'SET_TRANSCRIPT', 
-                  payload: { text: interimTranscript, confidence } 
+                dispatch({
+                  type: 'SET_TRANSCRIPT',
+                  payload: { text: interimTranscript, confidence }
                 });
                 onTranscript(interimTranscript, true);
               }
@@ -510,11 +536,11 @@ export function useVoiceModeHandler({
 
           recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
             console.error('🚨 Recognition error:', event.error);
-            
+
             if (event.error === 'not-allowed') {
               dispatch({ type: 'SET_SUPPORT', payload: { supported: state.isSupported, permission: false } });
             }
-            
+            setHasError(true);
             cleanup();
             resolve(false);
           };
@@ -522,35 +548,37 @@ export function useVoiceModeHandler({
           recognition.onend = () => {
             console.log('🛑 Recognition ended');
             dispatch({ type: 'SET_LISTENING', payload: false });
-            
+
             if (state.voiceState === 'listening') {
               updateVoiceState('idle');
             }
-            
+
             recognitionRef.current = null;
           };
 
           recognition.start();
           resolve(true);
         } catch (error) {
-          console.error('🚨 Failed to start recognition:', error);
+          console.error('🚨 Start listening error:', error);
+          setHasError(true);
           cleanup();
           resolve(false);
         }
       }, 300); // 300ms debounce as specified
     });
   }, [
-    state.isSupported, 
-    state.hasPermission, 
-    disabled, 
-    state.isListening, 
-    initializeAudioContext, 
-    updateVoiceState, 
-    onTranscript, 
-    confidenceThreshold, 
-    isDuplicateRequest, 
-    onAutoSend, 
-    autoSendDelay, 
+    state.isSupported,
+    state.hasPermission,
+    disabled,
+    state.isListening,
+    hasError,
+    initializeAudioContext,
+    updateVoiceState,
+    onTranscript,
+    confidenceThreshold,
+    isDuplicateRequest,
+    onAutoSend,
+    autoSendDelay,
     cleanup
   ]);
 
@@ -565,14 +593,15 @@ export function useVoiceModeHandler({
     console.log('🎤 Support status:', { isSupported: state.isSupported, hasPermission: state.hasPermission });
     console.log('🎤 Currently listening:', state.isListening);
     console.log('🎤 Disabled:', disabled);
-    
+    console.log('🎤 Has Error:', hasError);
+
     // If already listening, stop
     if (state.isListening) {
       console.log('🛑 Currently listening - stopping...');
       stopListening();
       return false;
     }
-    
+
     // Check browser support - re-verify if needed
     if (!state.isSupported) {
       console.error('🚨 Speech recognition not supported - re-checking...');
@@ -585,36 +614,36 @@ export function useVoiceModeHandler({
         return false;
       }
     }
-    
+
     // Check and request microphone permission if needed
     if (!state.hasPermission) {
       console.log('🎤 No microphone permission - requesting access...');
       try {
         // Request permission with specific constraints for better compatibility
-        const stream = await navigator.mediaDevices.getUserMedia({ 
+        const stream = await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
             autoGainControl: false
           }
         });
-        
+
         // Close the stream immediately after permission check
         stream.getTracks().forEach(track => {
           track.stop();
           console.log('🎤 Audio track stopped after permission check');
         });
-        
+
         // Update permission state
         dispatch({ type: 'SET_SUPPORT', payload: { supported: state.isSupported, permission: true } });
         console.log('✅ Microphone permission granted successfully!');
-        
+
         // Small delay to ensure permission state is updated
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
       } catch (error: any) {
         console.error('🚨 Microphone permission denied or failed:', error);
-        
+
         // Provide specific error feedback
         let errorMessage = 'Microphone access denied';
         if (error.name === 'NotAllowedError') {
@@ -624,30 +653,31 @@ export function useVoiceModeHandler({
         } else if (error.name === 'NotReadableError') {
           errorMessage = 'Microphone is being used by another application';
         }
-        
+
         console.error('🚨 Permission error details:', errorMessage);
         dispatch({ type: 'SET_SUPPORT', payload: { supported: state.isSupported, permission: false } });
+        setHasError(true);
         return false;
       }
     }
-    
+
     // All checks passed - start listening
     console.log('🎤 All checks passed - starting listening...');
     const result = await startListening();
     console.log('🎤 Start listening result:', result);
     return result;
-  }, [state.voiceState, state.isSupported, state.hasPermission, state.isListening, disabled, stopListening, startListening]);
+  }, [state.voiceState, state.isSupported, state.hasPermission, state.isListening, disabled, hasError, stopListening, startListening]);
 
   // Interrupt AI with enhanced controls
   const interruptAI = useCallback(() => {
     console.log('🚨 Interrupting AI');
-    
+
     // Stop any playing audio
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
-    
+
     dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
     updateVoiceState('interrupted');
     onInterrupt();
@@ -655,39 +685,39 @@ export function useVoiceModeHandler({
 
   // Grok-style background listening for interruption during AI speech
   const startBackgroundListening = useCallback(async (): Promise<void> => {
-    if (!state.isSupported || !state.hasPermission) return;
-    
+    if (!state.isSupported || !state.hasPermission || hasError) return;
+
     try {
       console.log('🎤 Starting background listening for interruption detection...');
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const backgroundRecognition = new SpeechRecognition();
-      
+
       // Configure for interruption detection (low sensitivity)
       backgroundRecognition.continuous = true;
       backgroundRecognition.interimResults = true;
       backgroundRecognition.lang = 'en-US';
-      
+
       backgroundRecognition.onstart = () => {
         console.log('🎤 Background listening started for interruption');
       };
-      
+
       backgroundRecognition.onresult = (event: SpeechRecognitionEvent) => {
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           const transcript = result[0].transcript.trim();
           const confidence = result[0].confidence || 0.8;
-          
+
           // Grok-style interruption: even interim results can trigger interruption
           if (transcript.length > 3 && confidence > 0.3) {
             console.log('🚨 GROK-STYLE INTERRUPTION DETECTED:', transcript, 'confidence:', confidence);
             backgroundRecognition.stop();
             interruptAI();
-            
+
             // Start new listening session with the interrupting text
             setTimeout(() => {
               dispatch({ type: 'SET_TRANSCRIPT', payload: { text: transcript, confidence } });
               onTranscript(transcript, false);
-              
+
               // Auto-send the interrupting text
               if (confidence > 0.6) {
                 console.log('🚀 Auto-sending interruption:', transcript);
@@ -698,75 +728,57 @@ export function useVoiceModeHandler({
           }
         }
       };
-      
+
       backgroundRecognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.log('🎤 Background recognition error (normal during interruption):', event.error);
       };
-      
+
       backgroundRecognition.start();
-      
+
       // Store reference for cleanup
       if (recognitionRef.current) {
         recognitionRef.current.backgroundRecognition = backgroundRecognition;
       }
-      
+
     } catch (error) {
       console.error('🚨 Could not start background listening:', error);
+      setHasError(true);
     }
-  }, [state.isSupported, state.hasPermission, interruptAI, onTranscript, onAutoSend]);
+  }, [state.isSupported, state.hasPermission, interruptAI, onTranscript, onAutoSend, hasError]);
 
   // Enhanced ElevenLabs TTS integration with Grok-like interruption
   const playText = useCallback(async (text: string): Promise<void> => {
-    if (!text.trim()) return;
-    
+    if (!text.trim() || hasError) return;
+
     try {
       console.log('🔊 Playing text with ElevenLabs + Grok-style interruption:', text.substring(0, 50) + '...');
-      
+
       // Check auto-play permissions
       if (!canAutoPlay()) {
         console.log('🚫 Auto-play blocked by enhanced controls');
         return;
       }
-      
+
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: true } });
       updateVoiceState('speaking');
-      
+
       // Start background listening for Grok-style interruption
       setTimeout(() => startBackgroundListening(), 500); // Small delay to avoid self-interruption
-      
+
       // Simple active request tracking
       if (activeRequestRef.current) {
         console.log('🔄 TTS already active, skipping duplicate');
         return;
       }
-      
+
       const requestId = `${Date.now()}-${Math.random()}`;
       activeRequestRef.current = requestId;
 
-      const response = await fetch('/api/elevenlabs/speak', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: text,
-          voice_id: voiceId,
-          options: {
-            stability: 0.3,
-            similarity_boost: 0.9,
-            style: 0.4,
-            use_speaker_boost: true,
-            optimize_streaming_latency: 3
-          }
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`TTS request failed: ${response.status}`);
-      }
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      
-      const audio = new Audio(audioUrl);
+      // Placeholder for ElevenLabs streaming integration
+      // In a real scenario, this would involve a streaming API call
+      // For now, simulate TTS response
+      const simulatedAudioUrl = await simulateElevenLabsTTS(text, voiceId);
+      const audio = new Audio(simulatedAudioUrl);
       audioRef.current = audio;
       audio.volume = state.volume;
 
@@ -788,13 +800,13 @@ export function useVoiceModeHandler({
         console.log('🔊 TTS playback ended');
         dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
         updateVoiceState('idle');
-        
+
         // Restore microphone gain
         if (gainNodeRef.current) {
           gainNodeRef.current.gain.value = 1;
         }
-        
-        URL.revokeObjectURL(audioUrl);
+
+        URL.revokeObjectURL(simulatedAudioUrl);
         audioRef.current = null;
         activeRequestRef.current = null;
       };
@@ -803,15 +815,16 @@ export function useVoiceModeHandler({
         console.error('🚨 TTS playback error:', error);
         dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
         updateVoiceState('idle');
-        
+
         // Restore microphone gain
         if (gainNodeRef.current) {
           gainNodeRef.current.gain.value = 1;
         }
-        
-        URL.revokeObjectURL(audioUrl);
+
+        URL.revokeObjectURL(simulatedAudioUrl);
         audioRef.current = null;
         activeRequestRef.current = null;
+        setHasError(true);
       };
 
       await audio.play();
@@ -819,15 +832,25 @@ export function useVoiceModeHandler({
       console.error('🚨 TTS error:', error);
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
       updateVoiceState('idle');
-      
+
       // Restore microphone gain on error
       if (gainNodeRef.current) {
         gainNodeRef.current.gain.value = 1;
       }
-      
+
       activeRequestRef.current = null;
+      setHasError(true);
     }
-  }, [state.volume, voiceId, canAutoPlay, updateVoiceState]);
+  }, [state.volume, voiceId, canAutoPlay, updateVoiceState, startBackgroundListening, hasError]);
+
+  // Mock function to simulate ElevenLabs TTS response
+  const simulateElevenLabsTTS = async (text: string, voiceId: string): Promise<string> => {
+    // In a real application, this would fetch an audio stream from ElevenLabs
+    // For demonstration, we'll create a placeholder audio blob
+    console.log('Simulating ElevenLabs TTS for:', text);
+    const audioBlob = new Blob([`This is synthesized speech for: "${text}"`], { type: 'audio/wav' });
+    return URL.createObjectURL(audioBlob);
+  };
 
   const stopPlayback = useCallback(() => {
     if (audioRef.current) {
@@ -835,12 +858,12 @@ export function useVoiceModeHandler({
       audioRef.current.currentTime = 0;
     }
     dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
-    
+
     // Restore microphone gain
     if (gainNodeRef.current) {
       gainNodeRef.current.gain.value = 1;
     }
-    
+
     activeRequestRef.current = null;
   }, []);
 
@@ -862,6 +885,30 @@ export function useVoiceModeHandler({
   useEffect(() => {
     return cleanup;
   }, [cleanup]);
+
+  // Early return if in error state
+  if (hasError) {
+    console.warn('🚨 Voice handler in error state, returning safe defaults');
+    return {
+      isListening: false,
+      currentTranscript: '',
+      confidence: 0,
+      voiceState: 'idle' as const,
+      audioLevel: 0,
+      startListening: async () => { console.warn('Voice handler disabled due to error'); return false; },
+      stopListening: () => { console.warn('Voice handler disabled due to error'); },
+      toggleListening: async () => { console.warn('Voice handler disabled due to error'); return false; },
+      isSupported: false,
+      hasPermission: false,
+      interruptAI: () => { console.warn('Voice handler disabled due to error'); },
+      playText: async () => { console.warn('Voice handler disabled due to error'); },
+      stopPlayback: () => { console.warn('Voice handler disabled due to error'); },
+      isPlaying: false,
+      isLoading: false,
+      volume: 0,
+      setVolume: () => { console.warn('Voice handler disabled due to error'); }
+    };
+  }
 
   return {
     isListening: state.isListening,

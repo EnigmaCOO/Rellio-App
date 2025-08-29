@@ -51,10 +51,9 @@ import { GrokStyleVoiceInterface } from "@/components/chat/GrokStyleVoiceInterfa
 import { ScholarPersonaSelector, type ScholarPersona, getPersonaForReligion, PersonaBadge } from "@/components/chat/ScholarPersonas";
 import { PersonaCustomizer } from "@/components/chat/PersonaCustomizer";
 import { ChatHistoryManager } from "@/components/chat/ChatHistoryManager";
-import { VoiceFirstInterface } from "@/components/chat/VoiceFirstInterface";
+import { VoiceFirstChatInterface } from "@/components/chat/VoiceFirstChatInterface";
 import { GrokStyleOrb } from "@/components/chat/GrokStyleOrb";
 import { MandalaOverlay } from "@/components/chat/MandalaOverlay";
-import { SimpleVoiceTest } from "./SimpleVoiceTest";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
