@@ -591,6 +591,19 @@ export function VoiceFirstChatInterface({
     }
   });
 
+  // Consolidated send message function (moved up to fix hoisting issue)
+  const handleSendMessage = useCallback((message: string) => {
+    if (!message.trim()) return;
+
+    console.log('📤 Sending message:', message);
+    sendMessageMutation.mutate(message);
+
+    // Clear text input if using text mode
+    if (showTextInput) {
+      setTextInputValue('');
+    }
+  }, [sendMessageMutation, showTextInput]);
+
   // Initialize Speech Recognition with Enhanced Features
   const initializeRecognition = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -716,7 +729,7 @@ export function VoiceFirstChatInterface({
     };
 
     return recognition;
-  }, [voiceState, settings.confidenceThreshold, settings.autoSendDelay, isAISpeaking, inputIsolated, isAudioIsolated, isTalkingBack, handleSendMessage, stopListening, initializeRecognition]);
+  }, [voiceState, settings.confidenceThreshold, settings.autoSendDelay, isAISpeaking, inputIsolated, isAudioIsolated, isTalkingBack, handleSendMessage, stopListening]);
 
   // Initialize Audio Context with Echo Cancellation for Level Detection
   const initializeAudioContext = useCallback(async () => {
@@ -878,18 +891,6 @@ export function VoiceFirstChatInterface({
 
   }, [isAIPlaying, stopAIPlayback, toast, interruptAI]); // Added interruptAI dependency
 
-  // Consolidated send message function
-  const handleSendMessage = useCallback((message: string) => {
-    if (!message.trim()) return;
-
-    console.log('📤 Sending message:', message);
-    sendMessageMutation.mutate(message);
-
-    // Clear text input if using text mode
-    if (showTextInput) {
-      setTextInputValue('');
-    }
-  }, [sendMessageMutation, showTextInput]);
 
   // Handle text input submission
   const handleTextSubmit = useCallback((e: React.FormEvent) => {
