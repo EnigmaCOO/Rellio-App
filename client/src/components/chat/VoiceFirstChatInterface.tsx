@@ -782,20 +782,18 @@ export function VoiceFirstChatInterface({
     return lastMessage?.type === 'ai' && lastMessage.content !== lastAIMessage;
   }, [messages, lastAIMessage]);
 
-  // Simplified auto-play logic using useMemo for efficient calculation
+  // Simplified auto-play logic - only prevent during voice recording
   const shouldAutoPlay = useMemo(() => {
     const hasLatestAI = hasNewAIMessage();
     const autoPlayEnabled = settings.autoPlayAI;
     const isCurrentlyPlaying = !!playingMessageId;
-    const voiceStateIdleOrReady = voiceState === 'idle' || voiceState === 'interrupted'; // Allow autoplay if idle or just interrupted
-    const notCurrentlyListening = voiceState !== 'listening'; // Don't autoplay if user is actively speaking
+    const voiceNotListening = voiceState !== 'listening'; // Only block if actively listening
 
     const result = hasLatestAI &&
                    autoPlayEnabled &&
                    !isCurrentlyPlaying &&
-                   voiceStateIdleOrReady &&
-                   !wasLastMessageVoice && // Don't autoplay if the last user message was voice-generated
-                   notCurrentlyListening;
+                   voiceNotListening &&
+                   wasLastMessageVoice; // Only auto-play for voice-initiated messages
 
     console.log('🔊 Auto-play check:', {
       hasLatestAI,
@@ -803,12 +801,12 @@ export function VoiceFirstChatInterface({
       isCurrentlyPlaying,
       voiceState,
       wasLastMessageVoice,
-      notCurrentlyListening,
+      voiceNotListening,
       result
     });
 
     return result;
-  }, [hasNewAIMessage, settings.autoPlayAI, playingMessageId, voiceState, wasLastMessageVoice]); // Added notCurrentlyListening check
+  }, [hasNewAIMessage, settings.autoPlayAI, playingMessageId, voiceState, wasLastMessageVoice]);
 
   // Direct auto-play trigger using useEffect
   useEffect(() => {

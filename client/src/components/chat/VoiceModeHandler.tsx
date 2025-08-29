@@ -344,17 +344,17 @@ export function useVoiceModeHandler({
     return false;
   }, [state.lastRequestTime]);
 
-  // Simplified auto-play control - only block during active listening
+  // Simplified auto-play control - only block during TTS playback
   const canAutoPlay = useCallback((): boolean => {
-    // Only block if actively listening (not during processing or idle)
-    if (state.isListening && state.voiceState === 'listening') {
-      console.log('🎤 Auto-play blocked: Currently listening');
+    // Only block if TTS is currently playing to prevent feedback
+    if (state.isPlaying) {
+      console.log('🔊 Auto-play blocked: TTS currently playing');
       return false;
     }
     
     console.log('✅ Auto-play allowed - Voice state:', state.voiceState);
     return true;
-  }, [state.isListening, state.voiceState]);
+  }, [state.isPlaying]);
 
   // Debounced startListening with 300ms debounce
   const startListening = useCallback(async (): Promise<boolean> => {
@@ -448,8 +448,9 @@ export function useVoiceModeHandler({
                 finalTranscript += transcript + ' ';
                 const cleanFinalTranscript = finalTranscript.trim();
                 
-                console.log('🎤 Final transcript received:', cleanFinalTranscript, 'confidence:', confidence);
+                console.log('✅ FINAL transcript received:', cleanFinalTranscript, 'confidence:', confidence);
                 
+                // Always update transcript state for display
                 dispatch({ 
                   type: 'SET_TRANSCRIPT', 
                   payload: { text: cleanFinalTranscript, confidence } 
@@ -462,37 +463,42 @@ export function useVoiceModeHandler({
                   autoSendTimeoutRef.current = null;
                 }
 
-                // Grok-like auto-send: Enhanced with shorter delay for better responsiveness
-                if (!isProcessingFinal && cleanFinalTranscript && confidence >= confidenceThreshold) {
+                // Enhanced auto-send with better conditions
+                if (!isProcessingFinal && cleanFinalTranscript.length > 2 && confidence >= confidenceThreshold) {
                   isProcessingFinal = true;
                   
-                  if (!isDuplicateRequest(cleanFinalTranscript)) {
-                    console.log('🚀 Grok-style auto-send triggered for:', cleanFinalTranscript);
+                  console.log('🚀 AUTO-SEND triggered for:', cleanFinalTranscript);
+                  
+                  // Immediate auto-send for better responsiveness
+                  autoSendTimeoutRef.current = setTimeout(() => {
+                    console.log('📤 SENDING voice message:', cleanFinalTranscript);
+                    dispatch({ type: 'UPDATE_REQUEST_TIME', payload: Date.now() });
+                    onAutoSend(cleanFinalTranscript);
+                    updateVoiceState('processing');
                     
-                    // Shorter delay for more responsive interaction (like Grok)
-                    autoSendTimeoutRef.current = setTimeout(() => {
-                      console.log('🚀 Auto-sending with fast speed:', cleanFinalTranscript);
-                      dispatch({ type: 'UPDATE_REQUEST_TIME', payload: Date.now() });
-                      onAutoSend(cleanFinalTranscript);
-                      updateVoiceState('processing');
-                      cleanup(); // Stop listening after auto-send
-                    }, 300); // Fast 300ms for immediate response
-                  } else {
-                    console.log('⏭️ Duplicate request blocked:', cleanFinalTranscript);
-                  }
+                    // Clear transcript after sending
+                    dispatch({ 
+                      type: 'SET_TRANSCRIPT', 
+                      payload: { text: '', confidence: 0 } 
+                    });
+                    
+                    cleanup(); // Stop listening after auto-send
+                  }, 500); // Slightly longer delay to ensure completion
                 } else {
-                  console.log('🚫 Auto-send conditions not met:', { 
+                  console.log('⚠️ Auto-send skipped:', { 
                     isProcessingFinal, 
+                    textLength: cleanFinalTranscript.length,
                     hasText: !!cleanFinalTranscript, 
                     confidence, 
                     threshold: confidenceThreshold 
                   });
                 }
               } else {
-                // Show interim results for immediate feedback (Grok-like)
+                // Show interim results for immediate feedback
                 interimTranscript += transcript;
-                console.log('🎤 Interim transcript:', interimTranscript);
+                console.log('🎤 INTERIM transcript:', interimTranscript);
                 
+                // Always show interim transcripts for user feedback
                 dispatch({ 
                   type: 'SET_TRANSCRIPT', 
                   payload: { text: interimTranscript, confidence } 
