@@ -6,13 +6,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Mic, 
-  MicOff, 
-  Square, 
-  Volume2, 
+import {
+  Mic,
+  MicOff,
+  Square,
+  Volume2,
   VolumeX,
-  Bot, 
+  Bot,
   User,
   Settings,
   Headphones,
@@ -48,6 +48,43 @@ import { useConsolidatedVoiceHandler } from './ConsolidatedVoiceHandler';
 import { apiRequest } from '@/lib/queryClient';
 import type { Religion, ChatMessage } from '@shared/schema';
 import type { ScholarPersona } from './ScholarPersonas';
+
+// Define a basic Error Boundary component for voice-related errors
+class VoiceErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("VoiceErrorBoundary caught an error:", error, errorInfo);
+    // You can also log the error to an error reporting service here
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center p-4 border border-red-300 bg-red-50 rounded-lg text-red-800">
+          <AlertTriangle className="w-6 h-6 mb-2" />
+          <p className="text-sm font-medium">Voice system encountered an error.</p>
+          <p className="text-xs mt-1">Please try again or refresh the page.</p>
+          {/* Optionally, show more details or a "report issue" button */}
+          {/* <details className="mt-2 text-xs">
+            <summary>Error Details</summary>
+            {this.state.error?.message}
+          </details> */}
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 
 // Compare Mode interfaces
 interface ComparisonVerse {
@@ -125,7 +162,7 @@ export function VoiceFirstChatInterface({
   const [showTextInput, setShowTextInput] = useState(false);
   const [textInputValue, setTextInputValue] = useState('');
   const [lastAIMessage, setLastAIMessage] = useState<string>('');
-  
+
   // Voice recognition support states
   const [isSupported, setIsSupported] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
@@ -149,39 +186,25 @@ export function VoiceFirstChatInterface({
     autoPlay: false, // Disable auto-play to prevent conflicts
     onStart: () => {
       console.log('🔊 AI started speaking');
-      setAISpeaking(true);
+      setIsAISpeaking(true); // Use setIsAISpeaking for internal state
       setPlayingMessageId(playingMessageId);
     },
     onEnd: () => {
       console.log('🔊 AI finished speaking');
-      setAISpeaking(false);
+      setIsAISpeaking(false); // Use setIsAISpeaking for internal state
       setPlayingMessageId(null);
     },
     onInterrupted: () => {
       console.log('🚨 AI speech interrupted');
-      setAISpeaking(false);
+      setIsAISpeaking(false); // Use setIsAISpeaking for internal state
       setPlayingMessageId(null);
     },
     onError: (error) => {
       console.log('🔊 AI speech error:', error);
-      setAISpeaking(false);
+      setIsAISpeaking(false); // Use setIsAISpeaking for internal state
       setPlayingMessageId(null);
     }
   });
-
-  // Voice event handlers for SimplifiedVoiceHandler
-  const handleVoiceMessage = useCallback((text: string) => {
-    console.log('📤 Voice message received:', text);
-    setWasLastMessageVoice(true);
-    handleSendMessage(text);
-  }, []);
-
-  const handleVoiceInterruption = useCallback(() => {
-    console.log('🚨 Voice interruption triggered');
-    if (isAIPlaying) {
-      stopAIPlayback();
-    }
-  }, [isAIPlaying, stopAIPlayback]);
 
   // Consolidated voice handler initialization
   const {
@@ -193,28 +216,55 @@ export function VoiceFirstChatInterface({
     startListening,
     stopListening,
     toggleListening,
-    setAISpeaking,
+    setAISpeaking: setVoiceHandlerAISpeaking, // Alias to avoid conflict
     interruptAI
   } = useConsolidatedVoiceHandler({
     onTranscript: (text, isInterim) => {
-      handleTranscriptUpdate(text);
+      // Handle transcript updates here if needed, but primarily managed by the handler's internal state
+      setIsProcessingVoice(text.length > 0); // Update processing state based on transcript
     },
-    onAutoSend: handleVoiceMessage,
+    onAutoSend: (text) => {
+      console.log('📤 Voice message received via auto-send:', text);
+      setWasLastMessageVoice(true);
+      handleSendMessage(text);
+    },
     onStateChange: (state) => {
-      console.log('🎤 Voice state:', state);
+      console.log('🎤 Voice state changed:', state);
+      // Update component's internal state based on voice handler state
+      // This mapping might need refinement based on the exact states exposed by useConsolidatedVoiceHandler
+      if (state === 'listening') {
+        // Already handled by toggleListening and startListening calls
+      } else if (state === 'idle') {
+        // Potentially reset listening state if it wasn't explicitly stopped
+      } else if (state === 'processing') {
+        setIsProcessingVoice(true);
+      } else if (state === 'ai_speaking') {
+        setVoiceHandlerAISpeaking(true); // Propagate AI speaking state
+        setIsAISpeaking(true); // Also update the component's direct state
+      } else if (state === 'interrupted') {
+        // Handle interruption state if needed, e.g., stop AI playback
+        if (isAIPlaying) {
+          stopAIPlayback();
+        }
+        setVoiceHandlerAISpeaking(false);
+        setIsAISpeaking(false);
+      }
     },
-    onInterrupt: handleVoiceInterruption,
-    disabled: false,
-    isAIResponding: isAIPlaying,
-    autoSendDelay: 2000,
-    confidenceThreshold: 0.7
+    onInterrupt: () => {
+      console.log('🚨 Voice interruption triggered by handler');
+      if (isAIPlaying) {
+        stopAIPlayback();
+      }
+      // Ensure relevant states are reset upon interruption
+      setVoiceHandlerAISpeaking(false);
+      setIsAISpeaking(false);
+      setPlayingMessageId(null);
+    },
+    disabled: false, // This should be dynamically managed if needed
+    isAIResponding: isAIPlaying, // Inform handler if AI is currently speaking
+    autoSendDelay: 2000, // Example delay
+    confidenceThreshold: 0.7 // Example threshold
   });
-
-  // Simplified transcript handling
-  const handleTranscriptUpdate = useCallback((transcript: string) => {
-    console.log('📝 Transcript update:', transcript);
-    setIsProcessingVoice(transcript.length > 0);
-  }, []);
 
   // Compare Mode state
   const [isCompareMode, setIsCompareMode] = useState(false);
@@ -225,73 +275,53 @@ export function VoiceFirstChatInterface({
 
   // Predefined themes for Compare Mode with modern styling
   const PREDEFINED_THEMES = [
-    { 
-      id: 'love', 
-      label: 'Love', 
-      icon: Heart, 
+    {
+      id: 'love', label: 'Love', icon: Heart,
       color: 'bg-gradient-to-br from-rose-50 to-pink-100 text-rose-700 border-rose-200 shadow-rose-100',
       hoverColor: 'hover:from-rose-100 hover:to-pink-200 hover:shadow-rose-200'
     },
-    { 
-      id: 'compassion', 
-      label: 'Compassion', 
-      icon: Heart, 
+    {
+      id: 'compassion', label: 'Compassion', icon: Heart,
       color: 'bg-gradient-to-br from-pink-50 to-rose-100 text-pink-700 border-pink-200 shadow-pink-100',
       hoverColor: 'hover:from-pink-100 hover:to-rose-200 hover:shadow-pink-200'
     },
-    { 
-      id: 'wisdom', 
-      label: 'Wisdom', 
-      icon: Brain, 
+    {
+      id: 'wisdom', label: 'Wisdom', icon: Brain,
       color: 'bg-gradient-to-br from-purple-50 to-violet-100 text-purple-700 border-purple-200 shadow-purple-100',
       hoverColor: 'hover:from-purple-100 hover:to-violet-200 hover:shadow-purple-200'
     },
-    { 
-      id: 'faith', 
-      label: 'Faith', 
-      icon: Star, 
+    {
+      id: 'faith', label: 'Faith', icon: Star,
       color: 'bg-gradient-to-br from-blue-50 to-indigo-100 text-blue-700 border-blue-200 shadow-blue-100',
       hoverColor: 'hover:from-blue-100 hover:to-indigo-200 hover:shadow-blue-200'
     },
-    { 
-      id: 'hope', 
-      label: 'Hope', 
-      icon: Sparkles, 
+    {
+      id: 'hope', label: 'Hope', icon: Sparkles,
       color: 'bg-gradient-to-br from-emerald-50 to-teal-100 text-emerald-700 border-emerald-200 shadow-emerald-100',
       hoverColor: 'hover:from-emerald-100 hover:to-teal-200 hover:shadow-emerald-200'
     },
-    { 
-      id: 'justice', 
-      label: 'Justice', 
-      icon: Scale, 
+    {
+      id: 'justice', label: 'Justice', icon: Scale,
       color: 'bg-gradient-to-br from-slate-50 to-gray-100 text-slate-700 border-slate-200 shadow-slate-100',
       hoverColor: 'hover:from-slate-100 hover:to-gray-200 hover:shadow-slate-200'
     },
-    { 
-      id: 'redemption', 
-      label: 'Redemption', 
-      icon: Flame, 
+    {
+      id: 'redemption', label: 'Redemption', icon: Flame,
       color: 'bg-gradient-to-br from-orange-50 to-amber-100 text-orange-700 border-orange-200 shadow-orange-100',
       hoverColor: 'hover:from-orange-100 hover:to-amber-200 hover:shadow-orange-200'
     },
-    { 
-      id: 'soul', 
-      label: 'Soul', 
-      icon: Eye, 
+    {
+      id: 'soul', label: 'Soul', icon: Eye,
       color: 'bg-gradient-to-br from-indigo-50 to-blue-100 text-indigo-700 border-indigo-200 shadow-indigo-100',
       hoverColor: 'hover:from-indigo-100 hover:to-blue-200 hover:shadow-indigo-200'
     },
-    { 
-      id: 'afterlife', 
-      label: 'Afterlife', 
-      icon: Crown, 
+    {
+      id: 'afterlife', label: 'Afterlife', icon: Crown,
       color: 'bg-gradient-to-br from-violet-50 to-purple-100 text-violet-700 border-violet-200 shadow-violet-100',
       hoverColor: 'hover:from-violet-100 hover:to-purple-200 hover:shadow-violet-200'
     },
-    { 
-      id: 'meaning of life', 
-      label: 'Meaning of Life', 
-      icon: Compass, 
+    {
+      id: 'meaning of life', label: 'Meaning of Life', icon: Compass,
       color: 'bg-gradient-to-br from-cyan-50 to-sky-100 text-cyan-700 border-cyan-200 shadow-cyan-100',
       hoverColor: 'hover:from-cyan-100 hover:to-sky-200 hover:shadow-cyan-200'
     }
@@ -306,7 +336,7 @@ export function VoiceFirstChatInterface({
   const gainNodeRef = useRef<GainNode | null>(null);
   const destinationRef = useRef<MediaStreamAudioDestinationNode | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-  const elevenLabsStreamRef = useRef<any>(null);
+  const elevenLabsStreamRef = useRef<any>(null); // This ref seems unused currently
 
   // Settings and persona change tracking
   const [settings, setSettings] = useState({
@@ -320,7 +350,7 @@ export function VoiceFirstChatInterface({
 
   // Track previous persona to detect changes
   const [previousPersona, setPreviousPersona] = useState<string | null>(null);
-  const [previousContext, setPreviousContext] = useState<{religion: Religion | null, book: string} | null>(null);
+  const [previousContext, setPreviousContext] = useState<{ religion: Religion | null, book: string } | null>(null);
 
 
   // Clear chat function
@@ -404,8 +434,8 @@ export function VoiceFirstChatInterface({
     setAutoPlayEnabled(!autoPlayEnabled);
     toast({
       title: autoPlayEnabled ? "Auto-play Disabled" : "Auto-play Enabled",
-      description: autoPlayEnabled 
-        ? "AI responses will no longer auto-play" 
+      description: autoPlayEnabled
+        ? "AI responses will no longer auto-play"
         : "AI responses will auto-play with voice",
       variant: "default"
     });
@@ -580,6 +610,7 @@ export function VoiceFirstChatInterface({
 
     recognition.onstart = () => {
       console.log('🎤 Speech recognition started');
+      // Should not directly set isListening here, useConsolidatedVoiceHandler manages this
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -660,8 +691,8 @@ export function VoiceFirstChatInterface({
           console.log('🚀 AUTO-SENDING message:', finalTranscript.trim());
           setWasLastMessageVoice(true);
           handleSendMessage(finalTranscript.trim());
-          stopListening();
-        }, 800);
+          stopListening(); // Stop listening after auto-sending
+        }, 800); // Use the configured autoSendDelay from settings
       }
     };
 
@@ -676,20 +707,22 @@ export function VoiceFirstChatInterface({
           variant: "destructive"
         });
       }
+      // Additional error handling might be needed here
     };
 
     recognition.onend = () => {
       console.log('🎤 Speech recognition ended');
+      // Handled by useConsolidatedVoiceHandler
     };
 
     return recognition;
-  }, [voiceState, settings.confidenceThreshold, settings.autoSendDelay]);
+  }, [voiceState, settings.confidenceThreshold, settings.autoSendDelay, isAISpeaking, inputIsolated, isAudioIsolated, isTalkingBack, handleSendMessage, stopListening, initializeRecognition]);
 
   // Initialize Audio Context with Echo Cancellation for Level Detection
   const initializeAudioContext = useCallback(async () => {
     try {
       // AGGRESSIVE echo cancellation to prevent AI audio feedback
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
@@ -697,7 +730,7 @@ export function VoiceFirstChatInterface({
           channelCount: 1,
           sampleRate: 16000, // Lower sample rate for better echo cancellation
           sampleSize: 16
-        } 
+        }
       });
       streamRef.current = stream;
       setHasPermission(true);
@@ -737,8 +770,7 @@ export function VoiceFirstChatInterface({
           const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
           analyserRef.current.getByteFrequencyData(dataArray);
 
-          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-          // Audio level is managed by voice handler
+          const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
 
           // DEBUG: Log audio levels when AI is speaking
           if (isAISpeaking) {
@@ -746,7 +778,7 @@ export function VoiceFirstChatInterface({
           }
 
           // Enhanced interruption detection (backup to onspeechstart)
-          if ((voiceState === 'ai_speaking' || isAISpeaking) && average > 50) {
+          if ((voiceState === 'ai_speaking' || isAISpeaking) && average > 50) { // Threshold based on settings.interruptionSensitivity?
             console.log('🚨 AUDIO-LEVEL INTERRUPTION! High audio detected during AI speech');
             console.log(`🔊 Audio level: ${average}, Threshold: 50`);
 
@@ -756,8 +788,8 @@ export function VoiceFirstChatInterface({
               console.log('🛑 AI interrupted via audio level detection');
             }
 
-            // Voice state is managed by voice handler
-            setIsAISpeaking(false);
+            // Voice state is managed by voice handler, but we can influence component states
+            setIsAISpeaking(false); // Update component state
             setIsTalkingBack(false);
             setInputIsolated(false);
             setIsAudioIsolated(false);
@@ -772,7 +804,7 @@ export function VoiceFirstChatInterface({
       console.error('🚨 Audio context initialization error:', error);
       setHasPermission(false);
     }
-  }, [voiceState, settings.interruptionSensitivity, isAISpeaking]);
+  }, [voiceState, settings.interruptionSensitivity, isAISpeaking, stopAIPlayback]); // Added stopAIPlayback as dependency
 
   // Check Support and Initialize
   useEffect(() => {
@@ -784,8 +816,8 @@ export function VoiceFirstChatInterface({
       initializeAudioContext();
     }
 
+    // Cleanup function
     return () => {
-      // Cleanup
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
@@ -799,154 +831,54 @@ export function VoiceFirstChatInterface({
         audioContextRef.current.close();
       }
     };
-  }, [initializeRecognition, initializeAudioContext]);
-
-  // GROK-STYLE: Background listening during AI speech for interruption detection
-  useEffect(() => {
-    let backgroundRecognition: any = null;
-    let startDelay: NodeJS.Timeout | null = null;
-
-    if (isAISpeaking && !inputIsolated && hasPermission && isSupported) {
-      console.log('🎤 GROK-STYLE: Starting background interruption detection during AI speech');
-
-      // Create separate recognition instance for background listening
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        backgroundRecognition = new SpeechRecognition();
-        backgroundRecognition.continuous = true;
-        backgroundRecognition.interimResults = false;
-        backgroundRecognition.lang = 'en-US';
-
-        // CRITICAL: Add delay to prevent immediate AI audio detection
-        startDelay = setTimeout(() => {
-          if (backgroundRecognition && isAISpeaking && !inputIsolated) {
-            try {
-              backgroundRecognition.start();
-              console.log('🎤 Background recognition started after delay to avoid AI audio');
-            } catch (error) {
-              console.warn('Delayed start failed:', error);
-            }
-          }
-        }, 1000); // Wait 1 second for AI audio to settle
-
-        // CRITICAL: Block ALL transcript updates from background recognition
-        backgroundRecognition.onresult = (event: any) => {
-          console.log('🚫 Background recognition result COMPLETELY BLOCKED - AI audio cannot contaminate transcript');
-          // ABSOLUTE BLOCK: This recognition must NEVER update transcripts
-          // Only used for onspeechstart interruption detection
-
-          // Extra safety: Log what we're blocking to ensure no AI audio leaks through
-          if (event.results && event.results.length > 0) {
-            const blockedText = event.results[event.results.length - 1][0].transcript;
-            console.log('🚫 BLOCKED AI AUDIO CONTAMINATION:', blockedText.substring(0, 50) + '...');
-          }
-        };
-
-        // CRITICAL: Interruption detection via speech start
-        backgroundRecognition.onspeechstart = () => {
-          console.log('🚨 USER INTERRUPTION DETECTED! Stopping AI immediately');
-
-          // Stop background recognition first
-          try {
-            backgroundRecognition.stop();
-          } catch (error) {
-            console.warn('Background recognition stop error:', error);
-          }
-
-          // Stop AI playback with smooth fade
-          if (stopAIPlayback) {
-            stopAIPlayback();
-            console.log('🛑 AI playback stopped due to interruption');
-          }
-
-          // Reset all AI states immediately
-          setIsAISpeaking(false);
-          setIsTalkingBack(false);
-          setInputIsolated(false);
-          setIsAudioIsolated(false);
-
-          // Voice state and transcript managed by voice handler
-
-          // Start listening for user input immediately
-          setTimeout(() => {
-            try {
-              console.log('🎤 Starting user recognition after interruption');
-              const userRecognition = initializeRecognition();
-              recognitionRef.current = userRecognition;
-              userRecognition.start();
-              // Voice state managed by voice handler
-              console.log('✅ User recognition active - ready for transcription');
-            } catch (error) {
-              console.error('Failed to start user recognition after interruption:', error);
-              // Voice state managed by voice handler
-            }
-          }, 300);
-        };
-
-        // Background recognition now starts with delay above
-        // No immediate start to prevent AI audio detection
-      }
-    }
-
-    // Cleanup background recognition and timers
-    return () => {
-      if (startDelay) {
-        clearTimeout(startDelay);
-      }
-      if (backgroundRecognition) {
-        try {
-          backgroundRecognition.stop();
-          console.log('🎤 Background recognition stopped');
-        } catch (error) {
-          console.warn('🎤 Failed to stop background recognition:', error);
-        }
-      }
-    };
-  }, [isAISpeaking, inputIsolated, hasPermission, isSupported, stopAIPlayback, initializeRecognition]);
+  }, [initializeRecognition, initializeAudioContext]); // Ensure dependencies are correct
 
   // HARDWARE AUDIO ISOLATION: Mute microphone during AI speech
   useEffect(() => {
     if (gainNodeRef.current && audioContextRef.current) {
       const currentTime = audioContextRef.current.currentTime;
 
+      // Conditionally mute/unmute based on AI speaking state and isolation flags
       if (isAISpeaking || isTalkingBack || inputIsolated || isAudioIsolated) {
         // MUTE microphone during AI speech to prevent feedback
         gainNodeRef.current.gain.setValueAtTime(0, currentTime);
         console.log('🔇 MICROPHONE MUTED: Preventing AI audio feedback');
-
-        // Voice state and transcript managed by voice handler
       } else {
-        // UNMUTE microphone when AI is silent
+        // UNMUTE microphone when AI is silent and no other isolation is active
         gainNodeRef.current.gain.setValueAtTime(1, currentTime);
         console.log('🎤 MICROPHONE UNMUTED: Ready for user input');
-
-        // Voice state is managed by voice handler
-        if (voiceState === 'ai_speaking') {
-          console.log('🎤 AI finished - ready for user input');
-        }
       }
     }
-  }, [isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated, voiceState]);
+  }, [isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated]); // Removed voiceState dependency as it's managed by the handler
 
-  // Simplified voice controls
+
+  // Handle interruption logic - simplified, relying more on the consolidated handler
   const handleInterruption = useCallback(() => {
-    console.log('🚨 Handling user interruption');
+    console.log('🚨 Handling user interruption via button/action');
 
     if (isAIPlaying) {
       stopAIPlayback();
     }
 
+    // Also attempt to stop speech synthesis if it's active
     if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
       window.speechSynthesis.cancel();
     }
 
+    // Notify user of interruption
     toast({
       title: "Response Interrupted",
       description: "You can ask a new question or continue the conversation",
       variant: "default"
     });
-  }, [isAIPlaying, stopAIPlayback, toast]);
 
+    // Potentially trigger the voice handler's interruption logic if needed
+    // For now, relying on the handler's internal `onInterrupt` callback for button presses
+    interruptAI(); // Call the handler's interrupt function
+
+  }, [isAIPlaying, stopAIPlayback, toast, interruptAI]); // Added interruptAI dependency
+
+  // Consolidated send message function
   const handleSendMessage = useCallback((message: string) => {
     if (!message.trim()) return;
 
@@ -968,23 +900,26 @@ export function VoiceFirstChatInterface({
     handleSendMessage(textInputValue);
   }, [textInputValue, inputIsolated, handleSendMessage]);
 
+  // Toggle voice input based on current state
   const toggleVoiceInput = useCallback(() => {
     if (voiceState === 'listening') {
-      stopListening();
-    } else if (voiceState === 'ai_speaking') {
-      interruptAI();
+      stopListening(); // If currently listening, stop
+    } else if (voiceState === 'ai_speaking' || isAIPlaying) {
+      // If AI is speaking (or playing), interrupt
+      handleInterruption();
     } else {
+      // Otherwise, start listening
       setWasLastMessageVoice(true);
       startListening();
     }
-  }, [voiceState, stopListening, startListening, interruptAI]);
+  }, [voiceState, stopListening, startListening, handleInterruption, isAIPlaying]); // Added isAIPlaying dependency
 
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Update AI volume
+  // Update AI volume based on settings
   useEffect(() => {
     setAIVolume(settings.volume);
   }, [settings.volume, setAIVolume]);
@@ -999,8 +934,6 @@ export function VoiceFirstChatInterface({
     }
   }, [selectedPersona, isInsideBook, context]);
 
-  // REMOVED: Duplicate voice synthesis system - using only useElevenLabsStreaming hook
-
   // Check for new AI messages
   const hasNewAIMessage = useCallback(() => {
     if (messages.length === 0) return false;
@@ -1008,18 +941,20 @@ export function VoiceFirstChatInterface({
     return lastMessage?.type === 'ai' && lastMessage.content !== lastAIMessage;
   }, [messages, lastAIMessage]);
 
-  // Simplified auto-play logic
+  // Simplified auto-play logic using useMemo for efficient calculation
   const shouldAutoPlay = useMemo(() => {
     const hasLatestAI = hasNewAIMessage();
     const autoPlayEnabled = settings.autoPlayAI;
     const isCurrentlyPlaying = !!playingMessageId;
-    const voiceStateIdle = voiceState === 'idle';
+    const voiceStateIdleOrReady = voiceState === 'idle' || voiceState === 'interrupted'; // Allow autoplay if idle or just interrupted
+    const notCurrentlyListening = voiceState !== 'listening'; // Don't autoplay if user is actively speaking
 
-    const result = hasLatestAI && 
-                   autoPlayEnabled && 
-                   !isCurrentlyPlaying && 
-                   voiceStateIdle &&
-                   !wasLastMessageVoice;
+    const result = hasLatestAI &&
+                   autoPlayEnabled &&
+                   !isCurrentlyPlaying &&
+                   voiceStateIdleOrReady &&
+                   !wasLastMessageVoice && // Don't autoplay if the last user message was voice-generated
+                   notCurrentlyListening;
 
     console.log('🔊 Auto-play check:', {
       hasLatestAI,
@@ -1027,13 +962,14 @@ export function VoiceFirstChatInterface({
       isCurrentlyPlaying,
       voiceState,
       wasLastMessageVoice,
+      notCurrentlyListening,
       result
     });
 
     return result;
-  }, [hasNewAIMessage, settings.autoPlayAI, playingMessageId, voiceState, wasLastMessageVoice]);
+  }, [hasNewAIMessage, settings.autoPlayAI, playingMessageId, voiceState, wasLastMessageVoice]); // Added notCurrentlyListening check
 
-  // Direct auto-play trigger
+  // Direct auto-play trigger using useEffect
   useEffect(() => {
     if (shouldAutoPlay) {
       const latestAIMessage = messages[messages.length - 1];
@@ -1106,7 +1042,7 @@ export function VoiceFirstChatInterface({
               type: 'perspective',
               religion,
               content: perspectiveContent,
-              colors: perspectiveColors[religion] || perspectiveColors['Christianity']
+              colors: perspectiveColors[religion] || perspectiveColors['Christianity'] // Default color if not found
             });
             console.log('✅ Added perspective:', religion, 'Content:', perspectiveContent.substring(0, 50) + '...');
           }
@@ -1120,6 +1056,7 @@ export function VoiceFirstChatInterface({
     }
 
     console.log('🎯 Final parsed parts:', parts.length, 'parts');
+    // Return the parsed parts, or the original content if no parsing occurred
     return parts.length > 0 ? parts : [{ type: 'text', content }];
   }, []);
 
@@ -1134,42 +1071,58 @@ export function VoiceFirstChatInterface({
       let chapter = 1;
       let verse = null;
 
-      // Extract chapter number
-      const chapterMatch = ref.match(/(\d+):(\d+)/);
-      if (chapterMatch) {
-        chapter = parseInt(chapterMatch[1]);
-        verse = parseInt(chapterMatch[2]);
+      // Extract chapter and verse numbers (e.g., 2:256, 112:1-4)
+      const chapterVerseMatch = ref.match(/(\d+):(\d+(?:-\d+)?)/);
+      if (chapterVerseMatch) {
+        chapter = parseInt(chapterVerseMatch[1]);
+        // Handle verse ranges by taking the first verse
+        verse = parseInt(chapterVerseMatch[2].split('-')[0]);
       }
 
       return { religion: 'islam' as Religion, book, chapter, verse };
     }
 
-    // Torah/Judaism patterns
+    // Torah/Judaism patterns - simplified to include common books
     const torahBooks = ['Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy', 'Bereshit', 'Shemot', 'Vayikra', 'Bamidbar', 'Devarim'];
-    for (const torahBook of torahBooks) {
-      if (ref.includes(torahBook)) {
-        const chapterMatch = ref.match(/(\d+):(\d+)/);
-        let chapter = 1;
-        let verse = null;
-        if (chapterMatch) {
-          chapter = parseInt(chapterMatch[1]);
-          verse = parseInt(chapterMatch[2]);
-        }
-        return { religion: 'judaism' as Religion, book: 'Torah', chapter, verse };
+    const bibleBooks = ['Matthew', 'Mark', 'Luke', 'John', 'Acts', 'Romans', 'Corinthians', 'Galatians', 'Ephesians', 'Philippians', 'Colossians', 'Thessalonians', 'Timothy', 'Titus', 'Philemon', 'Hebrews', 'James', 'Peter', 'Jude', 'Revelation', 'Psalms', 'Proverbs', 'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah', 'Lamentations', 'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos', 'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk', 'Zephaniah', 'Haggai', 'Zechariah', 'Malachi'];
+
+    let potentialBook = '';
+    let bookMatch = null;
+
+    // Try to find the book name in the reference string
+    for (const book of [...torahBooks, ...bibleBooks]) {
+      const bookRegex = new RegExp(`\\b${book}\\b`, 'i'); // Use word boundary to match whole words
+      const match = ref.match(bookRegex);
+      if (match) {
+        potentialBook = book;
+        bookMatch = match;
+        break; // Found a match, stop searching
       }
     }
 
-    // Bible/Christianity patterns (default for most book references)
-    const bibleBooks = ['Matthew', 'Mark', 'Luke', 'John', 'Acts', 'Romans', 'Corinthians', 'Galatians', 'Ephesians', 'Philippians', 'Colossians', 'Thessalonians', 'Timothy', 'Titus', 'Philemon', 'Hebrews', 'James', 'Peter', 'Jude', 'Revelation'];
-    const chapterMatch = ref.match(/(\d+):(\d+)/);
-    let chapter = 1;
-    let verse = null;
-    if (chapterMatch) {
-      chapter = parseInt(chapterMatch[1]);
-      verse = parseInt(chapterMatch[2]);
+    if (potentialBook) {
+      let chapter = 1;
+      let verse = null;
+      const chapterVerseMatch = ref.match(/(\d+):(\d+(?:-\d+)?)/);
+      if (chapterVerseMatch) {
+        chapter = parseInt(chapterVerseMatch[1]);
+        verse = parseInt(chapterVerseMatch[2].split('-')[0]);
+      }
+
+      // Determine religion based on book, defaulting to Christianity if unsure
+      let religion: Religion = 'christianity';
+      if (torahBooks.some(b => b.toLowerCase() === potentialBook.toLowerCase())) {
+        religion = 'judaism';
+      } else if (potentialBook.toLowerCase() === 'quran' || ref.toLowerCase().includes('quran')) {
+        // This case is handled above, but as a fallback
+        religion = 'islam';
+      }
+
+      return { religion, book: potentialBook, chapter, verse };
     }
 
-    return { religion: 'christianity' as Religion, book: 'Bible', chapter, verse };
+    // Default fallback if no clear pattern is matched
+    return { religion: 'christianity' as Religion, book: 'Bible', chapter: 1, verse: null };
   }, []);
 
   // Make scripture references clickable
@@ -1177,51 +1130,55 @@ export function VoiceFirstChatInterface({
     // Enhanced scripture reference patterns
     const patterns = [
       // Quran: Surah Al-Baqarah 2:256, Quran 112:1-4
-      /((?:Surah\s+)?(?:Al-)?[\w\s-]+\s+\d+:\d+(?:-\d+)?)/g,
-      // Bible: John 3:16, 1 John 4:8, Matthew 28:19
-      /(\d?\s?\w+\s+\d+:\d+(?:-\d+)?)/g,
-      // Torah: Deuteronomy 6:4, Exodus 34:6-7
-      /(\w+\s+\d+:\d+(?:-\d+)?)/g
+      /((?:Surah\s+)?(?:Al-)?[\w\s-]+\s+\d+:\d+(?:-\d+)?)/gi,
+      // Bible/Torah: John 3:16, 1 John 4:8, Matthew 28:19, Deuteronomy 6:4, Exodus 34:6-7
+      // Regex to capture book names and chapter:verse, allowing for optional initial number (e.g., 1 John)
+      /((?:\d+\s+)?(?:[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+\d+:\d+(?:-\d+)?)/g,
     ];
 
     let result = text;
     let parts = [];
     let currentIndex = 0;
 
-    // Find all scripture references
-    const allMatches: Array<{text: string, start: number, end: number}> = [];
+    // Find all scripture references across all patterns
+    const allMatches: Array<{ text: string, start: number, end: number }> = [];
     patterns.forEach(pattern => {
       let match;
-      while ((match = pattern.exec(text)) !== null) {
+      // Ensure the regex is global to find all occurrences
+      const regex = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
+      while ((match = regex.exec(text)) !== null) {
+        // Ensure we capture the actual reference text, usually match[1] if the pattern has a capturing group
+        const referenceText = match[1] || match[0]; // Use match[1] if available, otherwise the whole match
         allMatches.push({
-          text: match[1],
+          text: referenceText,
           start: match.index,
-          end: match.index + match[1].length
+          end: match.index + referenceText.length
         });
       }
     });
 
-    // Sort matches by position
+    // Sort matches by their starting position
     allMatches.sort((a, b) => a.start - b.start);
 
-    // Remove overlapping matches (keep the first one)
-    const filteredMatches: Array<{text: string, start: number, end: number}> = [];
+    // Filter out overlapping matches to avoid duplicate rendering or incorrect parsing
+    const filteredMatches: Array<{ text: string, start: number, end: number }> = [];
     let lastEnd = -1;
     allMatches.forEach(match => {
+      // Only add if the match does not overlap with the previous one
       if (match.start >= lastEnd) {
         filteredMatches.push(match);
         lastEnd = match.end;
       }
     });
 
-    // Build parts with clickable references
+    // Build the result array with text segments and clickable button components
     filteredMatches.forEach((match, index) => {
-      // Add text before this match
+      // Add the text segment before the current match
       if (match.start > currentIndex) {
         parts.push(text.slice(currentIndex, match.start));
       }
 
-      // Add clickable reference
+      // Create a clickable button for the scripture reference
       parts.push(
         <button
           key={`ref-${index}`}
@@ -1230,7 +1187,7 @@ export function VoiceFirstChatInterface({
             console.log('Scripture reference clicked:', match.text, 'Parsed:', parsed);
 
             if (onNavigateToVerse && parsed) {
-              // Navigate to the scripture location
+              // Navigate to the scripture location using the provided callback
               onNavigateToVerse(parsed.religion, parsed.book, parsed.chapter, parsed.verse || undefined);
             }
           }}
@@ -1242,18 +1199,20 @@ export function VoiceFirstChatInterface({
         </button>
       );
 
+      // Update the current index to the end of the processed match
       currentIndex = match.end;
     });
 
-    // Add remaining text
+    // Add any remaining text after the last match
     if (currentIndex < text.length) {
       parts.push(text.slice(currentIndex));
     }
 
+    // Return the array of text and button elements, or the original text if no references were found
     return parts.length > 0 ? parts : [text];
   }, [parseScriptureReference, onNavigateToVerse]);
 
-  // Update last AI message when new messages arrive
+  // Update last AI message when new messages arrive, used for auto-play logic
   useEffect(() => {
     if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
@@ -1283,12 +1242,12 @@ export function VoiceFirstChatInterface({
                 </div>
               </div>
             ) : (
-              <GrokStyleOrb 
-                state={voiceState === 'ai_speaking' ? 'responding' : 
+              <GrokStyleOrb
+                state={voiceState === 'ai_speaking' ? 'responding' :
                        voiceState === 'processing' ? 'processing' :
                        voiceState === 'listening' ? 'listening' :
-                       voiceState === 'interrupted' ? 'interrupted' : 'idle'} 
-                size="md" 
+                       voiceState === 'interrupted' ? 'interrupted' : 'idle'}
+                size="md"
               />
             )}
           </div>
@@ -1421,8 +1380,8 @@ export function VoiceFirstChatInterface({
                         <span className={cn(
                           "font-semibold text-center leading-tight group-hover:font-bold transition-all duration-300",
                           // Very aggressive font sizing to prevent text cutoff
-                          theme.label.length > 12 ? "text-[9px]" : 
-                          theme.label.length > 10 ? "text-[10px]" : 
+                          theme.label.length > 12 ? "text-[9px]" :
+                          theme.label.length > 10 ? "text-[10px]" :
                           theme.label.length > 8 ? "text-xs" : "text-sm",
                           // Better text fitting and wrapping
                           "break-words hyphens-auto w-full px-0.5 leading-[1.1]"
@@ -1486,7 +1445,7 @@ export function VoiceFirstChatInterface({
                   {(() => {
                     // Parse the AI summary to extract perspectives
                     const summary = comparisonResult.aiSummary;
-                    const parts = summary.split(/<perspective>([^<]+)<\/perspective>/);
+                    const parts = summary.split(/(<perspective>([^<]+)<\/perspective>)/);
                     const perspectives = [];
 
                     // Extract intro text (before first perspective)
@@ -1499,12 +1458,16 @@ export function VoiceFirstChatInterface({
 
                     // Extract perspective sections
                     for (let i = 1; i < parts.length; i += 2) {
+                      // parts[i] will be the tag, parts[i+1] will be the content
                       if (parts[i] && parts[i + 1]) {
-                        perspectives.push({
-                          type: 'perspective',
-                          religion: parts[i].trim(),
-                          content: parts[i + 1].trim()
-                        });
+                        const perspectiveTagMatch = parts[i].match(/<perspective>([^<]+)<\/perspective>/);
+                        if (perspectiveTagMatch && perspectiveTagMatch[1]) {
+                          perspectives.push({
+                            type: 'perspective',
+                            religion: perspectiveTagMatch[1].trim(),
+                            content: parts[i + 1].trim()
+                          });
+                        }
                       }
                     }
 
@@ -1585,7 +1548,7 @@ export function VoiceFirstChatInterface({
                 {/* Avatar */}
                 <div className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
-                  message.type === 'user' 
+                  message.type === 'user'
                     ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white"
                     : "bg-gradient-to-br from-teal-500 to-teal-600 text-white"
                 )}>
@@ -1599,13 +1562,13 @@ export function VoiceFirstChatInterface({
                 {/* Enhanced Message Bubble */}
                 <div className={cn(
                   "flex-1 max-w-[80%]",
-                  message.type === 'user' 
-                    ? "flex flex-col items-end" 
+                  message.type === 'user'
+                    ? "flex flex-col items-end"
                     : "flex flex-col items-end" // AI messages right-aligned per requirements
                 )}>
                   <div className={cn(
                     "relative px-4 py-3 rounded-2xl shadow-sm transition-all duration-200 group",
-                    message.type === 'user' 
+                    message.type === 'user'
                       ? "bg-gray-100 text-gray-800 rounded-br-md border border-gray-200"
                       : "bg-white text-gray-800 border border-gray-200 rounded-bl-md hover:border-teal-200" // White with 1px gray border
                   )}>
@@ -1620,8 +1583,8 @@ export function VoiceFirstChatInterface({
                                 part.colors.bg
                               )}>
                                 <div className="flex items-center gap-2">
-                                  <Badge 
-                                    variant="outline" 
+                                  <Badge
+                                    variant="outline"
                                     className={cn("text-xs font-medium", part.colors.badge)}
                                   >
                                     {part.religion}
@@ -1718,8 +1681,8 @@ export function VoiceFirstChatInterface({
                 onChange={(e) => setTextInputValue(e.target.value)}
                 disabled={inputIsolated || isAudioIsolated || sendMessageMutation.isPending}
                 placeholder={
-                  inputIsolated ? "Input locked - AI is speaking..." : 
-                  isAudioIsolated ? "Audio isolated - Please wait..." : 
+                  inputIsolated ? "Input locked - AI is speaking..." :
+                  isAudioIsolated ? "Audio isolated - Please wait..." :
                   "Type your spiritual question..."
                 }
                 className={cn(
@@ -1734,7 +1697,7 @@ export function VoiceFirstChatInterface({
                 className={cn(
                   "px-4 py-2 transition-all duration-300",
                   (inputIsolated || isAudioIsolated)
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed" 
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                     : "bg-teal-600 text-white hover:bg-teal-700"
                 )}
               >
@@ -1750,90 +1713,92 @@ export function VoiceFirstChatInterface({
         )}
 
         {/* Voice Controls */}
-        <div className="flex items-center justify-center gap-4">
-          {/* Main Voice Button */}
-          <div className="flex flex-col items-center">
-            <Button
-              onClick={toggleVoiceInput}
-              disabled={!isSupported || !hasPermission || sendMessageMutation.isPending}
-              className={cn(
-                "w-16 h-16 rounded-full transition-all duration-300",
-                voiceState === 'listening' 
-                  ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 animate-pulse"
-                  : voiceState === 'processing'
-                  ? "bg-gradient-to-br from-purple-500 to-purple-600 animate-spin"
-                  : voiceState === 'ai_speaking'
-                  ? "bg-gradient-to-br from-yellow-500 to-orange-600 animate-pulse"
-                  : voiceState === 'interrupted'
-                  ? "bg-gradient-to-br from-red-500 to-red-600 animate-ping shadow-lg shadow-red-500/50"
-                  : "bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700"
-              )}
-            >
-              {voiceState === 'processing' ? (
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : voiceState === 'listening' ? (
-                <Square className="w-6 h-6 text-white" />
-              ) : voiceState === 'ai_speaking' ? (
-                <Volume2 className="w-6 h-6 text-white" />
-              ) : voiceState === 'interrupted' ? (
-                <div className="w-6 h-6 text-white animate-pulse">⚡</div>
-              ) : inputIsolated ? (
-                <MicOff className="w-6 h-6 text-gray-500" />
-              ) : (
-                <Mic className="w-6 h-6 text-white" />
-              )}
-            </Button>
+        <VoiceErrorBoundary>
+          <div className="flex items-center justify-center gap-4">
+            {/* Main Voice Button */}
+            <div className="flex flex-col items-center">
+              <Button
+                onClick={toggleVoiceInput}
+                disabled={!isSupported || !hasPermission || sendMessageMutation.isPending}
+                className={cn(
+                  "w-16 h-16 rounded-full transition-all duration-300",
+                  voiceState === 'listening'
+                    ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 animate-pulse"
+                    : voiceState === 'processing'
+                    ? "bg-gradient-to-br from-purple-500 to-purple-600 animate-spin"
+                    : voiceState === 'ai_speaking' || isAISpeaking
+                    ? "bg-gradient-to-br from-yellow-500 to-orange-600 animate-pulse"
+                    : voiceState === 'interrupted'
+                    ? "bg-gradient-to-br from-red-500 to-red-600 animate-ping shadow-lg shadow-red-500/50"
+                    : "bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700"
+                )}
+              >
+                {voiceState === 'processing' ? (
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : voiceState === 'listening' ? (
+                  <Square className="w-6 h-6 text-white" />
+                ) : voiceState === 'ai_speaking' || isAISpeaking ? (
+                  <Volume2 className="w-6 h-6 text-white" />
+                ) : voiceState === 'interrupted' ? (
+                  <div className="w-6 h-6 text-white animate-pulse">⚡</div>
+                ) : inputIsolated ? (
+                  <MicOff className="w-6 h-6 text-gray-500" />
+                ) : (
+                  <Mic className="w-6 h-6 text-white" />
+                )}
+              </Button>
 
-            {/* Status Text */}
-            <div className="mt-2 text-center">
-              {voiceState === 'listening' && (
-                <div className="text-xs text-red-600 font-medium animate-pulse">
-                  Listening...
-                </div>
-              )}
-              {voiceState === 'processing' && (
-                <div className="text-xs text-purple-600 font-medium">
-                  Processing...
-                </div>
-              )}
-              {voiceState === 'ai_speaking' && (
-                <div className="text-xs text-yellow-600 font-medium animate-pulse">
-                  AI Speaking...
-                </div>
-              )}
-              {voiceState === 'interrupted' && (
-                <div className="text-xs text-red-600 font-medium animate-pulse">
-                  🚨 Interrupted
-                </div>
-              )}
-              {voiceState === 'idle' && isSupported && hasPermission && !inputIsolated && (
-                <div className="text-xs text-gray-500">
-                  Click to speak
-                </div>
-              )}
-              {inputIsolated && (
-                <div className="text-xs text-red-600 font-medium animate-pulse">
-                  🔒 Inputs Locked
-                </div>
-              )}
-              {isAudioIsolated && (
-                <div className="text-xs text-amber-600 font-medium animate-pulse">
-                  🔇 Audio Isolated
-                </div>
-              )}
+              {/* Status Text */}
+              <div className="mt-2 text-center">
+                {voiceState === 'listening' && (
+                  <div className="text-xs text-red-600 font-medium animate-pulse">
+                    Listening...
+                  </div>
+                )}
+                {voiceState === 'processing' && (
+                  <div className="text-xs text-purple-600 font-medium">
+                    Processing...
+                  </div>
+                )}
+                {voiceState === 'ai_speaking' || isAISpeaking && (
+                  <div className="text-xs text-yellow-600 font-medium animate-pulse">
+                    AI Speaking...
+                  </div>
+                )}
+                {voiceState === 'interrupted' && (
+                  <div className="text-xs text-red-600 font-medium animate-pulse">
+                    🚨 Interrupted
+                  </div>
+                )}
+                {voiceState === 'idle' && isSupported && hasPermission && !inputIsolated && (
+                  <div className="text-xs text-gray-500">
+                    Click to speak
+                  </div>
+                )}
+                {inputIsolated && (
+                  <div className="text-xs text-red-600 font-medium animate-pulse">
+                    🔒 Inputs Locked
+                  </div>
+                )}
+                {isAudioIsolated && (
+                  <div className="text-xs text-amber-600 font-medium animate-pulse">
+                    🔇 Audio Isolated
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Audio Waveform */}
-          {voiceState === 'listening' && (
-            <AudioWaveform 
-              isActive={true}
-              audioLevel={audioLevel}
-              size="md"
-              color="teal"
-            />
-          )}
-        </div>
+            {/* Audio Waveform */}
+            {voiceState === 'listening' && (
+              <AudioWaveform
+                isActive={true}
+                audioLevel={audioLevel}
+                size="md"
+                color="teal"
+              />
+            )}
+          </div>
+        </VoiceErrorBoundary>
 
         {/* Current Transcript Display */}
         {currentTranscript && (
@@ -1860,7 +1825,7 @@ export function VoiceFirstChatInterface({
                 <h2 className="font-semibold text-gray-900">History & Progress</h2>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setShowHistoryPanel(false)}>
-                <User className="h-4 w-4" />
+                <X className="h-4 w-4" />
               </Button>
             </div>
 
