@@ -1514,9 +1514,42 @@ function VoiceFirstChatInterfaceInner({
               <li>Microsoft Edge</li>
               <li>Safari (iOS/macOS)</li>
             </ul>
-            <p className="text-xs text-yellow-600 mt-2">
+            <p className="text-xs text-yellow-600 mt-2 mb-3">
               Current: {navigator.userAgent.split(' ')[0]} - Voice features will be disabled
             </p>
+            
+            {/* Manual Override Button */}
+            {(window.SpeechRecognition || window.webkitSpeechRecognition) && (
+              <div className="border-t border-yellow-300 pt-2 mt-2">
+                <p className="text-xs text-yellow-700 mb-2">
+                  🔧 Speech API detected but not enabled. Try manual override:
+                </p>
+                <Button
+                  onClick={async () => {
+                    console.log('🔧 Manual voice override triggered');
+                    // Force re-check with override
+                    const result = await toggleListening();
+                    if (result) {
+                      toast({
+                        title: "Voice Enabled!",
+                        description: "Manual override successful - voice input is now active.",
+                        variant: "default"
+                      });
+                    } else {
+                      toast({
+                        title: "Override Failed",
+                        description: "Unable to enable voice input. Browser may not support this feature.",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs px-3 py-1 h-auto"
+                >
+                  <Mic className="w-3 h-3 mr-1" />
+                  Force Enable Voice
+                </Button>
+              </div>
+            )}
           </div>
         )}
 

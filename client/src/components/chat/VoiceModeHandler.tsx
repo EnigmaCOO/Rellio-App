@@ -182,27 +182,31 @@ export function useVoiceModeHandler({
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       let supported = false;
       
-      // Check for browser support - simplified approach for better Chrome compatibility
-      if (SpeechRecognition) {
+      // Enhanced browser detection - force support for any browser with the API
+      if (SpeechRecognition || window.webkitSpeechRecognition) {
         supported = true;
-        console.log('✅ Speech Recognition API available');
-        console.log('🔍 Browser info:', {
+        console.log('✅ Speech Recognition API detected and forced enabled');
+        console.log('🔍 Detailed browser info:', {
           userAgent: navigator.userAgent,
+          fullUA: navigator.userAgent,
           webkitSpeechRecognition: !!window.webkitSpeechRecognition,
           SpeechRecognition: !!window.SpeechRecognition,
-          isChrome: navigator.userAgent.includes('Chrome'),
-          isEdge: navigator.userAgent.includes('Edge'),
-          isSafari: navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')
+          hasAPI: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
+          isChrome: navigator.userAgent.toLowerCase().includes('chrome'),
+          isEdge: navigator.userAgent.toLowerCase().includes('edge'),
+          isSafari: navigator.userAgent.toLowerCase().includes('safari') && !navigator.userAgent.toLowerCase().includes('chrome'),
+          isReplit: window.location.hostname.includes('replit'),
+          protocol: window.location.protocol
         });
       } else {
-        console.log('❌ Speech Recognition not available in this browser');
+        console.log('❌ Speech Recognition not available - no API found');
         console.log('🔍 Browser info:', {
           userAgent: navigator.userAgent,
           webkitSpeechRecognition: !!window.webkitSpeechRecognition,
           SpeechRecognition: !!window.SpeechRecognition,
-          isChrome: navigator.userAgent.includes('Chrome'),
-          isEdge: navigator.userAgent.includes('Edge'),
-          isSafari: navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')
+          windowSpeech: typeof window.speechSynthesis,
+          isHTTPS: window.location.protocol === 'https:',
+          origin: window.location.origin
         });
       }
 
@@ -227,6 +231,12 @@ export function useVoiceModeHandler({
           // For browsers that don't support permissions API, assume we need to request
           hasPermission = false;
         }
+      }
+
+      // Force enable if we detect any speech recognition API
+      if ((window.SpeechRecognition || window.webkitSpeechRecognition) && !supported) {
+        console.log('🔧 FORCE ENABLING: Speech API detected but not marked as supported');
+        supported = true;
       }
 
       console.log('🎤 Final support status:', { supported, hasPermission });
