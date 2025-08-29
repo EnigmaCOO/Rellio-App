@@ -164,50 +164,21 @@ export function useVoiceModeHandler({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const activeRequestRef = useRef<string | null>(null);
 
-  // Check support and permissions on mount - STABLE VERSION TO PREVENT LOOPS
+  // Quick support check on mount
   useEffect(() => {
-    let isMounted = true;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const supported = !!SpeechRecognition;
     
-    const checkSupportAndPermissions = async () => {
-      if (!isMounted) return;
-      
-      console.log('🔍 Checking speech recognition support and permissions (STABLE)...');
-      
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const supported = !!SpeechRecognition;
-      
-      console.log('🎤 Speech Recognition API available:', supported);
-      
-      if (!isMounted) return;
-      
-      if (!supported) {
-        console.error('🚨 Speech recognition not supported in this browser');
-        dispatch({ type: 'SET_SUPPORT', payload: { supported: false, permission: false } });
-        return;
-      }
-      
-      // Don't request permission automatically - let user click button first
-      console.log('✅ Speech recognition supported - waiting for user interaction');
-      dispatch({ type: 'SET_SUPPORT', payload: { supported: true, permission: false } });
-    };
-    
-    checkSupportAndPermissions();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, []); // EMPTY DEPENDENCY ARRAY TO PREVENT LOOPS
+    dispatch({ type: 'SET_SUPPORT', payload: { supported, permission: false } });
+  }, []);
 
   const updateVoiceState = useCallback((newState: VoiceState) => {
-    console.log('🎤 State change:', state.voiceState, '->', newState);
     dispatch({ type: 'SET_STATE', payload: newState });
     onStateChange(newState);
-  }, [onStateChange]); // REMOVED state.voiceState dependency to prevent loops
+  }, [onStateChange]);
 
-  // STABLE cleanup function to prevent infinite loops
+  // Fast cleanup function
   const cleanup = useCallback(() => {
-    console.log('🧹 Cleaning up voice handler');
-    
     // Clear all timeouts
     [autoSendTimeoutRef, debounceTimeoutRef, silenceDetectionRef].forEach(ref => {
       if (ref.current) {
