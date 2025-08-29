@@ -750,51 +750,7 @@ export function VoiceFirstChatInterface({
     handleSendMessage(textInputValue);
   }, [textInputValue, inputIsolated, handleSendMessage]);
 
-  // Toggle voice input based on current state
-  const toggleVoiceInput = useCallback(async () => {
-    console.log('🎤 Toggle voice input clicked - current state:', voiceState);
-    console.log('🎤 Voice support:', { isSupported, hasPermission });
-    
-    if (!isSupported) {
-      console.error('🚨 Speech recognition not supported');
-      toast({
-        title: "Voice Not Supported",
-        description: "Speech recognition is not supported in this browser",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!hasPermission) {
-      console.error('🚨 Microphone permission not granted');
-      toast({
-        title: "Microphone Access Required",
-        description: "Please allow microphone access to use voice input",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (voiceState === 'listening') {
-      console.log('🛑 Stopping listening');
-      stopListening();
-    } else if (voiceState === 'speaking' || isAIPlaying || voiceIsPlaying) {
-      console.log('🛑 Interrupting AI speech');
-      handleInterruption();
-    } else {
-      console.log('🎤 Starting listening');
-      setWasLastMessageVoice(true);
-      const success = await startListening();
-      if (!success) {
-        console.error('🚨 Failed to start listening');
-        toast({
-          title: "Voice Input Failed",
-          description: "Could not start voice recognition",
-          variant: "destructive"
-        });
-      }
-    }
-  }, [voiceState, stopListening, startListening, handleInterruption, isAIPlaying, voiceIsPlaying, isSupported, hasPermission, toast]);
+  // Voice input is now handled by the consolidated VoiceModeHandler toggleListening function
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -1600,7 +1556,12 @@ export function VoiceFirstChatInterface({
             {/* Main Voice Button */}
             <div className="flex flex-col items-center">
               <Button
-                onClick={toggleVoiceInput}
+                onClick={async () => {
+                  console.log('🎤 Microphone button clicked! Current state:', voiceState);
+                  console.log('🎤 Voice support check:', { isSupported, hasPermission });
+                  const result = await toggleListening();
+                  console.log('🎤 Toggle result:', result);
+                }}
                 disabled={!isSupported || !hasPermission || sendMessageMutation.isPending}
                 className={cn(
                   "w-16 h-16 rounded-full transition-all duration-300",
