@@ -1499,10 +1499,23 @@ function VoiceFirstChatInterfaceInner({
       <div className="border-t border-gray-200 p-4">
         {/* Browser Support Warning */}
         {!isSupported && (
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-yellow-600" />
-            <p className="text-sm text-yellow-800">
-              Voice input not supported in this browser. Please use Chrome or Edge.
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="w-4 h-4 text-yellow-600" />
+              <p className="text-sm text-yellow-800 font-medium">
+                Voice Input Not Available
+              </p>
+            </div>
+            <p className="text-xs text-yellow-700 mb-2">
+              Speech recognition requires a compatible browser. Please try:
+            </p>
+            <ul className="text-xs text-yellow-700 ml-4 list-disc space-y-1">
+              <li>Chrome (recommended)</li>
+              <li>Microsoft Edge</li>
+              <li>Safari (iOS/macOS)</li>
+            </ul>
+            <p className="text-xs text-yellow-600 mt-2">
+              Current: {navigator.userAgent.split(' ')[0]} - Voice features will be disabled
             </p>
           </div>
         )}
