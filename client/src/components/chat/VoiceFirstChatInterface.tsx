@@ -781,7 +781,6 @@ function VoiceFirstChatInterfaceInner({
   // Enhanced auto-play logic for voice mode
   const shouldAutoPlay = useMemo(() => {
     const hasLatestAI = hasNewAIMessage();
-    const autoPlayEnabled = autoPlayEnabled;
     const isCurrentlyPlaying = !!playingMessageId;
     const voiceNotActivelyListening = voiceState !== 'listening'; // Only block if actively listening
     const notProcessing = voiceState !== 'processing'; // Allow auto-play after processing
