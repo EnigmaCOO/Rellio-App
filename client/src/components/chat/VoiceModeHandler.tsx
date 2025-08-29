@@ -186,92 +186,73 @@ export function useVoiceModeHandler({
   // Enhanced support and permission check on mount with strict browser compatibility
   useEffect(() => {
     const checkSupportAndPermissions = async () => {
-      const userAgent = navigator.userAgent.toLowerCase();
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      
-      // Detailed browser detection with strict rules
-      const browserInfo = {
-        isChrome: userAgent.includes('chrome') && !userAgent.includes('edge') && !userAgent.includes('opr'),
-        isEdge: userAgent.includes('edge') || userAgent.includes('edg/'),
-        isSafari: userAgent.includes('safari') && !userAgent.includes('chrome'),
-        isFirefox: userAgent.includes('firefox'),
-        isOpera: userAgent.includes('opr') || userAgent.includes('opera'),
-        hasAPI: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
-        isHTTPS: window.location.protocol === 'https:',
-        userAgent: navigator.userAgent,
-        name: userAgent.includes('firefox') ? 'Firefox' :
-              userAgent.includes('safari') && !userAgent.includes('chrome') ? 'Safari' :
-              userAgent.includes('edge') || userAgent.includes('edg/') ? 'Microsoft Edge' :
-              userAgent.includes('chrome') ? 'Chrome' : 'Unknown Browser'
-      };
+      try {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-      console.log('🔍 Browser detection:', browserInfo);
+        // Detailed browser detection
+        const browserInfo = {
+          isChrome: userAgent.includes('chrome') && !userAgent.includes('edge') && !userAgent.includes('opr'),
+          isEdge: userAgent.includes('edge') || userAgent.includes('edg/'),
+          isSafari: userAgent.includes('safari') && !userAgent.includes('chrome'),
+          isFirefox: userAgent.includes('firefox'),
+          isOpera: userAgent.includes('opr') || userAgent.includes('opera'),
+          hasAPI: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
+          isHTTPS: window.location.protocol === 'https:',
+          userAgent: navigator.userAgent
+        };
 
-      let supported = false;
+        console.log('🔍 Browser detection:', browserInfo);
 
-      // Strict browser compatibility - only Chrome and Edge fully supported
-      if (SpeechRecognition && (browserInfo.isChrome || browserInfo.isEdge)) {
-        // Test if the API actually works by creating a test instance
-        try {
-          const testRecognition = new SpeechRecognition();
-          testRecognition.continuous = false;
-          testRecognition.interimResults = false;
-          
-          // If we can create it without errors, consider it supported
+        let supported = false;
+
+        // Strict browser compatibility - only Chrome and Edge reliably support Web Speech API
+        if (SpeechRecognition && (browserInfo.isChrome || browserInfo.isEdge)) {
           supported = true;
-          console.log('✅ Voice input fully supported - Chrome/Edge with working Speech API');
-          
-          // Clean up test instance immediately
-          testRecognition.abort?.();
-        } catch (testError) {
-          console.warn('⚠️ Speech API exists but failed test:', testError);
+          console.log('✅ Voice input enabled - Chrome/Edge with reliable Speech API support');
+        } else {
           supported = false;
-        }
-      } else if (browserInfo.isFirefox) {
-        supported = false;
-        console.log('❌ Voice disabled - Firefox does not support Web Speech API');
-      } else if (browserInfo.isSafari) {
-        supported = false;
-        console.log('❌ Voice disabled - Safari has limited/unreliable Web Speech API support');
-      } else if (!SpeechRecognition) {
-        supported = false;
-        console.log('❌ Voice disabled - No Speech Recognition API available');
-      } else {
-        supported = false;
-        console.log('❌ Voice disabled - Browser not in supported list (Chrome/Edge only)');
-      }
-
-      let hasPermission = false;
-
-      if (supported) {
-        try {
-          // Check if we already have permission
-          const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-
-          if (permissionStatus.state === 'granted') {
-            hasPermission = true;
-            console.log('🎤 Microphone permission already granted');
-          } else if (permissionStatus.state === 'prompt') {
-            console.log('🎤 Microphone permission needs to be requested');
-            // Don't auto-request here, wait for user interaction
+          if (browserInfo.isFirefox) {
+            console.log('❌ Voice disabled - Firefox does not support Web Speech API');
+          } else if (browserInfo.isSafari) {
+            console.log('❌ Voice disabled - Safari has unreliable Web Speech API support');
+          } else if (browserInfo.isOpera) {
+            console.log('❌ Voice disabled - Opera has limited Web Speech API support');
+          } else if (!SpeechRecognition) {
+            console.log('❌ Voice disabled - No Speech Recognition API available');
           } else {
-            console.log('🚫 Microphone permission denied');
+            console.log('❌ Voice disabled - Unsupported browser for reliable voice input');
           }
-        } catch (error) {
-          console.log('🎤 Permission API not available, will check on first use');
-          // For browsers that don't support permissions API, assume we need to request
-          hasPermission = false;
         }
-      }
 
-      console.log('🎤 Final support status:', { 
-        supported, 
-        hasPermission, 
-        browserName: browserInfo.name,
-        hasAPI: browserInfo.hasAPI
-      });
-      
-      dispatch({ type: 'SET_SUPPORT', payload: { supported, permission: hasPermission } });
+        let hasPermission = false;
+
+        if (supported) {
+          try {
+            // Check if we already have permission (only for supported browsers)
+            const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+
+            if (permissionStatus.state === 'granted') {
+              hasPermission = true;
+              console.log('🎤 Microphone permission already granted');
+            } else if (permissionStatus.state === 'prompt') {
+              console.log('🎤 Microphone permission needs to be requested');
+            } else {
+              console.log('🚫 Microphone permission denied');
+            }
+          } catch (error) {
+            console.log('🎤 Permission API not available, will check on first use');
+            hasPermission = false;
+          }
+        }
+
+        console.log('🎤 Final support status:', { supported, hasPermission, browser: browserInfo.isChrome ? 'Chrome' : browserInfo.isEdge ? 'Edge' : 'Unsupported' });
+        dispatch({ type: 'SET_SUPPORT', payload: { supported, permission: hasPermission } });
+      } catch (error) {
+        console.error('🚨 Browser compatibility check failed:', error);
+        // Fail safe - disable voice completely if detection fails
+        dispatch({ type: 'SET_SUPPORT', payload: { supported: false, permission: false } });
+      }
     };
 
     checkSupportAndPermissions();

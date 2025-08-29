@@ -134,6 +134,7 @@ function VoiceFirstChatInterfaceInner({
   const [inputIsolated, setInputIsolated] = useState(false); // Locks input during AI speech
   const [isAudioIsolated, setIsAudioIsolated] = useState(false); // Mutes mic during AI speech
   const [isProcessingVoice, setIsProcessingVoice] = useState<boolean>(false); // Tracks if voice processing is active
+  const [hasError, setHasError] = useState(false); // Tracks if voice system has encountered an error
 
   // Simplified ElevenLabs Integration (moved up to be available for handlers)
   const {
@@ -1533,51 +1534,67 @@ function VoiceFirstChatInterfaceInner({
 
       {/* Voice Input Area */}
       <div className="border-t border-gray-200 p-4">
-        {/* Enhanced Browser Support Warning */}
-        {!isSupported && (
+        {/* Enhanced Browser Support Warning with Error Handling */}
+        {(!isSupported || hasError) && (
           <div className="mb-4 p-4 bg-white border-2 border-gray-200 rounded-xl shadow-md">
             <div className="flex items-start gap-3">
               <div className="p-2 bg-gray-100 rounded-lg">
-                <MessageCircle className="w-5 h-5 text-gray-600" />
+                {hasError ? (
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                ) : (
+                  <MessageCircle className="w-5 h-5 text-gray-600" />
+                )}
               </div>
               <div className="flex-1">
                 <h4 className="text-sm font-semibold text-gray-900 mb-2">
-                  Text Input Mode Active
+                  {hasError ? "Voice System Error - Text Mode Active" : "Text Input Mode Active"}
                 </h4>
                 
-                {browserInfo.isFirefox ? (
+                {hasError ? (
+                  <div className="space-y-2">
+                    <p className="text-xs text-red-700">
+                      The voice system encountered an error and has been disabled. Use text input below to continue chatting.
+                    </p>
+                    <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg border border-red-200">
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <p className="text-xs text-red-800 font-medium">
+                        Try refreshing the page or use Chrome/Edge for better voice support
+                      </p>
+                    </div>
+                  </div>
+                ) : browserInfo.isFirefox ? (
                   <div className="space-y-2">
                     <p className="text-xs text-gray-700">
-                      Voice input is not available in Firefox. Use text input below to chat with the Universal Scholar.
+                      Voice input is not available in Firefox due to limited Web Speech API support.
                     </p>
                     <div className="flex items-center gap-2 p-2 bg-teal-50 rounded-lg border border-teal-200">
                       <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
                       <p className="text-xs text-teal-800 font-medium">
-                        For voice features, try Chrome or Microsoft Edge
+                        For voice features, switch to Google Chrome or Microsoft Edge
                       </p>
                     </div>
                   </div>
                 ) : browserInfo.isSafari ? (
                   <div className="space-y-2">
                     <p className="text-xs text-gray-700">
-                      Voice input has limited support in Safari. Text input is recommended for the best experience.
+                      Voice input is disabled in Safari due to unreliable Web Speech API support.
                     </p>
                     <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg border border-orange-200">
                       <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                       <p className="text-xs text-orange-800 font-medium">
-                        For full voice features, try Chrome or Microsoft Edge
+                        For reliable voice features, use Google Chrome or Microsoft Edge
                       </p>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     <p className="text-xs text-gray-700">
-                      Voice input requires Chrome or Microsoft Edge. Use text input below to continue your spiritual journey.
+                      Voice input requires Google Chrome or Microsoft Edge for reliable operation.
                     </p>
                     <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                       <p className="text-xs text-blue-800 font-medium">
-                        Current browser: {browserInfo.name}
+                        Current browser: {browserInfo.name} - Switch to Chrome or Edge for voice
                       </p>
                     </div>
                   </div>
