@@ -399,27 +399,30 @@ export function useVoiceModeHandler({
 
   // Simplified startListening without permission pre-checks
   const startListening = useCallback(async (): Promise<boolean> => {
-    try {
-      console.log('🎤 Starting listening...');
+    return new Promise(async (resolve, reject) => {
+      try {
+        console.log('🎤 Starting listening...');
 
-      if (disabled || state.isListening || hasError) {
-        console.log('🚫 Voice input disabled, already listening, or in error state');
-        return false;
-      }
+        if (disabled || state.isListening || hasError) {
+          console.log('🚫 Voice input disabled, already listening, or in error state');
+          resolve(false);
+          return;
+        }
 
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        console.error('🚫 Speech Recognition API not available');
-        return false;
-      }
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          console.error('🚫 Speech Recognition API not available');
+          resolve(false);
+          return;
+        }
 
-          // Initialize audio context for isolation
-      console.log('🔊 Initializing audio context...');
-      await initializeAudioContext();
+        // Initialize audio context for isolation
+        console.log('🔊 Initializing audio context...');
+        await initializeAudioContext();
 
-      console.log('🎤 Creating new SpeechRecognition instance...');
-      const recognition = new SpeechRecognition();
-      recognitionRef.current = recognition;
+        console.log('🎤 Creating new SpeechRecognition instance...');
+        const recognition = new SpeechRecognition();
+        recognitionRef.current = recognition;
 
           // Enhanced Grok-like configuration for optimal voice interaction
           recognition.continuous = true; // Keep listening for multiple phrases
@@ -448,9 +451,11 @@ export function useVoiceModeHandler({
               console.log('✅ Recognition started');
               dispatch({ type: 'SET_LISTENING', payload: true });
               updateVoiceState('listening');
+              resolve(true);
             } catch (error) {
               console.error('🚨 Recognition start error:', error);
               setHasError(true);
+              resolve(false);
             }
           };
 
@@ -560,19 +565,20 @@ export function useVoiceModeHandler({
           };
 
           recognition.start();
-      return true;
-    } catch (error) {
-      console.error('🚨 Start listening error:', error);
-      setHasError(true);
-      // Direct cleanup to avoid dependency
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
-        recognitionRef.current = null;
+        
+      } catch (error) {
+        console.error('🚨 Start listening error:', error);
+        setHasError(true);
+        // Direct cleanup to avoid dependency
+        if (recognitionRef.current) {
+          recognitionRef.current.abort();
+          recognitionRef.current = null;
+        }
+        dispatch({ type: 'SET_LISTENING', payload: false });
+        dispatch({ type: 'SET_STATE', payload: 'idle' });
+        resolve(false);
       }
-      dispatch({ type: 'SET_LISTENING', payload: false });
-      dispatch({ type: 'SET_STATE', payload: 'idle' });
-      return false;
-    }
+    });
   }, [
     disabled,
     hasError
@@ -858,12 +864,21 @@ export function useVoiceModeHandler({
     }
   }, []);
 
-  // Dynamic gain control based on AI state
+  // Enhanced dynamic gain control based on AI state
   useEffect(() => {
-    if (gainNodeRef.current) {
-      gainNodeRef.current.gain.value = (isAIResponding || state.isPlaying) ? 0 : 1;
+    if (gainNodeRef.current && audioContextRef.current) {
+      const currentTime = audioContextRef.current.currentTime;
+      
+      // Mute microphone during AI responses to prevent feedback loops
+      if (isAIResponding || state.isPlaying || state.isLoading) {
+        gainNodeRef.current.gain.setValueAtTime(0, currentTime);
+        console.log('🔇 Microphone muted - AI is responding/playing');
+      } else {
+        gainNodeRef.current.gain.setValueAtTime(1, currentTime);
+        console.log('🎤 Microphone unmuted - Ready for user input');
+      }
     }
-  }, [isAIResponding, state.isPlaying]);
+  }, [isAIResponding, state.isPlaying, state.isLoading]);
 
   // Cleanup on unmount - NO dependencies to prevent loops
   useEffect(() => {

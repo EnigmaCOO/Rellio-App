@@ -707,18 +707,16 @@ function VoiceFirstChatInterfaceInner({
     if (gainNodeRef.current && audioContextRef.current) {
       const currentTime = audioContextRef.current.currentTime;
 
-      // Conditionally mute/unmute based on AI speaking state and isolation flags
-      if (isAISpeaking || isTalkingBack || inputIsolated || isAudioIsolated) {
-        // MUTE microphone during AI speech to prevent feedback
+      // Mute microphone during AI speech to prevent feedback loops
+      if (isAISpeaking || isAIPlaying || playingMessageId) {
         gainNodeRef.current.gain.setValueAtTime(0, currentTime);
-        console.log('🔇 MICROPHONE MUTED: Preventing AI audio feedback');
+        console.log('🔇 MICROPHONE MUTED: AI speaking, preventing feedback');
       } else {
-        // UNMUTE microphone when AI is silent and no other isolation is active
         gainNodeRef.current.gain.setValueAtTime(1, currentTime);
         console.log('🎤 MICROPHONE UNMUTED: Ready for user input');
       }
     }
-  }, [isAISpeaking, isTalkingBack, inputIsolated, isAudioIsolated]); // Removed voiceState dependency as it's managed by the handler
+  }, [isAISpeaking, isAIPlaying, playingMessageId]);
 
 
   // Handle interruption logic - simplified, relying more on the consolidated handler
@@ -790,24 +788,22 @@ function VoiceFirstChatInterfaceInner({
   const shouldAutoPlay = useMemo(() => {
     const hasLatestAI = hasNewAIMessage();
     const isCurrentlyPlaying = !!playingMessageId;
-    const voiceNotActivelyListening = voiceState !== 'listening'; // Only block if actively listening
-    const notProcessing = voiceState !== 'processing'; // Allow auto-play after processing
+    const voiceNotActivelyListening = voiceState !== 'listening';
+    const notProcessing = voiceState !== 'processing';
 
+    // Simplified auto-play logic: play AI responses when auto-play is enabled and nothing is currently playing
     const result = hasLatestAI &&
                    autoPlayEnabled &&
                    !isCurrentlyPlaying &&
                    voiceNotActivelyListening &&
-                   notProcessing &&
-                   wasLastMessageVoice; // Only auto-play for voice-initiated messages
+                   notProcessing;
 
-    console.log('🔊 ENHANCED Auto-play check:', {
+    console.log('🔊 Auto-play check:', {
       hasLatestAI,
       autoPlayEnabled,
       isCurrentlyPlaying,
       voiceState,
       wasLastMessageVoice,
-      voiceNotActivelyListening,
-      notProcessing,
       result
     });
 
@@ -818,9 +814,12 @@ function VoiceFirstChatInterfaceInner({
   useEffect(() => {
     if (shouldAutoPlay && messages.length > 0) {
       const latestAIMessage = messages[messages.length - 1];
-      if (latestAIMessage?.type === 'ai' && latestAIMessage.content) {
-        console.log('🔊 VOICE MODE: Auto-playing AI response with ElevenLabs');
+      if (latestAIMessage?.type === 'ai' && latestAIMessage.content && latestAIMessage.content !== lastAIMessage) {
+        console.log('🔊 Auto-playing AI response with ElevenLabs');
         console.log('🎤 Message content:', latestAIMessage.content.substring(0, 100) + '...');
+        
+        // Update last AI message to prevent re-playing
+        setLastAIMessage(latestAIMessage.content);
         
         // Set playing state immediately
         setPlayingMessageId(latestAIMessage.id);
@@ -837,7 +836,7 @@ function VoiceFirstChatInterfaceInner({
           });
       }
     }
-  }, [shouldAutoPlay, messages, playAIText]);
+  }, [shouldAutoPlay, messages, playAIText, lastAIMessage]);
 
   // Enhanced message parsing for multi-perspective responses with colors and clickable references
   const parseMessageContent = useCallback((content: string) => {
@@ -1615,6 +1614,24 @@ function VoiceFirstChatInterfaceInner({
                     }
 
                     try {
+                      // If AI is speaking, interrupt it first
+                      if (isAIPlaying || playingMessageId) {
+                        console.log('🚨 Interrupting AI speech to start listening');
+                        stopAIPlayback();
+                        setPlayingMessageId(null);
+                        setIsAISpeaking(false);
+                        
+                        // Brief delay to ensure audio stops before starting listening
+                        setTimeout(async () => {
+                          const result = await toggleListening();
+                          if (result) {
+                            setWasLastMessageVoice(true);
+                            console.log('✅ Voice listening started after interruption');
+                          }
+                        }, 100);
+                        return;
+                      }
+
                       // Handle permission requests
                       if (!hasPermission) {
                         console.log('🎤 Requesting microphone permission...');
