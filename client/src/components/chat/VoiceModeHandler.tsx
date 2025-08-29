@@ -446,12 +446,12 @@ export function useVoiceModeHandler({
                     
                     // Shorter delay for more responsive interaction (like Grok)
                     autoSendTimeoutRef.current = setTimeout(() => {
-                      console.log('🚀 Auto-sending with Grok-like speed:', cleanFinalTranscript);
+                      console.log('🚀 Auto-sending with fast speed:', cleanFinalTranscript);
                       dispatch({ type: 'UPDATE_REQUEST_TIME', payload: Date.now() });
                       onAutoSend(cleanFinalTranscript);
                       updateVoiceState('processing');
                       cleanup(); // Stop listening after auto-send
-                    }, Math.max(autoSendDelay, 800)); // Minimum 800ms for speech completion
+                    }, 300); // Fast 300ms for immediate response
                   } else {
                     console.log('⏭️ Duplicate request blocked:', cleanFinalTranscript);
                   }

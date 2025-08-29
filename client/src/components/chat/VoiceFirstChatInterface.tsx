@@ -241,10 +241,12 @@ export function VoiceFirstChatInterface({
       setTextInputValue(text);
     },
     onAutoSend: (text) => {
-      console.log('🚀 Voice final transcript ready:', text);
+      console.log('🚀 Auto-sending voice message:', text);
+      setTextInputValue(text);
       setWasLastMessageVoice(true);
-      // Don't auto-send immediately - let user review and edit transcript
-      // The transcript is already in textInputValue, user can send manually
+      // Actually send the message for true auto-send
+      sendMessage(text);
+      setCurrentTranscript('');
       setIsProcessingVoice(false);
     },
     onStateChange: (state) => {
@@ -1564,11 +1566,7 @@ export function VoiceFirstChatInterface({
 
                   // Fast path - just start listening without excessive checks
                   if (!isSupported) {
-                    toast({
-                      title: "Voice Not Supported",
-                      description: "Speech recognition requires Chrome, Edge, or Safari.",
-                      variant: "destructive"
-                    });
+                    console.warn('Voice not supported');
                     return;
                   }
 
@@ -1577,22 +1575,11 @@ export function VoiceFirstChatInterface({
                     
                     if (result) {
                       setWasLastMessageVoice(true);
-                      // Only show toast if not already listening (first time)
-                      if (voiceState === 'idle') {
-                        toast({
-                          title: "🎤 Listening",
-                          description: "Speak now...",
-                          variant: "default"
-                        });
-                      }
+                      // No popups - just start listening silently
                     }
                   } catch (error) {
                     console.error('Voice error:', error);
-                    toast({
-                      title: "Voice Error", 
-                      description: "Please try again",
-                      variant: "destructive"
-                    });
+                    // Silent error handling - no popups
                   }
                 }}
                 disabled={false}
