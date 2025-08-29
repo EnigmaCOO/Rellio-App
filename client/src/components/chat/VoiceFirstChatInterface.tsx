@@ -178,6 +178,14 @@ function VoiceFirstChatInterfaceInner({
     volume: 0.8
   });
 
+  // Auto-enable text input when voice is not supported
+  useEffect(() => {
+    if (!isSupported && !showTextInput) {
+      setShowTextInput(true);
+      console.log('📝 Auto-enabled text input - voice not supported in this browser');
+    }
+  }, [isSupported, showTextInput]);
+
   // Use the working VoiceModeHandler with error boundary protection
   const voiceHandlerResult = (() => {
     try {
@@ -282,7 +290,8 @@ function VoiceFirstChatInterfaceInner({
     isPlaying: voiceIsPlaying,
     isLoading: voiceIsLoading,
     volume: voiceVolume,
-    setVolume: setVoiceVolume
+    setVolume: setVoiceVolume,
+    browserInfo
   } = voiceHandlerResult;
 
   // Compare Mode state
@@ -1497,59 +1506,57 @@ function VoiceFirstChatInterfaceInner({
 
       {/* Voice Input Area */}
       <div className="border-t border-gray-200 p-4">
-        {/* Browser Support Warning */}
+        {/* Enhanced Browser Support Warning */}
         {!isSupported && (
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="w-4 h-4 text-yellow-600" />
-              <p className="text-sm text-yellow-800 font-medium">
-                Voice Input Not Available
-              </p>
-            </div>
-            <p className="text-xs text-yellow-700 mb-2">
-              Speech recognition requires a compatible browser. Please try:
-            </p>
-            <ul className="text-xs text-yellow-700 ml-4 list-disc space-y-1">
-              <li>Chrome (recommended)</li>
-              <li>Microsoft Edge</li>
-              <li>Safari (iOS/macOS)</li>
-            </ul>
-            <p className="text-xs text-yellow-600 mt-2 mb-3">
-              Current: {navigator.userAgent.split(' ')[0]} - Voice features will be disabled
-            </p>
-            
-            {/* Manual Override Button */}
-            {(window.SpeechRecognition || window.webkitSpeechRecognition) && (
-              <div className="border-t border-yellow-300 pt-2 mt-2">
-                <p className="text-xs text-yellow-700 mb-2">
-                  🔧 Speech API detected but not enabled. Try manual override:
-                </p>
-                <Button
-                  onClick={async () => {
-                    console.log('🔧 Manual voice override triggered');
-                    // Force re-check with override
-                    const result = await toggleListening();
-                    if (result) {
-                      toast({
-                        title: "Voice Enabled!",
-                        description: "Manual override successful - voice input is now active.",
-                        variant: "default"
-                      });
-                    } else {
-                      toast({
-                        title: "Override Failed",
-                        description: "Unable to enable voice input. Browser may not support this feature.",
-                        variant: "destructive"
-                      });
-                    }
-                  }}
-                  className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs px-3 py-1 h-auto"
-                >
-                  <Mic className="w-3 h-3 mr-1" />
-                  Force Enable Voice
-                </Button>
+          <div className="mb-4 p-4 bg-white border-2 border-gray-200 rounded-xl shadow-md">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-gray-100 rounded-lg">
+                <MessageCircle className="w-5 h-5 text-gray-600" />
               </div>
-            )}
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                  Text Input Mode Active
+                </h4>
+                
+                {browserInfo.isFirefox ? (
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-700">
+                      Voice input is not available in Firefox. Use text input below to chat with the Universal Scholar.
+                    </p>
+                    <div className="flex items-center gap-2 p-2 bg-teal-50 rounded-lg border border-teal-200">
+                      <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
+                      <p className="text-xs text-teal-800 font-medium">
+                        For voice features, try Chrome or Microsoft Edge
+                      </p>
+                    </div>
+                  </div>
+                ) : browserInfo.isSafari ? (
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-700">
+                      Voice input has limited support in Safari. Text input is recommended for the best experience.
+                    </p>
+                    <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg border border-orange-200">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <p className="text-xs text-orange-800 font-medium">
+                        For full voice features, try Chrome or Microsoft Edge
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-700">
+                      Voice input requires Chrome or Microsoft Edge. Use text input below to continue your spiritual journey.
+                    </p>
+                    <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <p className="text-xs text-blue-800 font-medium">
+                        Current browser: {browserInfo.name}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -1591,11 +1598,11 @@ function VoiceFirstChatInterfaceInner({
           </div>
         )}
 
-        {/* Text Input with Isolation (Optional Alternative to Voice) */}
+        {/* Enhanced Text Input with better styling for unsupported browsers */}
         {showTextInput && (
           <form onSubmit={handleTextSubmit} className="mb-4">
             <div className={cn(
-              "flex gap-2 transition-all duration-300",
+              "flex gap-3 transition-all duration-300",
               inputIsolated && "opacity-50 pointer-events-none"
             )}>
               <input
@@ -1606,186 +1613,197 @@ function VoiceFirstChatInterfaceInner({
                 placeholder={
                   inputIsolated ? "Input locked - AI is speaking..." :
                   isAudioIsolated ? "Audio isolated - Please wait..." :
+                  !isSupported ? "Ask about spiritual wisdom, sacred texts, or life guidance..." :
                   "Type your spiritual question..."
                 }
                 className={cn(
-                  "flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm transition-all duration-300",
-                  "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent",
-                  (inputIsolated || isAudioIsolated) ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white text-gray-800"
+                  "flex-1 px-4 py-3 text-sm transition-all duration-300",
+                  "bg-white border-2 border-gray-200 rounded-xl shadow-md",
+                  "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-300",
+                  "placeholder:text-gray-500",
+                  (inputIsolated || isAudioIsolated) ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-300" : "text-gray-800 hover:border-gray-300"
                 )}
               />
               <Button
                 type="submit"
                 disabled={!textInputValue.trim() || inputIsolated || isAudioIsolated || sendMessageMutation.isPending}
                 className={cn(
-                  "px-4 py-2 transition-all duration-300",
+                  "px-6 py-3 rounded-xl font-medium transition-all duration-300 shadow-md",
                   (inputIsolated || isAudioIsolated)
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-teal-600 text-white hover:bg-teal-700"
+                    : "bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700 hover:shadow-lg transform hover:scale-105 active:scale-95"
                 )}
               >
-                Send
+                {sendMessageMutation.isPending ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  "Send"
+                )}
               </Button>
             </div>
             {inputIsolated && (
-              <p className="text-xs text-red-600 mt-1 animate-pulse">
-                🔒 Input isolated - AI is speaking. Wait for completion or interrupt to continue.
+              <p className="text-xs text-red-600 mt-2 animate-pulse flex items-center gap-1">
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                Input locked - AI is speaking. Wait for completion or interrupt to continue.
               </p>
             )}
           </form>
         )}
 
-        {/* Voice Controls */}
-        <VoiceErrorBoundary>
-          <div className="flex items-center justify-center gap-4">
-            {/* Main Voice Button */}
-            <div className="flex flex-col items-center">
-              <Button
-                onClick={async (e) => {
-                  console.log('🎤 Voice button clicked');
-                  
-                  e.preventDefault();
-                  e.stopPropagation();
-
-                  try {
-                    // Check browser support
-                    if (!isSupported) {
-                      console.warn('🚫 Voice not supported');
-                      toast({
-                        title: "Voice Not Supported",
-                        description: "Please use Chrome, Edge, or Safari for voice input.",
-                        variant: "destructive"
-                      });
-                      return;
-                    }
-
-                    // Handle permission requests
-                    if (!hasPermission) {
-                      console.log('🎤 Requesting microphone permission...');
-                      toast({
-                        title: "Requesting Permission",
-                        description: "Please allow microphone access when prompted.",
-                        variant: "default"
-                      });
-                    }
+        {/* Voice Controls - Only show if supported */}
+        {isSupported ? (
+          <VoiceErrorBoundary>
+            <div className="flex items-center justify-center gap-4">
+              {/* Main Voice Button */}
+              <div className="flex flex-col items-center">
+                <Button
+                  onClick={async (e) => {
+                    console.log('🎤 Voice button clicked');
+                    
+                    e.preventDefault();
+                    e.stopPropagation();
 
                     try {
-                      const result = await toggleListening();
-                      
-                      if (result) {
-                        setWasLastMessageVoice(true);
-                        console.log('✅ Voice listening started successfully');
-                      } else {
-                        console.warn('🚫 Failed to start voice listening');
-                        if (!hasPermission) {
-                          toast({
-                            title: "Permission Required",
-                            description: "Microphone access is needed for voice input. Please allow access in your browser.",
-                            variant: "destructive"
-                          });
+                      // Handle permission requests
+                      if (!hasPermission) {
+                        console.log('🎤 Requesting microphone permission...');
+                        toast({
+                          title: "Requesting Permission",
+                          description: "Please allow microphone access when prompted.",
+                          variant: "default"
+                        });
+                      }
+
+                      try {
+                        const result = await toggleListening();
+                        
+                        if (result) {
+                          setWasLastMessageVoice(true);
+                          console.log('✅ Voice listening started successfully');
+                        } else {
+                          console.warn('🚫 Failed to start voice listening');
+                          if (!hasPermission) {
+                            toast({
+                              title: "Permission Required",
+                              description: "Microphone access is needed for voice input. Please allow access in your browser.",
+                              variant: "destructive"
+                            });
+                          }
                         }
+                      } catch (error) {
+                        console.error('🚨 Voice toggle error:', error);
+                        toast({
+                          title: "Voice Error",
+                          description: "Voice system encountered an error. Please refresh the page if this persists.",
+                          variant: "destructive"
+                        });
                       }
                     } catch (error) {
-                      console.error('🚨 Voice toggle error:', error);
+                      console.error('🚨 Critical voice button error:', error);
                       toast({
-                        title: "Voice Error",
-                        description: "Voice system encountered an error. Please refresh the page if this persists.",
+                        title: "Critical Voice Error",
+                        description: "Voice system needs to be reset. Please refresh the page.",
                         variant: "destructive"
                       });
                     }
-                  } catch (error) {
-                    console.error('🚨 Critical voice button error:', error);
-                    toast({
-                      title: "Critical Voice Error",
-                      description: "Voice system needs to be reset. Please refresh the page.",
-                      variant: "destructive"
-                    });
+                  }}
+                  disabled={false}
+                  className={cn(
+                    "w-16 h-16 rounded-full transition-all duration-300 transform hover:scale-105 focus:scale-105 active:scale-95 shadow-md",
+                    // Grok-like button states with enhanced visual feedback
+                    voiceState === 'listening'
+                      ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 animate-pulse shadow-lg shadow-red-500/50 ring-2 ring-red-400 ring-opacity-75"
+                      : voiceState === 'processing'
+                      ? "bg-gradient-to-br from-purple-500 to-purple-600 animate-spin shadow-lg shadow-purple-500/50"
+                      : voiceState === 'speaking' || isAISpeaking
+                      ? "bg-gradient-to-br from-yellow-500 to-orange-600 animate-pulse shadow-lg shadow-yellow-500/50"
+                      : voiceState === 'interrupted'
+                      ? "bg-gradient-to-br from-red-500 to-red-600 animate-ping shadow-lg shadow-red-500/50 ring-4 ring-red-400 ring-opacity-75"
+                      : inputIsolated
+                      ? "bg-gray-400 cursor-not-allowed opacity-50"
+                      : "bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 hover:shadow-lg hover:shadow-teal-500/30 focus:ring-2 focus:ring-teal-400 focus:ring-opacity-75"
+                  )}
+                  title={
+                    !hasPermission ? "Click to request microphone permission" :
+                    voiceState === 'listening' ? "Listening... Click to stop" :
+                    voiceState === 'speaking' ? "AI is speaking... Click to interrupt" :
+                    "Click to speak - Grok-style voice input"
                   }
-                }}
-                disabled={false}
-                className={cn(
-                  "w-16 h-16 rounded-full transition-all duration-300 transform hover:scale-105 focus:scale-105 active:scale-95",
-                  // Grok-like button states with enhanced visual feedback
-                  voiceState === 'listening'
-                    ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 animate-pulse shadow-lg shadow-red-500/50 ring-2 ring-red-400 ring-opacity-75"
-                    : voiceState === 'processing'
-                    ? "bg-gradient-to-br from-purple-500 to-purple-600 animate-spin shadow-lg shadow-purple-500/50"
-                    : voiceState === 'speaking' || isAISpeaking
-                    ? "bg-gradient-to-br from-yellow-500 to-orange-600 animate-pulse shadow-lg shadow-yellow-500/50"
-                    : voiceState === 'interrupted'
-                    ? "bg-gradient-to-br from-red-500 to-red-600 animate-ping shadow-lg shadow-red-500/50 ring-4 ring-red-400 ring-opacity-75"
-                    : inputIsolated
-                    ? "bg-gray-400 cursor-not-allowed opacity-50"
-                    : "bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 hover:shadow-lg hover:shadow-teal-500/30 focus:ring-2 focus:ring-teal-400 focus:ring-opacity-75"
-                )}
-                title={
-                  !isSupported ? "Speech recognition not supported in this browser" :
-                  !hasPermission ? "Click to request microphone permission" :
-                  voiceState === 'listening' ? "Listening... Click to stop" :
-                  voiceState === 'speaking' ? "AI is speaking... Click to interrupt" :
-                  "Click to speak - Grok-style voice input"
-                }
-              >
-                {voiceState === 'processing' ? (
-                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : voiceState === 'listening' ? (
-                  <Square className="w-6 h-6 text-white" />
-                ) : voiceState === 'speaking' || isAISpeaking ? (
-                  <Volume2 className="w-6 h-6 text-white" />
-                ) : voiceState === 'interrupted' ? (
-                  <div className="w-6 h-6 text-white animate-pulse">⚡</div>
-                ) : inputIsolated ? (
-                  <MicOff className="w-6 h-6 text-gray-500" />
-                ) : (
-                  <Mic className="w-6 h-6 text-white" />
-                )}
-              </Button>
+                >
+                  {voiceState === 'processing' ? (
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : voiceState === 'listening' ? (
+                    <Square className="w-6 h-6 text-white" />
+                  ) : voiceState === 'speaking' || isAISpeaking ? (
+                    <Volume2 className="w-6 h-6 text-white" />
+                  ) : voiceState === 'interrupted' ? (
+                    <div className="w-6 h-6 text-white animate-pulse">⚡</div>
+                  ) : inputIsolated ? (
+                    <MicOff className="w-6 h-6 text-gray-500" />
+                  ) : (
+                    <Mic className="w-6 h-6 text-white" />
+                  )}
+                </Button>
 
-              {/* Status Text with Enhanced Debug Info */}
-              <div className="mt-2 text-center">
-                {voiceState === 'listening' && (
-                  <div className="text-xs text-red-600 font-medium animate-pulse">
-                    Listening...
-                  </div>
-                )}
-                {voiceState === 'processing' && (
-                  <div className="text-xs text-purple-600 font-medium">
-                    Processing...
-                  </div>
-                )}
-                {voiceState === 'speaking' || isAISpeaking && (
-                  <div className="text-xs text-yellow-600 font-medium animate-pulse">
-                    AI Speaking...
-                  </div>
-                )}
-                {voiceState === 'interrupted' && (
-                  <div className="text-xs text-red-600 font-medium animate-pulse">
-                    🚨 Interrupted
-                  </div>
-                )}
-                {voiceState === 'idle' && (
-                  <div className="text-xs text-gray-500">
-                    {!isSupported ? "Not Supported" : 
-                     !hasPermission ? "Need Permission" : 
-                     inputIsolated ? "Inputs Locked" :
-                     "Click to speak"}
-                  </div>
-                )}
-                
+                {/* Status Text */}
+                <div className="mt-2 text-center">
+                  {voiceState === 'listening' && (
+                    <div className="text-xs text-red-600 font-medium animate-pulse">
+                      Listening...
+                    </div>
+                  )}
+                  {voiceState === 'processing' && (
+                    <div className="text-xs text-purple-600 font-medium">
+                      Processing...
+                    </div>
+                  )}
+                  {(voiceState === 'speaking' || isAISpeaking) && (
+                    <div className="text-xs text-yellow-600 font-medium animate-pulse">
+                      AI Speaking...
+                    </div>
+                  )}
+                  {voiceState === 'interrupted' && (
+                    <div className="text-xs text-red-600 font-medium animate-pulse">
+                      🚨 Interrupted
+                    </div>
+                  )}
+                  {voiceState === 'idle' && (
+                    <div className="text-xs text-gray-500">
+                      {!hasPermission ? "Need Permission" : 
+                       inputIsolated ? "Inputs Locked" :
+                       "Click to speak"}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Audio Waveform */}
-            {voiceState === 'listening' && (
-              <AudioWaveform
-                isActive={true}
-                audioLevel={audioLevel}
-                size="md"
-                color="teal"
-              />
-            )}
+              {/* Audio Waveform */}
+              {voiceState === 'listening' && (
+                <AudioWaveform
+                  isActive={true}
+                  audioLevel={audioLevel}
+                  size="md"
+                  color="teal"
+                />
+              )}
+            </div>
+          </VoiceErrorBoundary>
+        ) : (
+          /* Text-only mode message for unsupported browsers */
+          <div className="flex flex-col items-center justify-center py-4">
+            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center shadow-md mb-3">
+              <MessageCircle className="w-6 h-6 text-gray-600" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-700 font-medium mb-1">
+                Text Chat Mode
+              </p>
+              <p className="text-xs text-gray-500">
+                Use the text input above to chat
+              </p>
+            </div>
           </div>
-        </VoiceErrorBoundary>
+        )}
 
         {/* Current Transcript Display */}
         {currentTranscript && (

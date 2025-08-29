@@ -44,6 +44,14 @@ export interface VoiceModeHandlerReturn {
   isLoading: boolean;
   volume: number;
   setVolume: (volume: number) => void;
+  // Browser info for better UI messaging
+  browserInfo: {
+    isChrome: boolean;
+    isEdge: boolean;
+    isSafari: boolean;
+    isFirefox: boolean;
+    name: string;
+  };
 }
 
 declare global {
@@ -178,36 +186,42 @@ export function useVoiceModeHandler({
   // Enhanced support and permission check on mount
   useEffect(() => {
     const checkSupportAndPermissions = async () => {
-      // More comprehensive browser support detection
+      const userAgent = navigator.userAgent.toLowerCase();
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      let supported = false;
       
-      // Enhanced browser detection - force support for any browser with the API
-      if (SpeechRecognition || window.webkitSpeechRecognition) {
+      // Detailed browser detection
+      const browserInfo = {
+        isChrome: userAgent.includes('chrome') && !userAgent.includes('edge') && !userAgent.includes('opr'),
+        isEdge: userAgent.includes('edge') || userAgent.includes('edg/'),
+        isSafari: userAgent.includes('safari') && !userAgent.includes('chrome'),
+        isFirefox: userAgent.includes('firefox'),
+        isOpera: userAgent.includes('opr') || userAgent.includes('opera'),
+        hasAPI: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
+        isHTTPS: window.location.protocol === 'https:',
+        userAgent: navigator.userAgent
+      };
+
+      console.log('🔍 Browser detection:', browserInfo);
+
+      let supported = false;
+
+      // Only enable voice for truly supported browsers
+      if (SpeechRecognition && (browserInfo.isChrome || browserInfo.isEdge)) {
         supported = true;
-        console.log('✅ Speech Recognition API detected and forced enabled');
-        console.log('🔍 Detailed browser info:', {
-          userAgent: navigator.userAgent,
-          fullUA: navigator.userAgent,
-          webkitSpeechRecognition: !!window.webkitSpeechRecognition,
-          SpeechRecognition: !!window.SpeechRecognition,
-          hasAPI: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
-          isChrome: navigator.userAgent.toLowerCase().includes('chrome'),
-          isEdge: navigator.userAgent.toLowerCase().includes('edge'),
-          isSafari: navigator.userAgent.toLowerCase().includes('safari') && !navigator.userAgent.toLowerCase().includes('chrome'),
-          isReplit: window.location.hostname.includes('replit'),
-          protocol: window.location.protocol
-        });
+        console.log('✅ Voice input enabled - Chrome/Edge with Speech API detected');
+      } else if (SpeechRecognition && browserInfo.isSafari) {
+        // Safari has limited support - enable with warning
+        supported = true;
+        console.log('⚠️ Voice input enabled with limited Safari support');
       } else {
-        console.log('❌ Speech Recognition not available - no API found');
-        console.log('🔍 Browser info:', {
-          userAgent: navigator.userAgent,
-          webkitSpeechRecognition: !!window.webkitSpeechRecognition,
-          SpeechRecognition: !!window.SpeechRecognition,
-          windowSpeech: typeof window.speechSynthesis,
-          isHTTPS: window.location.protocol === 'https:',
-          origin: window.location.origin
-        });
+        supported = false;
+        if (browserInfo.isFirefox) {
+          console.log('❌ Voice disabled - Firefox does not support Web Speech API');
+        } else if (!SpeechRecognition) {
+          console.log('❌ Voice disabled - No Speech Recognition API available');
+        } else {
+          console.log('❌ Voice disabled - Unsupported browser for reliable voice input');
+        }
       }
 
       let hasPermission = false;
@@ -950,6 +964,19 @@ export function useVoiceModeHandler({
     cleanup();
   }, [cleanup]);
 
+  // Get browser info for UI messaging
+  const userAgent = navigator.userAgent.toLowerCase();
+  const browserInfo = {
+    isChrome: userAgent.includes('chrome') && !userAgent.includes('edge') && !userAgent.includes('opr'),
+    isEdge: userAgent.includes('edge') || userAgent.includes('edg/'),
+    isSafari: userAgent.includes('safari') && !userAgent.includes('chrome'),
+    isFirefox: userAgent.includes('firefox'),
+    name: userAgent.includes('firefox') ? 'Firefox' :
+          userAgent.includes('safari') && !userAgent.includes('chrome') ? 'Safari' :
+          userAgent.includes('edge') || userAgent.includes('edg/') ? 'Microsoft Edge' :
+          userAgent.includes('chrome') ? 'Chrome' : 'Unknown Browser'
+  };
+
   // Early return if in error state
   if (hasError) {
     console.warn('🚨 Voice handler in error state, returning safe defaults');
@@ -993,7 +1020,8 @@ export function useVoiceModeHandler({
       setVolume: () => { 
         console.warn('Voice handler disabled due to error');
         resetVoiceSystem();
-      }
+      },
+      browserInfo
     };
   }
 
@@ -1015,6 +1043,7 @@ export function useVoiceModeHandler({
     isPlaying: state.isPlaying,
     isLoading: state.isLoading,
     volume: state.volume,
-    setVolume
+    setVolume,
+    browserInfo
   };
 }
