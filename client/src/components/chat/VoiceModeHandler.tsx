@@ -166,16 +166,40 @@ export function useVoiceModeHandler({
 
   // Check support and permissions on mount
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const supported = !!SpeechRecognition;
+    const checkSupportAndPermissions = async () => {
+      console.log('🔍 Checking speech recognition support and permissions...');
+      
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const supported = !!SpeechRecognition;
+      
+      console.log('🎤 Speech Recognition API available:', supported);
+      console.log('🎤 SpeechRecognition:', !!window.SpeechRecognition);
+      console.log('🎤 webkitSpeechRecognition:', !!window.webkitSpeechRecognition);
+      
+      if (!supported) {
+        console.error('🚨 Speech recognition not supported in this browser');
+        dispatch({ type: 'SET_SUPPORT', payload: { supported: false, permission: false } });
+        return;
+      }
+      
+      // Check microphone permissions
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          console.log('🎤 Requesting microphone permission...');
+          await navigator.mediaDevices.getUserMedia({ audio: true });
+          console.log('✅ Microphone permission granted');
+          dispatch({ type: 'SET_SUPPORT', payload: { supported: true, permission: true } });
+        } catch (error) {
+          console.error('🚨 Microphone permission denied:', error);
+          dispatch({ type: 'SET_SUPPORT', payload: { supported: true, permission: false } });
+        }
+      } else {
+        console.error('🚨 getUserMedia not available');
+        dispatch({ type: 'SET_SUPPORT', payload: { supported: true, permission: false } });
+      }
+    };
     
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(() => dispatch({ type: 'SET_SUPPORT', payload: { supported, permission: true } }))
-        .catch(() => dispatch({ type: 'SET_SUPPORT', payload: { supported, permission: false } }));
-    } else {
-      dispatch({ type: 'SET_SUPPORT', payload: { supported, permission: false } });
-    }
+    checkSupportAndPermissions();
   }, []);
 
   const updateVoiceState = useCallback((newState: VoiceState) => {
@@ -371,9 +395,17 @@ export function useVoiceModeHandler({
           }
 
           // Initialize audio context for isolation
+          console.log('🔊 Initializing audio context...');
           await initializeAudioContext();
 
           const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (!SpeechRecognition) {
+            console.error('🚨 Speech Recognition constructor not available!');
+            resolve(false);
+            return;
+          }
+          
+          console.log('🎤 Creating new SpeechRecognition instance...');
           const recognition = new SpeechRecognition();
           recognitionRef.current = recognition;
 
