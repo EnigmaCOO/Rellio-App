@@ -1527,28 +1527,30 @@ function VoiceFirstChatInterfaceInner({
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <p className="text-xs text-gray-700">
-                      Voice input is not available in Firefox due to limited Web Speech API support.
-                    </p>
-                    <div className="flex items-center gap-2 p-2 bg-teal-50 rounded-lg border border-teal-200">
-                      <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
-                      <p className="text-xs text-teal-800 font-medium">
-                        For voice features, switch to Google Chrome or Microsoft Edge
+                  <>
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-700">
+                        Voice input is not available in Firefox due to limited Web Speech API support.
                       </p>
+                      <div className="flex items-center gap-2 p-2 bg-teal-50 rounded-lg border border-teal-200">
+                        <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
+                        <p className="text-xs text-teal-800 font-medium">
+                          For voice features, switch to Google Chrome or Microsoft Edge
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-xs text-gray-700">
-                      Voice input requires Google Chrome or Microsoft Edge for reliable operation.
-                    </p>
-                    <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <p className="text-xs text-blue-800 font-medium">
-                        Switch to Chrome or Edge for voice features
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-700">
+                        Voice input requires Google Chrome or Microsoft Edge for reliable operation.
                       </p>
+                      <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <p className="text-xs text-blue-800 font-medium">
+                          Switch to Chrome or Edge for voice features
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
             </div>
