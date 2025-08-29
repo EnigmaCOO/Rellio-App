@@ -164,8 +164,6 @@ export function VoiceFirstChatInterface({
   const [lastAIMessage, setLastAIMessage] = useState<string>('');
 
   // Voice recognition support states
-  const [isSupported, setIsSupported] = useState(false);
-  const [hasPermission, setHasPermission] = useState(false);
   const [lastVoiceActivity, setLastVoiceActivity] = useState(0);
   const [isAISpeaking, setIsAISpeaking] = useState(false); // Tracks if AI is currently speaking
   const [isTalkingBack, setIsTalkingBack] = useState(false); // Tracks if AI is in a talk-back state
@@ -204,6 +202,16 @@ export function VoiceFirstChatInterface({
       setIsAISpeaking(false); // Use setIsAISpeaking for internal state
       setPlayingMessageId(null);
     }
+  });
+
+  // Settings and persona change tracking (moved up to fix hoisting issue)
+  const [settings, setSettings] = useState({
+    autoSendDelay: 800, // Faster auto-send for better voice UX
+    confidenceThreshold: 0.6, // Lower threshold for better auto-send
+    voiceEnabled: true,
+    autoPlayAI: true, // Re-enabled with server-side deduplication protection
+    interruptionSensitivity: 0.2, // Very sensitive for interruption testing
+    volume: 0.8
   });
 
   // Use the working VoiceModeHandler instead of ConsolidatedVoiceHandler
@@ -331,15 +339,6 @@ export function VoiceFirstChatInterface({
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const elevenLabsStreamRef = useRef<any>(null); // This ref seems unused currently
 
-  // Settings and persona change tracking
-  const [settings, setSettings] = useState({
-    autoSendDelay: 800, // Faster auto-send for better voice UX
-    confidenceThreshold: 0.6, // Lower threshold for better auto-send
-    voiceEnabled: true,
-    autoPlayAI: true, // Re-enabled with server-side deduplication protection
-    interruptionSensitivity: 0.2, // Very sensitive for interruption testing
-    volume: 0.8
-  });
 
   // Track previous persona to detect changes
   const [previousPersona, setPreviousPersona] = useState<string | null>(null);
@@ -614,7 +613,7 @@ export function VoiceFirstChatInterface({
         }
       });
       streamRef.current = stream;
-      setHasPermission(true);
+      // hasPermission is managed by voice handler
 
       console.log('🎤 Audio stream initialized with echo cancellation');
 
@@ -659,7 +658,7 @@ export function VoiceFirstChatInterface({
           }
 
           // Enhanced interruption detection (backup to onspeechstart)
-          if ((voiceState === 'ai_speaking' || isAISpeaking) && average > 50) { // Threshold based on settings.interruptionSensitivity?
+          if ((voiceState === 'speaking' || isAISpeaking) && average > 50) { // Threshold based on settings.interruptionSensitivity?
             console.log('🚨 AUDIO-LEVEL INTERRUPTION! High audio detected during AI speech');
             console.log(`🔊 Audio level: ${average}, Threshold: 50`);
 
@@ -683,7 +682,7 @@ export function VoiceFirstChatInterface({
       monitorAudioLevel();
     } catch (error) {
       console.error('🚨 Audio context initialization error:', error);
-      setHasPermission(false);
+      // hasPermission is managed by voice handler
     }
   }, [voiceState, settings.interruptionSensitivity, isAISpeaking, stopAIPlayback]); // Added stopAIPlayback as dependency
 
@@ -1122,7 +1121,7 @@ export function VoiceFirstChatInterface({
               </div>
             ) : (
               <GrokStyleOrb
-                state={voiceState === 'ai_speaking' ? 'responding' :
+                state={voiceState === 'speaking' ? 'responding' :
                        voiceState === 'processing' ? 'processing' :
                        voiceState === 'listening' ? 'listening' :
                        voiceState === 'interrupted' ? 'interrupted' : 'idle'}
@@ -1605,7 +1604,7 @@ export function VoiceFirstChatInterface({
                     ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 animate-pulse"
                     : voiceState === 'processing'
                     ? "bg-gradient-to-br from-purple-500 to-purple-600 animate-spin"
-                    : voiceState === 'ai_speaking' || isAISpeaking
+                    : voiceState === 'speaking' || isAISpeaking
                     ? "bg-gradient-to-br from-yellow-500 to-orange-600 animate-pulse"
                     : voiceState === 'interrupted'
                     ? "bg-gradient-to-br from-red-500 to-red-600 animate-ping shadow-lg shadow-red-500/50"
@@ -1616,7 +1615,7 @@ export function VoiceFirstChatInterface({
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : voiceState === 'listening' ? (
                   <Square className="w-6 h-6 text-white" />
-                ) : voiceState === 'ai_speaking' || isAISpeaking ? (
+                ) : voiceState === 'speaking' || isAISpeaking ? (
                   <Volume2 className="w-6 h-6 text-white" />
                 ) : voiceState === 'interrupted' ? (
                   <div className="w-6 h-6 text-white animate-pulse">⚡</div>
@@ -1639,7 +1638,7 @@ export function VoiceFirstChatInterface({
                     Processing...
                   </div>
                 )}
-                {voiceState === 'ai_speaking' || isAISpeaking && (
+                {voiceState === 'speaking' || isAISpeaking && (
                   <div className="text-xs text-yellow-600 font-medium animate-pulse">
                     AI Speaking...
                   </div>
