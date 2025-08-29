@@ -241,14 +241,17 @@ export function VoiceFirstChatInterface({
       setTextInputValue(text);
     },
     onAutoSend: (text) => {
-      console.log('🚀 Auto-sending voice message:', text);
+      console.log('🚀 VOICE MODE: Auto-sending voice message:', text);
       setTextInputValue(text);
-      setWasLastMessageVoice(true);
-      // Actually send the message using the mutation
-      console.log('📤 Calling sendMessageMutation.mutate with:', text);
-      sendMessageMutation.mutate(text);
-      setTextInputValue(''); // Clear input after sending
+      setWasLastMessageVoice(true); // Mark as voice-initiated for auto-play
       setIsProcessingVoice(false);
+      
+      // Send the message
+      console.log('📤 Sending voice message via mutation:', text);
+      sendMessageMutation.mutate(text);
+      
+      // Clear input after sending
+      setTextInputValue('');
     },
     onStateChange: (state) => {
       console.log('🎤 Voice state changed:', state);
@@ -540,25 +543,10 @@ export function VoiceFirstChatInterface({
       // Invalidate query to refresh messages
       await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
 
-      // Auto-play the AI response with ElevenLabs ONLY if the user used voice input
-      if (data.content && autoPlayEnabled && wasLastMessageVoice) {
-        console.log('🎙️ Auto-playing AI response (voice mode):', data.content.substring(0, 50) + '...');
-        setPlayingMessageId(data.id);
-        try {
-          await playAIText(data.content);
-          setPlayingMessageId(null);
-        } catch (error) {
-          console.error('🚨 Failed to play AI response:', error);
-          setPlayingMessageId(null);
-        }
-      } else {
-        console.log('🔇 Skipping AI voice response (text mode or voice disabled)');
-      }
+      console.log('✅ Message sent successfully, voice flag:', wasLastMessageVoice);
 
-      // Reset voice message flag
-      setWasLastMessageVoice(false);
-
-      // Transcript is managed by the voice handler
+      // Note: Auto-play is now handled by the useEffect watching shouldAutoPlay
+      // This prevents duplicate playback attempts
     },
     onError: async (error: any) => {
       console.error('🚨 Send message error:', error);
@@ -782,41 +770,56 @@ export function VoiceFirstChatInterface({
     return lastMessage?.type === 'ai' && lastMessage.content !== lastAIMessage;
   }, [messages, lastAIMessage]);
 
-  // Simplified auto-play logic - only prevent during voice recording
+  // Enhanced auto-play logic for voice mode
   const shouldAutoPlay = useMemo(() => {
     const hasLatestAI = hasNewAIMessage();
-    const autoPlayEnabled = settings.autoPlayAI;
+    const autoPlayEnabled = autoPlayEnabled;
     const isCurrentlyPlaying = !!playingMessageId;
-    const voiceNotListening = voiceState !== 'listening'; // Only block if actively listening
+    const voiceNotActivelyListening = voiceState !== 'listening'; // Only block if actively listening
+    const notProcessing = voiceState !== 'processing'; // Allow auto-play after processing
 
     const result = hasLatestAI &&
                    autoPlayEnabled &&
                    !isCurrentlyPlaying &&
-                   voiceNotListening &&
+                   voiceNotActivelyListening &&
+                   notProcessing &&
                    wasLastMessageVoice; // Only auto-play for voice-initiated messages
 
-    console.log('🔊 Auto-play check:', {
+    console.log('🔊 ENHANCED Auto-play check:', {
       hasLatestAI,
       autoPlayEnabled,
       isCurrentlyPlaying,
       voiceState,
       wasLastMessageVoice,
-      voiceNotListening,
+      voiceNotActivelyListening,
+      notProcessing,
       result
     });
 
     return result;
-  }, [hasNewAIMessage, settings.autoPlayAI, playingMessageId, voiceState, wasLastMessageVoice]);
+  }, [hasNewAIMessage, autoPlayEnabled, playingMessageId, voiceState, wasLastMessageVoice]);
 
-  // Direct auto-play trigger using useEffect
+  // Enhanced auto-play trigger for voice mode
   useEffect(() => {
-    if (shouldAutoPlay) {
+    if (shouldAutoPlay && messages.length > 0) {
       const latestAIMessage = messages[messages.length - 1];
-      if (latestAIMessage?.content) {
-        console.log('🔊 CALLING ElevenLabs NOW:', latestAIMessage.content.substring(0, 50) + '...');
-        playAIText(latestAIMessage.content).catch(error => {
-          console.error('🚨 ElevenLabs failed:', error);
-        });
+      if (latestAIMessage?.type === 'ai' && latestAIMessage.content) {
+        console.log('🔊 VOICE MODE: Auto-playing AI response with ElevenLabs');
+        console.log('🎤 Message content:', latestAIMessage.content.substring(0, 100) + '...');
+        
+        // Set playing state immediately
+        setPlayingMessageId(latestAIMessage.id);
+        
+        // Play with ElevenLabs
+        playAIText(latestAIMessage.content)
+          .then(() => {
+            console.log('✅ ElevenLabs auto-play completed successfully');
+            setPlayingMessageId(null);
+          })
+          .catch(error => {
+            console.error('🚨 ElevenLabs auto-play failed:', error);
+            setPlayingMessageId(null);
+          });
       }
     }
   }, [shouldAutoPlay, messages, playAIText]);
