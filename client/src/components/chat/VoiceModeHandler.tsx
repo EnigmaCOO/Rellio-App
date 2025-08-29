@@ -670,7 +670,7 @@ export function useVoiceModeHandler({
         }
       };
       
-      backgroundRecognition.onerror = (event) => {
+      backgroundRecognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.log('🎤 Background recognition error (normal during interruption):', event.error);
       };
       

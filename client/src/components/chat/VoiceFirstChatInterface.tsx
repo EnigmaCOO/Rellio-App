@@ -1557,21 +1557,49 @@ export function VoiceFirstChatInterface({
             <div className="flex flex-col items-center">
               <Button
                 onClick={async (e) => {
+                  console.log('🔥🔥🔥 BUTTON CLICK EVENT FIRED! 🔥🔥🔥');
+                  console.log('🎯 Event details:', e);
+                  console.log('🎯 Button element:', e.currentTarget);
+                  
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('🎤 GROK-STYLE VOICE BUTTON CLICKED!', { voiceState, isListening, isSupported, hasPermission });
+                  
+                  console.log('🎤 GROK-STYLE VOICE BUTTON CLICKED!');
+                  console.log('🔍 Current state:', { 
+                    voiceState, 
+                    isListening, 
+                    isSupported, 
+                    hasPermission,
+                    disabled: sendMessageMutation.isPending,
+                    buttonDisabled: !isSupported || !hasPermission || sendMessageMutation.isPending
+                  });
+                  
+                  console.log('🌐 Browser check:', {
+                    userAgent: navigator.userAgent,
+                    speechRecognition: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
+                    mediaDevices: !!navigator.mediaDevices,
+                    getUserMedia: !!navigator.mediaDevices?.getUserMedia
+                  });
 
-                  // Enhanced user feedback with toasts
+                  // Force support check if not detected
                   if (!isSupported) {
-                    console.error('🚨 Speech recognition not supported in this browser');
-                    toast({
-                      title: "Voice Not Supported",
-                      description: "Speech recognition requires Chrome, Edge, or Safari. Please switch browsers.",
-                      variant: "destructive"
-                    });
-                    return;
+                    console.log('🔄 Forcing speech recognition support check...');
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    if (SpeechRecognition) {
+                      console.log('✅ Speech recognition found! Updating state...');
+                      // Force update the support state
+                    } else {
+                      console.error('🚨 Speech recognition truly not supported in this browser');
+                      toast({
+                        title: "Voice Not Supported",
+                        description: "Speech recognition requires Chrome, Edge, or Safari. Please switch browsers.",
+                        variant: "destructive"
+                      });
+                      return;
+                    }
                   }
 
+                  // Force permission check if not granted
                   if (!hasPermission) {
                     console.log('🎤 Microphone permission needed - will prompt user');
                     toast({
@@ -1583,7 +1611,19 @@ export function VoiceFirstChatInterface({
                   }
 
                   try {
-                    console.log('🎤 Calling toggleListening for Grok-like experience...');
+                    console.log('🎤 About to call toggleListening...');
+                    console.log('🔍 toggleListening function:', toggleListening);
+                    
+                    if (typeof toggleListening !== 'function') {
+                      console.error('🚨 toggleListening is not a function!', typeof toggleListening);
+                      toast({
+                        title: "Voice System Error",
+                        description: "Voice function not available. Please refresh the page.",
+                        variant: "destructive"
+                      });
+                      return;
+                    }
+                    
                     const result = await toggleListening();
                     console.log('🎤 Toggle result:', result);
                     
@@ -1597,24 +1637,23 @@ export function VoiceFirstChatInterface({
                       });
                     } else {
                       console.log('❌ Voice recognition failed to start');
-                      if (hasPermission) {
-                        toast({
-                          title: "Voice Input Failed",
-                          description: "Could not start voice recognition. Please try again.",
-                          variant: "destructive"
-                        });
-                      }
+                      toast({
+                        title: "Voice Input Failed",
+                        description: "Could not start voice recognition. Check console for details.",
+                        variant: "destructive"
+                      });
                     }
                   } catch (error) {
                     console.error('🚨 Voice toggle error:', error);
+                    console.error('🚨 Error stack:', (error as Error).stack);
                     toast({
                       title: "Voice Error",
-                      description: "An unexpected error occurred with voice input.",
+                      description: `Error: ${(error as Error).message || 'Unknown error'}`,
                       variant: "destructive"
                     });
                   }
                 }}
-                disabled={sendMessageMutation.isPending}
+                disabled={false}
                 className={cn(
                   "w-16 h-16 rounded-full transition-all duration-300 transform hover:scale-105 focus:scale-105 active:scale-95",
                   // Grok-like button states with enhanced visual feedback
@@ -1653,7 +1692,7 @@ export function VoiceFirstChatInterface({
                 )}
               </Button>
 
-              {/* Status Text */}
+              {/* Status Text with Enhanced Debug Info */}
               <div className="mt-2 text-center">
                 {voiceState === 'listening' && (
                   <div className="text-xs text-red-600 font-medium animate-pulse">
@@ -1675,21 +1714,27 @@ export function VoiceFirstChatInterface({
                     🚨 Interrupted
                   </div>
                 )}
-                {voiceState === 'idle' && isSupported && hasPermission && !inputIsolated && (
+                {voiceState === 'idle' && (
                   <div className="text-xs text-gray-500">
-                    Click to speak
+                    {!isSupported ? "Not Supported" : 
+                     !hasPermission ? "Need Permission" : 
+                     inputIsolated ? "Inputs Locked" :
+                     "Click to speak"}
                   </div>
                 )}
-                {inputIsolated && (
-                  <div className="text-xs text-red-600 font-medium animate-pulse">
-                    🔒 Inputs Locked
-                  </div>
-                )}
-                {isAudioIsolated && (
-                  <div className="text-xs text-amber-600 font-medium animate-pulse">
-                    🔇 Audio Isolated
-                  </div>
-                )}
+                
+                {/* Debug status indicators */}
+                <div className="text-xs text-gray-400 mt-1 space-y-1">
+                  <div>Support: {isSupported ? "✅" : "❌"} | Permission: {hasPermission ? "✅" : "❌"}</div>
+                  <div>State: {voiceState} | Listening: {isListening ? "✅" : "❌"}</div>
+                  {!isSupported && (
+                    <div className="text-red-500 text-xs">
+                      Browser: {navigator.userAgent.includes('Chrome') ? 'Chrome' : 
+                               navigator.userAgent.includes('Edge') ? 'Edge' : 
+                               navigator.userAgent.includes('Safari') ? 'Safari' : 'Other'}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
