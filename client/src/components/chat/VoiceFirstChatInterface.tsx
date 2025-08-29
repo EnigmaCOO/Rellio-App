@@ -1559,38 +1559,84 @@ export function VoiceFirstChatInterface({
                 onClick={async (e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('🎤 Voice button clicked - state:', voiceState, 'listening:', isListening);
+                  console.log('🎤 GROK-STYLE VOICE BUTTON CLICKED!', { voiceState, isListening, isSupported, hasPermission });
 
+                  // Enhanced user feedback with toasts
                   if (!isSupported) {
                     console.error('🚨 Speech recognition not supported in this browser');
+                    toast({
+                      title: "Voice Not Supported",
+                      description: "Speech recognition requires Chrome, Edge, or Safari. Please switch browsers.",
+                      variant: "destructive"
+                    });
                     return;
                   }
 
                   if (!hasPermission) {
-                    console.error('🚨 Microphone permission not granted');
-                    return;
+                    console.log('🎤 Microphone permission needed - will prompt user');
+                    toast({
+                      title: "Microphone Access Required",
+                      description: "Please allow microphone access when prompted to use voice input.",
+                      variant: "default"
+                    });
+                    // Still try to toggle - it will request permission
                   }
 
                   try {
+                    console.log('🎤 Calling toggleListening for Grok-like experience...');
                     const result = await toggleListening();
                     console.log('🎤 Toggle result:', result);
+                    
+                    if (result) {
+                      console.log('✅ Voice recognition started successfully');
+                      setWasLastMessageVoice(true);
+                      toast({
+                        title: "🎤 Voice Active",
+                        description: "Listening... Speak your spiritual question now.",
+                        variant: "default"
+                      });
+                    } else {
+                      console.log('❌ Voice recognition failed to start');
+                      if (hasPermission) {
+                        toast({
+                          title: "Voice Input Failed",
+                          description: "Could not start voice recognition. Please try again.",
+                          variant: "destructive"
+                        });
+                      }
+                    }
                   } catch (error) {
                     console.error('🚨 Voice toggle error:', error);
+                    toast({
+                      title: "Voice Error",
+                      description: "An unexpected error occurred with voice input.",
+                      variant: "destructive"
+                    });
                   }
                 }}
-                disabled={!isSupported || !hasPermission || sendMessageMutation.isPending}
+                disabled={sendMessageMutation.isPending}
                 className={cn(
-                  "w-16 h-16 rounded-full transition-all duration-300",
+                  "w-16 h-16 rounded-full transition-all duration-300 transform hover:scale-105 focus:scale-105 active:scale-95",
+                  // Grok-like button states with enhanced visual feedback
                   voiceState === 'listening'
-                    ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 animate-pulse"
+                    ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 animate-pulse shadow-lg shadow-red-500/50 ring-2 ring-red-400 ring-opacity-75"
                     : voiceState === 'processing'
-                    ? "bg-gradient-to-br from-purple-500 to-purple-600 animate-spin"
+                    ? "bg-gradient-to-br from-purple-500 to-purple-600 animate-spin shadow-lg shadow-purple-500/50"
                     : voiceState === 'speaking' || isAISpeaking
-                    ? "bg-gradient-to-br from-yellow-500 to-orange-600 animate-pulse"
+                    ? "bg-gradient-to-br from-yellow-500 to-orange-600 animate-pulse shadow-lg shadow-yellow-500/50"
                     : voiceState === 'interrupted'
-                    ? "bg-gradient-to-br from-red-500 to-red-600 animate-ping shadow-lg shadow-red-500/50"
-                    : "bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700"
+                    ? "bg-gradient-to-br from-red-500 to-red-600 animate-ping shadow-lg shadow-red-500/50 ring-4 ring-red-400 ring-opacity-75"
+                    : inputIsolated
+                    ? "bg-gray-400 cursor-not-allowed opacity-50"
+                    : "bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 hover:shadow-lg hover:shadow-teal-500/30 focus:ring-2 focus:ring-teal-400 focus:ring-opacity-75"
                 )}
+                title={
+                  !isSupported ? "Speech recognition not supported in this browser" :
+                  !hasPermission ? "Click to request microphone permission" :
+                  voiceState === 'listening' ? "Listening... Click to stop" :
+                  voiceState === 'speaking' ? "AI is speaking... Click to interrupt" :
+                  "Click to speak - Grok-style voice input"
+                }
               >
                 {voiceState === 'processing' ? (
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
