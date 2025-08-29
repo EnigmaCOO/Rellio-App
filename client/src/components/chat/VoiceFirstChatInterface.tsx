@@ -600,7 +600,7 @@ export function VoiceFirstChatInterface({
     }
   }, [sendMessageMutation, showTextInput]);
 
-  // Speech recognition is now handled by VoiceModeHandler
+  // Speech input is now handled by VoiceModeHandler
 
   // Initialize Audio Context with Echo Cancellation for Level Detection
   const initializeAudioContext = useCallback(async () => {
@@ -1556,27 +1556,26 @@ export function VoiceFirstChatInterface({
             {/* Main Voice Button */}
             <div className="flex flex-col items-center">
               <Button
-                onClick={async () => {
-                  console.log('🎤 MICROPHONE BUTTON CLICKED! Current state:', voiceState);
-                  console.log('🎤 Voice support check:', { isSupported, hasPermission });
-                  console.log('🎤 Button disabled?', !isSupported || !hasPermission || sendMessageMutation.isPending);
-                  console.log('🎤 SendMessageMutation pending?', sendMessageMutation.isPending);
-                  
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('🎤 Voice button clicked - state:', voiceState, 'listening:', isListening);
+
                   if (!isSupported) {
                     console.error('🚨 Speech recognition not supported in this browser');
                     return;
                   }
-                  
+
                   if (!hasPermission) {
                     console.error('🚨 Microphone permission not granted');
                     return;
                   }
-                  
+
                   try {
                     const result = await toggleListening();
                     console.log('🎤 Toggle result:', result);
                   } catch (error) {
-                    console.error('🚨 Error calling toggleListening:', error);
+                    console.error('🚨 Voice toggle error:', error);
                   }
                 }}
                 disabled={!isSupported || !hasPermission || sendMessageMutation.isPending}

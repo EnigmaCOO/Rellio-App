@@ -307,13 +307,13 @@ export function useVoiceModeHandler({
     updateLevel();
   }, [state.voiceState, isAIResponding]);
 
-  // Duplicate prevention with simple timestamp check
+  // Simplified duplicate prevention - only block rapid successive identical requests
   const isDuplicateRequest = useCallback((text: string): boolean => {
     const now = Date.now();
     const timeSinceLastRequest = now - state.lastRequestTime;
     
-    // Simple 500ms cooldown for legitimate requests
-    if (timeSinceLastRequest < 500) {
+    // Only block if same request within 1 second
+    if (timeSinceLastRequest < 1000) {
       console.log('⏱️ Duplicate prevention: Too soon since last request');
       return true;
     }
@@ -321,25 +321,17 @@ export function useVoiceModeHandler({
     return false;
   }, [state.lastRequestTime]);
 
-  // Enhanced auto-play control with 2s cooldown
+  // Simplified auto-play control - only block during active listening
   const canAutoPlay = useCallback((): boolean => {
-    const now = Date.now();
-    const timeSinceLastAutoPlay = now - state.lastAutoPlayTime;
-    
-    // 2s cooldown post-transcription
-    if (timeSinceLastAutoPlay < 2000) {
-      console.log('⏱️ Auto-play cooldown: Too soon since last auto-play');
+    // Only block if actively listening (not during processing or idle)
+    if (state.isListening && state.voiceState === 'listening') {
+      console.log('🎤 Auto-play blocked: Currently listening');
       return false;
     }
     
-    // Block only if mic is actively listening
-    if (state.isListening) {
-      console.log('🎤 Auto-play blocked: Microphone is active');
-      return false;
-    }
-    
+    console.log('✅ Auto-play allowed - Voice state:', state.voiceState);
     return true;
-  }, [state.lastAutoPlayTime, state.isListening]);
+  }, [state.isListening, state.voiceState]);
 
   // Debounced startListening with 300ms debounce
   const startListening = useCallback(async (): Promise<boolean> => {
@@ -497,15 +489,21 @@ export function useVoiceModeHandler({
   }, [cleanup]);
 
   const toggleListening = useCallback(async (): Promise<boolean> => {
-    console.log('🎤 Toggle voice input clicked - current state:', state.voiceState);
+    console.log('🎤 Toggle voice input clicked - current state:', state.voiceState, 'listening:', state.isListening);
     console.log('🎤 Voice support:', { isSupported: state.isSupported, hasPermission: state.hasPermission });
     
+    // Force stop any current activity first
     if (state.isListening) {
+      console.log('🛑 Stopping current listening session');
       stopListening();
       return false;
-    } else {
-      return await startListening();
-    }
+    } 
+    
+    // Start listening
+    console.log('🎤 Starting new listening session');
+    const result = await startListening();
+    console.log('🎤 Start listening result:', result);
+    return result;
   }, [state.voiceState, state.isSupported, state.hasPermission, state.isListening, stopListening, startListening]);
 
   // Interrupt AI with enhanced controls
@@ -539,12 +537,13 @@ export function useVoiceModeHandler({
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: true } });
       updateVoiceState('speaking');
       
-      // Generate unique request ID to prevent duplicates
-      const requestId = `${Date.now()}-${Math.random()}`;
-      if (activeRequestRef.current === requestId) {
-        console.log('🚫 Duplicate TTS request blocked');
+      // Simple active request tracking
+      if (activeRequestRef.current) {
+        console.log('🔄 TTS already active, skipping duplicate');
         return;
       }
+      
+      const requestId = `${Date.now()}-${Math.random()}`;
       activeRequestRef.current = requestId;
 
       const response = await fetch('/api/elevenlabs/speak', {
