@@ -235,6 +235,8 @@ export default function ProfileSection({ onLogout }: ProfileSectionProps) {
                       <FormControl>
                         <Input
                           {...field}
+                          id="profile-username"
+                          autoComplete="username"
                           className="rounded-xl"
                         />
                       </FormControl>
@@ -252,7 +254,9 @@ export default function ProfileSection({ onLogout }: ProfileSectionProps) {
                       <FormControl>
                         <Input
                           {...field}
+                          id="profile-email"
                           type="email"
+                          autoComplete="email"
                           className="rounded-xl"
                         />
                       </FormControl>

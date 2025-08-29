@@ -263,8 +263,10 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                           <FormControl>
                             <Input
                               {...field}
+                              id="login-email"
                               type="email"
                               placeholder="Email"
+                              autoComplete="email"
                               className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                             />
                           </FormControl>
@@ -283,14 +285,17 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                             <div className="relative">
                               <Input
                                 {...field}
+                                id="login-password"
                                 type={showPassword ? "text" : "password"}
                                 placeholder="Forgot password?"
+                                autoComplete="current-password"
                                 className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 pr-11"
                               />
                               <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-600 transition-colors"
+                                aria-label={showPassword ? "Hide password" : "Show password"}
                               >
                                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                               </button>
@@ -304,12 +309,12 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <Checkbox 
-                          id="remember" 
+                          id="login-remember" 
                           checked={rememberMe}
                           onCheckedChange={(checked) => setRememberMe(checked === true)}
                           className="border-gray-300 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
                         />
-                        <label htmlFor="remember" className="text-sm text-gray-600">
+                        <label htmlFor="login-remember" className="text-sm text-gray-600">
                           Remember me
                         </label>
                       </div>
@@ -351,7 +356,9 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                             <FormControl>
                               <Input
                                 {...field}
+                                id="signup-firstname"
                                 placeholder="John"
+                                autoComplete="given-name"
                                 className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                               />
                             </FormControl>
@@ -369,7 +376,9 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                             <FormControl>
                               <Input
                                 {...field}
+                                id="signup-lastname"
                                 placeholder="Doe"
+                                autoComplete="family-name"
                                 className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                               />
                             </FormControl>
@@ -380,11 +389,12 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-gray-700 font-medium">Username</label>
+                      <label htmlFor="signup-username" className="text-gray-700 font-medium">Username</label>
                       <input
+                        id="signup-username"
                         type="text"
                         placeholder="Choose a username"
-                        autoComplete="off"
+                        autoComplete="username"
                         className="w-full h-12 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 px-4"
                         onChange={(e) => {
                           signupForm.setValue('username', e.target.value);
@@ -404,8 +414,10 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                           <FormControl>
                             <Input
                               {...field}
+                              id="signup-email"
                               type="email"
                               placeholder="john@example.com"
+                              autoComplete="email"
                               className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                             />
                           </FormControl>
@@ -424,14 +436,17 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                             <div className="relative">
                               <Input
                                 {...field}
+                                id="signup-password"
                                 type={showPassword ? "text" : "password"}
                                 placeholder="Enter your password"
+                                autoComplete="new-password"
                                 className="h-12 rounded-xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 pr-11"
                               />
                               <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-600 transition-colors"
+                                aria-label={showPassword ? "Hide password" : "Show password"}
                               >
                                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                               </button>
@@ -550,12 +565,12 @@ export default function AuthForm({ onSuccess, onBack }: AuthFormProps) {
                       <div className="flex justify-center">
                         <InputOTP maxLength={6} {...field}>
                           <InputOTPGroup>
-                            <InputOTPSlot index={0} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" />
-                            <InputOTPSlot index={1} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" />
-                            <InputOTPSlot index={2} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" />
-                            <InputOTPSlot index={3} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" />
-                            <InputOTPSlot index={4} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" />
-                            <InputOTPSlot index={5} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" />
+                            <InputOTPSlot index={0} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" id="otp-0" />
+                            <InputOTPSlot index={1} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" id="otp-1" />
+                            <InputOTPSlot index={2} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" id="otp-2" />
+                            <InputOTPSlot index={3} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" id="otp-3" />
+                            <InputOTPSlot index={4} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" id="otp-4" />
+                            <InputOTPSlot index={5} className="w-12 h-12 text-lg border-2 border-gray-200 rounded-xl focus:border-amber-500" id="otp-5" />
                           </InputOTPGroup>
                         </InputOTP>
                       </div>
