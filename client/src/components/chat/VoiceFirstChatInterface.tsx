@@ -408,7 +408,10 @@ function VoiceFirstChatInterfaceInner({
     // If we have a previous persona and it's different from current
     if (previousPersona && previousPersona !== currentPersonaKey) {
       console.log('🔄 Persona changed from', previousPersona, 'to', currentPersonaKey, '- Auto-clearing chat');
-      clearChat();
+      // Wrap async call to prevent unhandled promise rejection
+      clearChat().catch(error => {
+        console.error('❌ Failed to auto-clear chat on persona change:', error);
+      });
     }
 
     // Update tracking
@@ -546,18 +549,22 @@ function VoiceFirstChatInterfaceInner({
       return await response.json();
     },
     onSuccess: async (data) => {
-      // Track message sent for progress tracking
-      onMessageSent?.();
+      try {
+        // Track message sent for progress tracking
+        onMessageSent?.();
 
-      // Invalidate query to refresh messages
-      await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
+        // Invalidate query to refresh messages
+        await queryClient.invalidateQueries({ queryKey: ['/api/chat', sessionId] });
 
-      console.log('✅ Message sent successfully, voice flag:', wasLastMessageVoice);
+        console.log('✅ Message sent successfully, voice flag:', wasLastMessageVoice);
 
-      // Note: Auto-play is now handled by the useEffect watching shouldAutoPlay
-      // This prevents duplicate playback attempts
+        // Note: Auto-play is now handled by the useEffect watching shouldAutoPlay
+        // This prevents duplicate playback attempts
+      } catch (error) {
+        console.error('❌ Error in onSuccess handler:', error);
+      }
     },
-    onError: async (error: any) => {
+    onError: (error: any) => {
       console.error('🚨 Send message error:', error);
 
       // Handle moderation blocks specifically
@@ -1181,7 +1188,11 @@ function VoiceFirstChatInterfaceInner({
             size="sm"
             onClick={async () => {
               if (window.confirm('Clear all chat messages? This will start a fresh conversation.')) {
-                await clearChat();
+                try {
+                  await clearChat();
+                } catch (error) {
+                  console.error('❌ Failed to clear chat from button:', error);
+                }
               }
             }}
             className="text-xs px-2 h-7 text-red-600 border-red-300 hover:bg-red-50"
