@@ -237,11 +237,15 @@ export function VoiceFirstChatInterface({
     onTranscript: (text, isInterim) => {
       console.log('📝 Voice transcript:', text, 'isInterim:', isInterim);
       setIsProcessingVoice(text.length > 0);
+      // Update text input with live transcript so user can see and edit it
+      setTextInputValue(text);
     },
     onAutoSend: (text) => {
-      console.log('🚀 Voice auto-send:', text);
+      console.log('🚀 Voice final transcript ready:', text);
       setWasLastMessageVoice(true);
-      handleSendMessage(text);
+      // Don't auto-send immediately - let user review and edit transcript
+      // The transcript is already in textInputValue, user can send manually
+      setIsProcessingVoice(false);
     },
     onStateChange: (state) => {
       console.log('🎤 Voice state changed:', state);
