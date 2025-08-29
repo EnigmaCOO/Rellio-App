@@ -182,19 +182,18 @@ export function useVoiceModeHandler({
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       let supported = false;
       
-      // Check multiple ways to ensure browser support
+      // Check for browser support - simplified approach for better Chrome compatibility
       if (SpeechRecognition) {
-        try {
-          // Try to create an instance to verify it actually works
-          const testRecognition = new SpeechRecognition();
-          if (testRecognition) {
-            supported = true;
-            console.log('✅ Speech Recognition fully supported');
-          }
-        } catch (error) {
-          console.log('⚠️ Speech Recognition constructor failed:', error);
-          supported = false;
-        }
+        supported = true;
+        console.log('✅ Speech Recognition API available');
+        console.log('🔍 Browser info:', {
+          userAgent: navigator.userAgent,
+          webkitSpeechRecognition: !!window.webkitSpeechRecognition,
+          SpeechRecognition: !!window.SpeechRecognition,
+          isChrome: navigator.userAgent.includes('Chrome'),
+          isEdge: navigator.userAgent.includes('Edge'),
+          isSafari: navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')
+        });
       } else {
         console.log('❌ Speech Recognition not available in this browser');
         console.log('🔍 Browser info:', {
@@ -652,18 +651,8 @@ export function useVoiceModeHandler({
       console.error('🚨 Speech recognition not supported - re-checking...');
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognition) {
-        try {
-          // Test if we can actually create an instance
-          const testRecognition = new SpeechRecognition();
-          if (testRecognition) {
-            dispatch({ type: 'SET_SUPPORT', payload: { supported: true, permission: state.hasPermission } });
-            console.log('✅ Speech recognition found on re-check');
-          }
-        } catch (error) {
-          console.error('🚨 Speech recognition constructor failed on re-check:', error);
-          console.log('💡 Try using Chrome, Edge, or Safari for voice input');
-          return false;
-        }
+        dispatch({ type: 'SET_SUPPORT', payload: { supported: true, permission: state.hasPermission } });
+        console.log('✅ Speech recognition found on re-check');
       } else {
         console.error('🚨 Speech recognition still not available - browser not supported');
         console.log('💡 Voice input requires Chrome, Edge, or Safari browser');
