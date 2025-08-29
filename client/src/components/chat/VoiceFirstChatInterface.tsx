@@ -1526,7 +1526,7 @@ function VoiceFirstChatInterfaceInner({
                       </p>
                     </div>
                   </div>
-                ) : browserInfo.isFirefox ? (
+                ) : (
                   <div className="space-y-2">
                     <p className="text-xs text-gray-700">
                       Voice input is not available in Firefox due to limited Web Speech API support.
@@ -1538,19 +1538,6 @@ function VoiceFirstChatInterfaceInner({
                       </p>
                     </div>
                   </div>
-                ) : browserInfo.isSafari ? (
-                  <div className="space-y-2">
-                    <p className="text-xs text-gray-700">
-                      Voice input is disabled in Safari due to unreliable Web Speech API support.
-                    </p>
-                    <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg border border-orange-200">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <p className="text-xs text-orange-800 font-medium">
-                        For reliable voice features, use Google Chrome or Microsoft Edge
-                      </p>
-                    </div>
-                  </div>
-                ) : (
                   <div className="space-y-2">
                     <p className="text-xs text-gray-700">
                       Voice input requires Google Chrome or Microsoft Edge for reliable operation.
@@ -1558,7 +1545,7 @@ function VoiceFirstChatInterfaceInner({
                     <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                       <p className="text-xs text-blue-800 font-medium">
-                        Current browser: {browserInfo.name} - Switch to Chrome or Edge for voice
+                        Switch to Chrome or Edge for voice features
                       </p>
                     </div>
                   </div>
@@ -1602,7 +1589,7 @@ function VoiceFirstChatInterfaceInner({
                 <div className="flex items-center gap-2 p-2 bg-yellow-100 rounded-lg border border-yellow-300">
                   <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
                   <p className="text-xs text-yellow-800">
-                    <strong>Current:</strong> {browserInfo?.name || 'Unknown'} - Voice features will be disabled.
+                    <strong>Current browser:</strong> Voice features will be disabled.
                   </p>
                 </div>
               </div>
@@ -1694,7 +1681,7 @@ function VoiceFirstChatInterfaceInner({
                     if (!isSupported) {
                       toast({
                         title: "Voice Unavailable",
-                        description: `Voice input is not supported in ${browserInfo?.name || 'this browser'}. Please use text input or switch to Chrome/Edge.`,
+                        description: "Voice input is not supported in this browser. Please use text input or switch to Chrome/Edge.",
                         variant: "default"
                       });
                       return;
@@ -1767,7 +1754,7 @@ function VoiceFirstChatInterfaceInner({
                       : ""
                   )}
                   title={
-                    !isSupported ? `Voice not supported in ${browserInfo?.name || 'this browser'} - use text input or switch to Chrome/Edge` :
+                    !isSupported ? "Voice not supported - use text input or switch to Chrome/Edge" :
                     !hasPermission ? "Click to request microphone permission" :
                     voiceState === 'listening' ? "Listening... Click to stop" :
                     voiceState === 'speaking' ? "AI is speaking... Click to interrupt" :
