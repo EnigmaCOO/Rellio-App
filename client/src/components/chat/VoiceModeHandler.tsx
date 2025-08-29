@@ -183,75 +183,37 @@ export function useVoiceModeHandler({
   const activeRequestRef = useRef<string | null>(null);
   const elevenLabsStreamingRef = useRef<any>(null); // For ElevenLabs TTS
 
-  // Enhanced support and permission check on mount with strict browser compatibility
+  // Simplified and more permissive support check
   useEffect(() => {
     const checkSupportAndPermissions = async () => {
       try {
         const userAgent = navigator.userAgent.toLowerCase();
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-        // Detailed browser detection
-        const browserInfo = {
-          isChrome: userAgent.includes('chrome') && !userAgent.includes('edge') && !userAgent.includes('opr'),
-          isEdge: userAgent.includes('edge') || userAgent.includes('edg/'),
-          isSafari: userAgent.includes('safari') && !userAgent.includes('chrome'),
-          isFirefox: userAgent.includes('firefox'),
-          isOpera: userAgent.includes('opr') || userAgent.includes('opera'),
-          hasAPI: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
-          isHTTPS: window.location.protocol === 'https:',
-          userAgent: navigator.userAgent
-        };
+        console.log('🔍 Checking voice support:', { 
+          userAgent: userAgent.substring(0, 50), 
+          hasSpeechAPI: !!SpeechRecognition 
+        });
 
-        console.log('🔍 Browser detection:', browserInfo);
-
-        let supported = false;
-
-        // Strict browser compatibility - only Chrome and Edge reliably support Web Speech API
-        if (SpeechRecognition && (browserInfo.isChrome || browserInfo.isEdge)) {
-          supported = true;
-          console.log('✅ Voice input enabled - Chrome/Edge with reliable Speech API support');
-        } else {
-          supported = false;
-          if (browserInfo.isFirefox) {
-            console.log('❌ Voice disabled - Firefox does not support Web Speech API');
-          } else if (browserInfo.isSafari) {
-            console.log('❌ Voice disabled - Safari has unreliable Web Speech API support');
-          } else if (browserInfo.isOpera) {
-            console.log('❌ Voice disabled - Opera has limited Web Speech API support');
-          } else if (!SpeechRecognition) {
-            console.log('❌ Voice disabled - No Speech Recognition API available');
-          } else {
-            console.log('❌ Voice disabled - Unsupported browser for reliable voice input');
-          }
-        }
-
-        let hasPermission = false;
-
+        // More permissive browser support - if the API exists, allow it
+        const supported = !!SpeechRecognition;
+        
         if (supported) {
-          try {
-            // Check if we already have permission (only for supported browsers)
-            const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-
-            if (permissionStatus.state === 'granted') {
-              hasPermission = true;
-              console.log('🎤 Microphone permission already granted');
-            } else if (permissionStatus.state === 'prompt') {
-              console.log('🎤 Microphone permission needs to be requested');
-            } else {
-              console.log('🚫 Microphone permission denied');
-            }
-          } catch (error) {
-            console.log('🎤 Permission API not available, will check on first use');
-            hasPermission = false;
-          }
+          console.log('✅ Speech Recognition API found - voice input enabled');
+        } else {
+          console.log('❌ Speech Recognition API not found');
         }
 
-        console.log('🎤 Final support status:', { supported, hasPermission, browser: browserInfo.isChrome ? 'Chrome' : browserInfo.isEdge ? 'Edge' : 'Unsupported' });
+        // Don't check permissions upfront - let user trigger the permission request
+        const hasPermission = false; // Will be checked when user actually clicks
+
+        console.log('🎤 Voice system initialized:', { supported, hasPermission });
         dispatch({ type: 'SET_SUPPORT', payload: { supported, permission: hasPermission } });
       } catch (error) {
-        console.error('🚨 Browser compatibility check failed:', error);
-        // Fail safe - disable voice completely if detection fails
-        dispatch({ type: 'SET_SUPPORT', payload: { supported: false, permission: false } });
+        console.error('🚨 Voice support check failed:', error);
+        // More permissive fallback
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        dispatch({ type: 'SET_SUPPORT', payload: { supported: !!SpeechRecognition, permission: false } });
       }
     };
 
@@ -431,58 +393,29 @@ export function useVoiceModeHandler({
     return true;
   }, [state.isPlaying]);
 
-  // Debounced startListening with 300ms debounce
+  // Simplified startListening without permission pre-checks
   const startListening = useCallback(async (): Promise<boolean> => {
-    // Clear any pending debounce
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-      debounceTimeoutRef.current = null;
-    }
+    try {
+      console.log('🎤 Starting listening...');
 
-    return new Promise((resolve) => {
-      debounceTimeoutRef.current = setTimeout(async () => {
-        try {
-          console.log('🎤 Starting listening with 300ms debounce...');
-          console.log('🔍 Voice support check:', {
-            isSupported: state.isSupported,
-            hasPermission: state.hasPermission,
-            disabled,
-            isListening: state.isListening,
-            hasError
-          });
+      if (disabled || state.isListening || hasError) {
+        console.log('🚫 Voice input disabled, already listening, or in error state');
+        return false;
+      }
 
-          if (!state.isSupported) {
-            console.error('🚫 Speech recognition not supported');
-            resolve(false);
-            return;
-          }
-
-          if (!state.hasPermission) {
-            console.error('🚫 Microphone permission not granted');
-            resolve(false);
-            return;
-          }
-
-          if (disabled || state.isListening || hasError) {
-            console.log('🚫 Voice input disabled or already listening or in error state');
-            resolve(false);
-            return;
-          }
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        console.error('🚫 Speech Recognition API not available');
+        return false;
+      }
 
           // Initialize audio context for isolation
-          console.log('🔊 Initializing audio context...');
-          await initializeAudioContext();
+      console.log('🔊 Initializing audio context...');
+      await initializeAudioContext();
 
-          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-          if (!SpeechRecognition) {
-            console.error('🚨 Speech Recognition constructor not available!');
-            resolve(false);
-            return;
-          }
-
-          console.log('🎤 Creating new SpeechRecognition instance...');
-          const recognition = new SpeechRecognition();
-          recognitionRef.current = recognition;
+      console.log('🎤 Creating new SpeechRecognition instance...');
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
 
           // Enhanced Grok-like configuration for optimal voice interaction
           recognition.continuous = true; // Keep listening for multiple phrases
@@ -623,15 +556,13 @@ export function useVoiceModeHandler({
           };
 
           recognition.start();
-          resolve(true);
-        } catch (error) {
-          console.error('🚨 Start listening error:', error);
-          setHasError(true);
-          cleanup();
-          resolve(false);
-        }
-      }, 300); // 300ms debounce as specified
-    });
+      return true;
+    } catch (error) {
+      console.error('🚨 Start listening error:', error);
+      setHasError(true);
+      cleanup();
+      return false;
+    }
   }, [
     state.isSupported,
     state.hasPermission,
@@ -654,87 +585,53 @@ export function useVoiceModeHandler({
   }, [cleanup]);
 
   const toggleListening = useCallback(async (): Promise<boolean> => {
-    console.log('🎤 TOGGLE LISTENING CALLED!');
-    console.log('🎤 Current voice state:', state.voiceState);
-    console.log('🎤 Support status:', { isSupported: state.isSupported, hasPermission: state.hasPermission });
-    console.log('🎤 Currently listening:', state.isListening);
-    console.log('🎤 Disabled:', disabled);
-    console.log('🎤 Has Error:', hasError);
+    console.log('🎤 TOGGLE LISTENING - Current state:', {
+      listening: state.isListening,
+      supported: state.isSupported,
+      hasPermission: state.hasPermission,
+      disabled,
+      hasError
+    });
 
     // If already listening, stop
     if (state.isListening) {
-      console.log('🛑 Currently listening - stopping...');
+      console.log('🛑 Stopping listening...');
       stopListening();
       return false;
     }
 
-    // Check browser support - re-verify if needed
+    // Reset any previous errors
+    if (hasError) {
+      console.log('🔄 Resetting error state...');
+      setHasError(false);
+    }
+
+    // Check API availability
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.error('🚨 Speech Recognition API not available');
+      return false;
+    }
+
+    // Update support if not already set
     if (!state.isSupported) {
-      console.error('🚨 Speech recognition not supported - re-checking...');
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        dispatch({ type: 'SET_SUPPORT', payload: { supported: true, permission: state.hasPermission } });
-        console.log('✅ Speech recognition found on re-check');
-      } else {
-        console.error('🚨 Speech recognition still not available - browser not supported');
-        console.log('💡 Voice input requires Chrome, Edge, or Safari browser');
-        console.log('🔍 Current browser:', navigator.userAgent);
-        return false;
-      }
+      dispatch({ type: 'SET_SUPPORT', payload: { supported: true, permission: false } });
     }
 
-    // Check and request microphone permission if needed
-    if (!state.hasPermission) {
-      console.log('🎤 No microphone permission - requesting access...');
-      try {
-        // Request permission with specific constraints for better compatibility
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: false
-          }
-        });
-
-        // Close the stream immediately after permission check
-        stream.getTracks().forEach(track => {
-          track.stop();
-          console.log('🎤 Audio track stopped after permission check');
-        });
-
-        // Update permission state
-        dispatch({ type: 'SET_SUPPORT', payload: { supported: state.isSupported, permission: true } });
-        console.log('✅ Microphone permission granted successfully!');
-
-        // Small delay to ensure permission state is updated
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-      } catch (error: any) {
-        console.error('🚨 Microphone permission denied or failed:', error);
-
-        // Provide specific error feedback
-        let errorMessage = 'Microphone access denied';
-        if (error.name === 'NotAllowedError') {
-          errorMessage = 'Microphone permission denied by user';
-        } else if (error.name === 'NotFoundError') {
-          errorMessage = 'No microphone found';
-        } else if (error.name === 'NotReadableError') {
-          errorMessage = 'Microphone is being used by another application';
-        }
-
-        console.error('🚨 Permission error details:', errorMessage);
-        dispatch({ type: 'SET_SUPPORT', payload: { supported: state.isSupported, permission: false } });
-        setHasError(true);
-        return false;
+    // Request permission and start listening
+    console.log('🎤 Requesting microphone permission and starting...');
+    try {
+      const result = await startListening();
+      if (result) {
+        // Update permission state on successful start
+        dispatch({ type: 'SET_SUPPORT', payload: { supported: true, permission: true } });
       }
+      return result;
+    } catch (error) {
+      console.error('🚨 Failed to start listening:', error);
+      return false;
     }
-
-    // All checks passed - start listening
-    console.log('🎤 All checks passed - starting listening...');
-    const result = await startListening();
-    console.log('🎤 Start listening result:', result);
-    return result;
-  }, [state.voiceState, state.isSupported, state.hasPermission, state.isListening, disabled, hasError, stopListening, startListening]);
+  }, [state.isListening, state.isSupported, state.hasPermission, disabled, hasError, stopListening, startListening]);
 
   // Interrupt AI with enhanced controls
   const interruptAI = useCallback(() => {

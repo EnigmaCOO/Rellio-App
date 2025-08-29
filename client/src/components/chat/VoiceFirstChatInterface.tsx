@@ -1509,104 +1509,18 @@ function VoiceFirstChatInterfaceInner({
 
       {/* Voice Input Area */}
       <div className="border-t border-gray-200 p-4">
-        {/* Enhanced Browser Support Warning with Error Handling */}
-        {(!isSupported || hasError) && (
-          <div className="mb-4 p-4 bg-white border-2 border-gray-200 rounded-xl shadow-md">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-gray-100 rounded-lg">
-                {hasError ? (
-                  <AlertTriangle className="w-5 h-5 text-red-600" />
-                ) : (
-                  <MessageCircle className="w-5 h-5 text-gray-600" />
-                )}
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-semibold text-gray-900 mb-2">
-                  {hasError ? "Voice System Error - Text Mode Active" : "Text Input Mode Active"}
-                </h4>
-                
-                {hasError ? (
-                  <div className="space-y-2">
-                    <p className="text-xs text-red-700">
-                      The voice system encountered an error and has been disabled. Use text input below to continue chatting.
-                    </p>
-                    <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg border border-red-200">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <p className="text-xs text-red-800 font-medium">
-                        Try refreshing the page or use Chrome/Edge for better voice support
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-2">
-                      <p className="text-xs text-gray-700">
-                        Voice input is not available in Firefox due to limited Web Speech API support.
-                      </p>
-                      <div className="flex items-center gap-2 p-2 bg-teal-50 rounded-lg border border-teal-200">
-                        <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
-                        <p className="text-xs text-teal-800 font-medium">
-                          For voice features, switch to Google Chrome or Microsoft Edge
-                        </p>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-xs text-gray-700">
-                        Voice input requires Google Chrome or Microsoft Edge for reliable operation.
-                      </p>
-                      <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <p className="text-xs text-blue-800 font-medium">
-                          Switch to Chrome or Edge for voice features
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
+        {/* Simplified Error Display - Only show on actual errors */}
+        {hasError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
+              <p className="text-sm text-red-800 font-medium">
+                Voice System Error
+              </p>
             </div>
-          </div>
-        )}
-
-        {/* Browser Compatibility Warning for Unsupported Browsers */}
-        {!isSupported && (
-          <div className="mb-4 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-xl shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-yellow-600" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-semibold text-yellow-900 mb-2">
-                  Voice Input Not Available
-                </h4>
-                
-                <p className="text-xs text-yellow-800 mb-3 leading-relaxed">
-                  Speech recognition requires a compatible browser. Please try:
-                </p>
-                
-                <div className="space-y-2 mb-3">
-                  <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-yellow-200">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <p className="text-xs text-yellow-800 font-medium">Chrome (recommended)</p>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-yellow-200">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <p className="text-xs text-yellow-800 font-medium">Microsoft Edge</p>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-yellow-200">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                    <p className="text-xs text-yellow-800 font-medium">Safari (iOS/macOS)</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2 p-2 bg-yellow-100 rounded-lg border border-yellow-300">
-                  <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
-                  <p className="text-xs text-yellow-800">
-                    <strong>Current browser:</strong> Voice features will be disabled.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <p className="text-xs text-red-700">
+              Voice input encountered an error. Try refreshing the page or use text input below.
+            </p>
           </div>
         )}
 
