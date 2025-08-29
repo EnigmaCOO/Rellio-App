@@ -223,11 +223,16 @@ export function useVoiceModeHandler({
   const updateVoiceState = useCallback((newState: VoiceState) => {
     if (!hasError) { // Only update if not in an error state
       dispatch({ type: 'SET_STATE', payload: newState });
-      onStateChange(newState);
+      // Call onStateChange without making it a dependency to prevent loops
+      try {
+        onStateChange(newState);
+      } catch (error) {
+        console.error('🚨 State change callback error:', error);
+      }
     }
-  }, [onStateChange, hasError]);
+  }, [hasError]); // Remove onStateChange from dependencies
 
-  // Fast cleanup function
+  // Fast cleanup function - STABLE with minimal dependencies
   const cleanup = useCallback(() => {
     console.log('🎤 Voice handler cleanup');
     try {
@@ -281,12 +286,11 @@ export function useVoiceModeHandler({
 
       dispatch({ type: 'SET_LISTENING', payload: false });
       dispatch({ type: 'SET_STATE', payload: 'idle' });
-      onStateChange('idle');
     } catch (error) {
       console.error('🚨 Cleanup error:', error);
       setHasError(true);
     }
-  }, [onStateChange]); // STABLE - no dependencies to prevent loops
+  }, []); // NO dependencies to prevent infinite loops
 
   // Enhanced audio context initialization with maximum echo cancellation
   const initializeAudioContext = useCallback(async () => {
@@ -560,29 +564,44 @@ export function useVoiceModeHandler({
     } catch (error) {
       console.error('🚨 Start listening error:', error);
       setHasError(true);
-      cleanup();
+      // Direct cleanup to avoid dependency
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+        recognitionRef.current = null;
+      }
+      dispatch({ type: 'SET_LISTENING', payload: false });
+      dispatch({ type: 'SET_STATE', payload: 'idle' });
       return false;
     }
   }, [
-    state.isSupported,
-    state.hasPermission,
     disabled,
-    state.isListening,
-    hasError,
-    initializeAudioContext,
-    updateVoiceState,
-    onTranscript,
-    confidenceThreshold,
-    isDuplicateRequest,
-    onAutoSend,
-    autoSendDelay,
-    cleanup
-  ]);
+    hasError
+  ]); // Minimal dependencies to prevent loops
 
   const stopListening = useCallback(() => {
     console.log('🛑 Stopping listening');
-    cleanup();
-  }, [cleanup]);
+    // Call cleanup directly to avoid dependency issues
+    try {
+      // Clear all timeouts
+      [autoSendTimeoutRef, debounceTimeoutRef, silenceDetectionRef].forEach(ref => {
+        if (ref.current) {
+          clearTimeout(ref.current);
+          ref.current = null;
+        }
+      });
+
+      // Stop recognition
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+        recognitionRef.current = null;
+      }
+
+      dispatch({ type: 'SET_LISTENING', payload: false });
+      dispatch({ type: 'SET_STATE', payload: 'idle' });
+    } catch (error) {
+      console.error('🚨 Stop listening error:', error);
+    }
+  }, []); // No dependencies
 
   const toggleListening = useCallback(async (): Promise<boolean> => {
     console.log('🎤 TOGGLE LISTENING - Current state:', {
@@ -846,10 +865,56 @@ export function useVoiceModeHandler({
     }
   }, [isAIResponding, state.isPlaying]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount - NO dependencies to prevent loops
   useEffect(() => {
-    return cleanup;
-  }, [cleanup]);
+    return () => {
+      console.log('🎤 Voice handler cleanup on unmount');
+      try {
+        // Clear all timeouts
+        [autoSendTimeoutRef, debounceTimeoutRef, silenceDetectionRef].forEach(ref => {
+          if (ref.current) {
+            clearTimeout(ref.current);
+            ref.current = null;
+          }
+        });
+
+        // Stop main recognition
+        if (recognitionRef.current) {
+          try {
+            if (recognitionRef.current.backgroundRecognition) {
+              recognitionRef.current.backgroundRecognition.abort();
+              recognitionRef.current.backgroundRecognition = null;
+            }
+            recognitionRef.current.abort();
+            recognitionRef.current = null;
+          } catch (error) {
+            console.warn('🚨 Error aborting recognition:', error);
+          }
+        }
+
+        // Clean up audio context
+        if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+          audioContextRef.current.close();
+          audioContextRef.current = null;
+        }
+
+        // Clean up media stream
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+
+        // Stop TTS audio
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.src = '';
+          audioRef.current = null;
+        }
+      } catch (error) {
+        console.error('🚨 Cleanup error on unmount:', error);
+      }
+    };
+  }, []); // NO dependencies to prevent cleanup loops
 
   // Error recovery function
   const resetVoiceSystem = useCallback(() => {
