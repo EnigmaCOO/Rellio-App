@@ -1284,7 +1284,7 @@ export function VoiceFirstChatInterface({
               </div>
             ) : (
               <GrokStyleOrb 
-                state={voiceState === 'responding' ? 'responding' : 
+                state={voiceState === 'ai_speaking' ? 'responding' : 
                        voiceState === 'processing' ? 'processing' :
                        voiceState === 'listening' ? 'listening' :
                        voiceState === 'interrupted' ? 'interrupted' : 'idle'} 
@@ -1773,7 +1773,7 @@ export function VoiceFirstChatInterface({
                 <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : voiceState === 'listening' ? (
                 <Square className="w-6 h-6 text-white" />
-              ) : voiceState === 'responding' ? (
+              ) : voiceState === 'ai_speaking' ? (
                 <Volume2 className="w-6 h-6 text-white" />
               ) : voiceState === 'interrupted' ? (
                 <div className="w-6 h-6 text-white animate-pulse">⚡</div>
