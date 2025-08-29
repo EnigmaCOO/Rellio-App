@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useReducer, useEffect, useRef, useCallback } from 'react';
 
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
@@ -54,6 +53,88 @@ declare global {
   }
 }
 
+// Enhanced state management with useReducer
+interface VoiceStateData {
+  voiceState: VoiceState;
+  isListening: boolean;
+  currentTranscript: string;
+  confidence: number;
+  audioLevel: number;
+  isSupported: boolean;
+  hasPermission: boolean;
+  isPlaying: boolean;
+  isLoading: boolean;
+  volume: number;
+  lastRequestTime: number;
+  lastAutoPlayTime: number;
+}
+
+type VoiceAction = 
+  | { type: 'SET_STATE'; payload: VoiceState }
+  | { type: 'SET_LISTENING'; payload: boolean }
+  | { type: 'SET_TRANSCRIPT'; payload: { text: string; confidence: number } }
+  | { type: 'SET_AUDIO_LEVEL'; payload: number }
+  | { type: 'SET_SUPPORT'; payload: { supported: boolean; permission: boolean } }
+  | { type: 'SET_TTS_STATE'; payload: { playing: boolean; loading: boolean } }
+  | { type: 'SET_VOLUME'; payload: number }
+  | { type: 'UPDATE_REQUEST_TIME'; payload: number }
+  | { type: 'UPDATE_AUTOPLAY_TIME'; payload: number }
+  | { type: 'RESET'; payload?: Partial<VoiceStateData> };
+
+const initialState: VoiceStateData = {
+  voiceState: 'idle',
+  isListening: false,
+  currentTranscript: '',
+  confidence: 0,
+  audioLevel: 0,
+  isSupported: false,
+  hasPermission: false,
+  isPlaying: false,
+  isLoading: false,
+  volume: 0.8,
+  lastRequestTime: 0,
+  lastAutoPlayTime: 0,
+};
+
+function voiceReducer(state: VoiceStateData, action: VoiceAction): VoiceStateData {
+  switch (action.type) {
+    case 'SET_STATE':
+      return { ...state, voiceState: action.payload };
+    case 'SET_LISTENING':
+      return { ...state, isListening: action.payload };
+    case 'SET_TRANSCRIPT':
+      return { 
+        ...state, 
+        currentTranscript: action.payload.text, 
+        confidence: action.payload.confidence 
+      };
+    case 'SET_AUDIO_LEVEL':
+      return { ...state, audioLevel: action.payload };
+    case 'SET_SUPPORT':
+      return { 
+        ...state, 
+        isSupported: action.payload.supported, 
+        hasPermission: action.payload.permission 
+      };
+    case 'SET_TTS_STATE':
+      return { 
+        ...state, 
+        isPlaying: action.payload.playing, 
+        isLoading: action.payload.loading 
+      };
+    case 'SET_VOLUME':
+      return { ...state, volume: action.payload };
+    case 'UPDATE_REQUEST_TIME':
+      return { ...state, lastRequestTime: action.payload };
+    case 'UPDATE_AUTOPLAY_TIME':
+      return { ...state, lastAutoPlayTime: action.payload };
+    case 'RESET':
+      return { ...initialState, ...action.payload };
+    default:
+      return state;
+  }
+}
+
 export function useVoiceModeHandler({
   onTranscript,
   onAutoSend,
@@ -61,26 +142,14 @@ export function useVoiceModeHandler({
   onInterrupt,
   disabled = false,
   isAIResponding = false,
-  autoSendDelay = 1500,
-  confidenceThreshold = 0.85,
-  interruptionSensitivity = 0.3,
+  autoSendDelay = 800,
+  confidenceThreshold = 0.6,
+  interruptionSensitivity = 0.2,
   voiceId = 'ErXwobaYiN019PkySvjV'
 }: VoiceModeHandlerProps): VoiceModeHandlerReturn {
   
-  // Core voice state
-  const [isListening, setIsListening] = useState(false);
-  const [currentTranscript, setCurrentTranscript] = useState('');
-  const [confidence, setConfidence] = useState(0);
-  const [voiceState, setVoiceState] = useState<VoiceState>('idle');
-  const [audioLevel, setAudioLevel] = useState(0);
-  const [isSupported, setIsSupported] = useState(false);
-  const [hasPermission, setHasPermission] = useState(false);
-
-  // ElevenLabs TTS state
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [volume, setVolume] = useState(0.8);
-  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
+  // Enhanced state management with useReducer
+  const [state, dispatch] = useReducer(voiceReducer, initialState);
 
   // Enhanced refs for managing instances and timeouts
   const recognitionRef = useRef<any>(null);
@@ -91,30 +160,29 @@ export function useVoiceModeHandler({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
-  const lastSpeechTimeRef = useRef<number>(0);
   const isInitializingRef = useRef(false);
-  const speechEndCountRef = useRef<number>(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const activeRequestRef = useRef<string | null>(null);
 
   // Check support and permissions on mount
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    setIsSupported(!!SpeechRecognition);
+    const supported = !!SpeechRecognition;
     
-    // Check microphone permission
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(() => setHasPermission(true))
-        .catch(() => setHasPermission(false));
+        .then(() => dispatch({ type: 'SET_SUPPORT', payload: { supported, permission: true } }))
+        .catch(() => dispatch({ type: 'SET_SUPPORT', payload: { supported, permission: false } }));
+    } else {
+      dispatch({ type: 'SET_SUPPORT', payload: { supported, permission: false } });
     }
   }, []);
 
   const updateVoiceState = useCallback((newState: VoiceState) => {
-    console.log('🎤 State change:', voiceState, '->', newState);
-    setVoiceState(newState);
+    console.log('🎤 State change:', state.voiceState, '->', newState);
+    dispatch({ type: 'SET_STATE', payload: newState });
     onStateChange(newState);
-  }, [voiceState, onStateChange]);
+  }, [state.voiceState, onStateChange]);
 
   // Enhanced cleanup function
   const cleanup = useCallback(() => {
@@ -132,22 +200,22 @@ export function useVoiceModeHandler({
     if (recognitionRef.current) {
       try {
         recognitionRef.current.abort();
+        recognitionRef.current = null;
       } catch (error) {
-        console.warn('Error aborting recognition:', error);
+        console.warn('🚨 Error aborting recognition:', error);
       }
-      recognitionRef.current = null;
     }
 
-    // Stop audio streams
+    // Clean up audio context
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+
+    // Clean up media stream
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
-    }
-
-    // Close audio context
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
     }
 
     // Stop TTS audio
@@ -157,230 +225,265 @@ export function useVoiceModeHandler({
       audioRef.current = null;
     }
 
-    // Reset state
-    setIsListening(false);
-    setCurrentTranscript('');
-    setAudioLevel(0);
-    setConfidence(0);
-    setIsPlaying(false);
-    setIsLoading(false);
-    setCurrentAudio(null);
-    speechEndCountRef.current = 0;
-    lastSpeechTimeRef.current = 0;
-    activeRequestRef.current = null;
+    dispatch({ type: 'SET_LISTENING', payload: false });
     updateVoiceState('idle');
   }, [updateVoiceState]);
 
-  // Initialize audio context with echo cancellation
+  // Enhanced audio context initialization with maximum echo cancellation
   const initializeAudioContext = useCallback(async () => {
+    if (audioContextRef.current || isInitializingRef.current) return;
+    
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      isInitializingRef.current = true;
+      console.log('🔧 Initializing enhanced audio context with maximum echo cancellation...');
+
+      // Request microphone with MAXIMUM isolation constraints
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
+          echoCancellation: { exact: true },
+          noiseSuppression: { exact: true },
           autoGainControl: false,
-          channelCount: 1,
           sampleRate: 16000,
+          channelCount: 1,
           sampleSize: 16
-        } 
+        }
       });
       streamRef.current = stream;
-      setHasPermission(true);
 
       console.log('🎤 Audio stream initialized with echo cancellation');
 
+      // Enhanced Audio Context with Isolation Controls
       const audioContext = new AudioContext();
-      const analyser = audioContext.createAnalyser();
-      const gainNode = audioContext.createGain();
-      const microphone = audioContext.createMediaStreamSource(stream);
+      audioContextRef.current = audioContext;
 
+      const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
       analyser.smoothingTimeConstant = 0.8;
-
-      microphone.connect(gainNode);
-      gainNode.connect(analyser);
-
-      gainNode.gain.value = 1; // Start unmuted
-      console.log('🎤 Microphone initialized and ready');
-
-      audioContextRef.current = audioContext;
       analyserRef.current = analyser;
+
+      // Create enhanced gain control for AI speech isolation
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = isAIResponding ? 0 : 1; // Mute mic during AI speech
       gainNodeRef.current = gainNode;
 
-      // Start audio level monitoring
-      const monitorAudioLevel = () => {
-        if (analyserRef.current) {
-          const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-          analyserRef.current.getByteFrequencyData(dataArray);
-          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-          setAudioLevel(average);
-
-          // Enhanced interruption detection during AI speech
-          if ((voiceState === 'speaking' || isAIResponding) && average > 50) {
-            console.log('🚨 AUDIO-LEVEL INTERRUPTION! High audio detected during AI speech');
-            interruptAI();
-          }
-        }
-        requestAnimationFrame(monitorAudioLevel);
-      };
+      // Audio processing chain: Microphone -> Gain Control -> Analyser
+      const microphone = audioContext.createMediaStreamSource(stream);
+      microphone.connect(gainNode);
+      gainNode.connect(analyser);
 
       monitorAudioLevel();
     } catch (error) {
       console.error('🚨 Audio context initialization error:', error);
-      setHasPermission(false);
+    } finally {
+      isInitializingRef.current = false;
     }
-  }, [voiceState, isAIResponding]);
+  }, [isAIResponding]);
 
-  // Enhanced silence detection with sliding window
-  const handleSilenceDetection = useCallback((transcript: string, confidence: number) => {
-    console.log('🔊 Silence detection - transcript:', transcript, 'confidence:', confidence);
+  // Enhanced audio level monitoring with interruption detection
+  const monitorAudioLevel = useCallback(() => {
+    if (!analyserRef.current) return;
+
+    const analyser = analyserRef.current;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const updateLevel = () => {
+      if (!analyser) return;
+
+      analyser.getByteFrequencyData(dataArray);
+      const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
+      
+      dispatch({ type: 'SET_AUDIO_LEVEL', payload: average });
+
+      // Enhanced interruption detection (backup to onspeechstart)
+      if ((state.voiceState === 'speaking' || isAIResponding) && average > 50) {
+        console.log('🚨 AUDIO-LEVEL INTERRUPTION! High audio detected during AI speech');
+        interruptAI();
+      }
+
+      requestAnimationFrame(updateLevel);
+    };
+
+    updateLevel();
+  }, [state.voiceState, isAIResponding]);
+
+  // Duplicate prevention with simple timestamp check
+  const isDuplicateRequest = useCallback((text: string): boolean => {
+    const now = Date.now();
+    const timeSinceLastRequest = now - state.lastRequestTime;
     
+    // Simple 500ms cooldown for legitimate requests
+    if (timeSinceLastRequest < 500) {
+      console.log('⏱️ Duplicate prevention: Too soon since last request');
+      return true;
+    }
+    
+    return false;
+  }, [state.lastRequestTime]);
+
+  // Enhanced auto-play control with 2s cooldown
+  const canAutoPlay = useCallback((): boolean => {
+    const now = Date.now();
+    const timeSinceLastAutoPlay = now - state.lastAutoPlayTime;
+    
+    // 2s cooldown post-transcription
+    if (timeSinceLastAutoPlay < 2000) {
+      console.log('⏱️ Auto-play cooldown: Too soon since last auto-play');
+      return false;
+    }
+    
+    // Block only if mic is actively listening
+    if (state.isListening) {
+      console.log('🎤 Auto-play blocked: Microphone is active');
+      return false;
+    }
+    
+    return true;
+  }, [state.lastAutoPlayTime, state.isListening]);
+
+  // Debounced startListening with 300ms debounce
+  const startListening = useCallback(async (): Promise<boolean> => {
+    // Clear any pending debounce
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
+      debounceTimeoutRef.current = null;
     }
 
-    if (confidence < confidenceThreshold) {
-      console.log('⚠️ Confidence too low for auto-send:', confidence);
-      return;
-    }
-
-    // Debounce to filter noise-induced pauses
-    debounceTimeoutRef.current = setTimeout(() => {
-      console.log('🎯 Debounce completed, checking for sustained silence...');
-      
-      if (silenceDetectionRef.current) {
-        clearTimeout(silenceDetectionRef.current);
-      }
-      
-      const silenceWindow = Math.random() * 1000 + 1000; // 1-2 second window
-      
-      silenceDetectionRef.current = setTimeout(() => {
-        const now = Date.now();
-        const timeSinceLastSpeech = now - lastSpeechTimeRef.current;
-        
-        console.log('⏰ Silence window completed. Time since last speech:', timeSinceLastSpeech);
-        
-        if (timeSinceLastSpeech >= 1000 && transcript.trim()) {
-          console.log('🚀 Auto-send confirmed - sufficient silence and valid transcript');
+    return new Promise((resolve) => {
+      debounceTimeoutRef.current = setTimeout(async () => {
+        try {
+          console.log('🎤 Starting listening with 300ms debounce...');
           
-          setCurrentTranscript('');
-          setIsListening(false);
-          updateVoiceState('processing');
-          
-          onAutoSend(transcript.trim());
-          
-          setTimeout(() => updateVoiceState('idle'), 500);
-        } else {
-          console.log('⚠️ Auto-send cancelled - insufficient silence or empty transcript');
-        }
-      }, silenceWindow);
-    }, 300);
-  }, [confidenceThreshold, onAutoSend, updateVoiceState]);
-
-  // Start listening with enhanced features
-  const startListening = useCallback(async (): Promise<boolean> => {
-    console.log('🎤 Starting listening...');
-    
-    if (!isSupported || disabled || isInitializingRef.current) {
-      return false;
-    }
-
-    cleanup();
-    isInitializingRef.current = true;
-
-    try {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      
-      const recognition = recognitionRef.current;
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
-      recognition.maxAlternatives = 1;
-
-      recognition.onstart = () => {
-        console.log('✅ Recognition started');
-        setIsListening(true);
-        updateVoiceState('listening');
-        setAudioLevel(0.5);
-        isInitializingRef.current = false;
-      };
-
-      recognition.onresult = (event: any) => {
-        let finalTranscript = '';
-        let interimTranscript = '';
-        let maxConfidence = 0;
-        
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript.trim();
-          const resultConfidence = event.results[i][0].confidence || 0.8;
-          
-          if (event.results[i].isFinal) {
-            finalTranscript += transcript + ' ';
-            maxConfidence = Math.max(maxConfidence, resultConfidence);
-            lastSpeechTimeRef.current = Date.now();
-          } else {
-            interimTranscript += transcript + ' ';
-            lastSpeechTimeRef.current = Date.now();
+          if (!state.isSupported) {
+            console.error('🚫 Speech recognition not supported');
+            resolve(false);
+            return;
           }
-        }
-        
-        const fullTranscript = (finalTranscript + interimTranscript).trim();
-        console.log('📝 Enhanced transcript:', fullTranscript, 'confidence:', maxConfidence);
-        
-        setCurrentTranscript(fullTranscript);
-        setConfidence(maxConfidence);
-        onTranscript(fullTranscript, interimTranscript.length > 0);
-        
-        if (finalTranscript.trim()) {
-          console.log('🎯 Final transcript detected, initiating auto-send logic');
-          handleSilenceDetection(finalTranscript.trim(), maxConfidence);
-        }
-      };
 
-      recognition.onspeechend = () => {
-        console.log('🗣️ Speech ended detected');
-        speechEndCountRef.current += 1;
-        
-        const currentTranscriptValue = currentTranscript.trim();
-        if (currentTranscriptValue && confidence >= confidenceThreshold) {
-          console.log('🎯 Speech end confirmed, reinforcing auto-send decision');
-          handleSilenceDetection(currentTranscriptValue, confidence);
-        }
-      };
+          if (!state.hasPermission) {
+            console.error('🚫 Microphone permission not granted');
+            resolve(false);
+            return;
+          }
 
-      recognition.onerror = (event: any) => {
-        console.error('🎤 Recognition error:', event.error);
-        isInitializingRef.current = false;
-        
-        if (event.error === 'no-speech' || event.error === 'aborted') {
-          return;
-        }
-        
-        cleanup();
-      };
+          if (disabled || state.isListening) {
+            console.log('🚫 Voice input disabled or already listening');
+            resolve(false);
+            return;
+          }
 
-      recognition.onend = () => {
-        console.log('🛑 Recognition ended');
-        isInitializingRef.current = false;
-        setIsListening(false);
-        setAudioLevel(0);
-        
-        if (voiceState !== 'processing') {
-          updateVoiceState('idle');
-        }
-      };
+          // Initialize audio context for isolation
+          await initializeAudioContext();
 
-      recognition.start();
-      return true;
-      
-    } catch (error) {
-      console.error('❌ Failed to start recognition:', error);
-      isInitializingRef.current = false;
-      cleanup();
-      return false;
-    }
-  }, [isSupported, disabled, cleanup, updateVoiceState, onTranscript, handleSilenceDetection, confidence, confidenceThreshold, voiceState, currentTranscript]);
+          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          const recognition = new SpeechRecognition();
+          recognitionRef.current = recognition;
+
+          // Enhanced configuration
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = 'en-US';
+          recognition.maxAlternatives = 3;
+
+          let finalTranscript = '';
+          let isProcessingFinal = false;
+
+          recognition.onstart = () => {
+            console.log('✅ Recognition started');
+            dispatch({ type: 'SET_LISTENING', payload: true });
+            updateVoiceState('listening');
+          };
+
+          recognition.onresult = (event: SpeechRecognitionEvent) => {
+            let interimTranscript = '';
+            
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              const result = event.results[i];
+              const transcript = result[0].transcript;
+              const confidence = result[0].confidence;
+
+              if (result.isFinal) {
+                finalTranscript += transcript;
+                dispatch({ 
+                  type: 'SET_TRANSCRIPT', 
+                  payload: { text: finalTranscript.trim(), confidence } 
+                });
+                onTranscript(finalTranscript.trim(), false);
+
+                // Clear auto-send timeout if exists
+                if (autoSendTimeoutRef.current) {
+                  clearTimeout(autoSendTimeoutRef.current);
+                }
+
+                // Enhanced auto-send with duplicate prevention
+                if (!isProcessingFinal && finalTranscript.trim() && confidence > confidenceThreshold) {
+                  isProcessingFinal = true;
+                  
+                  if (!isDuplicateRequest(finalTranscript.trim())) {
+                    autoSendTimeoutRef.current = setTimeout(() => {
+                      console.log('🚀 Auto-sending with enhanced controls:', finalTranscript.trim());
+                      dispatch({ type: 'UPDATE_REQUEST_TIME', payload: Date.now() });
+                      onAutoSend(finalTranscript.trim());
+                      updateVoiceState('processing');
+                    }, autoSendDelay);
+                  }
+                }
+              } else {
+                interimTranscript += transcript;
+                dispatch({ 
+                  type: 'SET_TRANSCRIPT', 
+                  payload: { text: interimTranscript, confidence } 
+                });
+                onTranscript(interimTranscript, true);
+              }
+            }
+          };
+
+          recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+            console.error('🚨 Recognition error:', event.error);
+            
+            if (event.error === 'not-allowed') {
+              dispatch({ type: 'SET_SUPPORT', payload: { supported: state.isSupported, permission: false } });
+            }
+            
+            cleanup();
+            resolve(false);
+          };
+
+          recognition.onend = () => {
+            console.log('🛑 Recognition ended');
+            dispatch({ type: 'SET_LISTENING', payload: false });
+            
+            if (state.voiceState === 'listening') {
+              updateVoiceState('idle');
+            }
+            
+            recognitionRef.current = null;
+          };
+
+          recognition.start();
+          resolve(true);
+        } catch (error) {
+          console.error('🚨 Failed to start recognition:', error);
+          cleanup();
+          resolve(false);
+        }
+      }, 300); // 300ms debounce as specified
+    });
+  }, [
+    state.isSupported, 
+    state.hasPermission, 
+    disabled, 
+    state.isListening, 
+    initializeAudioContext, 
+    updateVoiceState, 
+    onTranscript, 
+    confidenceThreshold, 
+    isDuplicateRequest, 
+    onAutoSend, 
+    autoSendDelay, 
+    cleanup
+  ]);
 
   const stopListening = useCallback(() => {
     console.log('🛑 Stopping listening');
@@ -388,317 +491,194 @@ export function useVoiceModeHandler({
   }, [cleanup]);
 
   const toggleListening = useCallback(async (): Promise<boolean> => {
-    if (isListening) {
+    console.log('🎤 Toggle voice input clicked - current state:', state.voiceState);
+    console.log('🎤 Voice support:', { isSupported: state.isSupported, hasPermission: state.hasPermission });
+    
+    if (state.isListening) {
       stopListening();
       return false;
     } else {
       return await startListening();
     }
-  }, [isListening, startListening, stopListening]);
+  }, [state.voiceState, state.isSupported, state.hasPermission, state.isListening, stopListening, startListening]);
+
+  // Interrupt AI with enhanced controls
+  const interruptAI = useCallback(() => {
+    console.log('🚨 Interrupting AI');
+    
+    // Stop any playing audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    
+    dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
+    updateVoiceState('interrupted');
+    onInterrupt();
+  }, [updateVoiceState, onInterrupt]);
 
   // Enhanced ElevenLabs TTS integration
-  const cleanTextForSpeech = useCallback((text: string): string => {
-    return text
-      .replace(/<perspective>[^<]*<\/perspective>/gi, '')
-      .replace(/<[^>]*>/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }, []);
-
   const playText = useCallback(async (text: string): Promise<void> => {
     if (!text.trim()) return;
-
-    const cleanedText = cleanTextForSpeech(text);
-    const requestId = `${cleanedText.substring(0, 50)}_${voiceId}`;
-    
-    if (activeRequestRef.current === requestId) {
-      console.log('🚫 Duplicate request blocked:', requestId);
-      return;
-    }
-    
-    if (isPlaying || isLoading) {
-      console.log('🛑 Stopping existing playback for new request');
-      stopPlayback();
-    }
-    
-    activeRequestRef.current = requestId;
-
-    if (!cleanedText.trim()) {
-      console.log('🔊 No readable text after cleaning');
-      return;
-    }
-
-    const maxLength = 600;
-    const textToSpeak = cleanedText.length > maxLength ? cleanedText.substring(0, maxLength) + '...' : cleanedText;
-    
-    console.log('🔊 Starting ElevenLabs TTS for:', textToSpeak.substring(0, 50) + '...');
     
     try {
-      setIsLoading(true);
-      updateVoiceState('speaking');
-
-      // Mute microphone during TTS
-      if (gainNodeRef.current && audioContextRef.current) {
-        gainNodeRef.current.gain.setValueAtTime(0, audioContextRef.current.currentTime);
-        console.log('🔇 MICROPHONE MUTED: Preventing AI audio feedback');
+      console.log('🔊 Playing text with ElevenLabs:', text.substring(0, 50) + '...');
+      
+      // Check auto-play permissions
+      if (!canAutoPlay()) {
+        console.log('🚫 Auto-play blocked by enhanced controls');
+        return;
       }
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 45000);
+      
+      dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: true } });
+      updateVoiceState('speaking');
+      
+      // Generate unique request ID to prevent duplicates
+      const requestId = `${Date.now()}-${Math.random()}`;
+      if (activeRequestRef.current === requestId) {
+        console.log('🚫 Duplicate TTS request blocked');
+        return;
+      }
+      activeRequestRef.current = requestId;
 
       const response = await fetch('/api/elevenlabs/speak', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: textToSpeak.trim(),
-          voiceId,
+          text: text,
+          voice_id: voiceId,
           options: {
             stability: 0.3,
-            similarityBoost: 0.9,
+            similarity_boost: 0.9,
             style: 0.4,
-            useSpeakerBoost: true,
-            optimizeStreamingLatency: 3
+            use_speaker_boost: true,
+            optimize_streaming_latency: 3
           }
-        }),
-        signal: controller.signal
+        })
       });
-      
-      clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(`TTS request failed: ${response.status}`);
       }
 
-      const arrayBuffer = await response.arrayBuffer();
-      console.log('🔊 Audio data received:', arrayBuffer.byteLength, 'bytes');
-      
-      if (arrayBuffer.byteLength === 0) {
-        throw new Error('Empty audio data received');
-      }
-
-      const audioBlob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
-      
-      // Create audio element
-      const audio = new Audio();
-      audio.volume = Math.max(0.3, Math.min(volume, 1.0));
-      audio.crossOrigin = 'anonymous';
-      
+      const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
       
-      audio.onplay = () => {
-        console.log('🔊 Audio playback started');
-        setIsPlaying(true);
-        setIsLoading(false);
-        setCurrentAudio(audio);
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      audio.volume = state.volume;
+
+      // Mute microphone during AI speech (enhanced isolation)
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.value = 0;
+      }
+
+      audio.onloadstart = () => {
+        dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: true } });
+      };
+
+      audio.oncanplaythrough = () => {
+        dispatch({ type: 'SET_TTS_STATE', payload: { playing: true, loading: false } });
+        dispatch({ type: 'UPDATE_AUTOPLAY_TIME', payload: Date.now() });
       };
 
       audio.onended = () => {
-        console.log('🔊 Audio playback completed');
-        setIsPlaying(false);
-        setCurrentAudio(null);
+        console.log('🔊 TTS playback ended');
+        dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
         updateVoiceState('idle');
         
-        // Unmute microphone
-        if (gainNodeRef.current && audioContextRef.current) {
-          gainNodeRef.current.gain.setValueAtTime(1, audioContextRef.current.currentTime);
-          console.log('🎤 MICROPHONE UNMUTED: Ready for user input');
+        // Restore microphone gain
+        if (gainNodeRef.current) {
+          gainNodeRef.current.gain.value = 1;
         }
         
-        try {
-          URL.revokeObjectURL(audioUrl);
-        } catch (error) {
-          console.warn('🔊 URL cleanup warning:', error);
-        }
+        URL.revokeObjectURL(audioUrl);
+        audioRef.current = null;
+        activeRequestRef.current = null;
       };
 
-      audio.onerror = (event) => {
-        console.error('🔊 Audio playback error:', event);
-        setIsPlaying(false);
-        setIsLoading(false);
-        setCurrentAudio(null);
+      audio.onerror = (error) => {
+        console.error('🚨 TTS playback error:', error);
+        dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
         updateVoiceState('idle');
         
-        // Unmute microphone on error
-        if (gainNodeRef.current && audioContextRef.current) {
-          gainNodeRef.current.gain.setValueAtTime(1, audioContextRef.current.currentTime);
+        // Restore microphone gain
+        if (gainNodeRef.current) {
+          gainNodeRef.current.gain.value = 1;
         }
         
-        try {
-          URL.revokeObjectURL(audioUrl);
-        } catch (error) {
-          console.warn('🔊 URL cleanup error:', error);
-        }
+        URL.revokeObjectURL(audioUrl);
+        audioRef.current = null;
+        activeRequestRef.current = null;
       };
-      
-      audio.src = audioUrl;
-      audio.load();
+
       await audio.play();
-
-      audioRef.current = audio;
-
     } catch (error) {
-      console.log('🔊 ElevenLabs failed, using browser speech:', error);
-      setIsLoading(false);
+      console.error('🚨 TTS error:', error);
+      dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
+      updateVoiceState('idle');
       
-      // Fallback to browser speech synthesis
-      try {
-        if ('speechSynthesis' in window && window.speechSynthesis) {
-          console.log('🔊 Using browser speech synthesis fallback');
-          
-          window.speechSynthesis.cancel();
-          
-          const utterance = new SpeechSynthesisUtterance(textToSpeak);
-          utterance.volume = Math.min(volume, 1.0);
-          utterance.rate = 0.9;
-          utterance.pitch = 1.0;
-          
-          const voices = window.speechSynthesis.getVoices();
-          const englishVoice = voices.find(voice => 
-            voice.lang.includes('en') && (voice.name.includes('Google') || voice.name.includes('Microsoft'))
-          );
-          if (englishVoice) {
-            utterance.voice = englishVoice;
-          }
-          
-          utterance.onstart = () => {
-            setIsPlaying(true);
-            setIsLoading(false);
-          };
-          
-          utterance.onend = () => {
-            setIsPlaying(false);
-            setCurrentAudio(null);
-            updateVoiceState('idle');
-            
-            // Unmute microphone
-            if (gainNodeRef.current && audioContextRef.current) {
-              gainNodeRef.current.gain.setValueAtTime(1, audioContextRef.current.currentTime);
-            }
-          };
-          
-          utterance.onerror = () => {
-            setIsPlaying(false);
-            setIsLoading(false);
-            setCurrentAudio(null);
-            updateVoiceState('idle');
-            
-            // Unmute microphone
-            if (gainNodeRef.current && audioContextRef.current) {
-              gainNodeRef.current.gain.setValueAtTime(1, audioContextRef.current.currentTime);
-            }
-          };
-          
-          setIsPlaying(true);
-          setIsLoading(false);
-          window.speechSynthesis.speak(utterance);
-        }
-      } catch (fallbackError) {
-        console.error('🔊 Browser speech synthesis failed:', fallbackError);
-        setIsLoading(false);
-        updateVoiceState('idle');
-        
-        // Unmute microphone
-        if (gainNodeRef.current && audioContextRef.current) {
-          gainNodeRef.current.gain.setValueAtTime(1, audioContextRef.current.currentTime);
-        }
+      // Restore microphone gain on error
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.value = 1;
       }
+      
+      activeRequestRef.current = null;
     }
-  }, [voiceId, volume, cleanTextForSpeech, updateVoiceState]);
+  }, [state.volume, voiceId, canAutoPlay, updateVoiceState]);
 
   const stopPlayback = useCallback(() => {
-    console.log('🔊 Interruption detected - stopping all audio immediately');
-    
-    setIsPlaying(false);
-    setIsLoading(false);
-    setCurrentAudio(null);
-    updateVoiceState('interrupted');
-    
-    // Stop ElevenLabs audio
     if (audioRef.current) {
-      try {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-        
-        const oldSrc = audioRef.current.src;
-        audioRef.current.src = '';
-        if (oldSrc && oldSrc.startsWith('blob:')) {
-          URL.revokeObjectURL(oldSrc);
-        }
-      } catch (error) {
-        console.warn('🔊 Audio cleanup error (non-critical):', error);
-      }
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
+    
+    // Restore microphone gain
+    if (gainNodeRef.current) {
+      gainNodeRef.current.gain.value = 1;
     }
     
-    // Stop browser speech synthesis
-    if ('speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.resume();
-        console.log('🔊 Browser speech synthesis stopped immediately');
-      } catch (error) {
-        console.warn('🔊 Browser speech stop error:', error);
-      }
-    }
-    
-    // Unmute microphone immediately after interruption
-    if (gainNodeRef.current && audioContextRef.current) {
-      gainNodeRef.current.gain.setValueAtTime(1, audioContextRef.current.currentTime);
-      console.log('🎤 MICROPHONE UNMUTED: Ready for user input after interruption');
-    }
-    
-    // Brief delay before returning to idle
-    setTimeout(() => {
-      if (voiceState === 'interrupted') {
-        updateVoiceState('idle');
-      }
-    }, 500);
-  }, [voiceState, updateVoiceState]);
+    activeRequestRef.current = null;
+  }, []);
 
-  const interruptAI = useCallback(() => {
-    console.log('🛑 Interrupting AI');
-    stopPlayback();
-    onInterrupt();
-  }, [stopPlayback, onInterrupt]);
-
-  // Initialize audio context on mount
-  useEffect(() => {
-    if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
-      initializeAudioContext();
-    }
-  }, [initializeAudioContext]);
-
-  // Update volume when changed
-  useEffect(() => {
+  const setVolume = useCallback((newVolume: number) => {
+    dispatch({ type: 'SET_VOLUME', payload: newVolume });
     if (audioRef.current) {
-      audioRef.current.volume = volume;
+      audioRef.current.volume = newVolume;
     }
-  }, [volume]);
+  }, []);
+
+  // Dynamic gain control based on AI state
+  useEffect(() => {
+    if (gainNodeRef.current) {
+      gainNodeRef.current.gain.value = (isAIResponding || state.isPlaying) ? 0 : 1;
+    }
+  }, [isAIResponding, state.isPlaying]);
 
   // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      cleanup();
-    };
+    return cleanup;
   }, [cleanup]);
 
   return {
-    isListening,
-    currentTranscript,
-    confidence,
-    voiceState,
-    audioLevel,
+    isListening: state.isListening,
+    currentTranscript: state.currentTranscript,
+    confidence: state.confidence,
+    voiceState: state.voiceState,
+    audioLevel: state.audioLevel,
     startListening,
     stopListening,
     toggleListening,
-    isSupported,
-    hasPermission,
+    isSupported: state.isSupported,
+    hasPermission: state.hasPermission,
     interruptAI,
     // ElevenLabs TTS methods
     playText,
     stopPlayback,
-    isPlaying,
-    isLoading,
-    volume,
+    isPlaying: state.isPlaying,
+    isLoading: state.isLoading,
+    volume: state.volume,
     setVolume
   };
 }

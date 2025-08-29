@@ -1,0 +1,67 @@
+High-Level Prompt for Replit AI Agent
+SYSTEM / GUARDRAILS (paste first)
+You are a senior full-stack engineer tasked with refactoring the Universal Wisdom Explorer voice system in Rellio to resolve all identified issues (click to speak failure, overlapping components, auto-play loops, duplicate prevention, state conflicts, import circles, ElevenLabs issues, UI conflicts) by consolidating components and adding safeguards, without breaking non-voice functionality or logic.
+
+Do not alter routing, APIs, state schemas, or IDs used by analytics/tests.
+Keep all existing component props and exported names.
+Remove redundant files safely, updating imports to point to the consolidated handler.
+Write accessible, responsive, and performant code.
+Prefer Tailwind CSS for any UI tweaks.
+Use semantic HTML and ARIA where relevant.
+Produce a single PR with clear commits (e.g., "refactor(voice): consolidate handlers and remove duplicates", "fix(voice): resolve import conflicts and white screen").
+Test for white screen errors, loops, and ensure smooth operation post-refactor.
+
+TASK BRIEF (paste after system block)
+Goal: Refactor the voice system in Rellio's Universal Wisdom Explorer chat (client/src/components/RightColumnChat.tsx, client/src/components/chat/VoiceFirstChatInterface.tsx, and related files) to fix all issues: non-working click-to-speak, conflicts from 12+ overlapping components, auto-play feedback loops, duplicate request blocking, state management conflicts, import circular dependencies, ElevenLabs integration failures, and UI component overlaps. Consolidate into a single handler based on VoiceModeHandler.tsx, remove duplicates, and add error boundaries for stability. Maintain the white-themed UI (#FFFFFF, rounded corners 12px, shadow-md) with teal #00D5FF accents, purple-to-gold gradient (#4B0082 to #D4AF37, 10% opacity), and mandala art in the right-hand column.
+
+Voice System Consolidation:
+
+Keep VoiceModeHandler.tsx as the primary (FSM with auto-send, ElevenLabs TTS, personas from ScholarPersonas.tsx).
+Merge useful logic from VoiceFirstChatInterface.tsx (chat UI) and useElevenLabsStreaming.ts (TTS config) into VoiceModeHandler.tsx.
+Remove duplicates: EnhancedVoiceInterface.tsx, SimpleVoiceInterface.tsx, SupremeVoiceInterface.tsx, GrokStyleVoiceInterface.tsx, VoiceInputButton.tsx, VoiceInputControls.tsx, UnifiedVoiceInterface.tsx, and other redundant variants (e.g., 10+ listed).
+Update imports in RightColumnChat.tsx and EnhancedAuraArchivist.tsx to use the consolidated handler.
+
+
+Fix Click-to-Speak and Button Events:
+
+Ensure the microphone button's onClick triggers Web Speech API recognition reliably—debounce the event (300ms) and check permissions first.
+Add console logging for button states (e.g., "Voice input started") to debug failures.
+
+
+Resolve Auto-Play Feedback Loops and Duplicate Prevention:
+
+Simplify feedback prevention: Enable controlled auto-play (opt-in toggle) with 2s cooldown post-transcription; block only if mic active (isListening=true).
+Remove aggressive duplicate blocking—use a simple timestamp check (e.g., lastRequest > 500ms) to allow legitimate requests.
+Enhance echo cancellation (Web Audio API) to fully isolate AI output from input.
+
+
+Fix State Management and Import Conflicts:
+
+Use a single useReducer for voice state (IDLE/LISTENING/PROCESSING/SPEAKING) in VoiceModeHandler.tsx to eliminate conflicts.
+Scan and resolve circular imports (e.g., refactor dependencies to be linear); use forwardRef if needed.
+Add <errorboundary> around voice components to catch and log errors (e.g., white screen from undefined states).</errorboundary>
+
+
+UI and ElevenLabs Integration Fixes:
+
+Update ElevenLabs calls (g: Antoni voice default) to handle errors gracefully (fallback warning toast: "Using basic voice—check connection").
+UI: Add waveform (teal bars) for input, orb pulse (teal 24px header) for states; ensure no static elements cause hangs.
+
+
+Testing and Performance:
+
+Add unit tests (Jest) for button clicks, interruptions, and loops.
+Optimize: Reduce recognition instances to one; cleanup useEffect for API stops.
+
+
+
+Deliverables:
+
+Refactored VoiceModeHandler.tsx: Consolidated logic, single state machine.
+Updated RightColumnChat.tsx / VoiceFirstChatInterface.tsx: Use new handler; remove redundant imports.
+Deleted redundant files: List duplicates; migrate any unique code.
+<errorboundary> component: For voice wrappers.</errorboundary>
+Tailwind/CSS: Debug styles (e.g., animate-pulse for orb).
+State/Hooks: useReducer for voiceState; useEffect for cleanup/recognition init.
+
+Provide React/TypeScript code with Tailwind classes, and describe state/effects. Ensure a stable, conflict-free voice system for mesmerizing spiritual conversations.
