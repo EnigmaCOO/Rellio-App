@@ -244,9 +244,10 @@ export function VoiceFirstChatInterface({
       console.log('🚀 Auto-sending voice message:', text);
       setTextInputValue(text);
       setWasLastMessageVoice(true);
-      // Actually send the message for true auto-send
-      sendMessage(text);
-      setCurrentTranscript('');
+      // Actually send the message using the mutation
+      console.log('📤 Calling sendMessageMutation.mutate with:', text);
+      sendMessageMutation.mutate(text);
+      setTextInputValue(''); // Clear input after sending
       setIsProcessingVoice(false);
     },
     onStateChange: (state) => {
