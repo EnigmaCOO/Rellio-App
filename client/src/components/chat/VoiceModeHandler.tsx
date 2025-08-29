@@ -457,80 +457,96 @@ export function useVoiceModeHandler({
           let isProcessingFinal = false;
 
           recognition.onstart = () => {
-            console.log('✅ Recognition started');
-            dispatch({ type: 'SET_LISTENING', payload: true });
-            updateVoiceState('listening');
+            try {
+              console.log('✅ Recognition started');
+              dispatch({ type: 'SET_LISTENING', payload: true });
+              updateVoiceState('listening');
+            } catch (error) {
+              console.error('🚨 Recognition start error:', error);
+              setHasError(true);
+            }
           };
 
           recognition.onresult = (event: SpeechRecognitionEvent) => {
-            let interimTranscript = '';
+            try {
+              let interimTranscript = '';
 
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-              const result = event.results[i];
-              const transcript = result[0].transcript.trim();
-              const confidence = result[0].confidence || 0.8; // Default confidence for browsers that don't report it
+              for (let i = event.resultIndex; i < event.results.length; i++) {
+                const result = event.results[i];
+                const transcript = result[0].transcript.trim();
+                const confidence = result[0].confidence || 0.8; // Default confidence for browsers that don't report it
 
-              if (result.isFinal) {
-                finalTranscript += transcript + ' ';
-                const cleanFinalTranscript = finalTranscript.trim();
+                if (result.isFinal) {
+                  finalTranscript += transcript + ' ';
+                  const cleanFinalTranscript = finalTranscript.trim();
 
-                console.log('✅ FINAL transcript received:', cleanFinalTranscript, 'confidence:', confidence);
+                  console.log('✅ FINAL transcript received:', cleanFinalTranscript, 'confidence:', confidence);
 
-                // Always update transcript state for display
-                dispatch({
-                  type: 'SET_TRANSCRIPT',
-                  payload: { text: cleanFinalTranscript, confidence }
-                });
-                onTranscript(cleanFinalTranscript, false);
-
-                // Clear any existing auto-send timeout
-                if (autoSendTimeoutRef.current) {
-                  clearTimeout(autoSendTimeoutRef.current);
-                  autoSendTimeoutRef.current = null;
-                }
-
-                // Enhanced auto-send with better conditions
-                if (!isProcessingFinal && cleanFinalTranscript.length > 2 && confidence >= confidenceThreshold) {
-                  isProcessingFinal = true;
-
-                  console.log('🚀 AUTO-SEND triggered for:', cleanFinalTranscript);
-
-                  // Immediate auto-send for better responsiveness
-                  autoSendTimeoutRef.current = setTimeout(() => {
-                    console.log('📤 SENDING voice message:', cleanFinalTranscript);
-                    dispatch({ type: 'UPDATE_REQUEST_TIME', payload: Date.now() });
-                    onAutoSend(cleanFinalTranscript);
-                    updateVoiceState('processing');
-
-                    // Clear transcript after sending
-                    dispatch({
-                      type: 'SET_TRANSCRIPT',
-                      payload: { text: '', confidence: 0 }
-                    });
-
-                    cleanup(); // Stop listening after auto-send
-                  }, 500); // Slightly longer delay to ensure completion
-                } else {
-                  console.log('⚠️ Auto-send skipped:', {
-                    isProcessingFinal,
-                    textLength: cleanFinalTranscript.length,
-                    hasText: !!cleanFinalTranscript,
-                    confidence,
-                    threshold: confidenceThreshold
+                  // Always update transcript state for display
+                  dispatch({
+                    type: 'SET_TRANSCRIPT',
+                    payload: { text: cleanFinalTranscript, confidence }
                   });
-                }
-              } else {
-                // Show interim results for immediate feedback
-                interimTranscript += transcript;
-                console.log('🎤 INTERIM transcript:', interimTranscript);
+                  onTranscript(cleanFinalTranscript, false);
 
-                // Always show interim transcripts for user feedback
-                dispatch({
-                  type: 'SET_TRANSCRIPT',
-                  payload: { text: interimTranscript, confidence }
-                });
-                onTranscript(interimTranscript, true);
+                  // Clear any existing auto-send timeout
+                  if (autoSendTimeoutRef.current) {
+                    clearTimeout(autoSendTimeoutRef.current);
+                    autoSendTimeoutRef.current = null;
+                  }
+
+                  // Enhanced auto-send with better conditions
+                  if (!isProcessingFinal && cleanFinalTranscript.length > 2 && confidence >= confidenceThreshold) {
+                    isProcessingFinal = true;
+
+                    console.log('🚀 AUTO-SEND triggered for:', cleanFinalTranscript);
+
+                    // Immediate auto-send for better responsiveness
+                    autoSendTimeoutRef.current = setTimeout(() => {
+                      try {
+                        console.log('📤 SENDING voice message:', cleanFinalTranscript);
+                        dispatch({ type: 'UPDATE_REQUEST_TIME', payload: Date.now() });
+                        onAutoSend(cleanFinalTranscript);
+                        updateVoiceState('processing');
+
+                        // Clear transcript after sending
+                        dispatch({
+                          type: 'SET_TRANSCRIPT',
+                          payload: { text: '', confidence: 0 }
+                        });
+
+                        cleanup(); // Stop listening after auto-send
+                      } catch (error) {
+                        console.error('🚨 Auto-send timeout error:', error);
+                        setHasError(true);
+                      }
+                    }, 500); // Slightly longer delay to ensure completion
+                  } else {
+                    console.log('⚠️ Auto-send skipped:', {
+                      isProcessingFinal,
+                      textLength: cleanFinalTranscript.length,
+                      hasText: !!cleanFinalTranscript,
+                      confidence,
+                      threshold: confidenceThreshold
+                    });
+                  }
+                } else {
+                  // Show interim results for immediate feedback
+                  interimTranscript += transcript;
+                  console.log('🎤 INTERIM transcript:', interimTranscript);
+
+                  // Always show interim transcripts for user feedback
+                  dispatch({
+                    type: 'SET_TRANSCRIPT',
+                    payload: { text: interimTranscript, confidence }
+                  });
+                  onTranscript(interimTranscript, true);
+                }
               }
+            } catch (error) {
+              console.error('🚨 Recognition result processing error:', error);
+              setHasError(true);
+              cleanup();
             }
           };
 
@@ -886,6 +902,14 @@ export function useVoiceModeHandler({
     return cleanup;
   }, [cleanup]);
 
+  // Error recovery function
+  const resetVoiceSystem = useCallback(() => {
+    console.log('🔄 Resetting voice system...');
+    setHasError(false);
+    dispatch({ type: 'RESET' });
+    cleanup();
+  }, [cleanup]);
+
   // Early return if in error state
   if (hasError) {
     console.warn('🚨 Voice handler in error state, returning safe defaults');
@@ -895,18 +919,41 @@ export function useVoiceModeHandler({
       confidence: 0,
       voiceState: 'idle' as const,
       audioLevel: 0,
-      startListening: async () => { console.warn('Voice handler disabled due to error'); return false; },
-      stopListening: () => { console.warn('Voice handler disabled due to error'); },
-      toggleListening: async () => { console.warn('Voice handler disabled due to error'); return false; },
+      startListening: async () => { 
+        console.warn('Voice handler disabled due to error - attempting reset...');
+        resetVoiceSystem();
+        return false; 
+      },
+      stopListening: () => { 
+        console.warn('Voice handler disabled due to error');
+        resetVoiceSystem();
+      },
+      toggleListening: async () => { 
+        console.warn('Voice handler disabled due to error - attempting reset...');
+        resetVoiceSystem();
+        return false; 
+      },
       isSupported: false,
       hasPermission: false,
-      interruptAI: () => { console.warn('Voice handler disabled due to error'); },
-      playText: async () => { console.warn('Voice handler disabled due to error'); },
-      stopPlayback: () => { console.warn('Voice handler disabled due to error'); },
+      interruptAI: () => { 
+        console.warn('Voice handler disabled due to error');
+        resetVoiceSystem();
+      },
+      playText: async () => { 
+        console.warn('Voice handler disabled due to error');
+        resetVoiceSystem();
+      },
+      stopPlayback: () => { 
+        console.warn('Voice handler disabled due to error');
+        resetVoiceSystem();
+      },
       isPlaying: false,
       isLoading: false,
       volume: 0,
-      setVolume: () => { console.warn('Voice handler disabled due to error'); }
+      setVolume: () => { 
+        console.warn('Voice handler disabled due to error');
+        resetVoiceSystem();
+      }
     };
   }
 
