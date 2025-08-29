@@ -1498,13 +1498,41 @@ export function VoiceFirstChatInterface({
           </div>
         )}
 
-        {/* Permission Warning */}
+        {/* Permission Warning with Retry */}
         {isSupported && !hasPermission && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-            <Headphones className="w-4 h-4 text-red-600" />
-            <p className="text-sm text-red-800">
-              Microphone access required for voice input. Please allow access and refresh.
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <Headphones className="w-4 h-4 text-red-600" />
+              <p className="text-sm text-red-800 font-medium">
+                Microphone Access Required
+              </p>
+            </div>
+            <p className="text-xs text-red-700 mb-3">
+              Voice input needs microphone permission. Click "Request Permission" below, then allow access in your browser.
             </p>
+            <Button
+              onClick={async () => {
+                console.log('🎤 Manual permission request triggered');
+                const result = await toggleListening();
+                if (result) {
+                  toast({
+                    title: "Permission Granted",
+                    description: "Microphone access enabled! You can now use voice input.",
+                    variant: "default"
+                  });
+                } else {
+                  toast({
+                    title: "Permission Required",
+                    description: "Please allow microphone access in your browser settings to use voice input.",
+                    variant: "destructive"
+                  });
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 h-auto"
+            >
+              <Mic className="w-3 h-3 mr-1" />
+              Request Permission
+            </Button>
           </div>
         )}
 
@@ -1564,10 +1592,25 @@ export function VoiceFirstChatInterface({
                   e.preventDefault();
                   e.stopPropagation();
 
-                  // Fast path - just start listening without excessive checks
+                  // Check browser support
                   if (!isSupported) {
-                    console.warn('Voice not supported');
+                    console.warn('🚫 Voice not supported');
+                    toast({
+                      title: "Voice Not Supported",
+                      description: "Please use Chrome, Edge, or Safari for voice input.",
+                      variant: "destructive"
+                    });
                     return;
+                  }
+
+                  // Handle permission requests
+                  if (!hasPermission) {
+                    console.log('🎤 Requesting microphone permission...');
+                    toast({
+                      title: "Requesting Permission",
+                      description: "Please allow microphone access when prompted.",
+                      variant: "default"
+                    });
                   }
 
                   try {
@@ -1575,11 +1618,24 @@ export function VoiceFirstChatInterface({
                     
                     if (result) {
                       setWasLastMessageVoice(true);
-                      // No popups - just start listening silently
+                      console.log('✅ Voice listening started successfully');
+                    } else {
+                      console.warn('🚫 Failed to start voice listening');
+                      if (!hasPermission) {
+                        toast({
+                          title: "Permission Required",
+                          description: "Microphone access is needed for voice input. Please allow access in your browser.",
+                          variant: "destructive"
+                        });
+                      }
                     }
                   } catch (error) {
-                    console.error('Voice error:', error);
-                    // Silent error handling - no popups
+                    console.error('🚨 Voice error:', error);
+                    toast({
+                      title: "Voice Error",
+                      description: "Unable to access microphone. Please check your browser settings.",
+                      variant: "destructive"
+                    });
                   }
                 }}
                 disabled={false}

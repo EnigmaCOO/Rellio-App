@@ -164,12 +164,37 @@ export function useVoiceModeHandler({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const activeRequestRef = useRef<string | null>(null);
 
-  // Quick support check on mount
+  // Enhanced support and permission check on mount
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const supported = !!SpeechRecognition;
+    const checkSupportAndPermissions = async () => {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const supported = !!SpeechRecognition;
+      
+      let hasPermission = false;
+      
+      if (supported) {
+        try {
+          // Check if we already have permission
+          const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+          
+          if (permissionStatus.state === 'granted') {
+            hasPermission = true;
+            console.log('🎤 Microphone permission already granted');
+          } else if (permissionStatus.state === 'prompt') {
+            console.log('🎤 Microphone permission needs to be requested');
+            // Don't auto-request here, wait for user interaction
+          } else {
+            console.log('🚫 Microphone permission denied');
+          }
+        } catch (error) {
+          console.log('🎤 Permission API not available, will check on first use');
+        }
+      }
+      
+      dispatch({ type: 'SET_SUPPORT', payload: { supported, permission: hasPermission } });
+    };
     
-    dispatch({ type: 'SET_SUPPORT', payload: { supported, permission: false } });
+    checkSupportAndPermissions();
   }, []);
 
   const updateVoiceState = useCallback((newState: VoiceState) => {
@@ -555,16 +580,46 @@ export function useVoiceModeHandler({
       }
     }
     
-    // Check microphone permission - request if needed
+    // Check and request microphone permission if needed
     if (!state.hasPermission) {
       console.log('🎤 No microphone permission - requesting access...');
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach(track => track.stop()); // Close immediately after permission check
+        // Request permission with specific constraints for better compatibility
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: false
+          }
+        });
+        
+        // Close the stream immediately after permission check
+        stream.getTracks().forEach(track => {
+          track.stop();
+          console.log('🎤 Audio track stopped after permission check');
+        });
+        
+        // Update permission state
         dispatch({ type: 'SET_SUPPORT', payload: { supported: state.isSupported, permission: true } });
-        console.log('✅ Microphone permission granted!');
-      } catch (error) {
-        console.error('🚨 Microphone permission denied:', error);
+        console.log('✅ Microphone permission granted successfully!');
+        
+        // Small delay to ensure permission state is updated
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+      } catch (error: any) {
+        console.error('🚨 Microphone permission denied or failed:', error);
+        
+        // Provide specific error feedback
+        let errorMessage = 'Microphone access denied';
+        if (error.name === 'NotAllowedError') {
+          errorMessage = 'Microphone permission denied by user';
+        } else if (error.name === 'NotFoundError') {
+          errorMessage = 'No microphone found';
+        } else if (error.name === 'NotReadableError') {
+          errorMessage = 'Microphone is being used by another application';
+        }
+        
+        console.error('🚨 Permission error details:', errorMessage);
         dispatch({ type: 'SET_SUPPORT', payload: { supported: state.isSupported, permission: false } });
         return false;
       }
