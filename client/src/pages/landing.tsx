@@ -136,28 +136,83 @@ export default function LandingPage({
             One Scripture Across Worlds<br />Guiding Wisdom. Eternal Connection.<br />Discover insights across traditions. Ask, compare, and learn with scholar-grade AI.
           </p>
 
+          {/* Five Sacred Scriptures Circle */}
+          <div className="relative mx-auto mb-12 w-96 h-96 md:w-[500px] md:h-[500px]">
+            {/* Central Unity Orb */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-gradient-to-br from-yellow-200 to-yellow-400 animate-pulse [animation-duration:3s] shadow-[0_0_60px_rgba(255,215,0,0.8)] z-20" />
+            
+            {/* Seeker Silhouette */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-16 bg-black rounded-full z-30" style={{clipPath: 'ellipse(40% 100% at 50% 100%)'}} />
+            
+            {/* Scripture Books in Circle */}
+            {[
+              { name: 'TORAH', religion: 'judaism', position: { top: '10%', left: '20%' }, colorClass: 'border-yellow-300/80 bg-gradient-to-br from-yellow-900/40 to-yellow-800/20 group-hover:border-yellow-200 group-hover:shadow-[0_0_40px_rgba(255,215,0,0.6)]', symbol: '✡' },
+              { name: 'QURAN', religion: 'islam', position: { top: '5%', left: '50%', transform: 'translateX(-50%)' }, colorClass: 'border-teal-300/80 bg-gradient-to-br from-teal-900/40 to-teal-800/20 group-hover:border-teal-200 group-hover:shadow-[0_0_40px_rgba(0,213,255,0.6)]', symbol: '☪' },
+              { name: 'BIBLE', religion: 'christianity', position: { top: '10%', right: '20%' }, colorClass: 'border-blue-300/80 bg-gradient-to-br from-blue-900/40 to-blue-800/20 group-hover:border-blue-200 group-hover:shadow-[0_0_40px_rgba(59,130,246,0.6)]', symbol: '✝' },
+              { name: 'TRIPITAKA', religion: 'buddhism', position: { bottom: '15%', left: '15%' }, colorClass: 'border-purple-300/80 bg-gradient-to-br from-purple-900/40 to-purple-800/20 group-hover:border-purple-200 group-hover:shadow-[0_0_40px_rgba(147,51,234,0.6)]', symbol: '☸' },
+              { name: 'BHAGAVAD\\nGITA', religion: 'hinduism', position: { bottom: '15%', right: '15%' }, colorClass: 'border-orange-300/80 bg-gradient-to-br from-orange-900/40 to-orange-800/20 group-hover:border-orange-200 group-hover:shadow-[0_0_40px_rgba(249,115,22,0.6)]', symbol: 'ॐ' }
+            ].map((book, index) => (
+              <div key={book.name} className="absolute group">
+                <div className="absolute" style={book.position}>
+                  {/* Connecting Line to Center */}
+                  <div 
+                    className="absolute w-[1px] h-20 md:h-32 bg-gradient-to-b from-yellow-300/60 to-transparent origin-bottom z-10"
+                    style={{
+                      left: '50%',
+                      bottom: '100%',
+                      transform: `translateX(-50%) rotate(${
+                        book.name === 'TORAH' ? '45deg' :
+                        book.name === 'QURAN' ? '90deg' :
+                        book.name === 'BIBLE' ? '135deg' :
+                        book.name === 'TRIPITAKA' ? '-45deg' : '-135deg'
+                      })`,
+                      transformOrigin: 'bottom center'
+                    }}
+                  />
+                  
+                  {/* Scripture Book */}
+                  <button
+                    onClick={() => handleScriptureClick(book.religion)}
+                    className={`relative w-20 h-28 md:w-24 md:h-32 rounded-lg border-2 ${book.colorClass} backdrop-blur-sm transition-all duration-500 hover:scale-110 hover:brightness-120 z-20`}
+                    title={`Explore ${book.name.replace('\\n', ' ')}`}
+                  >
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-2">
+                      <div className="text-xl md:text-2xl mb-1 text-yellow-200">{book.symbol}</div>
+                      <div className="text-xs font-serif text-yellow-200 text-center leading-tight whitespace-pre-line font-bold tracking-wider">{book.name}</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
           {/* CTAs */}
           <div className="mx-auto mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a
-              href="#auth"
+            <button
               onClick={handleGetStarted}
-              className="group inline-flex items-center justify-center rounded-full border border-yellow-300/60 bg-gradient-to-br from-yellow-200 to-yellow-300 px-6 py-3 font-medium text-yellow-100 backdrop-blur-sm transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-300/60"
+              className="group inline-flex items-center justify-center rounded-full border border-yellow-300/60 bg-gradient-to-br from-yellow-200 to-yellow-300 px-8 py-4 font-medium text-black backdrop-blur-sm transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-300/60 font-serif tracking-widest"
               aria-label="Enter the Rellio spiritual community"
             >
-              Enter the Circle
-              <svg className="ml-2 h-4 w-4 transition group-hover:translate-x-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M12.293 4.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 11-1.414-1.414L14.586 10H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"/></svg>
-            </a>
-            <a
-              href="#scriptures"
+              ENTER THE CIRCLE
+            </button>
+            <button
               onClick={handleWatchDemo}
-              className="inline-flex items-center justify-center rounded-full border border-yellow-300/30 px-6 py-3 font-medium text-yellow-100/90 transition hover:border-yellow-300/60 hover:text-yellow-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-300/60"
+              className="inline-flex items-center justify-center rounded-full border border-yellow-300/60 px-8 py-4 font-medium text-yellow-100 transition hover:border-yellow-300/80 hover:text-yellow-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-300/60 font-serif tracking-widest"
               aria-label="Explore sacred scriptures"
             >
-              Explore Scriptures
-            </a>
+              EXPLORE SCRIPTURES
+            </button>
           </div>
+
+          {/* Tagline */}
+          <div className="mt-12 text-center">
+            <h2 className="font-serif text-xl md:text-2xl tracking-[0.3em] text-yellow-200">
+              ONE SCRIPTURE ACROSS WORLDS
+            </h2>
+          </div>
+          
           {/* Scroll cue */}
-          <div className="mt-14 flex justify-center">
+          <div className="mt-16 flex justify-center">
             <div className="h-10 w-6 rounded-full border border-yellow-200/30 flex items-start justify-center p-1">
               <div className="h-2 w-1 rounded-full bg-yellow-200/70 animate-bounce" />
             </div>
@@ -233,18 +288,58 @@ export default function LandingPage({
           </p>
         </div>
       </section>
-      <section id="community" className="bg-gradient-to-r from-[#0c0f12] to-indigo-900 py-24 text-yellow-100/85">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 text-center">
-          <h2 className="font-serif text-2xl tracking-widest text-yellow-200 mb-8">COMMUNITY</h2>
-          <p>Join readers, scholars, and seekers. Share insights with care and depth.</p>
-        </div>
-      </section>
-
+      
       {/* Community Section */}
       <section id="community" className="bg-gradient-to-r from-[#0c0f12] to-indigo-900 py-24 text-yellow-100/85">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 text-center">
           <h2 className="font-serif text-2xl tracking-widest text-yellow-200 mb-8">COMMUNITY</h2>
-          <p>Join readers, scholars, and seekers. Share insights with care and depth.</p>
+          <p className="text-lg mb-8">Join readers, scholars, and seekers. Share insights with care and depth.</p>
+          <div className="grid gap-6 md:grid-cols-3 max-w-4xl mx-auto">
+            <div className="rounded-2xl border border-white/5 bg-white/5 p-6">
+              <h3 className="mb-2 font-serif text-yellow-200 font-semibold">Global Discussions</h3>
+              <p className="text-sm text-yellow-100/80">Connect with seekers worldwide in thoughtful theological conversations.</p>
+            </div>
+            <div className="rounded-2xl border border-white/5 bg-white/5 p-6">
+              <h3 className="mb-2 font-serif text-yellow-200 font-semibold">Scholar Network</h3>
+              <p className="text-sm text-yellow-100/80">Learn from certified religious scholars and academic experts.</p>
+            </div>
+            <div className="rounded-2xl border border-white/5 bg-white/5 p-6">
+              <h3 className="mb-2 font-serif text-yellow-200 font-semibold">Study Groups</h3>
+              <p className="text-sm text-yellow-100/80">Join focused groups for deep scripture study and reflection.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* FAQ SECTION */}
+      <section id="faq" className="bg-black py-24 text-yellow-100/85">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <h2 className="font-serif text-2xl tracking-widest text-yellow-200 mb-12 text-center">FREQUENTLY ASKED QUESTIONS</h2>
+          <div className="space-y-6">
+            {[
+              {
+                question: "How does Rellio work?",
+                answer: "Rellio provides AI-powered insights from sacred texts across five major religious traditions. Simply select a scripture, ask questions, and receive contextual responses from specialized religious scholar personas."
+              },
+              {
+                question: "Is Rellio free to use?",
+                answer: "Rellio offers both free and premium tiers. Free users can explore scriptures and have basic conversations, while premium members get unlimited AI interactions and advanced features."
+              },
+              {
+                question: "Which religious texts are available?",
+                answer: "We currently support the Qur'an, Bible, Torah, Bhagavad Gita, and Tripitaka (Buddhist texts), with plans to expand to more traditions."
+              },
+              {
+                question: "Are the AI responses theologically accurate?",
+                answer: "Our AI is trained on scholarly sources and responds through specialized religious personas (Islamic Mufti, Christian Priest, Jewish Rabbi, Hindu Guru, Buddhist Monk) to ensure respectful and informed guidance."
+              }
+            ].map((faq, index) => (
+              <div key={index} className="rounded-xl border border-white/10 bg-white/5 p-6">
+                <h3 className="mb-3 font-serif text-yellow-200 font-semibold">{faq.question}</h3>
+                <p className="text-sm text-yellow-100/80 leading-relaxed">{faq.answer}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -269,8 +364,43 @@ export default function LandingPage({
           </div>
         </div>
       </section>
-      <footer className="border-t border-white/5 bg-black py-10 text-center text-xs text-yellow-100/50">
-        © {new Date().getFullYear()} Rellio. All rights reserved.
+      <footer className="border-t border-white/5 bg-black py-10 text-yellow-100/50">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <div className="flex items-center gap-3">
+              {logoUrl && (
+                <img src={logoUrl} alt="Rellio compass logo" className="h-6 w-6 object-contain" loading="lazy" />
+              )}
+              <span className="font-serif tracking-widest text-yellow-200">RELLIO</span>
+            </div>
+            
+            <div className="flex items-center gap-6">
+              <a href="/terms" className="text-xs hover:text-yellow-200 transition-colors">Terms</a>
+              <a href="/privacy" className="text-xs hover:text-yellow-200 transition-colors">Privacy</a>
+              <div className="flex items-center gap-4">
+                <a href="https://x.com/rellio" className="hover:text-yellow-200 transition-colors" aria-label="Follow us on X">
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                </a>
+                <a href="https://facebook.com/rellio" className="hover:text-yellow-200 transition-colors" aria-label="Follow us on Facebook">
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
+                  </svg>
+                </a>
+                <a href="https://instagram.com/rellio" className="hover:text-yellow-200 transition-colors" aria-label="Follow us on Instagram">
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fillRule="evenodd" d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 6.62 5.367 11.987 11.988 11.987s11.987-5.367 11.987-11.987C24.004 5.367 18.637.001 12.017.001zM8.449 16.988c-1.297 0-2.348-1.051-2.348-2.348s1.051-2.348 2.348-2.348 2.348 1.051 2.348 2.348-1.051 2.348-2.348 2.348zm7.718 0c-1.297 0-2.348-1.051-2.348-2.348s1.051-2.348 2.348-2.348 2.348 1.051 2.348 2.348-1.051 2.348-2.348 2.348z" clipRule="evenodd" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-6 pt-6 border-t border-white/5 text-center text-xs">
+            © {new Date().getFullYear()} Rellio. All rights reserved. Guiding wisdom across spiritual traditions.
+          </div>
+        </div>
       </footer>
       </div>
     </>
