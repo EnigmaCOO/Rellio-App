@@ -79,6 +79,7 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         pulse: "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         bounce: "bounce 1s ease-in-out infinite",
+        float: "float 6s ease-in-out infinite",
       },
       keyframes: {
         pulse: {
@@ -88,6 +89,11 @@ export default {
         bounce: {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-10px)" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0px) rotate(0deg)" },
+          "33%": { transform: "translateY(-20px) rotate(5deg)" },
+          "66%": { transform: "translateY(10px) rotate(-3deg)" },
         },
         "accordion-down": {
           from: {
