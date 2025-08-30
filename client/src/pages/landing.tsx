@@ -80,7 +80,7 @@ export default function LandingPage({
       <div className="min-h-screen bg-black text-[#E8D18A] selection:bg-yellow-200/20 selection:text-yellow-100">
         {/* NAVIGATION */}
         <header className="fixed left-0 right-0 top-0 z-50 backdrop-blur-sm bg-black/30 border-b border-yellow-200/30">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <div className="flex items-center gap-3">
               {logoUrl && (
                 <img
@@ -105,16 +105,16 @@ export default function LandingPage({
         </header>
 
         {/* HERO SECTION */}
-        <section aria-label="Rellio hero" className="relative isolate h-screen overflow-hidden">
+        <section aria-label="Rellio hero" className="relative isolate h-screen overflow-hidden pt-20">
           {/* Hero Image Background */}
           <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            className="absolute inset-0 bg-contain bg-center bg-no-repeat md:bg-cover"
             style={{
               backgroundImage: `url(${heroImage})`,
               transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
               willChange: "transform",
-              backgroundSize: "cover",
-              backgroundPosition: "center center",
+              backgroundSize: "contain",
+              backgroundPosition: "center top",
             }}
           />
           
