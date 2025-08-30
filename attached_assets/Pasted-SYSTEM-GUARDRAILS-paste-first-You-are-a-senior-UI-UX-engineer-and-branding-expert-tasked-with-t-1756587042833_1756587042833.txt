@@ -1,0 +1,277 @@
+SYSTEM / GUARDRAILS (paste first)
+
+You are a senior UI/UX engineer and branding expert tasked with transforming Rellio's current landing page into a luxurious, spiritual digital sanctuary that embodies the brand identity "Guiding Wisdom. Eternal Connection." Ensure no disruption to existing functionality, routing, or APIs, aligning with Rellio's core visual and interactive essence.
+
+- Preserve all existing functionality (e.g., CTAs, links, any interactive elements like buttons or modals).
+- Modify only styles, markup, and presentational code; keep logic intact.
+- Add new files with relative, tree-shakable imports if needed.
+- Write accessible, responsive, and performant code.
+- Use Tailwind CSS, extending the theme with brand-specific tokens.
+- Use semantic HTML and ARIA where relevant.
+- Produce a single PR with clear commits (e.g., "feat(ui): transform landing to luxury spiritual design", "style: add Rellio brand tokens").
+- Maintain Rellio’s brand essence: luxury meets spirituality, avoiding generic templates.
+
+TASK BRIEF (paste after system block)
+
+Goal: Transform the current Rellio landing page (client/src/pages/landing.tsx) into a production-ready design that reflects the brand identity "Guiding Wisdom. Eternal Connection" using the provided React + Tailwind component (RellioLanding.jsx) as a base. Incorporate a fullscreen cosmic hero with a golden compass emblem, a centered seeker silhouette linked to five glowing scriptures (Qur’an, Bible, Torah, Bhagavad Gita, Tripitaka) each with unique auras converging into a unity orb, sacred geometry patterns, and a starry sky. Make the books clickable to navigate to specific religion/book sections (e.g., trigger app navigation or open modals with previews). Replace existing content with this new layout, ensuring interactive behaviors (hover states, parallax, CTAs) and UI components (gold-lined nav, scroll cue) align with the tone of luxury, spirituality, and inclusivity. Keep all current functionality (e.g., existing CTAs like "Start Exploring" and "Watch Demo" remain operational, integrated into the new design).
+
+1) **Core Visual Identity**
+   - **Hero Background**: Use a fullscreen cosmic artwork (bgUrl="/assets/rellio-hero.jpg", 1200x1800+ resolution) with a golden compass emblem, a centered seeker silhouette connected to five scriptures (Qur’an, Bible, Torah, Bhagavad Gita, Tripitaka) each glowing with unique auras (e.g., teal for Qur’an, blue for Bible) converging into a unity orb. Add sacred geometry patterns and a starry sky for atmosphere.
+   - **Logo Integration**: Top center with Rellio wordmark in bold metallic serif (e.g., Cormorant Garamond) paired with a compass logo (logoUrl="/assets/rellio-logo-gold.png"), featuring a subtle golden pulse animation every 3s.
+   - **Tagline Placement**: Below logo, "One Scripture Across Worlds" (primary, larger font), followed by "Guiding Wisdom. Eternal Connection." (secondary, smaller font) in text-yellow-200.
+   - **Subheadline**: Integrate the current "Discover insights across traditions. Ask, compare, and learn with scholar-grade AI." below the tagline in text-yellow-100/80.
+
+2) **Interactive Behavior**
+   - **Hover States**: Enhance hero with hover effects on scripture elements (glow brighter, e.g., bg-teal-300 to bg-teal-200) with tooltips "Explore [Religion]" using Tailwind’s hover: and group- utilities.
+   - **Parallax**: Subtle background shift on scroll (translateY with clamp at 80px), disabled for prefers-reduced-motion users.
+   - **CTA Buttons**: 
+     - Primary: “Enter the Circle” (glowing gold, bg-gradient-to-br from-yellow-200 to-yellow-300, hover:brightness-110, link to current "Start Exploring" functionality).
+     - Secondary: “Explore Scriptures” (outlined gold, border-yellow-300/60, hover:border-yellow-200, link to current "Watch Demo" functionality).
+   - **Book Accessibility**: Make each scripture book clickable: On click, navigate to the corresponding religion/book section (e.g., use onNavigateToVerse or trigger a modal with verse previews and "Read More" button linking to dashboard).
+
+3) **UI Components**
+   - **Navigation Bar**: Transparent gold-lined nav (border-yellow-200/30) with links to Features, About, Community, Auth (Sign Up button, rounded-full with hover:bg-yellow-200/10).
+   - **Scroll Cue**: Animated bounce indicator below CTAs (h-2 w-1 bg-yellow-200/70 animate-bounce).
+   - **Section Styling**: Dark cosmic gradient backgrounds (e.g., bg-[#0c0f12], bg-gradient-to-r from-black to-indigo-900) with gold serif headers (font-serif text-yellow-200 tracking-widest).
+
+4) **Tone & Experience**
+   - **Luxury + Spiritual**: Polished layouts, minimal design, timeless serif fonts (e.g., Cormorant Garamond), and gold accents.
+   - **Mesmerizing**: Glow effects (animate-pulse), motion (parallax, bounce), and sacred symmetry in layout.
+   - **Inclusive & Universal**: Books treated with equal reverence, no hierarchy, unified orb symbolism.
+
+5) **Implementation Details**
+   - Replace current landing page content with RellioLanding.jsx structure:
+     ```tsx
+     import React, { useEffect, useState } from "react";
+     /**
+      * RellioLanding.tsx
+      * Production-ready landing hero built with React + Tailwind CSS.
+      *
+      * Features
+      * - Fullscreen hero using cosmic poster as background
+      * - Subtle parallax on scroll (disabled for reduced-motion users)
+      * - Gold nav + logo, responsive layout, accessible buttons
+      * - Gradient + vignette overlays for legibility
+      * - Two CTAs: Enter the Circle / Explore Scriptures
+      * - Clickable books for religion navigation
+      *
+      * Props (optional)
+      * - bgUrl: string – URL to the cosmic poster/hero background
+      * - logoUrl: string – URL to the gold compass mark (SVG/PNG)
+      */
+     export default function RellioLanding({
+       bgUrl = "/assets/rellio-hero.jpg", // Cosmic artwork with scriptures
+       logoUrl = "/assets/rellio-logo-gold.png",
+     }) {
+       const [offset, setOffset] = useState(0);
+       const prefersReduced = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+       useEffect(() => {
+         if (prefersReduced) return; // Respect user settings
+         const onScroll = () => {
+           const y = window.scrollY;
+           // Clamp parallax so it stays subtle
+           setOffset(Math.min(y * 0.2, 80));
+         };
+         window.addEventListener("scroll", onScroll, { passive: true });
+         return () => window.removeEventListener("scroll", onScroll);
+       }, [prefersReduced]);
+       return (
+         <div className="min-h-screen bg-black text-[#E8D18A] selection:bg-yellow-200/20 selection:text-yellow-100">
+           {/* NAV */}
+           <header className="fixed left-0 right-0 top-0 z-50 backdrop-blur-sm bg-black/30 border-b border-yellow-200/30">
+             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+               <div className="flex items-center gap-3">
+                 {logoUrl && (
+                   <img src={logoUrl} alt="Rellio compass logo" className="h-8 w-8 object-contain" loading="eager" />
+                 )}
+                 <span className="font-serif tracking-widest text-xl text-yellow-200">RELLIO</span>
+               </div>
+               <nav className="hidden md:flex items-center gap-8 text-sm text-yellow-100/80">
+                 <a href="#features" className="hover:text-yellow-200 transition-colors">Features</a>
+                 <a href="#about" className="hover:text-yellow-200 transition-colors">About</a>
+                 <a href="#community" className="hover:text-yellow-200 transition-colors">Community</a>
+                 <a href="#auth" className="ml-2 rounded-full border border-yellow-200/30 px-4 py-1.5 text-yellow-100 hover:bg-yellow-200/10 transition-colors">Sign Up</a>
+               </nav>
+             </div>
+           </header>
+           {/* HERO */}
+           <section aria-label="Rellio hero" className="relative isolate flex min-h-screen items-center justify-center overflow-hidden">
+             {/* Background image */}
+             <div
+               className="pointer-events-none absolute inset-0 -z-20 bg-cover bg-center"
+               style={{
+                 backgroundImage: `url(${bgUrl})`,
+                 transform: `translateY(${prefersReduced ? 0 : offset * 0.6}px)`,
+                 willChange: "transform",
+               }}
+             />
+             {/* Gradient + vignette overlays for legibility */}
+             <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-black via-black/20 to-black/50" />
+             <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_40%_at_50%_60%,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_40%,rgba(0,0,0,0.55)_100%)]" />
+             {/* Center content */}
+             <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-28 pb-24 text-center">
+               {/* Logo lockup */}
+               <div className="mx-auto mb-6 flex items-center justify-center gap-4">
+                 {logoUrl && (
+                   <img src={logoUrl} alt="Rellio compass" className="h-10 w-10 md:h-12 md:w-12 animate-pulse [animation-duration:3s]" />
+                 )}
+                 <h1 className="font-serif text-4xl md:text-6xl tracking-[0.25em] text-yellow-200 drop-shadow-[0_1px_0_rgba(0,0,0,0.8)]">RELLIO</h1>
+               </div>
+               <p className="mx-auto max-w-3xl text-base md:text-lg text-yellow-100/80">
+                 One Scripture Across Worlds<br />Guiding Wisdom. Eternal Connection.
+               </p>
+               {/* CTAs */}
+               <div className="mx-auto mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                 <a
+                   href="#auth"
+                   className="group inline-flex items-center justify-center rounded-full border border-yellow-300/60 bg-gradient-to-br from-yellow-200 to-yellow-300 px-6 py-3 font-medium text-yellow-100 backdrop-blur-sm transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-300/60"
+                   aria-label="Enter the Rellio spiritual community"
+                 >
+                   Enter the Circle
+                   <svg className="ml-2 h-4 w-4 transition group-hover:translate-x-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M12.293 4.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 11-1.414-1.414L14.586 10H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"/></svg>
+                 </a>
+                 <a
+                   href="#scriptures"
+                   className="inline-flex items-center justify-center rounded-full border border-yellow-300/30 px-6 py-3 font-medium text-yellow-100/90 transition hover:border-yellow-300/60 hover:text-yellow-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-300/60"
+                   aria-label="Explore sacred scriptures"
+                 >
+                   Explore Scriptures
+                 </a>
+               </div>
+               {/* Scroll cue */}
+               <div className="mt-14 flex justify-center">
+                 <div className="h-10 w-6 rounded-full border border-yellow-200/30 flex items-start justify-center p-1">
+                   <div className="h-2 w-1 rounded-full bg-yellow-200/70 animate-bounce" />
+                 </div>
+               </div>
+             </div>
+           </section>
+           {/* DUMMY SECTIONS (replace with real content) */}
+           <section id="features" className="bg-gradient-to-r from-[#0c0f12] to-indigo-900 py-24 text-yellow-100/90">
+             <div className="mx-auto max-w-6xl px-4 sm:px-6">
+               <h2 className="font-serif text-2xl tracking-widest text-yellow-200 mb-8">FEATURES</h2>
+               <div className="grid gap-6 md:grid-cols-3">
+                 {[
+                   {
+                     title: "AI Sage Scholar",
+                     body: "Converse with multi-faith scholar personas grounded in scripture.",
+                   },
+                   {
+                     title: "Parallel Scriptures",
+                     body: "Compare verses across traditions with context and commentary.",
+                   },
+                   {
+                     title: "Voice & Real-time",
+                     body: "Speak, interrupt, and refine queries hands-free as you read.",
+                   },
+                 ].map((c) => (
+                   <div key={c.title} className="rounded-2xl border border-white/5 bg-white/5 p-6">
+                     <h3 className="mb-2 font-serif text-yellow-200 font-semibold">{c.title}</h3>
+                     <p className="text-sm text-yellow-100/80">{c.body}</p>
+                   </div>
+                 ))}
+               </div>
+             </div>
+           </section>
+           <section id="about" className="bg-black py-24 text-yellow-100/85">
+             <div className="mx-auto max-w-3xl px-4 sm:px-6 text-center">
+               <h2 className="font-serif text-2xl tracking-widest text-yellow-200 mb-4">ONE SCRIPTURE ACROSS WORLDS</h2>
+               <p className="text-balance text-base">
+                 Rellio unites wisdom traditions through dialogue. Explore, compare, and connect with living texts in a sanctuary of calm design and world-class craft.
+               </p>
+             </div>
+           </section>
+           <section id="community" className="bg-gradient-to-r from-[#0c0f12] to-indigo-900 py-24 text-yellow-100/85">
+             <div className="mx-auto max-w-5xl px-4 sm:px-6 text-center">
+               <h2 className="font-serif text-2xl tracking-widest text-yellow-200 mb-8">COMMUNITY</h2>
+               <p>Join readers, scholars, and seekers. Share insights with care and depth.</p>
+             </div>
+           </section>
+           {/* AUTH ANCHOR */}
+           <section id="auth" className="bg-black py-24 text-yellow-100/85">
+             <div className="mx-auto max-w-md px-4 sm:px-6">
+               <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+                 <h3 className="mb-4 text-center font-serif text-xl tracking-widest text-yellow-200">ENTER THE CIRCLE</h3>
+                 <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                   <label className="block">
+                     <span className="mb-1 block text-sm">Email</span>
+                     <input type="email" required className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-yellow-50 placeholder-yellow-100/40 outline-none focus:border-yellow-300/60" placeholder="you@rellio.app" />
+                   </label>
+                   <label className="block">
+                     <span className="mb-1 block text-sm">Password</span>
+                     <input type="password" required className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-yellow-50 placeholder-yellow-100/40 outline-none focus:border-yellow-300/60" placeholder="••••••••" />
+                   </label>
+                   <button type="submit" className="mt-2 w-full rounded-full border border-yellow-300/60 bg-yellow-200/10 px-5 py-3 font-medium text-yellow-100 hover:bg-yellow-200/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-300/60">
+                     Continue
+                   </button>
+                 </form>
+               </div>
+             </div>
+           </section>
+           <footer className="border-t border-white/5 bg-black py-10 text-center text-xs text-yellow-100/50">
+             © {new Date().getFullYear()} Rellio. All rights reserved.
+           </footer>
+         </div>
+       );
+     }
+     ```
+   - **Tailwind Setup**: Ensure tailwind.config.js includes:
+     ```js
+     module.exports = {
+       content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
+       theme: {
+         extend: {
+           colors: {
+             "deep-indigo": "#060a1a",
+             "dark-indigo": "#0A0F29",
+             "gold": "#D4AF37",
+             "teal": "#00D5FF",
+             "text": "#F2F5FA",
+             "text-muted": "#B8C0D6",
+           },
+           fontFamily: {
+             serif: ["Cormorant Garamond", "ui-serif"],
+           },
+           animation: {
+             pulse: "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+             bounce: "bounce 1s ease-in-out infinite",
+           },
+           keyframes: {
+             pulse: {
+               "0%, 100%": { boxShadow: "0 0 0 0 rgba(212, 175, 55, 0.4)" },
+               "50%": { boxShadow: "0 0 0 10px rgba(212, 175, 55, 0)" },
+             },
+             bounce: {
+               "0%, 100%": { transform: "translateY(0)" },
+               "50%": { transform: "translateY(-10px)" },
+             },
+           },
+         },
+       },
+       plugins: [],
+     };
+     ```
+   - **Assets**: Add cosmic poster at public/assets/rellio-hero.jpg and gold logo at public/assets/rellio-logo-gold.png (SVG recommended, 1200x1800+ for hero).
+
+6) **Usage Instructions**
+   - Install Tailwind: `npm i -D tailwindcss postcss autoprefixer && npx tailwindcss init -p`.
+   - Update src/index.css with `@tailwind base; @tailwind components; @tailwind utilities;`.
+   - Replace current landing page with `<RellioLanding />` in App or page component.
+
+7) **Acceptance Criteria**
+   - Hero displays cosmic artwork, logo with 3s pulse, and taglines as specified.
+   - Hover states glow on scripture elements; parallax works (disabled for reduced motion).
+   - CTAs (Enter the Circle, Explore Scriptures) match design with accessibility.
+   - Sections (Features, About, Community, Auth) use cosmic gradients and serif headers.
+   - No console errors; Lighthouse Performance ≥ 90, Accessibility ≥ 95.
+
+8) **Implementation Steps (agent checklist)**
+   1. Install Tailwind and configure per instructions.
+   2. Create/update public/assets with hero and logo images.
+   3. Replace landing.tsx content with RellioLanding.jsx structure.
+   4. Extend tailwind.config.js with brand tokens.
+   5. Test parallax, hover states, and CTA focus states; adjust if needed.
+   6. Commit with messages: `feat(ui): transform landing to luxury spiritual design`, `style: add Rellio brand tokens`.
+
+#### FINAL INSTRUCTION TO AGENT
+Implement the transformation precisely, preserving all logic, and submit a PR that passes acceptance criteria and lint/build checks. Do not rename or remove existing props/IDs outside the landing page. Add only presentational files (images, config updates) and the new RellioLanding component. Ensure the landing page feels like a living, breathing digital sanctuary reflecting Rellio’s brand essence.
