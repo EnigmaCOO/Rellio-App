@@ -120,7 +120,7 @@ export default function LandingPage({
             {/* Torah - Top Left */}
             <button
               onClick={() => handleScriptureClick('judaism')}
-              className="absolute top-[25%] left-[15%] w-24 h-32 md:w-28 md:h-36 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              className="absolute top-[22%] left-[12%] w-20 h-28 md:w-24 md:h-32 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Torah"
               aria-label="Explore Torah"
             >
@@ -130,7 +130,7 @@ export default function LandingPage({
             {/* Quran - Top Center */}
             <button
               onClick={() => handleScriptureClick('islam')}
-              className="absolute top-[20%] left-1/2 -translate-x-1/2 w-24 h-32 md:w-28 md:h-36 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
+              className="absolute top-[18%] left-1/2 -translate-x-1/2 w-20 h-28 md:w-24 md:h-32 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
               title="Explore Quran"
               aria-label="Explore Quran"
             >
@@ -140,7 +140,7 @@ export default function LandingPage({
             {/* Bible - Top Right */}
             <button
               onClick={() => handleScriptureClick('christianity')}
-              className="absolute top-[25%] right-[15%] w-24 h-32 md:w-28 md:h-36 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
+              className="absolute top-[22%] right-[12%] w-20 h-28 md:w-24 md:h-32 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
               title="Explore Bible"
               aria-label="Explore Bible"
             >
@@ -150,7 +150,7 @@ export default function LandingPage({
             {/* Tripitaka - Bottom Left */}
             <button
               onClick={() => handleScriptureClick('buddhism')}
-              className="absolute bottom-[40%] left-[10%] w-24 h-32 md:w-28 md:h-36 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(147,51,234,0.8)] z-10"
+              className="absolute bottom-[42%] left-[8%] w-20 h-28 md:w-24 md:h-32 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(147,51,234,0.8)] z-10"
               title="Explore Tripitaka"
               aria-label="Explore Tripitaka"
             >
@@ -160,7 +160,7 @@ export default function LandingPage({
             {/* Bhagavad Gita - Bottom Right */}
             <button
               onClick={() => handleScriptureClick('hinduism')}
-              className="absolute bottom-[40%] right-[10%] w-24 h-32 md:w-28 md:h-36 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(249,115,22,0.8)] z-10"
+              className="absolute bottom-[42%] right-[8%] w-20 h-28 md:w-24 md:h-32 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(249,115,22,0.8)] z-10"
               title="Explore Bhagavad Gita"
               aria-label="Explore Bhagavad Gita"
             >
@@ -169,7 +169,7 @@ export default function LandingPage({
           </div>
           
           {/* CTAs positioned at bottom */}
-          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-20">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-20">
             <button
               onClick={handleGetStarted}
               className="inline-flex items-center justify-center rounded-lg border-2 border-yellow-300/60 bg-black/30 backdrop-blur-sm px-10 py-3 font-serif text-sm font-semibold tracking-[0.2em] text-yellow-200 transition-all duration-300 hover:border-yellow-200 hover:bg-yellow-200/10 hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
@@ -184,12 +184,12 @@ export default function LandingPage({
             >
               EXPLORE SCRIPTURES
             </button>
-          </div>
-          
-          {/* Scroll Cue */}
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex justify-center z-20">
-            <div className="h-8 w-5 rounded-full border border-yellow-200/40 flex items-start justify-center p-1">
-              <div className="h-2 w-1 rounded-full bg-yellow-200/80 animate-bounce" />
+            
+            {/* Scroll Cue */}
+            <div className="mt-3 flex justify-center">
+              <div className="h-6 w-4 rounded-full border border-yellow-200/40 flex items-start justify-center p-1">
+                <div className="h-1 w-1 rounded-full bg-yellow-200/80 animate-bounce" />
+              </div>
             </div>
           </div>
         </section>
@@ -291,19 +291,19 @@ export default function LandingPage({
         </section>
 
         {/* FOOTER */}
-        <footer className="bg-black py-16 text-yellow-100/50 border-t border-yellow-200/10">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <footer className="bg-black py-8 text-yellow-100/50 border-t border-yellow-200/10">
+          <div className="mx-auto max-w-4xl px-4 sm:px-6">
             {/* Logo and Navigation */}
-            <div className="text-center mb-12">
-              <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="text-center mb-6">
+              <div className="flex items-center justify-center gap-3 mb-4">
                 {logoUrl && (
-                  <img src={logoUrl} alt="Rellio compass logo" className="h-12 w-12 object-contain" loading="lazy" />
+                  <img src={logoUrl} alt="Rellio compass logo" className="h-8 w-8 object-contain" loading="lazy" />
                 )}
               </div>
-              <h2 className="font-serif text-3xl tracking-[0.3em] text-yellow-200 mb-8">RELLIO</h2>
+              <h2 className="font-serif text-xl tracking-[0.3em] text-yellow-200 mb-4">RELLIO</h2>
               
               {/* Footer Navigation */}
-              <div className="flex flex-wrap justify-center gap-8 text-sm">
+              <div className="flex flex-wrap justify-center gap-6 text-xs">
                 <a href="#features" className="hover:text-yellow-200 transition-colors">Features</a>
                 <a href="#about" className="hover:text-yellow-200 transition-colors">About</a>
                 <a href="#faq" className="hover:text-yellow-200 transition-colors">FAQ</a>
@@ -313,27 +313,27 @@ export default function LandingPage({
             </div>
             
             {/* Social Media Icons */}
-            <div className="flex justify-center gap-6 mb-8">
-              <a href="https://x.com/rellio" className="w-10 h-10 rounded-full border border-yellow-300/40 flex items-center justify-center hover:border-yellow-200 hover:text-yellow-200 hover:shadow-[0_0_20px_rgba(255,215,0,0.3)] transition-all duration-300" aria-label="Follow us on X">
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <div className="flex justify-center gap-4 mb-4">
+              <a href="https://x.com/rellio" className="w-8 h-8 rounded-full border border-yellow-300/40 flex items-center justify-center hover:border-yellow-200 hover:text-yellow-200 hover:shadow-[0_0_15px_rgba(255,215,0,0.3)] transition-all duration-300" aria-label="Follow us on X">
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                 </svg>
               </a>
-              <a href="https://facebook.com/rellio" className="w-10 h-10 rounded-full border border-yellow-300/40 flex items-center justify-center hover:border-yellow-200 hover:text-yellow-200 hover:shadow-[0_0_20px_rgba(255,215,0,0.3)] transition-all duration-300" aria-label="Follow us on Facebook">
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <a href="https://facebook.com/rellio" className="w-8 h-8 rounded-full border border-yellow-300/40 flex items-center justify-center hover:border-yellow-200 hover:text-yellow-200 hover:shadow-[0_0_15px_rgba(255,215,0,0.3)] transition-all duration-300" aria-label="Follow us on Facebook">
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
                 </svg>
               </a>
-              <a href="https://instagram.com/rellio" className="w-10 h-10 rounded-full border border-yellow-300/40 flex items-center justify-center hover:border-yellow-200 hover:text-yellow-200 hover:shadow-[0_0_20px_rgba(255,215,0,0.3)] transition-all duration-300" aria-label="Follow us on Instagram">
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <a href="https://instagram.com/rellio" className="w-8 h-8 rounded-full border border-yellow-300/40 flex items-center justify-center hover:border-yellow-200 hover:text-yellow-200 hover:shadow-[0_0_15px_rgba(255,215,0,0.3)] transition-all duration-300" aria-label="Follow us on Instagram">
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path fillRule="evenodd" d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 6.62 5.367 11.987 11.988 11.987s11.987-5.367 11.987-11.987C24.004 5.367 18.637.001 12.017.001zM8.449 16.988c-1.297 0-2.348-1.051-2.348-2.348s1.051-2.348 2.348-2.348 2.348 1.051 2.348 2.348-1.051 2.348-2.348 2.348zm7.718 0c-1.297 0-2.348-1.051-2.348-2.348s1.051-2.348 2.348-2.348 2.348 1.051 2.348 2.348-1.051 2.348-2.348 2.348z" clipRule="evenodd" />
                 </svg>
               </a>
             </div>
             
             {/* Copyright */}
-            <div className="text-center text-xs border-t border-yellow-200/10 pt-8">
-              © {new Date().getFullYear()} Rellio. All rights reserved. Guiding wisdom across spiritual traditions.
+            <div className="text-center text-xs border-t border-yellow-200/10 pt-4">
+              © {new Date().getFullYear()} Rellio. All rights reserved.
             </div>
           </div>
         </footer>
