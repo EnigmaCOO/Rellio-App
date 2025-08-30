@@ -107,11 +107,13 @@ export default function LandingPage({
         <section aria-label="Rellio hero" className="relative isolate min-h-screen overflow-hidden">
           {/* Hero Image Background */}
           <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            className="absolute inset-0 bg-contain bg-center bg-no-repeat md:bg-cover lg:bg-contain xl:bg-contain"
             style={{
               backgroundImage: `url(/assets/rellio-hero-final.png)`,
               transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
               willChange: "transform",
+              backgroundSize: "contain",
+              backgroundPosition: "center center",
             }}
           />
           
