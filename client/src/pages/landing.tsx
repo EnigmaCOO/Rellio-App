@@ -16,7 +16,7 @@ import {
   Play,
   Sparkles,
 } from "lucide-react";
-import heroImage from "@/assets/rellio-hero-new.png";
+import heroImage from "@assets/rellio-hero-final.png";
 
 export default function LandingPage({
   bgUrl = "/assets/rellio-hero.jpg",
