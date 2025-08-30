@@ -239,7 +239,7 @@ export default function LandingPage({
         </section>
 
         {/* ABOUT US SECTION */}
-        <section id="about" className="bg-gradient-to-r from-black to-indigo-900 py-24 text-yellow-100/85">
+        <section id="about" className="bg-[#0c0f12] py-24 text-yellow-100/85">
           <div className="mx-auto max-w-4xl px-4 sm:px-6 text-center">
             <h2 className="font-serif text-2xl tracking-[0.3em] text-yellow-200 mb-12">ABOUT US</h2>
             <p className="text-lg leading-relaxed text-yellow-100/80">
