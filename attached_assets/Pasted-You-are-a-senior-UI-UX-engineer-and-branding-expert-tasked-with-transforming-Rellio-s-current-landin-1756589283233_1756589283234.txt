@@ -1,0 +1,52 @@
+You are a senior UI/UX engineer and branding expert tasked with transforming Rellio's current landing page into a luxurious, spiritual digital sanctuary that embodies the brand identity "Guiding Wisdom. Eternal Connection." Ensure no disruption to existing functionality, routing, or APIs, aligning with Rellio's core visual and interactive essence.
+
+Preserve all existing functionality (e.g., CTAs, links, interactive elements like buttons or modals).
+Modify only styles, markup, and presentational code; keep logic intact.
+Add new files with relative, tree-shakable imports if needed.
+Write accessible, responsive, and performant code.
+Use Tailwind CSS, extending the theme with brand-specific tokens.
+Use semantic HTML and ARIA where relevant.
+Produce a single PR with clear commits (e.g., "feat(ui): transform landing to luxury spiritual design", "style: add Rellio brand tokens").
+Maintain Rellio’s brand essence: luxury meets spirituality, avoiding generic templates.
+
+TASK BRIEF (paste after system block)
+Goal: Transform the current Rellio landing page (client/src/pages/landing.tsx) to a production-ready design that reflects the brand identity "Guiding Wisdom. Eternal Connection" using the provided React + Tailwind component (RellioLanding.jsx) as a base. Incorporate a fullscreen cosmic hero with a golden compass emblem, a centered seeker silhouette linked to five glowing scriptures (Qur’an, Bible, Torah, Bhagavad Gita, Tripitaka) each with unique auras converging into a unity orb, sacred geometry patterns, and starry sky. Make the books clickable directly from the hero image (using image maps or overlaid transparent buttons matching the image positions), ensuring they are not visually different from the background image. On click, open the corresponding book (e.g., Quran click navigates to Quran section or triggers onNavigateToVerse for Quran). Place book names under the image elements as labels (not overlaid on the books), styled in text-yellow-100/80 with hover glow. Update the tagline to "RELLIO One Scripture Across Worlds Guiding Wisdom. Eternal Connection. Discover insights across traditions. Ask, compare, and learn with scholar-grade AI." below the logo. Add social icons (e.g., X, Facebook, Instagram) and links to Terms and Privacy Policies in the footer. Replace existing content with this new layout, ensuring interactive behaviors (hover states, parallax, CTAs) and UI components (gold-lined nav, scroll cue) align with the tone of luxury, spirituality, and inclusivity.
+
+Core Visual Identity
+
+Hero Background: Use a fullscreen cosmic artwork (bgUrl="/assets/rellio-hero.jpg", 1200x1800+ resolution) with a golden compass emblem, a centered seeker silhouette connected to five scriptures (Qur’an, Bible, Torah, Bhagavad Gita, Tripitaka) each glowing with unique auras (e.g., teal for Qur’an, blue for Bible) converging into a unity orb. Add sacred geometry patterns and a starry sky for atmosphere.
+Logo Integration: Top center with Rellio wordmark in bold metallic serif (e.g., Cormorant Garamond) paired with a compass logo (logoUrl="/assets/rellio-logo-gold.png"), featuring a subtle golden pulse animation every 3s.
+Tagline Placement: Below logo, display "RELLIO One Scripture Across Worlds Guiding Wisdom. Eternal Connection. Discover insights across traditions. Ask, compare, and learn with scholar-grade AI." in text-yellow-200 (larger for main, smaller for subtext), centered with max-w-3xl.
+
+
+Interactive Behavior
+
+Hover States: Enhance hero with hover effects on scripture elements (glow brighter, e.g., filter: brightness(1.2), shadow-glowTeal) with tooltips "Explore [Book Name]" using Tailwind’s hover: and group- utilities.
+Parallax: Subtle background shift on scroll (translateY with clamp at 80px), disabled for prefers-reduced-motion users.
+CTA Buttons:
+
+Primary: “Enter the Circle” (glowing gold, bg-gradient-to-br from-yellow-200 to-yellow-300, hover:brightness-110).
+Secondary: “Explore Scriptures” (outlined gold, border-yellow-300/60, hover:border-yellow-200).
+
+
+Book Navigation: Make books clickable from the image (use <img usemap="#book-map"> with <map name="book-map"> and <area> tags for each book position, or overlaid absolute divs matching image coordinates). On click, trigger navigation to the book (e.g., use existing onNavigateToVerse or route to /religion/book).</map>
+
+
+UI Components
+
+Navigation Bar: Transparent gold-lined nav (border-yellow-200/30) with links to Features, About, Community, Auth (Sign Up button, rounded-full with hover:bg-yellow-200/10).
+Scroll Cue: Animated bounce indicator below CTAs (h-2 w-1 bg-yellow-200/70 animate-bounce).
+Section Styling: Dark cosmic gradient backgrounds (e.g., bg-[#0c0f12], bg-gradient-to-r from-black to-indigo-900) with gold serif headers (font-serif text-yellow-200 tracking-widest).
+Footer: Add social icons (X, Facebook, Instagram) with gold outline glow (e.g., <xicon class="h-6 w-6 hover:text-yellow-200"></xicon>), and links to Terms (/terms) and Privacy (/privacy) in text-xs text-yellow-100/50.
+
+
+Tone & Experience
+
+Luxury + Spiritual: Polished layouts, minimal design, timeless serif fonts (e.g., Cormorant Garamond), and gold accents.
+Mesmerizing: Glow effects (animate-pulse), motion (parallax, bounce), and sacred symmetry in layout.
+Inclusive & Universal: Books treated with equal reverence, no hierarchy, unified orb symbolism.
+
+
+Implementation Details
+
+Replace current landing page content with RellioLanding.jsx structure, including book labels under images (text-yellow-100/80, font-serif, hover:text-yellow-200) and clickable areas.
