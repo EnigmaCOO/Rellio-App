@@ -180,7 +180,7 @@ export default function LandingPage({
         </section>
 
         {/* FEATURES SECTION */}
-        <section id="features" className="bg-[#0c0f12] py-16 text-yellow-100/85">
+        <section id="features" className="bg-[#0c0f12] pt-8 pb-16 text-yellow-100/85">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             {/* CTAs positioned above features */}
             <div className="flex flex-col items-center gap-4 mb-16">
