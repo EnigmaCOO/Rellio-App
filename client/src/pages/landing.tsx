@@ -17,6 +17,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import heroImage from "@assets/rellio-hero-latest.png";
+import compassLogo from "@assets/rellio-compass-logo.png";
 
 export default function LandingPage({
   bgUrl = "/assets/rellio-hero.jpg",
@@ -82,14 +83,12 @@ export default function LandingPage({
         <header className="fixed left-0 right-0 top-0 z-50 backdrop-blur-sm bg-black/30 border-b border-yellow-200/30">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {logoUrl && (
-                <img
-                  src={logoUrl}
-                  alt="Rellio compass logo"
-                  className="h-8 w-8 object-contain animate-pulse [animation-duration:3s]"
-                  loading="eager"
-                />
-              )}
+              <img
+                src={compassLogo}
+                alt="Rellio compass logo"
+                className="h-10 w-10 object-contain animate-pulse [animation-duration:3s]"
+                loading="eager"
+              />
               <span className="font-serif tracking-widest text-xl text-yellow-200">RELLIO</span>
             </div>
             <nav className="hidden md:flex items-center gap-8 text-sm text-yellow-100/80">
@@ -299,9 +298,7 @@ export default function LandingPage({
             {/* Logo and Navigation */}
             <div className="text-center mb-6">
               <div className="flex items-center justify-center gap-3 mb-4">
-                {logoUrl && (
-                  <img src={logoUrl} alt="Rellio compass logo" className="h-8 w-8 object-contain" loading="lazy" />
-                )}
+                <img src={compassLogo} alt="Rellio compass logo" className="h-10 w-10 object-contain" loading="lazy" />
               </div>
               <h2 className="font-serif text-xl tracking-[0.3em] text-yellow-200 mb-4">RELLIO</h2>
               
