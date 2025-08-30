@@ -107,12 +107,12 @@ export default function LandingPage({
         <section aria-label="Rellio hero" className="relative isolate h-screen overflow-hidden">
           {/* Hero Image Background */}
           <div
-            className="absolute inset-0 bg-contain bg-center bg-no-repeat"
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat md:bg-contain"
             style={{
-              backgroundImage: `url(/assets/rellio-hero-final.png)`,
+              backgroundImage: `url(/assets/rellio-hero-desktop.png)`,
               transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
               willChange: "transform",
-              backgroundSize: "contain",
+              backgroundSize: "cover",
               backgroundPosition: "center center",
             }}
           />
@@ -122,7 +122,7 @@ export default function LandingPage({
             {/* Torah - Top Left */}
             <button
               onClick={() => handleScriptureClick('judaism')}
-              className="absolute top-[20%] left-[30%] w-16 h-24 md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              className="absolute top-[22%] left-[20%] w-18 h-26 md:w-22 md:h-30 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Torah"
               aria-label="Explore Torah"
             >
@@ -132,7 +132,7 @@ export default function LandingPage({
             {/* Quran - Top Center */}
             <button
               onClick={() => handleScriptureClick('islam')}
-              className="absolute top-[16%] left-1/2 -translate-x-1/2 w-16 h-24 md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
+              className="absolute top-[25%] left-1/2 -translate-x-1/2 w-18 h-26 md:w-22 md:h-30 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
               title="Explore Quran"
               aria-label="Explore Quran"
             >
@@ -142,7 +142,7 @@ export default function LandingPage({
             {/* Bible - Top Right */}
             <button
               onClick={() => handleScriptureClick('christianity')}
-              className="absolute top-[20%] right-[30%] w-16 h-24 md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
+              className="absolute top-[22%] right-[20%] w-18 h-26 md:w-22 md:h-30 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
               title="Explore Bible"
               aria-label="Explore Bible"
             >
@@ -152,7 +152,7 @@ export default function LandingPage({
             {/* Tripitaka - Bottom Left */}
             <button
               onClick={() => handleScriptureClick('buddhism')}
-              className="absolute bottom-[32%] left-[25%] w-16 h-24 md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(147,51,234,0.8)] z-10"
+              className="absolute top-[50%] left-[15%] w-18 h-26 md:w-22 md:h-30 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(147,51,234,0.8)] z-10"
               title="Explore Tripitaka"
               aria-label="Explore Tripitaka"
             >
@@ -162,7 +162,7 @@ export default function LandingPage({
             {/* Bhagavad Gita - Bottom Right */}
             <button
               onClick={() => handleScriptureClick('hinduism')}
-              className="absolute bottom-[32%] right-[25%] w-16 h-24 md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(249,115,22,0.8)] z-10"
+              className="absolute top-[50%] right-[15%] w-18 h-26 md:w-22 md:h-30 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(249,115,22,0.8)] z-10"
               title="Explore Bhagavad Gita"
               aria-label="Explore Bhagavad Gita"
             >
