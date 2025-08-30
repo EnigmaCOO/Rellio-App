@@ -9,6 +9,8 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        'xl': '20px',
+        '2xl': '24px',
       },
       colors: {
         background: "var(--background)",
@@ -84,11 +86,6 @@ export default {
         'glow-gold': '0 0 24px rgba(212,175,55,0.35)',
         'glow-teal': '0 0 18px rgba(0,213,255,0.30)',
         'card-shadow': '0 10px 30px rgba(0,0,0,0.35)',
-      },
-      borderRadius: {
-        'lg': '16px',
-        'xl': '20px',
-        '2xl': '24px',
       },
       keyframes: {
         'spin-once': {

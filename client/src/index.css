@@ -837,3 +837,12 @@
 .chat-message.interrupted {
   @apply bg-red-50 border-l-4 border-red-400;
 }
+
+/* Custom shadow glow effects for cosmic design */
+.shadow-glow-gold {
+  box-shadow: var(--glow-gold);
+}
+
+.shadow-glow-teal {
+  box-shadow: var(--glow-teal);
+}
