@@ -109,80 +109,77 @@ export default function LandingPage({
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
-              backgroundImage: `url(/assets/rellio-hero-circle.png)`,
+              backgroundImage: `url(/assets/rellio-hero-final.png)`,
               transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
               willChange: "transform",
             }}
           />
-          
-          {/* Light overlay to make content readable */}
-          <div className="absolute inset-0 bg-black/10" />
           
           {/* Clickable Scripture Areas positioned over the image */}
           <div className="absolute inset-0">
             {/* Torah - Top Left */}
             <button
               onClick={() => handleScriptureClick('judaism')}
-              className="absolute top-[20%] left-[20%] w-20 h-24 md:w-24 md:h-28 transition-all duration-300 hover:scale-110 hover:brightness-125 hover:drop-shadow-[0_0_20px_rgba(255,215,0,0.8)] z-10"
+              className="absolute top-[25%] left-[15%] w-24 h-32 md:w-28 md:h-36 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Torah"
               aria-label="Explore Torah"
             >
-              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-yellow-300/50 transition-all duration-300" />
+              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-yellow-300/70 hover:bg-yellow-200/10 transition-all duration-300" />
             </button>
 
             {/* Quran - Top Center */}
             <button
               onClick={() => handleScriptureClick('islam')}
-              className="absolute top-[15%] left-1/2 -translate-x-1/2 w-20 h-24 md:w-24 md:h-28 transition-all duration-300 hover:scale-110 hover:brightness-125 hover:drop-shadow-[0_0_20px_rgba(0,213,255,0.8)] z-10"
+              className="absolute top-[20%] left-1/2 -translate-x-1/2 w-24 h-32 md:w-28 md:h-36 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
               title="Explore Quran"
               aria-label="Explore Quran"
             >
-              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-teal-300/50 transition-all duration-300" />
+              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-teal-300/70 hover:bg-teal-200/10 transition-all duration-300" />
             </button>
 
             {/* Bible - Top Right */}
             <button
               onClick={() => handleScriptureClick('christianity')}
-              className="absolute top-[20%] right-[20%] w-20 h-24 md:w-24 md:h-28 transition-all duration-300 hover:scale-110 hover:brightness-125 hover:drop-shadow-[0_0_20px_rgba(59,130,246,0.8)] z-10"
+              className="absolute top-[25%] right-[15%] w-24 h-32 md:w-28 md:h-36 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
               title="Explore Bible"
               aria-label="Explore Bible"
             >
-              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-blue-300/50 transition-all duration-300" />
+              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-blue-300/70 hover:bg-blue-200/10 transition-all duration-300" />
             </button>
 
             {/* Tripitaka - Bottom Left */}
             <button
               onClick={() => handleScriptureClick('buddhism')}
-              className="absolute bottom-[35%] left-[15%] w-20 h-24 md:w-24 md:h-28 transition-all duration-300 hover:scale-110 hover:brightness-125 hover:drop-shadow-[0_0_20px_rgba(147,51,234,0.8)] z-10"
+              className="absolute bottom-[40%] left-[10%] w-24 h-32 md:w-28 md:h-36 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(147,51,234,0.8)] z-10"
               title="Explore Tripitaka"
               aria-label="Explore Tripitaka"
             >
-              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-purple-300/50 transition-all duration-300" />
+              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-purple-300/70 hover:bg-purple-200/10 transition-all duration-300" />
             </button>
 
             {/* Bhagavad Gita - Bottom Right */}
             <button
               onClick={() => handleScriptureClick('hinduism')}
-              className="absolute bottom-[35%] right-[15%] w-20 h-24 md:w-24 md:h-28 transition-all duration-300 hover:scale-110 hover:brightness-125 hover:drop-shadow-[0_0_20px_rgba(249,115,22,0.8)] z-10"
+              className="absolute bottom-[40%] right-[10%] w-24 h-32 md:w-28 md:h-36 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(249,115,22,0.8)] z-10"
               title="Explore Bhagavad Gita"
               aria-label="Explore Bhagavad Gita"
             >
-              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-orange-300/50 transition-all duration-300" />
+              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-orange-300/70 hover:bg-orange-200/10 transition-all duration-300" />
             </button>
           </div>
           
           {/* CTAs positioned at bottom */}
-          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-20">
+          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-20">
             <button
               onClick={handleGetStarted}
-              className="inline-flex items-center justify-center rounded-lg border-2 border-yellow-300/50 bg-black/20 backdrop-blur-sm px-8 py-3 font-serif text-sm font-semibold tracking-[0.2em] text-yellow-200 transition-all duration-300 hover:border-yellow-200 hover:bg-yellow-200/10 hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+              className="inline-flex items-center justify-center rounded-lg border-2 border-yellow-300/60 bg-black/30 backdrop-blur-sm px-10 py-3 font-serif text-sm font-semibold tracking-[0.2em] text-yellow-200 transition-all duration-300 hover:border-yellow-200 hover:bg-yellow-200/10 hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
               aria-label="Enter the Rellio spiritual community"
             >
               ENTER THE CIRCLE
             </button>
             <button
               onClick={handleWatchDemo}
-              className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-yellow-600/80 to-yellow-500/80 backdrop-blur-sm px-6 py-2 font-serif text-xs font-semibold tracking-[0.2em] text-black transition-all duration-300 hover:from-yellow-500 hover:to-yellow-400 hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+              className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-yellow-600/90 to-yellow-500/90 backdrop-blur-sm px-8 py-2 font-serif text-xs font-semibold tracking-[0.2em] text-black transition-all duration-300 hover:from-yellow-500 hover:to-yellow-400 hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
               aria-label="Explore sacred scriptures"
             >
               EXPLORE SCRIPTURES
@@ -190,9 +187,9 @@ export default function LandingPage({
           </div>
           
           {/* Scroll Cue */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex justify-center z-20">
-            <div className="h-8 w-5 rounded-full border border-yellow-200/30 flex items-start justify-center p-1">
-              <div className="h-2 w-1 rounded-full bg-yellow-200/70 animate-bounce" />
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex justify-center z-20">
+            <div className="h-8 w-5 rounded-full border border-yellow-200/40 flex items-start justify-center p-1">
+              <div className="h-2 w-1 rounded-full bg-yellow-200/80 animate-bounce" />
             </div>
           </div>
         </section>
