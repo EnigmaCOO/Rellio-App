@@ -171,8 +171,8 @@ export default function LandingPage({
             </button>
           </div>
           
-          {/* CTAs positioned at bottom */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-20">
+          {/* CTAs positioned under "ONE SCRIPTURE ACROSS WORLDS" text */}
+          <div className="absolute bottom-[15%] left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-20">
             <button
               onClick={handleGetStarted}
               className="inline-flex items-center justify-center rounded-lg border-2 border-yellow-300/60 bg-black/30 backdrop-blur-sm px-10 py-3 font-serif text-sm font-semibold tracking-[0.2em] text-yellow-200 transition-all duration-300 hover:border-yellow-200 hover:bg-yellow-200/10 hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
@@ -198,7 +198,7 @@ export default function LandingPage({
         </section>
 
         {/* FEATURES SECTION */}
-        <section id="features" className="bg-[#0c0f12] py-24 text-yellow-100/85">
+        <section id="features" className="bg-[#0c0f12] py-32 text-yellow-100/85">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <h2 className="font-serif text-2xl tracking-[0.3em] text-yellow-200 mb-16 text-center">FEATURES</h2>
             
