@@ -1,0 +1,49 @@
+You are a senior UI/UX engineer and branding expert tasked with refining Rellio's landing page (client/src/pages/landing.tsx) into a luxurious, spiritual digital sanctuary embodying "Guiding Wisdom. Eternal Connection." Resolve layout overlap, add missing sections (Features, About Us, FAQ, Privacy, Terms, Socials), and ensure no disruption to existing functionality, routing, or APIs.
+
+Preserve all existing functionality (e.g., CTAs, handleGetStarted, handleScriptureClick, handleWatchDemo).
+Modify only styles, markup, and presentational code; keep logic intact.
+Add new files with relative, tree-shakable imports if needed.
+Write accessible, responsive, and performant code using Tailwind CSS, extending with brand-specific tokens.
+Use semantic HTML and ARIA where relevant.
+Produce a single PR with clear commits (e.g., "fix(ui): resolve layout and add missing sections", "style: refine Rellio landing design").
+Maintain Rellio’s brand essence: luxury meets spirituality, avoiding generic templates.
+
+TASK BRIEF (paste after system block)
+Goal: Refine the current LandingPage.tsx to fix overlapping elements and add missing sections (Features, About Us, FAQ, Privacy, Terms, Socials). Use the existing structure as a base, ensuring a clean, responsive grid layout with a fullscreen cosmic hero, clickable scriptures (Qur’an, Bible, Torah, Bhagavad Gita, Tripitaka) integrated into the image, and all required sections. The design should feature a golden compass emblem, seeker silhouette with unique auras converging into a unity orb, sacred geometry, and starry sky. Place book names below the image as labels, add social icons and Terms/Privacy links in the footer, and prevent stacking issues.
+
+Core Visual Identity
+
+Hero Background: Use fullscreen cosmic artwork (bgUrl="/assets/rellio-hero.jpg") with a golden compass emblem, seeker silhouette, and five scriptures with unique auras converging into a unity orb. Add sacred geometry and starry sky, ensuring no overlap with sections below using a constrained container.
+Logo Integration: Top center with Rellio wordmark in bold metallic serif (Cormorant Garamond) and compass logo (logoUrl="/assets/rellio-logo-gold.png"), with a 3s golden pulse.
+Tagline Placement: Below logo, display "RELLIO One Scripture Across Worlds Guiding Wisdom. Eternal Connection. Discover insights across traditions. Ask, compare, and learn with scholar-grade AI." in text-yellow-200 (larger for main, smaller for subtext), centered with max-w-3xl.
+
+
+Interactive Behavior
+
+Hover States: Enhance scripture hover with brighter glow (filter: brightness(1.2), shadow-glowTeal) and tooltips "Explore [Book Name]" using Tailwind’s hover: utilities.
+Parallax: Keep subtle background shift (translateY with clamp at 80px), disabled for prefers-reduced-motion.
+CTA Buttons: Retain "ENTER THE CIRCLE" (glowing gold) and "EXPLORE SCRIPTURES" (gold gradient) with existing handlers.
+Book Navigation: Integrate clickable books into the hero image (use <map> with <area> tags or absolute divs matching image coordinates). Use <code>handleScriptureClick</code> to navigate (e.g., <code>/dashboard?religion=judaism</code> for Torah).</map>
+
+
+UI Components and Section Layout
+
+Navigation Bar: Transparent gold-lined nav (border-yellow-200/30) with links to Features, About, Community, Auth (Sign Up button).
+Scroll Cue: Animated bounce indicator below CTAs.
+Section Styling: Use a grid layout (grid-cols-1 md:grid-cols-2 lg:grid-cols-3) with 2rem padding (py-8) and dark cosmic gradients (bg-[#0c0f12], bg-gradient-to-r from-black to-indigo-900) with serif headers.
+Book Labels: Place book names below the hero image in a flex row (text-yellow-100/80, font-serif, hover:text-yellow-200).
+Features Section: Grid of cards for AI Sage Scholar, Parallel Scriptures, and Voice & Real-time.
+About Us Section: Centered text block with "ABOUT US" header and paragraph.
+FAQ Section: Accordion with questions (e.g., "How does Rellio work?").
+Footer: Social icons (X, Facebook, Instagram) with gold glow and links to Terms (/terms) and Privacy (/privacy).
+
+
+Tone & Experience
+
+Luxury + Spiritual: Polished, minimal design with serif fonts and gold accents.
+Mesmerizing: Glow effects, motion, and symmetry.
+Inclusive & Universal: Equal scripture representation.
+
+
+
+Implementation Details

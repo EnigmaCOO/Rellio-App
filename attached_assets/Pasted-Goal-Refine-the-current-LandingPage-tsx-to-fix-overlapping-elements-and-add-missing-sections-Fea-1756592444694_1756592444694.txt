@@ -1,0 +1,522 @@
+Goal: Refine the current `LandingPage.tsx` to fix overlapping elements and add missing sections (Features, About Us, FAQ, Privacy, Terms, Socials). Use the existing structure as a base, ensuring a clean, responsive grid layout with a fullscreen cosmic hero, clickable scriptures (Qur’an, Bible, Torah, Bhagavad Gita, Tripitaka) integrated into the image, and all required sections. The design should feature a golden compass emblem, seeker silhouette with unique auras converging into a unity orb, sacred geometry, and starry sky. Place book names below the image as labels, add social icons and Terms/Privacy links in the footer, and prevent stacking issues.
+
+1) **Core Visual Identity**
+   - **Hero Background**: Use fullscreen cosmic artwork (bgUrl="/assets/rellio-hero.jpg") with a golden compass emblem, seeker silhouette, and five scriptures with unique auras converging into a unity orb. Add sacred geometry and starry sky, ensuring no overlap with sections below using a constrained container.
+   - **Logo Integration**: Top center with Rellio wordmark in bold metallic serif (Cormorant Garamond) and compass logo (logoUrl="/assets/rellio-logo-gold.png"), with a 3s golden pulse.
+   - **Tagline Placement**: Below logo, display "RELLIO One Scripture Across Worlds Guiding Wisdom. Eternal Connection. Discover insights across traditions. Ask, compare, and learn with scholar-grade AI." in text-yellow-200 (larger for main, smaller for subtext), centered with max-w-3xl.
+
+2) **Interactive Behavior**
+   - **Hover States**: Enhance scripture hover with brighter glow (filter: brightness(1.2), shadow-glowTeal) and tooltips "Explore [Book Name]" using Tailwind’s hover: utilities.
+   - **Parallax**: Keep subtle background shift (translateY with clamp at 80px), disabled for prefers-reduced-motion.
+   - **CTA Buttons**: Retain "ENTER THE CIRCLE" (glowing gold) and "EXPLORE SCRIPTURES" (gold gradient) with existing handlers.
+   - **Book Navigation**: Integrate clickable books into the hero image (use <map> with <area> tags or absolute divs matching image coordinates). Use `handleScriptureClick` to navigate (e.g., `/dashboard?religion=judaism` for Torah).
+
+3) **UI Components and Section Layout**
+   - **Navigation Bar**: Transparent gold-lined nav (border-yellow-200/30) with links to Features, About, Community, Auth (Sign Up button).
+   - **Scroll Cue**: Animated bounce indicator below CTAs.
+   - **Section Styling**: Use a grid layout (grid-cols-1 md:grid-cols-2 lg:grid-cols-3) with 2rem padding (py-8) and dark cosmic gradients (bg-[#0c0f12], bg-gradient-to-r from-black to-indigo-900) with serif headers.
+   - **Book Labels**: Place book names below the hero image in a flex row (text-yellow-100/80, font-serif, hover:text-yellow-200).
+   - **Features Section**: Grid of cards for AI Sage Scholar, Parallel Scriptures, and Voice & Real-time.
+   - **About Us Section**: Centered text block with "ABOUT US" header and paragraph.
+   - **FAQ Section**: Accordion with questions (e.g., "How does Rellio work?").
+   - **Footer**: Social icons (X, Facebook, Instagram) with gold glow and links to Terms (/terms) and Privacy (/privacy).
+
+4) **Tone & Experience**
+   - **Luxury + Spiritual**: Polished, minimal design with serif fonts and gold accents.
+   - **Mesmerizing**: Glow effects, motion, and symmetry.
+   - **Inclusive & Universal**: Equal scripture representation.
+
+5) **Implementation Details**
+   - Refine `LandingPage.tsx`:
+     ```tsx
+     import { useState, useEffect } from "react";
+     import { useLocation } from "wouter";
+     import { Helmet } from "react-helmet";
+     import { Button } from "@/components/ui/button";
+     import {
+       Menu,
+       X,
+       BookOpen,
+       MessageCircle,
+       Users,
+       Search,
+       TrendingUp,
+       Compass,
+       Volume2,
+       Eye,
+       Play,
+       Sparkles,
+     } from "lucide-react";
+
+     export default function LandingPage({
+       bgUrl = "/assets/rellio-hero.jpg",
+       logoUrl = "/assets/rellio-logo-gold.png",
+     }: {
+       bgUrl?: string;
+       logoUrl?: string;
+     } = {}) {
+       const [offset, setOffset] = useState(0);
+       const [, setLocation] = useLocation();
+       const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
+       const prefersReduced = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+       useEffect(() => {
+         if (prefersReduced) return;
+         const onScroll = () => {
+           const y = window.scrollY;
+           setOffset(Math.min(y * 0.2, 80));
+         };
+         window.addEventListener("scroll", onScroll, { passive: true });
+         return () => window.removeEventListener("scroll", onScroll);
+       }, [prefersReduced]);
+
+       const handleGetStarted = () => setLocation("/dashboard");
+       const handleWatchDemo = () =>
+         document.getElementById("scriptures")?.scrollIntoView({ behavior: "smooth" });
+       const handleScriptureClick = (religion: string) =>
+         setLocation(`/dashboard?religion=${religion.toLowerCase()}`);
+
+       return (
+         <>
+           <Helmet>
+             <title>Rellio - Explore Sacred Wisdom with AI</title>
+             <meta
+               name="description"
+               content="Dive into Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more! Engage with voice chats, scholar personas, and theme-based verse comparisons—enlighten your soul today!"
+             />
+             <meta property="og:title" content="Rellio - Explore Sacred Wisdom with AI" />
+             <meta
+               property="og:description"
+               content="Dive into Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more! Engage with voice chats, scholar personas, and theme-based verse comparisons—enlighten your soul today!"
+             />
+             <meta property="og:image" content={`${currentOrigin}/images/og-image.png`} />
+             <meta
+               property="og:image:alt"
+               content="Rellio - Golden compass star symbol on dark navy background with 'Guiding Wisdom. Eternal Connection.' tagline"
+             />
+             <meta property="og:image:width" content="1200" />
+             <meta property="og:image:height" content="630" />
+             <meta property="og:url" content={currentOrigin} />
+             <meta property="og:type" content="website" />
+             <meta name="twitter:card" content="summary_large_image" />
+             <meta name="twitter:title" content="Rellio - Explore Sacred Wisdom with AI" />
+             <meta
+               name="twitter:description"
+               content="Dive into Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more! Engage with voice chats, scholar personas, and theme-based verse comparisons—enlighten your soul today!"
+             />
+             <meta name="twitter:image" content={`${currentOrigin}/images/og-image.png`} />
+           </Helmet>
+
+           <div className="min-h-screen bg-black text-[#E8D18A] selection:bg-yellow-200/20 selection:text-yellow-100">
+             {/* NAV */}
+             <header className="fixed left-0 right-0 top-0 z-50 backdrop-blur-sm bg-black/30 border-b border-yellow-200/30">
+               <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                 <div className="flex items-center gap-3">
+                   {logoUrl && (
+                     <img
+                       src={logoUrl}
+                       alt="Rellio compass logo"
+                       className="h-8 w-8 object-contain animate-pulse [animation-duration:3s]"
+                       loading="eager"
+                     />
+                   )}
+                   <span className="font-serif tracking-widest text-xl text-yellow-200">RELLIO</span>
+                 </div>
+                 <nav className="hidden md:flex items-center gap-8 text-sm text-yellow-100/80">
+                   <a href="#features" className="hover:text-yellow-200 transition-colors">Features</a>
+                   <a href="#about" className="hover:text-yellow-200 transition-colors">About</a>
+                   <a href="#faq" className="hover:text-yellow-200 transition-colors">FAQ</a>
+                   <a href="#auth" className="ml-2 rounded-full border border-yellow-200/30 px-4 py-1.5 text-yellow-100 hover:bg-yellow-200/10 transition-colors">Sign Up</a>
+                 </nav>
+                 <button className="md:hidden text-yellow-200" aria-label="Open menu">
+                   <Menu className="h-6 w-6" />
+                 </button>
+               </div>
+             </header>
+             {/* HERO */}
+             <section aria-label="Rellio hero" className="relative isolate flex min-h-screen items-center justify-center overflow-hidden">
+               <div
+                 className="pointer-events-none absolute inset-0 -z-20 bg-cover bg-center"
+                 style={{
+                   backgroundImage: `url(${bgUrl})`,
+                   transform: `translateY(${prefersReduced ? 0 : offset * 0.6}px)`,
+                   willChange: "transform",
+                 }}
+               />
+               <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-black via-black/20 to-black/50" />
+               <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_40%_at_50%_60%,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_40%,rgba(0,0,0,0.55)_100%)]" />
+               <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-28 pb-24 text-center">
+                 <div className="mx-auto mb-6 flex items-center justify-center gap-4">
+                   {logoUrl && (
+                     <img
+                       src={logoUrl}
+                       alt="Rellio compass logo"
+                       className="h-8 w-8 object-contain animate-pulse [animation-duration:3s]"
+                       loading="eager"
+                     />
+                   )}
+                   <span className="font-serif tracking-widest text-xl text-yellow-200">RELLIO</span>
+                 </div>
+                 <p className="mx-auto max-w-3xl text-base md:text-lg text-yellow-100/80">
+                   One Scripture Across Worlds<br />Guiding Wisdom. Eternal Connection.<br />Discover insights across traditions. Ask, compare, and learn with scholar-grade AI.
+                 </p>
+                 <div className="relative mx-auto mb-12 w-full max-w-5xl h-[600px] md:h-[700px]">
+                   <div className="absolute top-[35%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gradient-to-br from-yellow-300 to-yellow-500 shadow-[0_0_80px_rgba(255,215,0,0.8)] z-30 animate-pulse [animation-duration:3s]" />
+                   <div className="absolute top-[45%] left-1/2 -translate-x-1/2 w-20 h-32 z-20">
+                     <div
+                       className="w-full h-full bg-black rounded-t-full"
+                       style={{ clipPath: "polygon(30% 0%, 70% 0%, 80% 15%, 85% 25%, 85% 40%, 75% 50%, 80% 65%, 85% 80%, 85% 100%, 15% 100%, 15% 80%, 20% 65%, 25% 50%, 15% 40%, 15% 25%, 20% 15%)" }}
+                     />
+                   </div>
+                   {[
+                     {
+                       name: "Torah",
+                       religion: "judaism",
+                       symbol: "✡",
+                       position: { top: "15%", left: "25%" },
+                       rotation: "-30deg",
+                       colors: "from-yellow-600 to-yellow-800 border-yellow-400",
+                       hoverColors: "hover:from-yellow-500 hover:to-yellow-700 hover:border-yellow-300",
+                     },
+                     {
+                       name: "Quran",
+                       religion: "islam",
+                       symbol: "ﷲ",
+                       position: { top: "8%", left: "50%", transform: "translateX(-50%)" },
+                       rotation: "0deg",
+                       colors: "from-teal-600 to-teal-800 border-teal-400",
+                       hoverColors: "hover:from-teal-500 hover:to-teal-700 hover:border-teal-300",
+                     },
+                     {
+                       name: "Bible",
+                       religion: "christianity",
+                       symbol: "✝",
+                       position: { top: "15%", right: "25%" },
+                       rotation: "30deg",
+                       colors: "from-blue-600 to-blue-800 border-blue-400",
+                       hoverColors: "hover:from-blue-500 hover:to-blue-700 hover:border-blue-300",
+                     },
+                     {
+                       name: "Tripitaka",
+                       religion: "buddhism",
+                       symbol: "☸",
+                       position: { bottom: "25%", left: "20%" },
+                       rotation: "-45deg",
+                       colors: "from-purple-600 to-purple-800 border-purple-400",
+                       hoverColors: "hover:from-purple-500 hover:to-purple-700 hover:border-purple-300",
+                     },
+                     {
+                       name: "Bhagavad Gita",
+                       religion: "hinduism",
+                       symbol: "ॐ",
+                       position: { bottom: "25%", right: "20%" },
+                       rotation: "45deg",
+                       colors: "from-orange-600 to-orange-800 border-orange-400",
+                       hoverColors: "hover:from-orange-500 hover:to-orange-700 hover:border-orange-300",
+                     },
+                   ].map((book, index) => (
+                     <div key={book.name} className="absolute">
+                       <div className="absolute" style={book.position}>
+                         <div
+                           className="absolute w-[2px] h-40 md:h-52 bg-gradient-to-b from-yellow-400/80 via-yellow-300/60 to-transparent origin-bottom z-10"
+                           style={{
+                             left: "50%",
+                             bottom: "100%",
+                             transform: `translateX(-50%) rotate(${
+                               book.name === "Torah"
+                                 ? "65deg"
+                                 : book.name === "Quran"
+                                 ? "90deg"
+                                 : book.name === "Bible"
+                                 ? "115deg"
+                                 : book.name === "Tripitaka"
+                                 ? "25deg"
+                                 : "155deg"
+                             })`,
+                             transformOrigin: "bottom center",
+                           }}
+                         />
+                         <button
+                           onClick={() => handleScriptureClick(book.religion)}
+                           className={`relative w-24 h-32 md:w-28 md:h-36 rounded-lg border-2 bg-gradient-to-br ${book.colors} ${book.hoverColors} backdrop-blur-sm transition-all duration-500 hover:scale-110 hover:brightness-120 z-20 shadow-[0_0_30px_rgba(0,0,0,0.5)]`}
+                           style={{ transform: `rotate(${book.rotation})` }}
+                           title={`Explore ${book.name.replace("\n", " ")}`}
+                         >
+                           <div className="absolute inset-0 flex flex-col items-center justify-center p-2">
+                             <div className="text-2xl md:text-3xl mb-2 text-yellow-100 drop-shadow-lg">
+                               {book.symbol}
+                             </div>
+                             <div className="text-xs font-serif text-yellow-100 text-center leading-tight whitespace-pre-line font-bold tracking-wider drop-shadow-md">
+                               {book.name}
+                             </div>
+                           </div>
+                         </button>
+                       </div>
+                     </div>
+                   ))}
+                   <div className="absolute top-[20%] right-[15%] text-2xl text-yellow-300/60 animate-float">
+                     ✝
+                   </div>
+                   <div className="absolute bottom-[35%] right-[10%] text-xl text-yellow-300/60 animate-float [animation-delay:1s]">
+                     ☯
+                   </div>
+                   <div className="absolute top-[25%] left-[10%] text-xl text-yellow-300/60 animate-float [animation-delay:2s]">
+                     ☸
+                   </div>
+                   <div className="absolute bottom-[40%] left-[15%] text-2xl text-yellow-300/60 animate-float [animation-delay:0.5s]">
+                     ॐ
+                   </div>
+                 </div>
+                 <div className="mx-auto mt-8 flex flex-col items-center justify-center gap-6 sm:flex-row">
+                   <Button
+                     onClick={handleGetStarted}
+                     className="group inline-flex items-center justify-center rounded-lg border-2 border-yellow-300/50 bg-transparent px-12 py-4 font-serif text-base font-semibold tracking-[0.3em] text-yellow-200 transition-all duration-300 hover:border-yellow-200 hover:bg-yellow-200/10 hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+                     aria-label="Enter the Rellio spiritual community"
+                   >
+                     ENTER THE CIRCLE
+                   </Button>
+                   <Button
+                     onClick={handleWatchDemo}
+                     className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-yellow-600 to-yellow-500 px-10 py-3 font-serif text-sm font-semibold tracking-[0.2em] text-black transition-all duration-300 hover:from-yellow-500 hover:to-yellow-400 hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+                     aria-label="Explore sacred scriptures"
+                   >
+                     EXPLORE SCRIPTURES
+                   </Button>
+                 </div>
+                 <div className="mt-12 text-center">
+                   <h2 className="font-serif text-xl md:text-2xl tracking-[0.3em] text-yellow-200">
+                     ONE SCRIPTURE ACROSS WORLDS
+                   </h2>
+                 </div>
+                 <div className="mt-6 flex justify-center gap-4">
+                   <span className="font-serif text-yellow-100/80 hover:text-yellow-200 cursor-default">
+                     Torah
+                   </span>
+                   <span className="font-serif text-yellow-100/80 hover:text-yellow-200 cursor-default">
+                     Quran
+                   </span>
+                   <span className="font-serif text-yellow-100/80 hover:text-yellow-200 cursor-default">
+                     Bible
+                   </span>
+                   <span className="font-serif text-yellow-100/80 hover:text-yellow-200 cursor-default">
+                     Tripitaka
+                   </span>
+                   <span className="font-serif text-yellow-100/80 hover:text-yellow-200 cursor-default">
+                     Bhagavad Gita
+                   </span>
+                 </div>
+                 <div className="mt-16 flex justify-center">
+                   <div className="h-10 w-6 rounded-full border border-yellow-200/30 flex items-start justify-center p-1">
+                     <div className="h-2 w-1 rounded-full bg-yellow-200/70 animate-bounce" />
+                   </div>
+                 </div>
+               </div>
+             </section>
+             {/* FEATURES */}
+             <section id="features" className="py-24 bg-gradient-to-r from-[#0c0f12] to-indigo-900 text-yellow-100/90">
+               <div className="mx-auto max-w-6xl px-4 sm:px-6">
+                 <h2 className="font-serif text-2xl tracking-widest text-yellow-200 mb-8 text-center">
+                   FEATURES
+                 </h2>
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                   {[
+                     {
+                       title: "AI Sage Scholar",
+                       icon: Sparkles,
+                       description: "Engage with multi-faith scholar personas grounded in scripture.",
+                     },
+                     {
+                       title: "Parallel Scriptures",
+                       icon: BookOpen,
+                       description: "Compare verses across traditions with context and commentary.",
+                     },
+                     {
+                       title: "Voice & Real-time",
+                       icon: Volume2,
+                       description: "Speak, interrupt, and refine queries hands-free as you read.",
+                     },
+                   ].map((feature) => (
+                     <div
+                       key={feature.title}
+                       className="rounded-2xl border border-white/5 bg-white/5 p-6 text-center"
+                     >
+                       <feature.icon className="mx-auto mb-2 h-8 w-8 text-yellow-200" />
+                       <h3 className="mb-2 font-serif text-yellow-200 font-semibold">
+                         {feature.title}
+                       </h3>
+                       <p className="text-sm text-yellow-100/80">{feature.description}</p>
+                     </div>
+                   ))}
+                 </div>
+               </div>
+             </section>
+             {/* ABOUT US */}
+             <section id="about" className="py-24 bg-black text-yellow-100/85">
+               <div className="mx-auto max-w-3xl px-4 sm:px-6 text-center">
+                 <h2 className="font-serif text-2xl tracking-widest text-yellow-200 mb-4">
+                   ABOUT US
+                 </h2>
+                 <p className="text-balance text-base">
+                   Rellio unites wisdom traditions through dialogue. Explore, compare, and
+                   connect with living texts in a sanctuary of calm design and world-class
+                   craft.
+                 </p>
+               </div>
+             </section>
+             {/* FAQ */}
+             <section id="faq" className="py-24 bg-gradient-to-r from-[#0c0f12] to-indigo-900 text-yellow-100/85">
+               <div className="mx-auto max-w-5xl px-4 sm:px-6 text-center">
+                 <h2 className="font-serif text-2xl tracking-widest text-yellow-200 mb-8">
+                   FAQ
+                 </h2>
+                 <div className="space-y-4 max-w-prose mx-auto">
+                   {[
+                     { q: "How does Rellio work?", a: "Rellio uses AI to provide insights from multiple scriptures." },
+                     { q: "Is it free?", a: "Basic access is free with premium features available." },
+                   ].map((item, idx) => (
+                     <details key={idx} className="group">
+                       <summary className="font-medium text-yellow-100/80 hover:text-yellow-200 cursor-pointer">
+                         {item.q}
+                       </summary>
+                       <p className="mt-2 text-sm text-yellow-100/70">{item.a}</p>
+                     </details>
+                   ))}
+                 </div>
+               </div>
+             </section>
+             {/* AUTH ANCHOR */}
+             <section id="auth" className="py-24 bg-black text-yellow-100/85">
+               <div className="mx-auto max-w-md px-4 sm:px-6">
+                 <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+                   <h3 className="mb-4 text-center font-serif text-xl tracking-widest text-yellow-200">
+                     ENTER THE CIRCLE
+                   </h3>
+                   <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                     <label className="block">
+                       <span className="mb-1 block text-sm">Email</span>
+                       <input
+                         type="email"
+                         required
+                         className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-yellow-50 placeholder-yellow-100/40 outline-none focus:border-yellow-300/60"
+                         placeholder="you@rellio.app"
+                       />
+                     </label>
+                     <label className="block">
+                       <span className="mb-1 block text-sm">Password</span>
+                       <input
+                         type="password"
+                         required
+                         className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-yellow-50 placeholder-yellow-100/40 outline-none focus:border-yellow-300/60"
+                         placeholder="••••••••"
+                       />
+                     </label>
+                     <Button
+                       type="submit"
+                       className="mt-2 w-full rounded-full border border-yellow-300/60 bg-yellow-200/10 px-5 py-3 font-medium text-yellow-100 hover:bg-yellow-200/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-300/60"
+                     >
+                       Continue
+                     </Button>
+                   </form>
+                 </div>
+               </div>
+             </section>
+             {/* FOOTER */}
+             <footer className="border-t border-white/5 bg-black py-10 text-center text-xs text-yellow-100/50">
+               <div className="flex justify-center gap-4 mb-2">
+                 <a href="https://x.com/rellio" aria-label="Rellio on X">
+                   <X className="h-6 w-6 hover:text-yellow-200" />
+                 </a>
+                 <a href="https://facebook.com/rellio" aria-label="Rellio on Facebook">
+                   <svg
+                     className="h-6 w-6 hover:text-yellow-200"
+                     fill="currentColor"
+                     viewBox="0 0 24 24"
+                   >
+                     <path d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.991 22 12c0-5.523-4.477-10-10-10z" />
+                   </svg>
+                 </a>
+                 <a href="https://instagram.com/rellio" aria-label="Rellio on Instagram">
+                   <svg
+                     className="h-6 w-6 hover:text-yellow-200"
+                     fill="currentColor"
+                     viewBox="0 0 24 24"
+                   >
+                     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.325 3.608 1.3.975.975 1.239 2.242 1.301 3.608.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.062 1.366-.325 2.633-1.3 3.608-.975.975-2.242 1.239-3.608 1.301-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.366-.062-2.633-.325-3.608-1.3-.975-.975-1.239-2.242-1.301-3.608-.058-1.266-.07-1.646-.07-4.85s.012-3.584.07-4.85c.062-1.366.325-2.633 1.3-3.608.975-.975 2.242-1.239 3.608-1.301 1.266-.058 1.646-.07 4.85-.07m0-2.163C8.736 0 8.334.012 7.05.07c-1.366.062-2.697.33-3.71 1.342-.975.975-1.31 2.344-1.372 3.71-.058 1.284-.07 1.686-.07 4.85 0 3.164.012 3.566.07 4.85.062 1.366.33 2.697 1.342 3.71.975.975 2.344 1.31 3.71 1.372 1.284.058 1.686.07 4.85.07 3.164 0 3.566-.012 4.85-.07 1.366-.062 2.697-.33 3.71-1.342.975-.975 1.31-2.344 1.372-3.71.058-1.284.07-1.686.07-4.85 0-3.164-.012-3.566-.07-4.85-.062-1.366-.33-2.697-1.342-3.71-.975-.975-2.344-1.31-3.71-1.372-1.284-.058-1.686-.07-4.85-.07zM12 5.838c-3.403 0-6.162 2.759-6.162 6.162S8.597 18.162 12 18.162 18.162 15.403 18.162 12 15.403 5.838 12 5.838zm0 10.162c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4zm0-6.162a2.162 2.162 0 110 4.324 2.162 2.162 0 010-4.324zM12 3c-2.209 0-4 1.791-4 4s1.791 4 4 4 4-1.791 4-4-1.791-4-4-4zm0 6c-1.105 0-2-.895-2-2s.895-2 2-2 2 .895 2 2-.895 2-2 2z" />
+                   </svg>
+                 </a>
+               </div>
+               <div>
+                 <a href="/terms" className="hover:text-yellow-200 mx-2">Terms</a>
+                 <a href="/privacy" className="hover:text-yellow-200 mx-2">Privacy</a>
+               </div>
+               <p className="mt-2">© {new Date().getFullYear()} Rellio. All rights reserved.</p>
+             </footer>
+           </div>
+         </>
+       );
+     }
+     ```
+   - **Tailwind Setup**: Update tailwind.config.js:
+     ```js
+     module.exports = {
+       content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
+       theme: {
+         extend: {
+           colors: {
+             "deep-indigo": "#060a1a",
+             "dark-indigo": "#0A0F29",
+             "gold": "#D4AF37",
+             "teal": "#00D5FF",
+             "text": "#F2F5FA",
+             "text-muted": "#B8C0D6",
+           },
+           fontFamily: {
+             serif: ["Cormorant Garamond", "ui-serif"],
+           },
+           animation: {
+             pulse: "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+             bounce: "bounce 1s ease-in-out infinite",
+             float: "float 4s ease-in-out infinite",
+           },
+           keyframes: {
+             pulse: {
+               "0%, 100%": { boxShadow: "0 0 0 0 rgba(212, 175, 55, 0.4)" },
+               "50%": { boxShadow: "0 0 0 10px rgba(212, 175, 55, 0)" },
+             },
+             bounce: {
+               "0%, 100%": { transform: "translateY(0)" },
+               "50%": { transform: "translateY(-10px)" },
+             },
+             float: {
+               "0%, 100%": { transform: "translateY(0)" },
+               "50%": { transform: "translateY(-20px)" },
+             },
+           },
+         },
+       },
+       plugins: [],
+     };
+     ```
+   - **Assets**: Ensure public/assets/rellio-hero.jpg, rellio-logo-gold.png, and /images/og-image.png are present.
+
+6) **Usage Instructions**
+   - Install dependencies: `npm i react-helmet wouter @radix-ui/react-icons`.
+   - Update src/index.css with `@tailwind base; @tailwind components; @tailwind utilities;`.
+   - Replace landing.tsx with this code.
+
+7) **Acceptance Criteria**
+   - Hero displays without overlap, with taglines, CTAs, and book navigation working.
+   - Sections (Features, About Us, FAQ, Auth) render with proper spacing.
+   - Footer includes socials, Terms, and Privacy links.
+   - No console errors; Lighthouse Performance ≥ 90, Accessibility ≥ 95.
+
+8) **Implementation Steps**
+   1. Install dependencies and configure Tailwind.
+   2. Add assets to public/assets and /images.
+   3. Update landing.tsx with the refined structure.
+   4. Adjust tailwind.config.js with animations.
+   5. Test layout, spacing, and navigation; fix overlap with padding.
+   6. Commit with: `fix(ui): resolve layout and enhance sections`, `style: refine Rellio design`.
+
+#### FINAL INSTRUCTION
+Implement precisely, preserving logic, and submit a PR passing acceptance criteria and lint/build checks. Add only presentational files (images, config). Ensure a seamless, luxurious spiritual experience reflecting Rellio’s essence. If issues persist, share console logs or a preview!
