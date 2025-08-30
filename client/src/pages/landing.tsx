@@ -109,7 +109,7 @@ export default function LandingPage({
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat md:bg-contain"
             style={{
-              backgroundImage: `url(/assets/rellio-hero-desktop.png)`,
+              backgroundImage: `url(/assets/rellio-hero-final.png)`,
               transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
               willChange: "transform",
               backgroundSize: "cover",
