@@ -16,6 +16,7 @@ import {
   Play,
   Sparkles,
 } from "lucide-react";
+import heroImage from "@/assets/rellio-hero-new.png";
 
 export default function LandingPage({
   bgUrl = "/assets/rellio-hero.jpg",
@@ -109,7 +110,7 @@ export default function LandingPage({
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
-              backgroundImage: `url(/assets/rellio-hero-desktop-final.png)`,
+              backgroundImage: `url(${heroImage})`,
               transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
               willChange: "transform",
               backgroundSize: "cover",
