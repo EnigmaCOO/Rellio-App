@@ -104,159 +104,92 @@ export default function LandingPage({
         </header>
 
         {/* HERO SECTION */}
-        <section aria-label="Rellio hero" className="relative isolate flex min-h-screen items-center justify-center overflow-hidden">
+        <section aria-label="Rellio hero" className="relative isolate min-h-screen overflow-hidden">
+          {/* Hero Image Background */}
           <div
-            className="pointer-events-none absolute inset-0 -z-20 bg-cover bg-center"
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
-              backgroundImage: `url(${bgUrl})`,
-              transform: `translateY(${prefersReduced ? 0 : offset * 0.6}px)`,
+              backgroundImage: `url(/attached_assets/8DE20286-A10D-4CBF-AF5E-5BB7C0658E1A_1756592916417.PNG)`,
+              transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
               willChange: "transform",
             }}
           />
-          <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-black via-black/20 to-black/50" />
-          <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_40%_at_50%_60%,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_40%,rgba(0,0,0,0.55)_100%)]" />
           
-          <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-28 pb-24 text-center">
-            <div className="mx-auto mb-6 flex items-center justify-center gap-4">
-              {logoUrl && (
-                <img
-                  src={logoUrl}
-                  alt="Rellio compass logo"
-                  className="h-8 w-8 object-contain animate-pulse [animation-duration:3s]"
-                  loading="eager"
-                />
-              )}
-              <span className="font-serif tracking-widest text-xl text-yellow-200">RELLIO</span>
-            </div>
-            
-            <p className="mx-auto max-w-3xl text-base md:text-lg text-yellow-100/80 mb-12">
-              One Scripture Across Worlds<br />
-              <span className="text-yellow-200 text-xl md:text-2xl font-serif">Guiding Wisdom. Eternal Connection.</span><br />
-              Discover insights across traditions. Ask, compare, and learn with scholar-grade AI.
-            </p>
-            
-            {/* Sacred Circle Design */}
-            <div className="relative mx-auto mb-12 w-full max-w-5xl h-[600px] md:h-[700px]">
-              {/* Central Golden Orb */}
-              <div className="absolute top-[35%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gradient-to-br from-yellow-300 to-yellow-500 shadow-[0_0_80px_rgba(255,215,0,0.8)] z-30 animate-pulse [animation-duration:3s]" />
-              
-              {/* Central Person Silhouette */}
-              <div className="absolute top-[45%] left-1/2 -translate-x-1/2 w-20 h-32 z-20">
-                <div className="w-full h-full bg-black rounded-t-full" style={{clipPath: 'polygon(30% 0%, 70% 0%, 80% 15%, 85% 25%, 85% 40%, 75% 50%, 80% 65%, 85% 80%, 85% 100%, 15% 100%, 15% 80%, 20% 65%, 25% 50%, 15% 40%, 15% 25%, 20% 15%)'}} />
-              </div>
-              
-              {/* Five Sacred Scripture Books in Circle */}
-              {[
-                {
-                  name: 'TORAH',
-                  religion: 'judaism',
-                  symbol: '✡',
-                  position: { top: '15%', left: '25%' },
-                  rotation: '-30deg',
-                  colors: 'from-yellow-600 to-yellow-800 border-yellow-400',
-                  hoverColors: 'hover:from-yellow-500 hover:to-yellow-700 hover:border-yellow-300 hover:brightness-120'
-                },
-                {
-                  name: 'QURAN',
-                  religion: 'islam',
-                  symbol: 'ﷲ',
-                  position: { top: '8%', left: '50%', transform: 'translateX(-50%)' },
-                  rotation: '0deg',
-                  colors: 'from-teal-600 to-teal-800 border-teal-400',
-                  hoverColors: 'hover:from-teal-500 hover:to-teal-700 hover:border-teal-300 hover:brightness-120'
-                },
-                {
-                  name: 'BIBLE',
-                  religion: 'christianity',
-                  symbol: '✝',
-                  position: { top: '15%', right: '25%' },
-                  rotation: '30deg',
-                  colors: 'from-blue-600 to-blue-800 border-blue-400',
-                  hoverColors: 'hover:from-blue-500 hover:to-blue-700 hover:border-blue-300 hover:brightness-120'
-                },
-                {
-                  name: 'TRIPITAKA',
-                  religion: 'buddhism',
-                  symbol: '☸',
-                  position: { bottom: '25%', left: '20%' },
-                  rotation: '-45deg',
-                  colors: 'from-purple-600 to-purple-800 border-purple-400',
-                  hoverColors: 'hover:from-purple-500 hover:to-purple-700 hover:border-purple-300 hover:brightness-120'
-                },
-                {
-                  name: 'BHAGAVAD\nGITA',
-                  religion: 'hinduism',
-                  symbol: 'ॐ',
-                  position: { bottom: '25%', right: '20%' },
-                  rotation: '45deg',
-                  colors: 'from-orange-600 to-orange-800 border-orange-400',
-                  hoverColors: 'hover:from-orange-500 hover:to-orange-700 hover:border-orange-300 hover:brightness-120'
-                }
-              ].map((book, index) => (
-                <div key={book.name} className="absolute">
-                  <div className="absolute" style={book.position}>
-                    {/* Golden Connecting Line to Center */}
-                    <div 
-                      className="absolute w-[2px] h-40 md:h-52 bg-gradient-to-b from-yellow-400/80 via-yellow-300/60 to-transparent origin-bottom z-10"
-                      style={{
-                        left: '50%',
-                        bottom: '100%',
-                        transform: `translateX(-50%) rotate(${
-                          book.name === 'TORAH' ? '65deg' :
-                          book.name === 'QURAN' ? '90deg' :
-                          book.name === 'BIBLE' ? '115deg' :
-                          book.name === 'TRIPITAKA' ? '25deg' : '155deg'
-                        })`,
-                        transformOrigin: 'bottom center'
-                      }}
-                    />
-                    
-                    {/* Scripture Book */}
-                    <button
-                      onClick={() => handleScriptureClick(book.religion)}
-                      className={`group relative w-24 h-32 md:w-28 md:h-36 rounded-lg border-2 bg-gradient-to-br ${book.colors} ${book.hoverColors} backdrop-blur-sm transition-all duration-500 hover:scale-110 z-20 shadow-[0_0_30px_rgba(0,0,0,0.5)]`}
-                      style={{ transform: `rotate(${book.rotation})` }}
-                      title={`Explore ${book.name.replace('\n', ' ')}`}
-                    >
-                      <div className="absolute inset-0 flex flex-col items-center justify-center p-2">
-                        <div className="text-2xl md:text-3xl mb-2 text-yellow-100 drop-shadow-lg">{book.symbol}</div>
-                        <div className="text-xs font-serif text-yellow-100 text-center leading-tight whitespace-pre-line font-bold tracking-wider drop-shadow-md">{book.name}</div>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              ))}
-              
-              {/* Floating Religious Symbols */}
-              <div className="absolute top-[20%] right-[15%] text-2xl text-yellow-300/60 animate-float">✝</div>
-              <div className="absolute bottom-[35%] right-[10%] text-xl text-yellow-300/60 animate-float [animation-delay:1s]">☯</div>
-              <div className="absolute top-[25%] left-[10%] text-xl text-yellow-300/60 animate-float [animation-delay:2s]">☸</div>
-              <div className="absolute bottom-[40%] left-[15%] text-2xl text-yellow-300/60 animate-float [animation-delay:0.5s]">ॐ</div>
-            </div>
-            
-            {/* CTAs */}
-            <div className="mx-auto mt-8 flex flex-col items-center justify-center gap-6">
-              <button
-                onClick={handleGetStarted}
-                className="group inline-flex items-center justify-center rounded-lg border-2 border-yellow-300/50 bg-transparent px-12 py-4 font-serif text-base font-semibold tracking-[0.3em] text-yellow-200 transition-all duration-300 hover:border-yellow-200 hover:bg-yellow-200/10 hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
-                aria-label="Enter the Rellio spiritual community"
-              >
-                ENTER THE CIRCLE
-              </button>
-              <button
-                onClick={handleWatchDemo}
-                className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-yellow-600 to-yellow-500 px-10 py-3 font-serif text-sm font-semibold tracking-[0.2em] text-black transition-all duration-300 hover:from-yellow-500 hover:to-yellow-400 hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
-                aria-label="Explore sacred scriptures"
-              >
-                EXPLORE SCRIPTURES
-              </button>
-            </div>
-            
-            {/* Scroll Cue */}
-            <div className="mt-16 flex justify-center">
-              <div className="h-10 w-6 rounded-full border border-yellow-200/30 flex items-start justify-center p-1">
-                <div className="h-2 w-1 rounded-full bg-yellow-200/70 animate-bounce" />
-              </div>
+          {/* Clickable Scripture Areas positioned over the image */}
+          <div className="absolute inset-0">
+            {/* Torah - Top Left */}
+            <button
+              onClick={() => handleScriptureClick('judaism')}
+              className="absolute top-[20%] left-[20%] w-20 h-24 md:w-24 md:h-28 transition-all duration-300 hover:scale-110 hover:brightness-125 hover:drop-shadow-[0_0_20px_rgba(255,215,0,0.8)] z-10"
+              title="Explore Torah"
+              aria-label="Explore Torah"
+            >
+              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-yellow-300/50 transition-all duration-300" />
+            </button>
+
+            {/* Quran - Top Center */}
+            <button
+              onClick={() => handleScriptureClick('islam')}
+              className="absolute top-[15%] left-1/2 -translate-x-1/2 w-20 h-24 md:w-24 md:h-28 transition-all duration-300 hover:scale-110 hover:brightness-125 hover:drop-shadow-[0_0_20px_rgba(0,213,255,0.8)] z-10"
+              title="Explore Quran"
+              aria-label="Explore Quran"
+            >
+              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-teal-300/50 transition-all duration-300" />
+            </button>
+
+            {/* Bible - Top Right */}
+            <button
+              onClick={() => handleScriptureClick('christianity')}
+              className="absolute top-[20%] right-[20%] w-20 h-24 md:w-24 md:h-28 transition-all duration-300 hover:scale-110 hover:brightness-125 hover:drop-shadow-[0_0_20px_rgba(59,130,246,0.8)] z-10"
+              title="Explore Bible"
+              aria-label="Explore Bible"
+            >
+              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-blue-300/50 transition-all duration-300" />
+            </button>
+
+            {/* Tripitaka - Bottom Left */}
+            <button
+              onClick={() => handleScriptureClick('buddhism')}
+              className="absolute bottom-[35%] left-[15%] w-20 h-24 md:w-24 md:h-28 transition-all duration-300 hover:scale-110 hover:brightness-125 hover:drop-shadow-[0_0_20px_rgba(147,51,234,0.8)] z-10"
+              title="Explore Tripitaka"
+              aria-label="Explore Tripitaka"
+            >
+              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-purple-300/50 transition-all duration-300" />
+            </button>
+
+            {/* Bhagavad Gita - Bottom Right */}
+            <button
+              onClick={() => handleScriptureClick('hinduism')}
+              className="absolute bottom-[35%] right-[15%] w-20 h-24 md:w-24 md:h-28 transition-all duration-300 hover:scale-110 hover:brightness-125 hover:drop-shadow-[0_0_20px_rgba(249,115,22,0.8)] z-10"
+              title="Explore Bhagavad Gita"
+              aria-label="Explore Bhagavad Gita"
+            >
+              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-orange-300/50 transition-all duration-300" />
+            </button>
+          </div>
+          
+          {/* CTAs positioned at bottom */}
+          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-20">
+            <button
+              onClick={handleGetStarted}
+              className="inline-flex items-center justify-center rounded-lg border-2 border-yellow-300/50 bg-black/20 backdrop-blur-sm px-8 py-3 font-serif text-sm font-semibold tracking-[0.2em] text-yellow-200 transition-all duration-300 hover:border-yellow-200 hover:bg-yellow-200/10 hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+              aria-label="Enter the Rellio spiritual community"
+            >
+              ENTER THE CIRCLE
+            </button>
+            <button
+              onClick={handleWatchDemo}
+              className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-yellow-600/80 to-yellow-500/80 backdrop-blur-sm px-6 py-2 font-serif text-xs font-semibold tracking-[0.2em] text-black transition-all duration-300 hover:from-yellow-500 hover:to-yellow-400 hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+              aria-label="Explore sacred scriptures"
+            >
+              EXPLORE SCRIPTURES
+            </button>
+          </div>
+          
+          {/* Scroll Cue */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex justify-center z-20">
+            <div className="h-8 w-5 rounded-full border border-yellow-200/30 flex items-start justify-center p-1">
+              <div className="h-2 w-1 rounded-full bg-yellow-200/70 animate-bounce" />
             </div>
           </div>
         </section>
