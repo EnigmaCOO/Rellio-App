@@ -115,6 +115,9 @@ export default function LandingPage({
             }}
           />
           
+          {/* Light overlay to make content readable */}
+          <div className="absolute inset-0 bg-black/10" />
+          
           {/* Clickable Scripture Areas positioned over the image */}
           <div className="absolute inset-0">
             {/* Torah - Top Left */}
