@@ -161,11 +161,11 @@ export default function LandingPage({
             {/* Bible - Outline around the book */}
             <button
               onClick={() => handleScriptureClick('christianity')}
-              className="absolute top-[32%] right-[16%] w-[68px] h-[94px] md:top-[37%] md:right-[19%] md:w-[76px] md:h-[106px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
+              className="absolute top-[33%] right-[16%] w-[68px] h-[94px] md:top-[38%] md:right-[19%] md:w-[76px] md:h-[106px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(34,197,94,0.8)] z-10"
               title="Explore Bible"
               aria-label="Explore Bible"
             >
-              <div className="w-full h-full bg-transparent rounded border-2 border-blue-300/60 hover:border-blue-300/90 transition-all duration-300" />
+              <div className="w-full h-full bg-transparent rounded border-2 border-green-300/60 hover:border-green-300/90 transition-all duration-300" />
             </button>
 
             {/* Tripitaka - Outline around the book */}
