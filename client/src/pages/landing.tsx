@@ -151,7 +151,7 @@ export default function LandingPage({
             {/* Quran - Custom size to match book dimensions */}
             <button
               onClick={() => handleScriptureClick('islam')}
-              className="absolute top-[38%] left-1/2 -translate-x-1/2 w-[72px] h-[92px] md:top-[28%] md:left-1/2 md:-translate-x-1/2 md:w-[84px] md:h-[108px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
+              className="absolute top-[42%] left-1/2 -translate-x-1/2 w-[72px] h-[92px] md:top-[32%] md:left-1/2 md:-translate-x-1/2 md:w-[84px] md:h-[108px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
               title="Explore Quran"
               aria-label="Explore Quran"
             >
