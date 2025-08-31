@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,16 @@ export default function LandingPage({
   const [, setLocation] = useLocation();
   const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
   const prefersReduced = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const heroContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Dynamic book positions based on image dimensions
+  const [bookPositions, setBookPositions] = useState({
+    torah: { top: 0, left: 0, width: 64, height: 92 },
+    quran: { top: 0, left: 0, width: 80, height: 100 },
+    bible: { top: 0, right: 0, width: 68, height: 94 },
+    tripitaka: { top: 0, left: 0, width: 60, height: 84 },
+    bhagavadGita: { top: 0, right: 0, width: 72, height: 90 }
+  });
 
   useEffect(() => {
     if (prefersReduced) return;
@@ -58,6 +68,94 @@ export default function LandingPage({
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+  
+  // Dynamic positioning based on image container size
+  useEffect(() => {
+    const updateBookPositions = () => {
+      if (!heroContainerRef.current) return;
+      
+      const container = heroContainerRef.current;
+      const { width, height } = container.getBoundingClientRect();
+      
+      if (isMobile) {
+        // Mobile positioning - based on contain background sizing
+        setBookPositions({
+          torah: { 
+            top: height * 0.33, 
+            left: width * 0.15, 
+            width: 64, 
+            height: 92 
+          },
+          quran: { 
+            top: height * 0.32, 
+            left: width * 0.5 - 40, // Center minus half width
+            width: 80, 
+            height: 100 
+          },
+          bible: { 
+            top: height * 0.33, 
+            right: width * 0.16, 
+            width: 68, 
+            height: 94 
+          },
+          tripitaka: { 
+            top: height * 0.46, 
+            left: width * 0.085, 
+            width: 60, 
+            height: 84 
+          },
+          bhagavadGita: { 
+            top: height * 0.465, 
+            right: width * 0.07, 
+            width: 72, 
+            height: 90 
+          }
+        });
+      } else {
+        // Desktop positioning - based on cover background sizing
+        setBookPositions({
+          torah: { 
+            top: height * 0.28, 
+            left: width * 0.26, 
+            width: 72, 
+            height: 104 
+          },
+          quran: { 
+            top: height * 0.30, 
+            left: width * 0.5 - 46, // Center minus half width
+            width: 92, 
+            height: 116 
+          },
+          bible: { 
+            top: height * 0.28, 
+            right: width * 0.27, 
+            width: 76, 
+            height: 106 
+          },
+          tripitaka: { 
+            top: height * 0.52, 
+            left: width * 0.21, 
+            width: 68, 
+            height: 96 
+          },
+          bhagavadGita: { 
+            top: height * 0.52, 
+            right: width * 0.21, 
+            width: 80, 
+            height: 102 
+          }
+        });
+      }
+    };
+    
+    // Update positions on mount and resize
+    updateBookPositions();
+    window.addEventListener('resize', updateBookPositions);
+    
+    return () => {
+      window.removeEventListener('resize', updateBookPositions);
+    };
+  }, [isMobile]);
 
   const handleGetStarted = () => setLocation("/dashboard");
   const handleWatchDemo = () =>
@@ -123,7 +221,11 @@ export default function LandingPage({
         </header>
 
         {/* HERO SECTION */}
-        <section aria-label="Rellio hero" className="relative isolate h-screen overflow-hidden pt-20">
+        <section 
+          ref={heroContainerRef}
+          aria-label="Rellio hero" 
+          className="relative isolate h-screen overflow-hidden pt-20"
+        >
           {/* Hero Image Background */}
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -136,52 +238,82 @@ export default function LandingPage({
             }}
           />
           
-          {/* Clickable Scripture Areas positioned over the image */}
+          {/* Clickable Scripture Areas positioned dynamically over the image */}
           <div className="absolute inset-0">
-            {/* Torah - Outline around the book */}
+            {/* Torah - Dynamically positioned outline */}
             <button
               onClick={() => handleScriptureClick('judaism')}
-              className="absolute top-[33%] left-[15%] w-[64px] h-[92px] md:top-[28%] md:left-[26%] md:w-[72px] md:h-[104px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              style={{
+                top: `${bookPositions.torah.top}px`,
+                left: `${bookPositions.torah.left}px`,
+                width: `${bookPositions.torah.width}px`,
+                height: `${bookPositions.torah.height}px`,
+              }}
+              className="absolute transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Torah"
               aria-label="Explore Torah"
             >
               <div className="w-full h-full bg-transparent rounded border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300" />
             </button>
 
-            {/* Quran - Outline around the book */}
+            {/* Quran - Dynamically positioned outline */}
             <button
               onClick={() => handleScriptureClick('islam')}
-              className="absolute top-[32%] left-1/2 -translate-x-1/2 w-[80px] h-[100px] md:top-[30%] md:left-1/2 md:-translate-x-1/2 md:w-[92px] md:h-[116px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              style={{
+                top: `${bookPositions.quran.top}px`,
+                left: `${bookPositions.quran.left}px`,
+                width: `${bookPositions.quran.width}px`,
+                height: `${bookPositions.quran.height}px`,
+              }}
+              className="absolute transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Quran"
               aria-label="Explore Quran"
             >
               <div className="w-full h-full bg-transparent rounded border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300" />
             </button>
 
-            {/* Bible - Outline around the book */}
+            {/* Bible - Dynamically positioned outline */}
             <button
               onClick={() => handleScriptureClick('christianity')}
-              className="absolute top-[33%] right-[16%] w-[68px] h-[94px] md:top-[28%] md:right-[27%] md:w-[76px] md:h-[106px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              style={{
+                top: `${bookPositions.bible.top}px`,
+                right: `${bookPositions.bible.right}px`,
+                width: `${bookPositions.bible.width}px`,
+                height: `${bookPositions.bible.height}px`,
+              }}
+              className="absolute transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Bible"
               aria-label="Explore Bible"
             >
               <div className="w-full h-full bg-transparent rounded border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300" />
             </button>
 
-            {/* Tripitaka - Outline around the book */}
+            {/* Tripitaka - Dynamically positioned outline */}
             <button
               onClick={() => handleScriptureClick('buddhism')}
-              className="absolute top-[46%] left-[8.5%] w-[60px] h-[84px] md:top-[52%] md:left-[21%] md:w-[68px] md:h-[96px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              style={{
+                top: `${bookPositions.tripitaka.top}px`,
+                left: `${bookPositions.tripitaka.left}px`,
+                width: `${bookPositions.tripitaka.width}px`,
+                height: `${bookPositions.tripitaka.height}px`,
+              }}
+              className="absolute transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Tripitaka"
               aria-label="Explore Tripitaka"
             >
               <div className="w-full h-full bg-transparent rounded border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300" />
             </button>
 
-            {/* Bhagavad Gita - Outline around the book */}
+            {/* Bhagavad Gita - Dynamically positioned outline */}
             <button
               onClick={() => handleScriptureClick('hinduism')}
-              className="absolute top-[46.5%] right-[7%] w-[72px] h-[90px] md:top-[52%] md:right-[21%] md:w-[80px] md:h-[102px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              style={{
+                top: `${bookPositions.bhagavadGita.top}px`,
+                right: `${bookPositions.bhagavadGita.right}px`,
+                width: `${bookPositions.bhagavadGita.width}px`,
+                height: `${bookPositions.bhagavadGita.height}px`,
+              }}
+              className="absolute transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Bhagavad Gita"
               aria-label="Explore Bhagavad Gita"
             >
