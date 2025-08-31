@@ -151,7 +151,7 @@ export default function LandingPage({
             {/* Quran - Outline around the book */}
             <button
               onClick={() => handleScriptureClick('islam')}
-              className="absolute top-[33%] left-1/2 -translate-x-1/2 w-[80px] h-[100px] md:top-[37%] md:left-1/2 md:-translate-x-1/2 md:w-[92px] md:h-[116px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
+              className="absolute top-[32%] left-1/2 -translate-x-1/2 w-[80px] h-[100px] md:top-[36%] md:left-1/2 md:-translate-x-1/2 md:w-[92px] md:h-[116px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
               title="Explore Quran"
               aria-label="Explore Quran"
             >
