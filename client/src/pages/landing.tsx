@@ -136,56 +136,56 @@ export default function LandingPage({
             }}
           />
           
-          {/* Clickable Scripture Areas positioned over the image - Desktop Only */}
-          <div className="absolute inset-0 hidden md:block">
-            {/* Torah - Top Left */}
+          {/* Clickable Scripture Areas positioned over the image */}
+          <div className="absolute inset-0">
+            {/* Torah - Top Left (Mobile: Left, Desktop: Top Left) */}
             <button
               onClick={() => handleScriptureClick('judaism')}
-              className="absolute top-[20%] left-[15%] w-16 h-24 md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              className="absolute top-[25%] left-[20%] w-16 h-20 md:top-[22%] md:left-[18%] md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Torah"
               aria-label="Explore Torah"
             >
-              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-yellow-300/70 hover:bg-yellow-200/10 transition-all duration-300" />
+              <div className="w-full h-full bg-yellow-200/5 rounded-lg border-2 border-yellow-300/20 hover:border-yellow-300/70 hover:bg-yellow-200/15 transition-all duration-300 backdrop-blur-sm" />
             </button>
 
             {/* Quran - Top Center */}
             <button
               onClick={() => handleScriptureClick('islam')}
-              className="absolute top-[18%] left-1/2 -translate-x-1/2 w-16 h-24 md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
+              className="absolute top-[25%] left-1/2 -translate-x-1/2 w-16 h-20 md:top-[20%] md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
               title="Explore Quran"
               aria-label="Explore Quran"
             >
-              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-teal-300/70 hover:bg-teal-200/10 transition-all duration-300" />
+              <div className="w-full h-full bg-teal-200/5 rounded-lg border-2 border-teal-300/20 hover:border-teal-300/70 hover:bg-teal-200/15 transition-all duration-300 backdrop-blur-sm" />
             </button>
 
-            {/* Bible - Top Right */}
+            {/* Bible - Top Right (Mobile: Right, Desktop: Top Right) */}
             <button
               onClick={() => handleScriptureClick('christianity')}
-              className="absolute top-[20%] right-[15%] w-16 h-24 md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
+              className="absolute top-[25%] right-[20%] w-16 h-20 md:top-[22%] md:right-[18%] md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
               title="Explore Bible"
               aria-label="Explore Bible"
             >
-              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-blue-300/70 hover:bg-blue-200/10 transition-all duration-300" />
+              <div className="w-full h-full bg-blue-200/5 rounded-lg border-2 border-blue-300/20 hover:border-blue-300/70 hover:bg-blue-200/15 transition-all duration-300 backdrop-blur-sm" />
             </button>
 
-            {/* Tripitaka - Middle Left */}
+            {/* Tripitaka - Bottom Left (Mobile: Bottom Left, Desktop: Middle Left) */}
             <button
               onClick={() => handleScriptureClick('buddhism')}
-              className="absolute top-[42%] left-[12%] w-16 h-24 md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(147,51,234,0.8)] z-10"
+              className="absolute top-[40%] left-[25%] w-16 h-20 md:top-[45%] md:left-[15%] md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(147,51,234,0.8)] z-10"
               title="Explore Tripitaka"
               aria-label="Explore Tripitaka"
             >
-              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-purple-300/70 hover:bg-purple-200/10 transition-all duration-300" />
+              <div className="w-full h-full bg-purple-200/5 rounded-lg border-2 border-purple-300/20 hover:border-purple-300/70 hover:bg-purple-200/15 transition-all duration-300 backdrop-blur-sm" />
             </button>
 
-            {/* Bhagavad Gita - Middle Right */}
+            {/* Bhagavad Gita - Bottom Right (Mobile: Bottom Right, Desktop: Middle Right) */}
             <button
               onClick={() => handleScriptureClick('hinduism')}
-              className="absolute top-[42%] right-[12%] w-16 h-24 md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(249,115,22,0.8)] z-10"
+              className="absolute top-[40%] right-[25%] w-16 h-20 md:top-[45%] md:right-[15%] md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(249,115,22,0.8)] z-10"
               title="Explore Bhagavad Gita"
               aria-label="Explore Bhagavad Gita"
             >
-              <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-orange-300/70 hover:bg-orange-200/10 transition-all duration-300" />
+              <div className="w-full h-full bg-orange-200/5 rounded-lg border-2 border-orange-300/20 hover:border-orange-300/70 hover:bg-orange-200/15 transition-all duration-300 backdrop-blur-sm" />
             </button>
           </div>
           
