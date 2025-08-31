@@ -39,16 +39,7 @@ export default function LandingPage({
   const [, setLocation] = useLocation();
   const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
   const prefersReduced = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const heroContainerRef = useRef<HTMLDivElement>(null);
-  
-  // Dynamic book positions with robust calculations
-  const [bookPositions, setBookPositions] = useState({
-    Torah: { top: 0, left: 0, width: 0, height: 0 },
-    Quran: { top: 0, left: 0, width: 0, height: 0 },
-    Bible: { top: 0, right: 0, width: 0, height: 0 },
-    Tripitaka: { top: 0, left: 0, width: 0, height: 0 },
-    "Bhagavad Gita": { top: 0, right: 0, width: 0, height: 0 }
-  });
+  const heroImageRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     if (prefersReduced) return;
@@ -69,75 +60,16 @@ export default function LandingPage({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
   
-  // Robust dynamic positioning with debounced resize handling
+  // Debug image dimensions on load
   useEffect(() => {
-    // Debounce function to prevent excessive recalculations
-    const debounce = (fn: () => void, delay: number) => {
-      let timeout: NodeJS.Timeout;
-      return () => {
-        clearTimeout(timeout);
-        timeout = setTimeout(fn, delay);
-      };
-    };
-
-    const updateBookPositions = () => {
-      if (!heroContainerRef.current) return;
-      
-      const hero = heroContainerRef.current;
-      const { width, height } = hero.getBoundingClientRect();
-      
-      // Base calculations on image's natural aspect ratio
-      const baseWidth = 1200; // Natural width of rellio-hero.jpg
-      const scale = width / baseWidth;
-      const offset = window.innerWidth < 640 ? 8 : 12; // Mobile vs desktop
-      
-      // Define proportional coordinates for each book relative to image
-      const bookCoords = {
-        Torah: { topPercent: 0.15, leftPercent: 0.25, baseWidth: 28, baseHeight: 36 },
-        Quran: { topPercent: 0.08, leftPercent: 0.5, baseWidth: 32, baseHeight: 40 },
-        Bible: { topPercent: 0.15, rightPercent: 0.25, baseWidth: 28, baseHeight: 36 },
-        Tripitaka: { bottomPercent: 0.25, leftPercent: 0.2, baseWidth: 26, baseHeight: 34 },
-        "Bhagavad Gita": { bottomPercent: 0.25, rightPercent: 0.2, baseWidth: 30, baseHeight: 38 }
-      };
-      
-      const newPositions: typeof bookPositions = {};
-      
-      Object.entries(bookCoords).forEach(([bookName, coords]) => {
-        const scaledWidth = coords.baseWidth * scale + offset * 2;
-        const scaledHeight = coords.baseHeight * scale + offset * 2;
-        
-        newPositions[bookName as keyof typeof bookPositions] = {
-          top: coords.topPercent ? height * coords.topPercent - offset : 
-               coords.bottomPercent ? height - (height * coords.bottomPercent) - scaledHeight + offset : 0,
-          left: coords.leftPercent ? width * coords.leftPercent - offset - (scaledWidth / 2) : 0,
-          right: coords.rightPercent ? width * coords.rightPercent - offset : undefined,
-          width: scaledWidth,
-          height: scaledHeight
-        };
+    const img = heroImageRef.current;
+    if (img && img.complete) {
+      console.log('Hero image dimensions:', {
+        natural: { width: img.naturalWidth, height: img.naturalHeight },
+        rendered: { width: img.width, height: img.height }
       });
-      
-      setBookPositions(newPositions);
-      
-      // Debug logging
-      console.log('Updated book positions:', {
-        containerSize: { width, height },
-        scale,
-        offset,
-        positions: newPositions
-      });
-    };
-    
-    // Initial update
-    updateBookPositions();
-    
-    // Debounced resize handler
-    const debouncedUpdate = debounce(updateBookPositions, 200);
-    window.addEventListener('resize', debouncedUpdate);
-    
-    return () => {
-      window.removeEventListener('resize', debouncedUpdate);
-    };
-  }, [isMobile]);
+    }
+  }, []);
 
   const handleGetStarted = () => setLocation("/dashboard");
   const handleWatchDemo = () =>
@@ -204,93 +136,111 @@ export default function LandingPage({
 
         {/* HERO SECTION */}
         <section 
-          ref={heroContainerRef}
           aria-label="Rellio hero" 
-          className="relative isolate h-screen overflow-hidden pt-20"
+          className="relative isolate flex min-h-screen items-center justify-center overflow-hidden"
         >
-          {/* Hero Image Background */}
-          <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          {/* Hero Image with Clickable Map Areas */}
+          <img
+            ref={heroImageRef}
+            src={isMobile ? mobileHeroImage : heroImage}
+            alt="Rellio cosmic hero with sacred scriptures"
+            className="w-full h-auto min-h-screen object-cover"
+            useMap="#scriptureBookMap"
             style={{
-              backgroundImage: `url(${isMobile ? mobileHeroImage : heroImage})`,
               transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
-              willChange: "transform",
-              backgroundSize: isMobile ? "contain" : "cover",
-              backgroundPosition: "center center",
+              willChange: "transform"
+            }}
+            onLoad={() => {
+              const img = heroImageRef.current;
+              if (img) {
+                console.log('Hero image loaded:', {
+                  natural: { width: img.naturalWidth, height: img.naturalHeight },
+                  rendered: { width: img.width, height: img.height }
+                });
+              }
             }}
           />
           
-          {/* Clickable Scripture Areas positioned dynamically over the image */}
-          <div className="absolute inset-0">
-            {/* Torah - Dynamically positioned outline */}
-            <button
+          {/* Image Map for Scripture Books */}
+          <map name="scriptureBookMap">
+            {/* Torah - Top Left */}
+            <area
+              shape="rect"
+              coords="240,270,360,450"
+              alt="Torah"
+              title="Explore Torah - Sacred Jewish text"
               onClick={() => handleScriptureClick('judaism')}
-              style={{
-                top: `${bookPositions.Torah.top}px`,
-                left: `${bookPositions.Torah.left}px`,
-                width: `${bookPositions.Torah.width}px`,
-                height: `${bookPositions.Torah.height}px`,
-              }}
-              className="absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-20 rounded"
-              title="Explore Torah"
-              aria-label="Explore Torah"
+              className="cursor-pointer"
             />
-
-            {/* Quran - Dynamically positioned outline */}
-            <button
+            
+            {/* Quran - Top Center */}
+            <area
+              shape="rect"
+              coords="540,144,660,324"
+              alt="Quran"
+              title="Explore Quran - Sacred Islamic text"
               onClick={() => handleScriptureClick('islam')}
-              style={{
-                top: `${bookPositions.Quran.top}px`,
-                left: `${bookPositions.Quran.left}px`,
-                width: `${bookPositions.Quran.width}px`,
-                height: `${bookPositions.Quran.height}px`,
-              }}
-              className="absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-20 rounded"
-              title="Explore Quran"
-              aria-label="Explore Quran"
+              className="cursor-pointer"
             />
-
-            {/* Bible - Dynamically positioned outline */}
-            <button
+            
+            {/* Bible - Top Right */}
+            <area
+              shape="rect"
+              coords="840,270,960,450"
+              alt="Bible"
+              title="Explore Bible - Sacred Christian text"
               onClick={() => handleScriptureClick('christianity')}
-              style={{
-                top: `${bookPositions.Bible.top}px`,
-                right: `${bookPositions.Bible.right}px`,
-                width: `${bookPositions.Bible.width}px`,
-                height: `${bookPositions.Bible.height}px`,
-              }}
-              className="absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-20 rounded"
-              title="Explore Bible"
-              aria-label="Explore Bible"
+              className="cursor-pointer"
             />
-
-            {/* Tripitaka - Dynamically positioned outline */}
-            <button
+            
+            {/* Tripitaka - Bottom Left */}
+            <area
+              shape="rect"
+              coords="180,1350,300,1530"
+              alt="Tripitaka"
+              title="Explore Tripitaka - Sacred Buddhist texts"
               onClick={() => handleScriptureClick('buddhism')}
-              style={{
-                top: `${bookPositions.Tripitaka.top}px`,
-                left: `${bookPositions.Tripitaka.left}px`,
-                width: `${bookPositions.Tripitaka.width}px`,
-                height: `${bookPositions.Tripitaka.height}px`,
-              }}
-              className="absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-20 rounded"
-              title="Explore Tripitaka"
-              aria-label="Explore Tripitaka"
+              className="cursor-pointer"
             />
-
-            {/* Bhagavad Gita - Dynamically positioned outline */}
-            <button
+            
+            {/* Bhagavad Gita - Bottom Right */}
+            <area
+              shape="rect"
+              coords="900,1350,1020,1530"
+              alt="Bhagavad Gita"
+              title="Explore Bhagavad Gita - Sacred Hindu text"
               onClick={() => handleScriptureClick('hinduism')}
-              style={{
-                top: `${bookPositions["Bhagavad Gita"].top}px`,
-                right: `${bookPositions["Bhagavad Gita"].right}px`,
-                width: `${bookPositions["Bhagavad Gita"].width}px`,
-                height: `${bookPositions["Bhagavad Gita"].height}px`,
-              }}
-              className="absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-20 rounded"
-              title="Explore Bhagavad Gita"
-              aria-label="Explore Bhagavad Gita"
+              className="cursor-pointer"
             />
+          </map>
+          
+          {/* Gradient overlays to enhance cosmic atmosphere */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/20 to-black/50" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_40%_at_50%_60%,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_40%,rgba(0,0,0,0.55)_100%)]" />
+          
+          {/* Center content overlay */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-28 pb-24 text-center">
+              {/* Compass Logo */}
+              <div className="mx-auto mb-8 flex justify-center">
+                <img
+                  src={compassLogo}
+                  alt="Rellio compass logo"
+                  className="h-16 w-16 md:h-20 md:w-20 object-contain animate-pulse [animation-duration:3s] drop-shadow-[0_0_20px_rgba(255,215,0,0.4)]"
+                  loading="eager"
+                />
+              </div>
+              
+              {/* Main Title */}
+              <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-[0.3em] text-yellow-200 mb-6 drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)]">
+                RELLIO
+              </h1>
+              
+              {/* Tagline */}
+              <p className="font-serif text-lg sm:text-xl md:text-2xl tracking-[0.4em] text-yellow-300/90 mb-12 drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]">
+                GUIDING WISDOM. ETERNAL CONNECTION.
+              </p>
+            </div>
           </div>
           
           {/* Mobile Navigation Helper */}

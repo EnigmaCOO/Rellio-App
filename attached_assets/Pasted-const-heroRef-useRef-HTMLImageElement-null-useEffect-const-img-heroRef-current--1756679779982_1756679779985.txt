@@ -1,0 +1,64 @@
+const heroRef = useRef<HTMLImageElement>(null);
+
+useEffect(() => {
+  const img = heroRef.current;
+  if (img) {
+    console.log("Image dimensions:", img.naturalWidth, img.naturalHeight); // Debug
+  }
+}, []);
+
+return (
+  <section aria-label="Rellio hero" className="relative isolate flex min-h-screen items-center justify-center overflow-hidden">
+    <img
+      ref={heroRef}
+      src={bgUrl}
+      alt="Rellio cosmic hero with scriptures"
+      className="w-full h-auto min-h-screen object-cover pointer-events-none"
+      useMap="#bookMap"
+      style={{ transform: `translateY(${prefersReduced ? 0 : offset * 0.6}px)` }}
+    />
+    <map name="bookMap">
+      <area
+        shape="rect"
+        coords="240,180,360,360" // Approx. Torah position (25%, 15% to 30%, 30% of 1200x1800)
+        alt="Torah"
+        title="Explore Torah"
+        onClick={() => handleScriptureClick("judaism")}
+      />
+      <area
+        shape="rect"
+        coords="540,96,660,276" // Approx. Quran position (45%, 8% to 55%, 23%)
+        alt="Quran"
+        title="Explore Quran"
+        onClick={() => handleScriptureClick("islam")}
+      />
+      <area
+        shape="rect"
+        coords="840,180,960,360" // Approx. Bible position (70%, 15% to 80%, 30%)
+        alt="Bible"
+        title="Explore Bible"
+        onClick={() => handleScriptureClick("christianity")}
+      />
+      <area
+        shape="rect"
+        coords="180,1350,300,1530" // Approx. Tripitaka position (15%, 75% to 25%, 85%)
+        alt="Tripitaka"
+        title="Explore Tripitaka"
+        onClick={() => handleScriptureClick("buddhism")}
+      />
+      <area
+        shape="rect"
+        coords="900,1350,1020,1530" // Approx. Bhagavad Gita position (75%, 75% to 85%, 85%)
+        alt="Bhagavad Gita"
+        title="Explore Bhagavad Gita"
+        onClick={() => handleScriptureClick("hinduism")}
+      />
+    </map>
+    {/* Gradient overlays */}
+    <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-black via-black/20 to-black/50" />
+    <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_40%_at_50%_60%,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_40%,rgba(0,0,0,0.55)_100%)]" />
+    {/* Center content */}
+    <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-28 pb-24 text-center">
+      {/* Existing logo, tagline, CTAs, and labels */}
+    </div>
+  </section>
