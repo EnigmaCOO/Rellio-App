@@ -171,11 +171,11 @@ export default function LandingPage({
             {/* Tripitaka - Outline around the book */}
             <button
               onClick={() => handleScriptureClick('buddhism')}
-              className="absolute top-[47%] left-[9%] w-[60px] h-[84px] md:top-[56%] md:left-[14%] md:w-[68px] md:h-[96px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(147,51,234,0.8)] z-10"
+              className="absolute top-[46%] left-[9%] w-[60px] h-[84px] md:top-[55%] md:left-[14%] md:w-[68px] md:h-[96px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(236,72,153,0.8)] z-10"
               title="Explore Tripitaka"
               aria-label="Explore Tripitaka"
             >
-              <div className="w-full h-full bg-transparent rounded border-2 border-purple-300/60 hover:border-purple-300/90 transition-all duration-300" />
+              <div className="w-full h-full bg-transparent rounded border-2 border-pink-300/60 hover:border-pink-300/90 transition-all duration-300" />
             </button>
 
             {/* Bhagavad Gita - Outline around the book */}
