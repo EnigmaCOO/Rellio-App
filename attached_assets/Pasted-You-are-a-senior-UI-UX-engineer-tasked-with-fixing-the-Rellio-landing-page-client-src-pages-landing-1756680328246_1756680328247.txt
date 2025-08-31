@@ -1,0 +1,121 @@
+You are a senior UI/UX engineer tasked with fixing the Rellio landing page (client/src/pages/landing.tsx) to ensure clickable placeholders for the scripture books (Qur’an, Bible, Torah, Bhagavad Gita, Tripitaka) align with `/assets/rellio-hero.jpg` and are functional across all screen sizes, resolving the current non-clickable issue. Preserve all existing functionality, routing, and APIs, and align with Rellio’s "Guiding Wisdom. Eternal Connection" brand.
+
+- Preserve existing functionality (e.g., `handleScriptureClick`, CTAs, parallax).
+- Modify only styles, markup, and minimal JavaScript in `landing.tsx`; avoid complex state logic.
+- Write accessible, responsive, and performant code using Tailwind CSS.
+- Produce a single PR with clear commits (e.g., "fix(ui): resolve non-clickable book placeholders", "refactor: simplify hero interaction").
+- Maintain Rellio’s luxury-spiritual essence.
+
+#### TASK BRIEF (paste after system block)
+Goal: Fix the non-clickable and misaligned book placeholders in the `LandingPage.tsx` hero section, where the previous image map attempt failed. Implement styled `<button>` overlays with simplified dynamic positioning based on the background image’s rendered size, ensuring they align with the books in `/assets/rellio-hero.jpg` and trigger `handleScriptureClick`. Preserve the cosmic hero design (golden compass, seeker silhouette, unity orb) and add debug features to validate placement.
+
+1) **Button Overlay Implementation**
+   - Use a `<div>` with `bgUrl` as the background and overlay `<button>` elements for each book.
+   - Use `useEffect` to set initial positions based on the container’s size, with manual adjustments for responsiveness.
+   - Define base coordinates relative to a 1200x1800 image (verify actual size) and apply offsets (8px mobile, 12px desktop) as borders.
+   - Example structure:
+     ```tsx
+     const heroRef = useRef<HTMLDivElement>(null);
+
+     useEffect(() => {
+       const hero = heroRef.current;
+       if (hero) {
+         const { width, height } = hero.getBoundingClientRect();
+         const baseWidth = 1200; // Verify with actual image
+         const scale = width / baseWidth;
+         const offset = window.innerWidth < 640 ? 8 : 12;
+         const books = hero.querySelectorAll(".book-btn");
+         books.forEach((btn) => {
+           const name = btn.getAttribute("data-book");
+           let top, left, right, bottom;
+           switch (name) {
+             case "Torah":
+               top = height * 0.15 - offset;
+               left = width * 0.25 - offset;
+               break;
+             case "Quran":
+               top = height * 0.08 - offset;
+               left = width * 0.5 - offset;
+               break;
+             case "Bible":
+               top = height * 0.15 - offset;
+               right = width * 0.25 - offset;
+               break;
+             case "Tripitaka":
+               bottom = height * 0.25 - offset;
+               left = width * 0.2 - offset;
+               break;
+             case "Bhagavad Gita":
+               bottom = height * 0.25 - offset;
+               right = width * 0.2 - offset;
+               break;
+           }
+           btn.style.top = `${top}px`;
+           btn.style.left = `${left}px`;
+           btn.style.right = right ? `${right}px` : "";
+           btn.style.bottom = bottom ? `${bottom}px` : "";
+           btn.style.width = `${28 * scale + offset * 2}px`;
+           btn.style.height = `${36 * scale + offset * 2}px`;
+           console.log(`Position for ${name}:`, { top, left, right, bottom, width: btn.style.width, height: btn.style.height }); // Debug
+         });
+       }
+     }, []);
+
+     return (
+       <section
+         ref={heroRef}
+         aria-label="Rellio hero"
+         className="relative isolate flex min-h-screen items-center justify-center overflow-hidden"
+       >
+         <div
+           className="hero-bg pointer-events-none absolute inset-0 -z-20 bg-cover bg-center"
+           style={{
+             backgroundImage: `url(${bgUrl})`,
+             transform: `translateY(${prefersReduced ? 0 : offset * 0.6}px)`,
+             willChange: "transform",
+           }}
+         />
+         <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-black via-black/20 to-black/50" />
+         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_40%_at_50%_60%,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_40%,rgba(0,0,0,0.55)_100%)]" />
+         <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-28 pb-24 text-center">
+           {/* Logo, tagline, CTAs, labels */}
+           <button
+             data-book="Torah"
+             onClick={() => handleScriptureClick("judaism")}
+             className="book-btn absolute bg-transparent border-2 border-yellow-400 hover:border-yellow-300 z-20"
+             style={{ transform: "rotate(-30deg)" }}
+           />
+           {/* Repeat for Quran, Bible, Tripitaka, Bhagavad Gita with respective rotations */}
+         </div>
+       </section>
+     );
+     ```
+
+2) **Responsive Design**
+   - Use Tailwind’s `sm:`, `md:`, `lg:` to adjust button sizes and offsets at breakpoints (e.g., `md:w-28 md:h-36`).
+   - Ensure the hero container uses `min-h-screen` and `max-w-5xl` with flexible padding.
+
+3) **Debugging and Validation**
+   - Add temporary borders (`border-2 border-red-500`) to buttons during testing.
+   - Use `console.log` to output positions and verify alignment with the image.
+   - Test on mobile (320px), tablet (768px), and desktop (1280px).
+
+4) **Acceptance Criteria**
+   - Book buttons are clickable and align with `/assets/rellio-hero.jpg` books across all screen sizes.
+   - No overlap or drift; borders frame books with 8px (mobile) or 12px (desktop) offsets.
+   - Parallax, CTAs, and other features remain functional.
+   - No console errors; Lighthouse Performance ≥ 90.
+
+5) **Implementation Steps**
+   1. Replace the hero button structure with the updated overlay in `LandingPage.tsx`.
+   2. Add `useEffect` with initial position calculation.
+   3. Test clickability and alignment, adjusting coordinates if needed.
+   4. Commit with: "fix(ui): resolve non-clickable book placeholders", "refactor: simplify hero interaction".
+
+#### FINAL INSTRUCTION
+Implement the fix, submit a PR passing acceptance criteria and lint/build checks. Preserve existing logic, adding only the overlay and effect. Ensure a seamless, luxurious spiritual experience. If issues persist, share the updated code, console logs, or a deployed URL—let’s debug this step-by-step until it’s perfect!
+
+#### Additional Notes
+- **Verify Image Size**: Check `/assets/rellio-hero.jpg` dimensions and adjust `baseWidth` (e.g., 1200) in `useEffect`.
+- **Manual Adjustment**: If alignment is off, tweak percentage values (e.g., `height * 0.15`) based on debug logs.
+- **Fallback**: If buttons still fail, we can revert to an SVG overlay—let me know if you’d like to pursue that next!

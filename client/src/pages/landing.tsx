@@ -39,7 +39,7 @@ export default function LandingPage({
   const [, setLocation] = useLocation();
   const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
   const prefersReduced = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const heroImageRef = useRef<HTMLImageElement>(null);
+  const heroContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (prefersReduced) return;
@@ -60,28 +60,84 @@ export default function LandingPage({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
   
-  // Debug image dimensions and verify coordinates
+  // Dynamic button positioning based on hero container size
   useEffect(() => {
-    const img = heroImageRef.current;
-    if (img && img.complete) {
-      console.log('Hero image dimensions:', {
-        natural: { width: img.naturalWidth, height: img.naturalHeight },
-        rendered: { width: img.width, height: img.height },
-        aspectRatio: img.naturalWidth / img.naturalHeight
+    const hero = heroContainerRef.current;
+    if (hero) {
+      const { width, height } = hero.getBoundingClientRect();
+      const baseWidth = 1024; // Actual image width from console logs
+      const scale = width / baseWidth;
+      const offset = window.innerWidth < 640 ? 8 : 12;
+      
+      const books = hero.querySelectorAll('.book-btn');
+      books.forEach((btn) => {
+        const name = btn.getAttribute('data-book');
+        let top, left, right, bottom, buttonWidth, buttonHeight;
+        
+        switch (name) {
+          case 'Torah':
+            top = height * 0.24 - offset;
+            left = width * 0.26 - offset;
+            buttonWidth = 80 * scale + offset * 2;
+            buttonHeight = 100 * scale + offset * 2;
+            break;
+          case 'Quran':
+            top = height * 0.22 - offset;
+            left = width * 0.50 - (90 * scale / 2) - offset;
+            buttonWidth = 90 * scale + offset * 2;
+            buttonHeight = 110 * scale + offset * 2;
+            break;
+          case 'Bible':
+            top = height * 0.24 - offset;
+            right = width * 0.26 - offset;
+            buttonWidth = 80 * scale + offset * 2;
+            buttonHeight = 100 * scale + offset * 2;
+            break;
+          case 'Tripitaka':
+            bottom = height * 0.28 - offset;
+            left = width * 0.21 - offset;
+            buttonWidth = 75 * scale + offset * 2;
+            buttonHeight = 95 * scale + offset * 2;
+            break;
+          case 'Bhagavad Gita':
+            bottom = height * 0.28 - offset;
+            right = width * 0.21 - offset;
+            buttonWidth = 85 * scale + offset * 2;
+            buttonHeight = 105 * scale + offset * 2;
+            break;
+        }
+        
+        btn.style.top = top !== undefined ? `${top}px` : '';
+        btn.style.left = left !== undefined ? `${left}px` : '';
+        btn.style.right = right !== undefined ? `${right}px` : '';
+        btn.style.bottom = bottom !== undefined ? `${bottom}px` : '';
+        btn.style.width = `${buttonWidth}px`;
+        btn.style.height = `${buttonHeight}px`;
+        
+        console.log(`Position for ${name}:`, {
+          top, left, right, bottom, 
+          width: buttonWidth, height: buttonHeight,
+          scale: scale.toFixed(2)
+        });
       });
-      console.log('Image map coordinates are based on natural dimensions');
+      
+      console.log('Hero container dimensions:', {
+        width, height, scale: scale.toFixed(2), offset
+      });
     }
-  }, []);
+  }, [isMobile]);
   
-  // Add resize listener for debugging
+  // Add resize listener for recalculation
   useEffect(() => {
     const handleResize = () => {
-      const img = heroImageRef.current;
-      if (img) {
-        console.log('Window resized - Image size:', {
-          rendered: { width: img.width, height: img.height },
-          viewport: { width: window.innerWidth, height: window.innerHeight }
-        });
+      const hero = heroContainerRef.current;
+      if (hero) {
+        setTimeout(() => {
+          const { width, height } = hero.getBoundingClientRect();
+          console.log('Window resized - Hero container:', {
+            width, height, viewport: { width: window.innerWidth, height: window.innerHeight }
+          });
+        }, 100);
       }
     };
     
@@ -154,107 +210,66 @@ export default function LandingPage({
 
         {/* HERO SECTION */}
         <section 
+          ref={heroContainerRef}
           aria-label="Rellio hero" 
           className="relative isolate flex min-h-screen items-center justify-center overflow-hidden"
         >
-          {/* Hero Image with Clickable Map Areas */}
-          <img
-            ref={heroImageRef}
-            src={isMobile ? mobileHeroImage : heroImage}
-            alt="Rellio cosmic hero with sacred scriptures"
-            className="w-full h-auto min-h-screen object-cover sm:object-contain md:object-cover"
-            useMap="#scriptureBookMap"
+          {/* Hero Background Image */}
+          <div
+            className="hero-bg pointer-events-none absolute inset-0 -z-20 bg-cover bg-center"
             style={{
+              backgroundImage: `url(${isMobile ? mobileHeroImage : heroImage})`,
               transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
-              willChange: "transform"
-            }}
-            onLoad={() => {
-              const img = heroImageRef.current;
-              if (img) {
-                console.log('Hero image loaded - Dimensions and coordinate mapping:', {
-                  natural: { width: img.naturalWidth, height: img.naturalHeight },
-                  rendered: { width: img.width, height: img.height },
-                  aspectRatio: (img.naturalWidth / img.naturalHeight).toFixed(2),
-                  coordinateSystem: 'Based on 1024x1536 actual natural dimensions',
-                  books: {
-                    Torah: 'coords="265,370,365,500" - Top Left',
-                    Quran: 'coords="462,340,562,470" - Top Center', 
-                    Bible: 'coords="659,370,759,500" - Top Right',
-                    Tripitaka: 'coords="215,570,315,700" - Bottom Left',
-                    BhagavadGita: 'coords="709,570,809,700" - Bottom Right'
-                  }
-                });
-              }
+              willChange: "transform",
+              backgroundSize: isMobile ? "contain" : "cover",
+              backgroundPosition: "center center"
             }}
           />
           
-          {/* Image Map for Scripture Books - Based on actual image positions */}
-          <map name="scriptureBookMap">
-            {/* Debug: Add temporary visual borders to verify alignment */}
-            <style>{`
-              area[title*="Torah"]:hover, 
-              area[title*="Quran"]:hover, 
-              area[title*="Bible"]:hover, 
-              area[title*="Tripitaka"]:hover, 
-              area[title*="Bhagavad"]:hover {
-                cursor: pointer !important;
-              }
-            `}</style>
-            {/* Torah - Top Left (green book with Hebrew text) */}
-            <area
-              shape="rect"
-              coords="265,370,365,500"
-              alt="Torah"
-              title="Explore Torah - Sacred Jewish text"
-              onClick={() => handleScriptureClick('judaism')}
-              className="cursor-pointer hover:opacity-80"
-              style={{ outline: 'none' }}
-            />
-            
-            {/* Quran - Top Center (dark green book with Arabic text) */}
-            <area
-              shape="rect"
-              coords="462,340,562,470"
-              alt="Quran"
-              title="Explore Quran - Sacred Islamic text"
-              onClick={() => handleScriptureClick('islam')}
-              className="cursor-pointer hover:opacity-80"
-              style={{ outline: 'none' }}
-            />
-            
-            {/* Bible - Top Right (brown book with cross) */}
-            <area
-              shape="rect"
-              coords="659,370,759,500"
-              alt="Bible"
-              title="Explore Bible - Sacred Christian text"
-              onClick={() => handleScriptureClick('christianity')}
-              className="cursor-pointer hover:opacity-80"
-              style={{ outline: 'none' }}
-            />
-            
-            {/* Tripitaka - Bottom Left (dark book with sun symbol) */}
-            <area
-              shape="rect"
-              coords="215,570,315,700"
-              alt="Tripitaka"
-              title="Explore Tripitaka - Sacred Buddhist texts"
-              onClick={() => handleScriptureClick('buddhism')}
-              className="cursor-pointer hover:opacity-80"
-              style={{ outline: 'none' }}
-            />
-            
-            {/* Bhagavad Gita - Bottom Right (orange/red book with sun symbol) */}
-            <area
-              shape="rect"
-              coords="709,570,809,700"
-              alt="Bhagavad Gita"
-              title="Explore Bhagavad Gita - Sacred Hindu text"
-              onClick={() => handleScriptureClick('hinduism')}
-              className="cursor-pointer hover:opacity-80"
-              style={{ outline: 'none' }}
-            />
-          </map>
+          {/* Scripture Book Button Overlays */}
+          <button
+            data-book="Torah"
+            onClick={() => handleScriptureClick('judaism')}
+            className="book-btn absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 hover:bg-yellow-300/10 transition-all duration-300 hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(255,215,0,0.6)] z-20 rounded"
+            title="Explore Torah - Sacred Jewish text"
+            aria-label="Explore Torah"
+            style={{ transform: 'rotate(-15deg)' }}
+          />
+          
+          <button
+            data-book="Quran"
+            onClick={() => handleScriptureClick('islam')}
+            className="book-btn absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 hover:bg-yellow-300/10 transition-all duration-300 hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(255,215,0,0.6)] z-20 rounded"
+            title="Explore Quran - Sacred Islamic text"
+            aria-label="Explore Quran"
+          />
+          
+          <button
+            data-book="Bible"
+            onClick={() => handleScriptureClick('christianity')}
+            className="book-btn absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 hover:bg-yellow-300/10 transition-all duration-300 hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(255,215,0,0.6)] z-20 rounded"
+            title="Explore Bible - Sacred Christian text"
+            aria-label="Explore Bible"
+            style={{ transform: 'rotate(15deg)' }}
+          />
+          
+          <button
+            data-book="Tripitaka"
+            onClick={() => handleScriptureClick('buddhism')}
+            className="book-btn absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 hover:bg-yellow-300/10 transition-all duration-300 hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(255,215,0,0.6)] z-20 rounded"
+            title="Explore Tripitaka - Sacred Buddhist texts"
+            aria-label="Explore Tripitaka"
+            style={{ transform: 'rotate(-10deg)' }}
+          />
+          
+          <button
+            data-book="Bhagavad Gita"
+            onClick={() => handleScriptureClick('hinduism')}
+            className="book-btn absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 hover:bg-yellow-300/10 transition-all duration-300 hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(255,215,0,0.6)] z-20 rounded"
+            title="Explore Bhagavad Gita - Sacred Hindu text"
+            aria-label="Explore Bhagavad Gita"
+            style={{ transform: 'rotate(10deg)' }}
+          />
           
           {/* Gradient overlays to enhance cosmic atmosphere */}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/20 to-black/50" />
