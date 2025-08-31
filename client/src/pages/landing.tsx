@@ -138,50 +138,50 @@ export default function LandingPage({
           
           {/* Clickable Scripture Areas positioned over the image */}
           <div className="absolute inset-0">
-            {/* Torah - Positioned exactly over the book */}
+            {/* Torah - Custom size to match book dimensions */}
             <button
               onClick={() => handleScriptureClick('judaism')}
-              className="absolute top-[28%] left-[22%] w-[68px] h-[88px] md:top-[30%] md:left-[23%] md:w-[76px] md:h-[100px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              className="absolute top-[28%] left-[22%] w-[56px] h-[84px] md:top-[28%] md:left-[26%] md:w-[64px] md:h-[96px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Torah"
               aria-label="Explore Torah"
             >
               <div className="w-full h-full bg-transparent rounded-md border border-yellow-300/25 hover:border-yellow-300/60 hover:bg-yellow-200/8 transition-all duration-300" />
             </button>
 
-            {/* Quran - Positioned exactly over the book */}
+            {/* Quran - Custom size to match book dimensions */}
             <button
               onClick={() => handleScriptureClick('islam')}
-              className="absolute top-[28%] left-1/2 -translate-x-1/2 w-[68px] h-[88px] md:top-[22%] md:w-[76px] md:h-[100px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
+              className="absolute top-[28%] left-1/2 -translate-x-1/2 w-[72px] h-[92px] md:top-[20%] md:w-[84px] md:h-[108px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
               title="Explore Quran"
               aria-label="Explore Quran"
             >
               <div className="w-full h-full bg-transparent rounded-md border border-teal-300/25 hover:border-teal-300/60 hover:bg-teal-200/8 transition-all duration-300" />
             </button>
 
-            {/* Bible - Positioned exactly over the book */}
+            {/* Bible - Custom size to match book dimensions */}
             <button
               onClick={() => handleScriptureClick('christianity')}
-              className="absolute top-[28%] right-[22%] w-[68px] h-[88px] md:top-[30%] md:right-[23%] md:w-[76px] md:h-[100px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
+              className="absolute top-[28%] right-[22%] w-[60px] h-[86px] md:top-[28%] md:right-[26%] md:w-[68px] md:h-[98px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
               title="Explore Bible"
               aria-label="Explore Bible"
             >
               <div className="w-full h-full bg-transparent rounded-md border border-blue-300/25 hover:border-blue-300/60 hover:bg-blue-200/8 transition-all duration-300" />
             </button>
 
-            {/* Tripitaka - Positioned exactly over the book */}
+            {/* Tripitaka - Custom size to match book dimensions */}
             <button
               onClick={() => handleScriptureClick('buddhism')}
-              className="absolute top-[55%] left-[18%] w-[68px] h-[88px] md:top-[50%] md:left-[18%] md:w-[76px] md:h-[100px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(147,51,234,0.8)] z-10"
+              className="absolute top-[55%] left-[18%] w-[52px] h-[76px] md:top-[48%] md:left-[16%] md:w-[60px] md:h-[88px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(147,51,234,0.8)] z-10"
               title="Explore Tripitaka"
               aria-label="Explore Tripitaka"
             >
               <div className="w-full h-full bg-transparent rounded-md border border-purple-300/25 hover:border-purple-300/60 hover:bg-purple-200/8 transition-all duration-300" />
             </button>
 
-            {/* Bhagavad Gita - Positioned exactly over the book */}
+            {/* Bhagavad Gita - Custom size to match book dimensions */}
             <button
               onClick={() => handleScriptureClick('hinduism')}
-              className="absolute top-[55%] right-[18%] w-[68px] h-[88px] md:top-[50%] md:right-[18%] md:w-[76px] md:h-[100px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(249,115,22,0.8)] z-10"
+              className="absolute top-[55%] right-[18%] w-[64px] h-[82px] md:top-[48%] md:right-[16%] md:w-[72px] md:h-[94px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(249,115,22,0.8)] z-10"
               title="Explore Bhagavad Gita"
               aria-label="Explore Bhagavad Gita"
             >
