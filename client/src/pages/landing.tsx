@@ -18,6 +18,10 @@ import {
   Brain,
   Route,
   Target,
+  Mail,
+  Phone,
+  Globe,
+  Send,
 } from "lucide-react";
 import heroImage from "@assets/rellio-hero-latest.png";
 import mobileHeroImage from "@assets/rellio-mobile-hero.png";
@@ -362,6 +366,105 @@ export default function LandingPage({
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CONTACT SECTION */}
+        <section id="contact" className="bg-black py-24 text-yellow-100/85">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="text-center mb-16">
+              <h2 className="font-serif text-2xl tracking-[0.3em] text-yellow-200 mb-4">CONNECT WITH US</h2>
+              <p className="font-serif text-lg tracking-[0.2em] text-yellow-200/80">GET IN TOUCH</p>
+              <p className="font-serif text-sm tracking-[0.3em] text-yellow-300/60 mt-2">SACRED CONNECTIONS</p>
+            </div>
+            
+            <div className="grid gap-12 lg:grid-cols-2">
+              {/* Contact Information */}
+              <div className="space-y-8">
+                <div className="text-center lg:text-left">
+                  <h3 className="font-serif text-xl tracking-[0.2em] text-yellow-200 mb-8">Follow Our Journey</h3>
+                  
+                  <div className="space-y-6">
+                    {/* Email */}
+                    <div className="flex items-center justify-center lg:justify-start gap-4">
+                      <div className="w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
+                        <Mail className="h-6 w-6 text-yellow-200" />
+                      </div>
+                      <div>
+                        <p className="font-serif text-yellow-200 tracking-wide">hello@rellio.app</p>
+                      </div>
+                    </div>
+                    
+                    {/* Phone */}
+                    <div className="flex items-center justify-center lg:justify-start gap-4">
+                      <div className="w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
+                        <Phone className="h-6 w-6 text-yellow-200" />
+                      </div>
+                      <div>
+                        <p className="font-serif text-yellow-200 tracking-wide">+1 (555) RELLIO-1</p>
+                      </div>
+                    </div>
+                    
+                    {/* Location */}
+                    <div className="flex items-center justify-center lg:justify-start gap-4">
+                      <div className="w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
+                        <Globe className="h-6 w-6 text-yellow-200" />
+                      </div>
+                      <div>
+                        <p className="font-serif text-yellow-200 tracking-wide">Digital Platform - Serving Globally</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Contact Form */}
+              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-8">
+                <h3 className="font-serif text-xl tracking-[0.2em] text-yellow-200 mb-2 text-center">Send us a Message</h3>
+                <p className="text-sm text-yellow-100/70 mb-8 text-center">We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
+                
+                <form className="space-y-6">
+                  {/* Name Field */}
+                  <div>
+                    <label className="block text-sm font-serif text-yellow-200 mb-2 tracking-wide">Your Name</label>
+                    <input 
+                      type="text" 
+                      className="w-full px-4 py-3 rounded-lg bg-black/50 border border-yellow-300/30 text-yellow-100 placeholder-yellow-100/40 focus:border-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-200/20 transition-all duration-300"
+                      placeholder="Enter your name"
+                    />
+                  </div>
+                  
+                  {/* Email Field */}
+                  <div>
+                    <label className="block text-sm font-serif text-yellow-200 mb-2 tracking-wide">Email Address</label>
+                    <input 
+                      type="email" 
+                      className="w-full px-4 py-3 rounded-lg bg-black/50 border border-yellow-300/30 text-yellow-100 placeholder-yellow-100/40 focus:border-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-200/20 transition-all duration-300"
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                  
+                  {/* Message Field */}
+                  <div>
+                    <label className="block text-sm font-serif text-yellow-200 mb-2 tracking-wide">Your Message</label>
+                    <textarea 
+                      rows={6}
+                      className="w-full px-4 py-3 rounded-lg bg-black/50 border border-yellow-300/30 text-yellow-100 placeholder-yellow-100/40 focus:border-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-200/20 transition-all duration-300 resize-none"
+                      placeholder="Share your thoughts, questions, or feedback..."
+                    />
+                  </div>
+                  
+                  {/* Submit Button */}
+                  <button 
+                    type="submit"
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-yellow-600/90 to-yellow-500/90 backdrop-blur-sm px-8 py-3 font-serif text-sm font-semibold tracking-[0.2em] text-black transition-all duration-300 hover:from-yellow-500 hover:to-yellow-400 hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+                  >
+                    <Send className="h-4 w-4" />
+                    SEND SACRED MESSAGE
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         </section>
