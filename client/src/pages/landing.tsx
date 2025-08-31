@@ -158,7 +158,7 @@ export default function LandingPage({
               data-book="Torah"
               onClick={() => handleScriptureClick('judaism')}
               className="absolute bg-transparent border-2 border-yellow-400 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 w-20 h-28 sm:w-24 sm:h-32 md:w-28 md:h-36 lg:w-32 lg:h-40 pointer-events-auto rounded"
-              style={{ top: "15%", left: "25%", transform: "rotate(-15deg)" }}
+              style={{ top: "24%", left: "26%", transform: "rotate(-15deg)" }}
               title="Explore Torah - Sacred Jewish text"
               aria-label="Explore Torah"
             />
@@ -168,7 +168,7 @@ export default function LandingPage({
               data-book="Quran"
               onClick={() => handleScriptureClick('islam')}
               className="absolute bg-transparent border-2 border-teal-400 hover:border-teal-300 hover:bg-teal-400/10 transition-all duration-300 hover:scale-105 z-20 w-20 h-28 sm:w-24 sm:h-32 md:w-28 md:h-36 lg:w-32 lg:h-40 pointer-events-auto rounded"
-              style={{ top: "8%", left: "50%", transform: "translateX(-50%)" }}
+              style={{ top: "22%", left: "50%", transform: "translateX(-50%)" }}
               title="Explore Quran - Sacred Islamic text"
               aria-label="Explore Quran"
             />
@@ -178,7 +178,7 @@ export default function LandingPage({
               data-book="Bible"
               onClick={() => handleScriptureClick('christianity')}
               className="absolute bg-transparent border-2 border-blue-400 hover:border-blue-300 hover:bg-blue-400/10 transition-all duration-300 hover:scale-105 z-20 w-20 h-28 sm:w-24 sm:h-32 md:w-28 md:h-36 lg:w-32 lg:h-40 pointer-events-auto rounded"
-              style={{ top: "15%", right: "25%", transform: "rotate(15deg)" }}
+              style={{ top: "24%", right: "26%", transform: "rotate(15deg)" }}
               title="Explore Bible - Sacred Christian text"
               aria-label="Explore Bible"
             />
@@ -188,7 +188,7 @@ export default function LandingPage({
               data-book="Tripitaka"
               onClick={() => handleScriptureClick('buddhism')}
               className="absolute bg-transparent border-2 border-purple-400 hover:border-purple-300 hover:bg-purple-400/10 transition-all duration-300 hover:scale-105 z-20 w-20 h-28 sm:w-24 sm:h-32 md:w-28 md:h-36 lg:w-32 lg:h-40 pointer-events-auto rounded"
-              style={{ bottom: "25%", left: "20%", transform: "rotate(-10deg)" }}
+              style={{ bottom: "28%", left: "21%", transform: "rotate(-10deg)" }}
               title="Explore Tripitaka - Sacred Buddhist texts"
               aria-label="Explore Tripitaka"
             />
@@ -198,35 +198,17 @@ export default function LandingPage({
               data-book="Bhagavad Gita"
               onClick={() => handleScriptureClick('hinduism')}
               className="absolute bg-transparent border-2 border-orange-400 hover:border-orange-300 hover:bg-orange-400/10 transition-all duration-300 hover:scale-105 z-20 w-20 h-28 sm:w-24 sm:h-32 md:w-28 md:h-36 lg:w-32 lg:h-40 pointer-events-auto rounded"
-              style={{ bottom: "25%", right: "20%", transform: "rotate(10deg)" }}
+              style={{ bottom: "28%", right: "21%", transform: "rotate(10deg)" }}
               title="Explore Bhagavad Gita - Sacred Hindu text"
               aria-label="Explore Bhagavad Gita"
             />
           </div>
           
-          {/* Center content overlay */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-28 pb-24 text-center">
-              {/* Compass Logo */}
-              <div className="mx-auto mb-8 flex justify-center">
-                <img
-                  src={compassLogo}
-                  alt="Rellio compass logo"
-                  className="h-16 w-16 md:h-20 md:w-20 object-contain animate-pulse [animation-duration:3s] drop-shadow-[0_0_20px_rgba(255,215,0,0.4)]"
-                  loading="eager"
-                />
-              </div>
-              
-              {/* Main Title */}
-              <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-[0.3em] text-yellow-200 mb-6 drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)]">
-                RELLIO
-              </h1>
-              
-              {/* Tagline */}
-              <p className="font-serif text-lg sm:text-xl md:text-2xl tracking-[0.4em] text-yellow-300/90 mb-12 drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]">
-                GUIDING WISDOM. ETERNAL CONNECTION.
-              </p>
-            </div>
+          {/* Tagline positioned over person's head */}
+          <div className="absolute top-[68%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30">
+            <p className="font-serif text-xs sm:text-sm md:text-base tracking-[0.3em] text-yellow-300/90 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] text-center whitespace-nowrap">
+              GUIDING WISDOM. ETERNAL CONNECTION.
+            </p>
           </div>
           
           {/* Mobile Navigation Helper */}
