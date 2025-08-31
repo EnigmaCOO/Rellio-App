@@ -131,61 +131,61 @@ export default function LandingPage({
               backgroundImage: `url(${isMobile ? mobileHeroImage : heroImage})`,
               transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
               willChange: "transform",
-              backgroundSize: "cover",
+              backgroundSize: isMobile ? "contain" : "cover",
               backgroundPosition: "center center",
             }}
           />
           
           {/* Clickable Scripture Areas positioned over the image */}
           <div className="absolute inset-0">
-            {/* Torah - Custom size to match book dimensions */}
+            {/* Torah - Outline around the book */}
             <button
               onClick={() => handleScriptureClick('judaism')}
-              className="absolute top-[28%] left-[22%] w-[56px] h-[84px] md:top-[28%] md:left-[26%] md:w-[64px] md:h-[96px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              className="absolute top-[26%] left-[20%] w-[56px] h-[84px] md:top-[28%] md:left-[26%] md:w-[64px] md:h-[96px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Torah"
               aria-label="Explore Torah"
             >
-              <div className="w-full h-full bg-transparent rounded-md border border-yellow-300/25 hover:border-yellow-300/60 hover:bg-yellow-200/8 transition-all duration-300" />
+              <div className="w-full h-full bg-transparent rounded border-2 border-yellow-300/40 hover:border-yellow-300/80 hover:bg-yellow-200/10 transition-all duration-300" />
             </button>
 
-            {/* Quran - Custom size to match book dimensions */}
+            {/* Quran - Outline around the book */}
             <button
               onClick={() => handleScriptureClick('islam')}
-              className="absolute top-[42%] left-1/2 -translate-x-1/2 w-[72px] h-[92px] md:top-[32%] md:left-1/2 md:-translate-x-1/2 md:w-[84px] md:h-[108px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
+              className="absolute top-[26%] left-1/2 -translate-x-1/2 w-[72px] h-[92px] md:top-[32%] md:left-1/2 md:-translate-x-1/2 md:w-[84px] md:h-[108px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
               title="Explore Quran"
               aria-label="Explore Quran"
             >
-              <div className="w-full h-full bg-transparent rounded-md border border-teal-300/25 hover:border-teal-300/60 hover:bg-teal-200/8 transition-all duration-300" />
+              <div className="w-full h-full bg-transparent rounded border-2 border-teal-300/40 hover:border-teal-300/80 hover:bg-teal-200/10 transition-all duration-300" />
             </button>
 
-            {/* Bible - Custom size to match book dimensions */}
+            {/* Bible - Outline around the book */}
             <button
               onClick={() => handleScriptureClick('christianity')}
-              className="absolute top-[32%] right-[12%] w-[60px] h-[86px] md:top-[32%] md:right-[23%] md:w-[68px] md:h-[98px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
+              className="absolute top-[26%] right-[20%] w-[60px] h-[86px] md:top-[32%] md:right-[23%] md:w-[68px] md:h-[98px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
               title="Explore Bible"
               aria-label="Explore Bible"
             >
-              <div className="w-full h-full bg-transparent rounded-md border border-blue-300/25 hover:border-blue-300/60 hover:bg-blue-200/8 transition-all duration-300" />
+              <div className="w-full h-full bg-transparent rounded border-2 border-blue-300/40 hover:border-blue-300/80 hover:bg-blue-200/10 transition-all duration-300" />
             </button>
 
-            {/* Tripitaka - Custom size to match book dimensions */}
+            {/* Tripitaka - Outline around the book */}
             <button
               onClick={() => handleScriptureClick('buddhism')}
-              className="absolute top-[58%] left-[12%] w-[52px] h-[76px] md:top-[58%] md:left-[19%] md:w-[60px] md:h-[88px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(147,51,234,0.8)] z-10"
+              className="absolute top-[50%] left-[14%] w-[52px] h-[76px] md:top-[58%] md:left-[19%] md:w-[60px] md:h-[88px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(147,51,234,0.8)] z-10"
               title="Explore Tripitaka"
               aria-label="Explore Tripitaka"
             >
-              <div className="w-full h-full bg-transparent rounded-md border border-purple-300/25 hover:border-purple-300/60 hover:bg-purple-200/8 transition-all duration-300" />
+              <div className="w-full h-full bg-transparent rounded border-2 border-purple-300/40 hover:border-purple-300/80 hover:bg-purple-200/10 transition-all duration-300" />
             </button>
 
-            {/* Bhagavad Gita - Custom size to match book dimensions */}
+            {/* Bhagavad Gita - Outline around the book */}
             <button
               onClick={() => handleScriptureClick('hinduism')}
-              className="absolute top-[58%] right-[12%] w-[64px] h-[82px] md:top-[58%] md:right-[19%] md:w-[72px] md:h-[94px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(249,115,22,0.8)] z-10"
+              className="absolute top-[50%] right-[14%] w-[64px] h-[82px] md:top-[58%] md:right-[19%] md:w-[72px] md:h-[94px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(249,115,22,0.8)] z-10"
               title="Explore Bhagavad Gita"
               aria-label="Explore Bhagavad Gita"
             >
-              <div className="w-full h-full bg-transparent rounded-md border border-orange-300/25 hover:border-orange-300/60 hover:bg-orange-200/8 transition-all duration-300" />
+              <div className="w-full h-full bg-transparent rounded border-2 border-orange-300/40 hover:border-orange-300/80 hover:bg-orange-200/10 transition-all duration-300" />
             </button>
           </div>
           
