@@ -17,6 +17,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import heroImage from "@assets/rellio-hero-latest.png";
+import mobileHeroImage from "@assets/rellio-mobile-hero.png";
 import compassLogo from "@assets/rellio-compass-logo.png";
 
 export default function LandingPage({
@@ -27,6 +28,7 @@ export default function LandingPage({
   logoUrl?: string;
 } = {}) {
   const [offset, setOffset] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
   const [, setLocation] = useLocation();
   const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
   const prefersReduced = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -40,6 +42,15 @@ export default function LandingPage({
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, [prefersReduced]);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const handleGetStarted = () => setLocation("/dashboard");
   const handleWatchDemo = () =>
@@ -107,18 +118,18 @@ export default function LandingPage({
         <section aria-label="Rellio hero" className="relative isolate h-screen overflow-hidden pt-20">
           {/* Hero Image Background */}
           <div
-            className="absolute inset-0 bg-contain bg-center bg-no-repeat md:bg-cover"
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
-              backgroundImage: `url(${heroImage})`,
+              backgroundImage: `url(${isMobile ? mobileHeroImage : heroImage})`,
               transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
               willChange: "transform",
-              backgroundSize: "contain",
-              backgroundPosition: "center top",
+              backgroundSize: "cover",
+              backgroundPosition: "center center",
             }}
           />
           
-          {/* Clickable Scripture Areas positioned over the image */}
-          <div className="absolute inset-0">
+          {/* Clickable Scripture Areas positioned over the image - Desktop Only */}
+          <div className="absolute inset-0 hidden md:block">
             {/* Torah - Top Left */}
             <button
               onClick={() => handleScriptureClick('judaism')}
@@ -168,6 +179,11 @@ export default function LandingPage({
             >
               <div className="w-full h-full bg-transparent rounded-lg border-2 border-transparent hover:border-orange-300/70 hover:bg-orange-200/10 transition-all duration-300" />
             </button>
+          </div>
+          
+          {/* Mobile Navigation Helper */}
+          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 text-center z-20 md:hidden">
+            <p className="text-yellow-200/80 text-sm mb-4 font-serif tracking-wider">TAP BELOW TO EXPLORE</p>
           </div>
           
           {/* Scroll Cue */}
