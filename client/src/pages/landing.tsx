@@ -151,21 +151,21 @@ export default function LandingPage({
             {/* Quran - Outline around the book */}
             <button
               onClick={() => handleScriptureClick('islam')}
-              className="absolute top-[32%] left-1/2 -translate-x-1/2 w-[80px] h-[100px] md:top-[36%] md:left-1/2 md:-translate-x-1/2 md:w-[92px] md:h-[116px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
+              className="absolute top-[32%] left-1/2 -translate-x-1/2 w-[80px] h-[100px] md:top-[36%] md:left-1/2 md:-translate-x-1/2 md:w-[92px] md:h-[116px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Quran"
               aria-label="Explore Quran"
             >
-              <div className="w-full h-full bg-transparent rounded border-2 border-teal-300/60 hover:border-teal-300/90 transition-all duration-300" />
+              <div className="w-full h-full bg-transparent rounded border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300" />
             </button>
 
             {/* Bible - Outline around the book */}
             <button
               onClick={() => handleScriptureClick('christianity')}
-              className="absolute top-[33%] right-[16%] w-[68px] h-[94px] md:top-[38%] md:right-[19%] md:w-[76px] md:h-[106px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(34,197,94,0.8)] z-10"
+              className="absolute top-[33%] right-[16%] w-[68px] h-[94px] md:top-[38%] md:right-[19%] md:w-[76px] md:h-[106px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Bible"
               aria-label="Explore Bible"
             >
-              <div className="w-full h-full bg-transparent rounded border-2 border-green-300/60 hover:border-green-300/90 transition-all duration-300" />
+              <div className="w-full h-full bg-transparent rounded border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300" />
             </button>
 
             {/* Tripitaka - Outline around the book */}
@@ -181,11 +181,11 @@ export default function LandingPage({
             {/* Bhagavad Gita - Outline around the book */}
             <button
               onClick={() => handleScriptureClick('hinduism')}
-              className="absolute top-[46%] right-[7%] w-[72px] h-[90px] md:top-[55%] md:right-[12%] md:w-[80px] md:h-[102px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(249,115,22,0.8)] z-10"
+              className="absolute top-[46%] right-[7%] w-[72px] h-[90px] md:top-[55%] md:right-[12%] md:w-[80px] md:h-[102px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Bhagavad Gita"
               aria-label="Explore Bhagavad Gita"
             >
-              <div className="w-full h-full bg-transparent rounded border-2 border-orange-300/60 hover:border-orange-300/90 transition-all duration-300" />
+              <div className="w-full h-full bg-transparent rounded border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300" />
             </button>
           </div>
           
