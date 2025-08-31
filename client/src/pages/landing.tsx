@@ -175,13 +175,13 @@ export default function LandingPage({
                   natural: { width: img.naturalWidth, height: img.naturalHeight },
                   rendered: { width: img.width, height: img.height },
                   aspectRatio: (img.naturalWidth / img.naturalHeight).toFixed(2),
-                  coordinateSystem: 'Based on 840x560 natural dimensions',
+                  coordinateSystem: 'Based on 1024x1536 actual natural dimensions',
                   books: {
-                    Torah: 'coords="195,160,275,250" - Top Left',
-                    Quran: 'coords="380,135,480,235" - Top Center', 
-                    Bible: 'coords="565,160,645,250" - Top Right',
-                    Tripitaka: 'coords="155,300,235,390" - Bottom Left',
-                    BhagavadGita: 'coords="605,300,685,390" - Bottom Right'
+                    Torah: 'coords="265,370,365,500" - Top Left',
+                    Quran: 'coords="462,340,562,470" - Top Center', 
+                    Bible: 'coords="659,370,759,500" - Top Right',
+                    Tripitaka: 'coords="215,570,315,700" - Bottom Left',
+                    BhagavadGita: 'coords="709,570,809,700" - Bottom Right'
                   }
                 });
               }
@@ -203,7 +203,7 @@ export default function LandingPage({
             {/* Torah - Top Left (green book with Hebrew text) */}
             <area
               shape="rect"
-              coords="195,160,275,250"
+              coords="265,370,365,500"
               alt="Torah"
               title="Explore Torah - Sacred Jewish text"
               onClick={() => handleScriptureClick('judaism')}
@@ -214,7 +214,7 @@ export default function LandingPage({
             {/* Quran - Top Center (dark green book with Arabic text) */}
             <area
               shape="rect"
-              coords="380,135,480,235"
+              coords="462,340,562,470"
               alt="Quran"
               title="Explore Quran - Sacred Islamic text"
               onClick={() => handleScriptureClick('islam')}
@@ -225,7 +225,7 @@ export default function LandingPage({
             {/* Bible - Top Right (brown book with cross) */}
             <area
               shape="rect"
-              coords="565,160,645,250"
+              coords="659,370,759,500"
               alt="Bible"
               title="Explore Bible - Sacred Christian text"
               onClick={() => handleScriptureClick('christianity')}
@@ -236,7 +236,7 @@ export default function LandingPage({
             {/* Tripitaka - Bottom Left (dark book with sun symbol) */}
             <area
               shape="rect"
-              coords="155,300,235,390"
+              coords="215,570,315,700"
               alt="Tripitaka"
               title="Explore Tripitaka - Sacred Buddhist texts"
               onClick={() => handleScriptureClick('buddhism')}
@@ -247,7 +247,7 @@ export default function LandingPage({
             {/* Bhagavad Gita - Bottom Right (orange/red book with sun symbol) */}
             <area
               shape="rect"
-              coords="605,300,685,390"
+              coords="709,570,809,700"
               alt="Bhagavad Gita"
               title="Explore Bhagavad Gita - Sacred Hindu text"
               onClick={() => handleScriptureClick('hinduism')}
