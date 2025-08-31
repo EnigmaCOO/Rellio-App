@@ -15,6 +15,9 @@ import {
   Eye,
   Play,
   Sparkles,
+  Brain,
+  Route,
+  Target,
 } from "lucide-react";
 import heroImage from "@assets/rellio-hero-latest.png";
 import mobileHeroImage from "@assets/rellio-mobile-hero.png";
@@ -217,37 +220,92 @@ export default function LandingPage({
             
             <h2 className="font-serif text-2xl tracking-[0.3em] text-yellow-200 mb-16 text-center">FEATURES</h2>
             
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {/* AI Sage Scholar */}
-              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-8 text-center hover:border-yellow-200/50 transition-all duration-300">
-                <div className="mx-auto mb-6 w-16 h-16 rounded-full border border-yellow-300/50 flex items-center justify-center">
-                  <BookOpen className="h-8 w-8 text-yellow-200" />
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {/* Sacred Texts */}
+              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-6 text-center hover:border-yellow-200/50 transition-all duration-300">
+                <div className="mx-auto mb-4 w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
+                  <BookOpen className="h-6 w-6 text-yellow-200" />
                 </div>
-                <h3 className="mb-4 font-serif text-yellow-200 font-semibold text-xl tracking-wide">AI Sage Scholar</h3>
-                <p className="text-sm text-yellow-100/80 leading-relaxed">
-                  Engage with specialized religious personas - Islamic Mufti, Christian Priest, Jewish Rabbi, Hindu Guru, Buddhist Monk - for authentic theological guidance.
+                <h3 className="mb-3 font-serif text-yellow-200 font-semibold text-lg tracking-wide">Sacred Texts</h3>
+                <p className="text-xs text-yellow-100/80 leading-relaxed">
+                  Access scriptures from multiple religious traditions with authentic translations
                 </p>
               </div>
 
-              {/* Parallel Scriptures */}
-              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-8 text-center hover:border-yellow-200/50 transition-all duration-300">
-                <div className="mx-auto mb-6 w-16 h-16 rounded-full border border-yellow-300/50 flex items-center justify-center">
-                  <Search className="h-8 w-8 text-yellow-200" />
+              {/* AI Guidance */}
+              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-6 text-center hover:border-yellow-200/50 transition-all duration-300">
+                <div className="mx-auto mb-4 w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
+                  <Brain className="h-6 w-6 text-yellow-200" />
                 </div>
-                <h3 className="mb-4 font-serif text-yellow-200 font-semibold text-xl tracking-wide">Parallel Scriptures</h3>
-                <p className="text-sm text-yellow-100/80 leading-relaxed">
-                  Compare verses across traditions. Find common themes and unique insights from Bible, Qur'an, Torah, Bhagavad Gita, and Tripitaka.
+                <h3 className="mb-3 font-serif text-yellow-200 font-semibold text-lg tracking-wide">AI Guidance</h3>
+                <p className="text-xs text-yellow-100/80 leading-relaxed">
+                  Scholar-grade AI personas provide contextual insights for each tradition
                 </p>
               </div>
 
-              {/* Voice & Real-time */}
-              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-8 text-center hover:border-yellow-200/50 transition-all duration-300">
-                <div className="mx-auto mb-6 w-16 h-16 rounded-full border border-yellow-300/50 flex items-center justify-center">
-                  <Volume2 className="h-8 w-8 text-yellow-200" />
+              {/* Deep Dialogue */}
+              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-6 text-center hover:border-yellow-200/50 transition-all duration-300">
+                <div className="mx-auto mb-4 w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
+                  <MessageCircle className="h-6 w-6 text-yellow-200" />
                 </div>
-                <h3 className="mb-4 font-serif text-yellow-200 font-semibold text-xl tracking-wide">Voice & Real-time</h3>
-                <p className="text-sm text-yellow-100/80 leading-relaxed">
-                  Experience voice-first interactions with real-time responses. Speak your questions and receive spoken wisdom from ancient texts.
+                <h3 className="mb-3 font-serif text-yellow-200 font-semibold text-lg tracking-wide">Deep Dialogue</h3>
+                <p className="text-xs text-yellow-100/80 leading-relaxed">
+                  Engage in meaningful conversations about spiritual teachings and wisdom
+                </p>
+              </div>
+
+              {/* Voice Interaction */}
+              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-6 text-center hover:border-yellow-200/50 transition-all duration-300">
+                <div className="mx-auto mb-4 w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
+                  <Volume2 className="h-6 w-6 text-yellow-200" />
+                </div>
+                <h3 className="mb-3 font-serif text-yellow-200 font-semibold text-lg tracking-wide">Voice Interaction</h3>
+                <p className="text-xs text-yellow-100/80 leading-relaxed">
+                  Listen and speak naturally with voice-enabled spiritual guidance
+                </p>
+              </div>
+
+              {/* Wisdom Search */}
+              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-6 text-center hover:border-yellow-200/50 transition-all duration-300">
+                <div className="mx-auto mb-4 w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
+                  <Search className="h-6 w-6 text-yellow-200" />
+                </div>
+                <h3 className="mb-3 font-serif text-yellow-200 font-semibold text-lg tracking-wide">Wisdom Search</h3>
+                <p className="text-xs text-yellow-100/80 leading-relaxed">
+                  Find relevant passages and teachings across all sacred texts instantly
+                </p>
+              </div>
+
+              {/* Progress Tracking */}
+              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-6 text-center hover:border-yellow-200/50 transition-all duration-300">
+                <div className="mx-auto mb-4 w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
+                  <TrendingUp className="h-6 w-6 text-yellow-200" />
+                </div>
+                <h3 className="mb-3 font-serif text-yellow-200 font-semibold text-lg tracking-wide">Progress Tracking</h3>
+                <p className="text-xs text-yellow-100/80 leading-relaxed">
+                  Monitor your spiritual journey and reading milestones
+                </p>
+              </div>
+
+              {/* Multi-Perspective */}
+              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-6 text-center hover:border-yellow-200/50 transition-all duration-300">
+                <div className="mx-auto mb-4 w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
+                  <Eye className="h-6 w-6 text-yellow-200" />
+                </div>
+                <h3 className="mb-3 font-serif text-yellow-200 font-semibold text-lg tracking-wide">Multi-Perspective</h3>
+                <p className="text-xs text-yellow-100/80 leading-relaxed">
+                  Compare interpretations and insights across different religious views
+                </p>
+              </div>
+
+              {/* Community */}
+              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-6 text-center hover:border-yellow-200/50 transition-all duration-300">
+                <div className="mx-auto mb-4 w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
+                  <Users className="h-6 w-6 text-yellow-200" />
+                </div>
+                <h3 className="mb-3 font-serif text-yellow-200 font-semibold text-lg tracking-wide">Community</h3>
+                <p className="text-xs text-yellow-100/80 leading-relaxed">
+                  Connect with fellow seekers on their spiritual journeys
                 </p>
               </div>
             </div>
