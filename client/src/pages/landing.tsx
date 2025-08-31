@@ -141,7 +141,7 @@ export default function LandingPage({
             {/* Torah - Positioned exactly over the book */}
             <button
               onClick={() => handleScriptureClick('judaism')}
-              className="absolute top-[22%] left-[26%] w-[72px] h-[96px] md:top-[30%] md:left-[28%] md:w-[80px] md:h-[108px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              className="absolute top-[28%] left-[22%] w-[68px] h-[88px] md:top-[30%] md:left-[23%] md:w-[76px] md:h-[100px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Torah"
               aria-label="Explore Torah"
             >
@@ -151,7 +151,7 @@ export default function LandingPage({
             {/* Quran - Positioned exactly over the book */}
             <button
               onClick={() => handleScriptureClick('islam')}
-              className="absolute top-[22%] left-1/2 -translate-x-1/2 w-[72px] h-[96px] md:top-[18%] md:w-[80px] md:h-[108px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
+              className="absolute top-[28%] left-1/2 -translate-x-1/2 w-[68px] h-[88px] md:top-[22%] md:w-[76px] md:h-[100px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
               title="Explore Quran"
               aria-label="Explore Quran"
             >
@@ -161,7 +161,7 @@ export default function LandingPage({
             {/* Bible - Positioned exactly over the book */}
             <button
               onClick={() => handleScriptureClick('christianity')}
-              className="absolute top-[22%] right-[26%] w-[72px] h-[96px] md:top-[30%] md:right-[28%] md:w-[80px] md:h-[108px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
+              className="absolute top-[28%] right-[22%] w-[68px] h-[88px] md:top-[30%] md:right-[23%] md:w-[76px] md:h-[100px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
               title="Explore Bible"
               aria-label="Explore Bible"
             >
@@ -171,7 +171,7 @@ export default function LandingPage({
             {/* Tripitaka - Positioned exactly over the book */}
             <button
               onClick={() => handleScriptureClick('buddhism')}
-              className="absolute top-[42%] left-[26%] w-[72px] h-[96px] md:top-[52%] md:left-[18%] md:w-[80px] md:h-[108px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(147,51,234,0.8)] z-10"
+              className="absolute top-[55%] left-[18%] w-[68px] h-[88px] md:top-[50%] md:left-[18%] md:w-[76px] md:h-[100px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(147,51,234,0.8)] z-10"
               title="Explore Tripitaka"
               aria-label="Explore Tripitaka"
             >
@@ -181,7 +181,7 @@ export default function LandingPage({
             {/* Bhagavad Gita - Positioned exactly over the book */}
             <button
               onClick={() => handleScriptureClick('hinduism')}
-              className="absolute top-[42%] right-[26%] w-[72px] h-[96px] md:top-[52%] md:right-[18%] md:w-[80px] md:h-[108px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(249,115,22,0.8)] z-10"
+              className="absolute top-[55%] right-[18%] w-[68px] h-[88px] md:top-[50%] md:right-[18%] md:w-[76px] md:h-[100px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(249,115,22,0.8)] z-10"
               title="Explore Bhagavad Gita"
               aria-label="Explore Bhagavad Gita"
             >
