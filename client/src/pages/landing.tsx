@@ -141,7 +141,7 @@ export default function LandingPage({
             {/* Torah - Outline around the book */}
             <button
               onClick={() => handleScriptureClick('judaism')}
-              className="absolute top-[33%] left-[15%] w-[64px] h-[92px] md:top-[30%] md:left-[26%] md:w-[72px] md:h-[104px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              className="absolute top-[33%] left-[15%] w-[64px] h-[92px] md:top-[29%] md:left-[26%] md:w-[72px] md:h-[104px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Torah"
               aria-label="Explore Torah"
             >
@@ -161,7 +161,7 @@ export default function LandingPage({
             {/* Bible - Outline around the book */}
             <button
               onClick={() => handleScriptureClick('christianity')}
-              className="absolute top-[33%] right-[16%] w-[68px] h-[94px] md:top-[30%] md:right-[28%] md:w-[76px] md:h-[106px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              className="absolute top-[33%] right-[16%] w-[68px] h-[94px] md:top-[29%] md:right-[27%] md:w-[76px] md:h-[106px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Bible"
               aria-label="Explore Bible"
             >
