@@ -181,7 +181,7 @@ export default function LandingPage({
             {/* Bhagavad Gita - Outline around the book */}
             <button
               onClick={() => handleScriptureClick('hinduism')}
-              className="absolute top-[46%] right-[7%] w-[72px] h-[90px] md:top-[55%] md:right-[12%] md:w-[80px] md:h-[102px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              className="absolute top-[46.5%] right-[7%] w-[72px] h-[90px] md:top-[55.5%] md:right-[12%] md:w-[80px] md:h-[102px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Bhagavad Gita"
               aria-label="Explore Bhagavad Gita"
             >
