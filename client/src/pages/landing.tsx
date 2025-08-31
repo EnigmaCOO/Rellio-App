@@ -41,13 +41,13 @@ export default function LandingPage({
   const prefersReduced = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const heroContainerRef = useRef<HTMLDivElement>(null);
   
-  // Dynamic book positions based on image dimensions
+  // Dynamic book positions with robust calculations
   const [bookPositions, setBookPositions] = useState({
-    torah: { top: 0, left: 0, width: 64, height: 92 },
-    quran: { top: 0, left: 0, width: 80, height: 100 },
-    bible: { top: 0, right: 0, width: 68, height: 94 },
-    tripitaka: { top: 0, left: 0, width: 60, height: 84 },
-    bhagavadGita: { top: 0, right: 0, width: 72, height: 90 }
+    Torah: { top: 0, left: 0, width: 0, height: 0 },
+    Quran: { top: 0, left: 0, width: 0, height: 0 },
+    Bible: { top: 0, right: 0, width: 0, height: 0 },
+    Tripitaka: { top: 0, left: 0, width: 0, height: 0 },
+    "Bhagavad Gita": { top: 0, right: 0, width: 0, height: 0 }
   });
 
   useEffect(() => {
@@ -69,93 +69,73 @@ export default function LandingPage({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
   
-  // Dynamic positioning based on image container size
+  // Robust dynamic positioning with debounced resize handling
   useEffect(() => {
+    // Debounce function to prevent excessive recalculations
+    const debounce = (fn: () => void, delay: number) => {
+      let timeout: NodeJS.Timeout;
+      return () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(fn, delay);
+      };
+    };
+
     const updateBookPositions = () => {
       if (!heroContainerRef.current) return;
       
-      const container = heroContainerRef.current;
-      const { width, height } = container.getBoundingClientRect();
+      const hero = heroContainerRef.current;
+      const { width, height } = hero.getBoundingClientRect();
       
-      if (isMobile) {
-        // Mobile positioning - creating borders AROUND books, not on them
-        const borderOffset = 8; // pixels to offset the border from book edges
-        setBookPositions({
-          torah: { 
-            top: height * 0.33 - borderOffset, 
-            left: width * 0.15 - borderOffset, 
-            width: 64 + (borderOffset * 2), 
-            height: 92 + (borderOffset * 2) 
-          },
-          quran: { 
-            top: height * 0.32 - borderOffset, 
-            left: width * 0.5 - 40 - borderOffset, // Center minus half width minus offset
-            width: 80 + (borderOffset * 2), 
-            height: 100 + (borderOffset * 2) 
-          },
-          bible: { 
-            top: height * 0.33 - borderOffset, 
-            right: width * 0.16 - borderOffset, 
-            width: 68 + (borderOffset * 2), 
-            height: 94 + (borderOffset * 2) 
-          },
-          tripitaka: { 
-            top: height * 0.46 - borderOffset, 
-            left: width * 0.085 - borderOffset, 
-            width: 60 + (borderOffset * 2), 
-            height: 84 + (borderOffset * 2) 
-          },
-          bhagavadGita: { 
-            top: height * 0.465 - borderOffset, 
-            right: width * 0.07 - borderOffset, 
-            width: 72 + (borderOffset * 2), 
-            height: 90 + (borderOffset * 2) 
-          }
-        });
-      } else {
-        // Desktop positioning - creating borders AROUND books, not on them
-        const borderOffset = 12; // pixels to offset the border from book edges
-        setBookPositions({
-          torah: { 
-            top: height * 0.28 - borderOffset, 
-            left: width * 0.26 - borderOffset, 
-            width: 72 + (borderOffset * 2), 
-            height: 104 + (borderOffset * 2) 
-          },
-          quran: { 
-            top: height * 0.30 - borderOffset, 
-            left: width * 0.5 - 46 - borderOffset, // Center minus half width minus offset
-            width: 92 + (borderOffset * 2), 
-            height: 116 + (borderOffset * 2) 
-          },
-          bible: { 
-            top: height * 0.28 - borderOffset, 
-            right: width * 0.27 - borderOffset, 
-            width: 76 + (borderOffset * 2), 
-            height: 106 + (borderOffset * 2) 
-          },
-          tripitaka: { 
-            top: height * 0.52 - borderOffset, 
-            left: width * 0.21 - borderOffset, 
-            width: 68 + (borderOffset * 2), 
-            height: 96 + (borderOffset * 2) 
-          },
-          bhagavadGita: { 
-            top: height * 0.52 - borderOffset, 
-            right: width * 0.21 - borderOffset, 
-            width: 80 + (borderOffset * 2), 
-            height: 102 + (borderOffset * 2) 
-          }
-        });
-      }
+      // Base calculations on image's natural aspect ratio
+      const baseWidth = 1200; // Natural width of rellio-hero.jpg
+      const scale = width / baseWidth;
+      const offset = window.innerWidth < 640 ? 8 : 12; // Mobile vs desktop
+      
+      // Define proportional coordinates for each book relative to image
+      const bookCoords = {
+        Torah: { topPercent: 0.15, leftPercent: 0.25, baseWidth: 28, baseHeight: 36 },
+        Quran: { topPercent: 0.08, leftPercent: 0.5, baseWidth: 32, baseHeight: 40 },
+        Bible: { topPercent: 0.15, rightPercent: 0.25, baseWidth: 28, baseHeight: 36 },
+        Tripitaka: { bottomPercent: 0.25, leftPercent: 0.2, baseWidth: 26, baseHeight: 34 },
+        "Bhagavad Gita": { bottomPercent: 0.25, rightPercent: 0.2, baseWidth: 30, baseHeight: 38 }
+      };
+      
+      const newPositions: typeof bookPositions = {};
+      
+      Object.entries(bookCoords).forEach(([bookName, coords]) => {
+        const scaledWidth = coords.baseWidth * scale + offset * 2;
+        const scaledHeight = coords.baseHeight * scale + offset * 2;
+        
+        newPositions[bookName as keyof typeof bookPositions] = {
+          top: coords.topPercent ? height * coords.topPercent - offset : 
+               coords.bottomPercent ? height - (height * coords.bottomPercent) - scaledHeight + offset : 0,
+          left: coords.leftPercent ? width * coords.leftPercent - offset - (scaledWidth / 2) : 0,
+          right: coords.rightPercent ? width * coords.rightPercent - offset : undefined,
+          width: scaledWidth,
+          height: scaledHeight
+        };
+      });
+      
+      setBookPositions(newPositions);
+      
+      // Debug logging
+      console.log('Updated book positions:', {
+        containerSize: { width, height },
+        scale,
+        offset,
+        positions: newPositions
+      });
     };
     
-    // Update positions on mount and resize
+    // Initial update
     updateBookPositions();
-    window.addEventListener('resize', updateBookPositions);
+    
+    // Debounced resize handler
+    const debouncedUpdate = debounce(updateBookPositions, 200);
+    window.addEventListener('resize', debouncedUpdate);
     
     return () => {
-      window.removeEventListener('resize', updateBookPositions);
+      window.removeEventListener('resize', debouncedUpdate);
     };
   }, [isMobile]);
 
@@ -246,81 +226,71 @@ export default function LandingPage({
             <button
               onClick={() => handleScriptureClick('judaism')}
               style={{
-                top: `${bookPositions.torah.top}px`,
-                left: `${bookPositions.torah.left}px`,
-                width: `${bookPositions.torah.width}px`,
-                height: `${bookPositions.torah.height}px`,
+                top: `${bookPositions.Torah.top}px`,
+                left: `${bookPositions.Torah.left}px`,
+                width: `${bookPositions.Torah.width}px`,
+                height: `${bookPositions.Torah.height}px`,
               }}
-              className="absolute transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              className="absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-20 rounded"
               title="Explore Torah"
               aria-label="Explore Torah"
-            >
-              <div className="w-full h-full bg-transparent rounded border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300" />
-            </button>
+            />
 
             {/* Quran - Dynamically positioned outline */}
             <button
               onClick={() => handleScriptureClick('islam')}
               style={{
-                top: `${bookPositions.quran.top}px`,
-                left: `${bookPositions.quran.left}px`,
-                width: `${bookPositions.quran.width}px`,
-                height: `${bookPositions.quran.height}px`,
+                top: `${bookPositions.Quran.top}px`,
+                left: `${bookPositions.Quran.left}px`,
+                width: `${bookPositions.Quran.width}px`,
+                height: `${bookPositions.Quran.height}px`,
               }}
-              className="absolute transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              className="absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-20 rounded"
               title="Explore Quran"
               aria-label="Explore Quran"
-            >
-              <div className="w-full h-full bg-transparent rounded border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300" />
-            </button>
+            />
 
             {/* Bible - Dynamically positioned outline */}
             <button
               onClick={() => handleScriptureClick('christianity')}
               style={{
-                top: `${bookPositions.bible.top}px`,
-                right: `${bookPositions.bible.right}px`,
-                width: `${bookPositions.bible.width}px`,
-                height: `${bookPositions.bible.height}px`,
+                top: `${bookPositions.Bible.top}px`,
+                right: `${bookPositions.Bible.right}px`,
+                width: `${bookPositions.Bible.width}px`,
+                height: `${bookPositions.Bible.height}px`,
               }}
-              className="absolute transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              className="absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-20 rounded"
               title="Explore Bible"
               aria-label="Explore Bible"
-            >
-              <div className="w-full h-full bg-transparent rounded border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300" />
-            </button>
+            />
 
             {/* Tripitaka - Dynamically positioned outline */}
             <button
               onClick={() => handleScriptureClick('buddhism')}
               style={{
-                top: `${bookPositions.tripitaka.top}px`,
-                left: `${bookPositions.tripitaka.left}px`,
-                width: `${bookPositions.tripitaka.width}px`,
-                height: `${bookPositions.tripitaka.height}px`,
+                top: `${bookPositions.Tripitaka.top}px`,
+                left: `${bookPositions.Tripitaka.left}px`,
+                width: `${bookPositions.Tripitaka.width}px`,
+                height: `${bookPositions.Tripitaka.height}px`,
               }}
-              className="absolute transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              className="absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-20 rounded"
               title="Explore Tripitaka"
               aria-label="Explore Tripitaka"
-            >
-              <div className="w-full h-full bg-transparent rounded border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300" />
-            </button>
+            />
 
             {/* Bhagavad Gita - Dynamically positioned outline */}
             <button
               onClick={() => handleScriptureClick('hinduism')}
               style={{
-                top: `${bookPositions.bhagavadGita.top}px`,
-                right: `${bookPositions.bhagavadGita.right}px`,
-                width: `${bookPositions.bhagavadGita.width}px`,
-                height: `${bookPositions.bhagavadGita.height}px`,
+                top: `${bookPositions["Bhagavad Gita"].top}px`,
+                right: `${bookPositions["Bhagavad Gita"].right}px`,
+                width: `${bookPositions["Bhagavad Gita"].width}px`,
+                height: `${bookPositions["Bhagavad Gita"].height}px`,
               }}
-              className="absolute transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              className="absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-20 rounded"
               title="Explore Bhagavad Gita"
               aria-label="Explore Bhagavad Gita"
-            >
-              <div className="w-full h-full bg-transparent rounded border-2 border-yellow-300/60 hover:border-yellow-300/90 transition-all duration-300" />
-            </button>
+            />
           </div>
           
           {/* Mobile Navigation Helper */}

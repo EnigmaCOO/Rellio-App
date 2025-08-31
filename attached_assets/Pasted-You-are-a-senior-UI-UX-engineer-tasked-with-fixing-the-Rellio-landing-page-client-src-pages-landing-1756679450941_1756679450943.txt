@@ -1,0 +1,123 @@
+You are a senior UI/UX engineer tasked with fixing the Rellio landing page (client/src/pages/landing.tsx) to ensure clickable placeholders for the scripture books (Qur’an, Bible, Torah, Bhagavad Gita, Tripitaka) align perfectly with `/assets/rellio-hero.jpg` across all screen sizes, resolving the current misalignment issue post-deployment. Preserve all existing functionality, routing, and APIs, and align with Rellio’s "Guiding Wisdom. Eternal Connection" brand.
+
+- Preserve existing functionality (e.g., `handleScriptureClick`, CTAs, parallax).
+- Modify only styles, markup, and JavaScript logic in `landing.tsx`; keep other files intact.
+- Write accessible, responsive, and performant code using Tailwind CSS.
+- Produce a single PR with clear commits (e.g., "fix(ui): resolve book placeholder misalignment", "refactor: optimize dynamic positioning").
+- Maintain Rellio’s luxury-spiritual essence.
+
+#### TASK BRIEF (paste after system block)
+Goal: Fix the misalignment of clickable book placeholders in the `LandingPage.tsx` hero section, where the dynamic positioning system fails to keep borders aligned with `/assets/rellio-hero.jpg` books after deployment or full tab open. Implement a robust, debounced dynamic positioning solution using `useEffect` and `useRef`, ensuring pixel-perfect alignment and responsive offsets across all screen sizes. Preserve the existing cosmic hero design and functionality.
+
+1) **Dynamic Positioning Implementation**
+   - Add a `useRef` to track the hero image container and `useState` for book positions.
+   - Use `useEffect` with a debounced resize handler (e.g., lodash.debounce or custom 200ms delay) to recalculate positions.
+   - Base calculations on the image’s natural aspect ratio (assumed 1200x1800 for `/assets/rellio-hero.jpg`) scaled to the container’s rendered size.
+   - Define proportional coordinates (e.g., Torah: top 15%, left 25%) and apply offsets (12px desktop, 8px mobile) outward as borders.
+   - Example:
+     ```tsx
+     const [bookPositions, setBookPositions] = useState({
+       Torah: { top: 0, left: 0, width: 0, height: 0 },
+       Quran: { top: 0, left: 0, width: 0, height: 0 },
+       Bible: { top: 0, left: 0, width: 0, height: 0 },
+       Tripitaka: { top: 0, left: 0, width: 0, height: 0 },
+       "Bhagavad Gita": { top: 0, left: 0, width: 0, height: 0 },
+     });
+     const heroRef = useRef<HTMLDivElement>(null);
+
+     useEffect(() => {
+       const debounce = (fn: () => void, delay: number) => {
+         let timeout: NodeJS.Timeout;
+         return () => {
+           clearTimeout(timeout);
+           timeout = setTimeout(fn, delay);
+         };
+       };
+       const updatePositions = () => {
+         const hero = heroRef.current;
+         if (hero) {
+           const { width, height } = hero.getBoundingClientRect();
+           const baseWidth = 1200; // Natural width of rellio-hero.jpg
+           const scale = width / baseWidth;
+           const offset = window.innerWidth < 640 ? 8 : 12; // Mobile vs. desktop
+           setBookPositions({
+             Torah: {
+               top: height * 0.15 - offset,
+               left: width * 0.25 - offset,
+               width: 28 * scale + offset * 2,
+               height: 36 * scale + offset * 2,
+             },
+             Quran: {
+               top: height * 0.08 - offset,
+               left: width * 0.5 - offset,
+               width: 28 * scale + offset * 2,
+               height: 36 * scale + offset * 2,
+             },
+             Bible: {
+               top: height * 0.15 - offset,
+               right: width * 0.25 - offset,
+               width: 28 * scale + offset * 2,
+               height: 36 * scale + offset * 2,
+             },
+             Tripitaka: {
+               bottom: height * 0.25 - offset,
+               left: width * 0.2 - offset,
+               width: 28 * scale + offset * 2,
+               height: 36 * scale + offset * 2,
+             },
+             "Bhagavad Gita": {
+               bottom: height * 0.25 - offset,
+               right: width * 0.2 - offset,
+               width: 28 * scale + offset * 2,
+               height: 36 * scale + offset * 2,
+             },
+           });
+           console.log("Updated positions:", bookPositions); // Debug
+         }
+       };
+       updatePositions();
+       const debouncedUpdate = debounce(updatePositions, 200);
+       window.addEventListener("resize", debouncedUpdate);
+       return () => window.removeEventListener("resize", debouncedUpdate);
+     }, []);
+     // In render:
+     <section ref={heroRef} ...>
+       <button
+         onClick={() => handleScriptureClick("judaism")}
+         style={{
+           top: bookPositions.Torah.top,
+           left: bookPositions.Torah.left,
+           width: bookPositions.Torah.width,
+           height: bookPositions.Torah.height,
+           transform: "rotate(-30deg)",
+         }}
+         className="absolute bg-transparent border-2 border-yellow-400 hover:border-yellow-300 z-20"
+       >
+         {/* Content */}
+       </button>
+       {/* Other books similarly */}
+     </section>
+     ```
+
+2) **Responsive Design**
+   - Use Tailwind’s `sm:`, `md:`, `lg:` prefixes to adjust offsets and sizes at breakpoints (e.g., `md:border-2`, `sm:border-1`).
+   - Ensure the hero container uses `min-h-screen` and `max-w-5xl` with flexible padding.
+
+3) **Debugging and Validation**
+   - Add `console.log` to verify `width`, `height`, and `bookPositions` during resize.
+   - Test on mobile (e.g., 320px), tablet (768px), and desktop (1280px) to confirm alignment.
+
+4) **Acceptance Criteria**
+   - Book placeholders align with `/assets/rellio-hero.jpg` books across all screen sizes.
+   - No overlap or drift; borders frame books with 8px (mobile) or 12px (desktop) offsets.
+   - Parallax and clicks work; Lighthouse Performance ≥ 90.
+   - No console errors from infinite loops or unhandled exceptions.
+
+5) **Implementation Steps**
+   1. Add `useRef`, `useState`, and debounced `useEffect` to `LandingPage.tsx`.
+   2. Update button styles with dynamic `bookPositions`.
+   3. Test resize behavior and adjust coordinates if needed.
+   4. Commit with: "fix(ui): resolve book placeholder misalignment", "refactor: optimize dynamic positioning".
+
+#### FINAL INSTRUCTION
+Implement the fix, submit a PR passing acceptance criteria and lint/build checks. Preserve existing logic, adding only state and effects. Ensure a seamless, luxurious spiritual experience. If misalignment persists, share the updated code, console logs, or a deployed URL for further debugging!
