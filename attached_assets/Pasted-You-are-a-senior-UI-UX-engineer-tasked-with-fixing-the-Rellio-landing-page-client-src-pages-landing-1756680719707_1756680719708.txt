@@ -1,0 +1,108 @@
+You are a senior UI/UX engineer tasked with fixing the Rellio landing page (client/src/pages/landing.tsx) to ensure clickable placeholders for the scripture books (Qur’an, Bible, Torah, Bhagavad Gita, Tripitaka) align with `/assets/rellio-hero.jpg` and are functional, resolving the issue of the background image being barely visible on desktop and buttons not working. Preserve all existing functionality, routing, and APIs, and align with Rellio’s "Guiding Wisdom. Eternal Connection" brand.
+
+- Preserve existing functionality (e.g., `handleScriptureClick`, CTAs, parallax).
+- Modify only styles, markup, and minimal JavaScript in `landing.tsx`; avoid overcomplicated logic.
+- Write accessible, responsive, and performant code using Tailwind CSS.
+- Produce a single PR with clear commits (e.g., "fix(ui): resolve image visibility and button clickability", "refactor: simplify hero overlays").
+- Maintain Rellio’s luxury-spiritual essence.
+
+#### TASK BRIEF (paste after system block)
+Goal: Fix the `LandingPage.tsx` hero section where the background image (`/assets/rellio-hero.jpg`) is barely visible on desktop, and clickable book placeholders are not working or misaligned. Implement styled `<button>` overlays with static CSS positioning based on the image’s natural dimensions (verify as 1200x1800), ensuring the image remains prominent and buttons are clickable. Preserve the cosmic hero design (golden compass, seeker silhouette, unity orb) and add debug features.
+
+1) **Button Overlay and Visibility Fix**
+   - Use a `<div>` with `bgUrl` as the background and overlay `<button>` elements for each book.
+   - Set initial positions with CSS using percentage-based `top`/`left` relative to a 1200x1800 image (adjust if actual size differs), with 8px (mobile) and 12px (desktop) border offsets.
+   - Ensure the image is visible by adjusting z-index (`z-10` for image, `z-20` for buttons) and reducing gradient opacity if needed.
+   - Example structure:
+     ```tsx
+     const heroRef = useRef<HTMLDivElement>(null);
+
+     useEffect(() => {
+       const hero = heroRef.current;
+       if (hero) {
+         console.log("Hero dimensions:", hero.getBoundingClientRect()); // Debug
+       }
+     }, []);
+
+     return (
+       <section
+         ref={heroRef}
+         aria-label="Rellio hero"
+         className="relative isolate flex min-h-screen items-center justify-center overflow-hidden"
+       >
+         <div
+           className="hero-bg absolute inset-0 -z-10 bg-cover bg-center"
+           style={{
+             backgroundImage: `url(${bgUrl})`,
+             transform: `translateY(${prefersReduced ? 0 : offset * 0.6}px)`,
+             willChange: "transform",
+           }}
+         />
+         <div className="pointer-events-none absolute inset-0 -z-20 bg-gradient-to-t from-black/70 via-black/30 to-black/50" /> {/* Reduced opacity */}
+         <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(60%_40%_at_50%_60%,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_40%,rgba(0,0,0,0.3)_100%)]" /> {/* Reduced opacity */}
+         <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-28 pb-24 text-center">
+           <button
+             data-book="Torah"
+             onClick={() => handleScriptureClick("judaism")}
+             className="absolute bg-transparent border-2 border-yellow-400 hover:border-yellow-300 z-20 w-28 h-36 md:w-32 md:h-40"
+             style={{ top: "15%", left: "25%", transform: "rotate(-15deg)" }}
+           />
+           <button
+             data-book="Quran"
+             onClick={() => handleScriptureClick("islam")}
+             className="absolute bg-transparent border-2 border-teal-400 hover:border-teal-300 z-20 w-28 h-36 md:w-32 md:h-40"
+             style={{ top: "8%", left: "50%", transform: "translateX(-50%)" }}
+           />
+           <button
+             data-book="Bible"
+             onClick={() => handleScriptureClick("christianity")}
+             className="absolute bg-transparent border-2 border-blue-400 hover:border-blue-300 z-20 w-28 h-36 md:w-32 md:h-40"
+             style={{ top: "15%", right: "25%" }}
+           />
+           <button
+             data-book="Tripitaka"
+             onClick={() => handleScriptureClick("buddhism")}
+             className="absolute bg-transparent border-2 border-purple-400 hover:border-purple-300 z-20 w-28 h-36 md:w-32 md:h-40"
+             style={{ bottom: "25%", left: "20%" }}
+           />
+           <button
+             data-book="Bhagavad Gita"
+             onClick={() => handleScriptureClick("hinduism")}
+             className="absolute bg-transparent border-2 border-orange-400 hover:border-orange-300 z-20 w-28 h-36 md:w-32 md:h-40"
+             style={{ bottom: "25%", right: "20%" }}
+           />
+           {/* Logo, tagline, CTAs, labels */}
+         </div>
+       </section>
+     );
+     ```
+
+2) **Responsive Design**
+   - Use Tailwind’s `sm:`, `md:`, `lg:` to adjust button sizes and positions (e.g., `md:top-1/6 md:left-1/4`).
+   - Ensure the hero container uses `min-h-screen` and `max-w-5xl` with flexible padding.
+
+3) **Debugging and Validation**
+   - Add temporary borders (`border-2 border-red-500`) to buttons during testing.
+   - Use `console.log` to output `hero.getBoundingClientRect()` and verify alignment.
+   - Test on mobile (320px), tablet (768px), and desktop (1280px).
+
+4) **Acceptance Criteria**
+   - Background image is fully visible with reduced gradient opacity.
+   - Book buttons are clickable, aligning with `/assets/rellio-hero.jpg` books across all screen sizes.
+   - No overlap or drift; borders frame books with 8px (mobile) or 12px (desktop) offsets.
+   - Parallax, CTAs, and other features remain functional.
+   - No console errors; Lighthouse Performance ≥ 90.
+
+5) **Implementation Steps**
+   1. Update the hero section in `LandingPage.tsx` with the new overlay structure.
+   2. Adjust z-index and gradient opacity to ensure image visibility.
+   3. Test clickability and alignment, tweaking percentages if needed.
+   4. Commit with: "fix(ui): resolve image visibility and button clickability", "refactor: simplify hero overlays".
+
+#### FINAL INSTRUCTION
+Implement the fix, submit a PR passing acceptance criteria and lint/build checks. Preserve existing logic, adding only the overlay adjustments. Ensure a seamless, luxurious spiritual experience with a prominent image. If issues persist (e.g., misalignment or unclickable buttons), share the updated code, console logs, or a deployed URL—let’s troubleshoot together until it’s flawless!
+
+#### Additional Notes
+- **Verify Image Size**: Check `/assets/rellio-hero.jpg` dimensions and adjust percentages (e.g., `15%`) if the aspect ratio differs from 1200x1800.
+- **Gradient Adjustment**: If the image is still faint, reduce `from-black/70` to `/50` or lower.
+- **Fallback**: If buttons remain unclickable, add a `pointer-events-auto` class to them and retest z-index.

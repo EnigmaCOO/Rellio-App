@@ -60,89 +60,13 @@ export default function LandingPage({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
   
-  // Dynamic button positioning based on hero container size
+  // Debug hero dimensions on load
   useEffect(() => {
     const hero = heroContainerRef.current;
     if (hero) {
-      const { width, height } = hero.getBoundingClientRect();
-      const baseWidth = 1024; // Actual image width from console logs
-      const scale = width / baseWidth;
-      const offset = window.innerWidth < 640 ? 8 : 12;
-      
-      const books = hero.querySelectorAll('.book-btn');
-      books.forEach((btn) => {
-        const name = btn.getAttribute('data-book');
-        let top, left, right, bottom, buttonWidth, buttonHeight;
-        
-        switch (name) {
-          case 'Torah':
-            top = height * 0.24 - offset;
-            left = width * 0.26 - offset;
-            buttonWidth = 80 * scale + offset * 2;
-            buttonHeight = 100 * scale + offset * 2;
-            break;
-          case 'Quran':
-            top = height * 0.22 - offset;
-            left = width * 0.50 - (90 * scale / 2) - offset;
-            buttonWidth = 90 * scale + offset * 2;
-            buttonHeight = 110 * scale + offset * 2;
-            break;
-          case 'Bible':
-            top = height * 0.24 - offset;
-            right = width * 0.26 - offset;
-            buttonWidth = 80 * scale + offset * 2;
-            buttonHeight = 100 * scale + offset * 2;
-            break;
-          case 'Tripitaka':
-            bottom = height * 0.28 - offset;
-            left = width * 0.21 - offset;
-            buttonWidth = 75 * scale + offset * 2;
-            buttonHeight = 95 * scale + offset * 2;
-            break;
-          case 'Bhagavad Gita':
-            bottom = height * 0.28 - offset;
-            right = width * 0.21 - offset;
-            buttonWidth = 85 * scale + offset * 2;
-            buttonHeight = 105 * scale + offset * 2;
-            break;
-        }
-        
-        btn.style.top = top !== undefined ? `${top}px` : '';
-        btn.style.left = left !== undefined ? `${left}px` : '';
-        btn.style.right = right !== undefined ? `${right}px` : '';
-        btn.style.bottom = bottom !== undefined ? `${bottom}px` : '';
-        btn.style.width = `${buttonWidth}px`;
-        btn.style.height = `${buttonHeight}px`;
-        
-        console.log(`Position for ${name}:`, {
-          top, left, right, bottom, 
-          width: buttonWidth, height: buttonHeight,
-          scale: scale.toFixed(2)
-        });
-      });
-      
-      console.log('Hero container dimensions:', {
-        width, height, scale: scale.toFixed(2), offset
-      });
+      console.log('Hero dimensions:', hero.getBoundingClientRect());
+      console.log('Background image:', isMobile ? mobileHeroImage : heroImage);
     }
-  }, [isMobile]);
-  
-  // Add resize listener for recalculation
-  useEffect(() => {
-    const handleResize = () => {
-      const hero = heroContainerRef.current;
-      if (hero) {
-        setTimeout(() => {
-          const { width, height } = hero.getBoundingClientRect();
-          console.log('Window resized - Hero container:', {
-            width, height, viewport: { width: window.innerWidth, height: window.innerHeight }
-          });
-        }, 100);
-      }
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const handleGetStarted = () => setLocation("/dashboard");
@@ -216,64 +140,69 @@ export default function LandingPage({
         >
           {/* Hero Background Image */}
           <div
-            className="hero-bg pointer-events-none absolute inset-0 -z-20 bg-cover bg-center"
+            className="hero-bg absolute inset-0 -z-10 bg-cover bg-center"
             style={{
               backgroundImage: `url(${isMobile ? mobileHeroImage : heroImage})`,
               transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
-              willChange: "transform",
-              backgroundSize: isMobile ? "contain" : "cover",
-              backgroundPosition: "center center"
+              willChange: "transform"
             }}
           />
           
-          {/* Scripture Book Button Overlays */}
-          <button
-            data-book="Torah"
-            onClick={() => handleScriptureClick('judaism')}
-            className="book-btn absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 hover:bg-yellow-300/10 transition-all duration-300 hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(255,215,0,0.6)] z-20 rounded"
-            title="Explore Torah - Sacred Jewish text"
-            aria-label="Explore Torah"
-            style={{ transform: 'rotate(-15deg)' }}
-          />
+          {/* Reduced opacity gradients for better image visibility */}
+          <div className="pointer-events-none absolute inset-0 -z-20 bg-gradient-to-t from-black/50 via-black/20 to-black/40" />
+          <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(60%_40%_at_50%_60%,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_40%,rgba(0,0,0,0.3)_100%)]" />
           
-          <button
-            data-book="Quran"
-            onClick={() => handleScriptureClick('islam')}
-            className="book-btn absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 hover:bg-yellow-300/10 transition-all duration-300 hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(255,215,0,0.6)] z-20 rounded"
-            title="Explore Quran - Sacred Islamic text"
-            aria-label="Explore Quran"
-          />
-          
-          <button
-            data-book="Bible"
-            onClick={() => handleScriptureClick('christianity')}
-            className="book-btn absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 hover:bg-yellow-300/10 transition-all duration-300 hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(255,215,0,0.6)] z-20 rounded"
-            title="Explore Bible - Sacred Christian text"
-            aria-label="Explore Bible"
-            style={{ transform: 'rotate(15deg)' }}
-          />
-          
-          <button
-            data-book="Tripitaka"
-            onClick={() => handleScriptureClick('buddhism')}
-            className="book-btn absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 hover:bg-yellow-300/10 transition-all duration-300 hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(255,215,0,0.6)] z-20 rounded"
-            title="Explore Tripitaka - Sacred Buddhist texts"
-            aria-label="Explore Tripitaka"
-            style={{ transform: 'rotate(-10deg)' }}
-          />
-          
-          <button
-            data-book="Bhagavad Gita"
-            onClick={() => handleScriptureClick('hinduism')}
-            className="book-btn absolute bg-transparent border-2 border-yellow-300/60 hover:border-yellow-300/90 hover:bg-yellow-300/10 transition-all duration-300 hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(255,215,0,0.6)] z-20 rounded"
-            title="Explore Bhagavad Gita - Sacred Hindu text"
-            aria-label="Explore Bhagavad Gita"
-            style={{ transform: 'rotate(10deg)' }}
-          />
-          
-          {/* Gradient overlays to enhance cosmic atmosphere */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/20 to-black/50" />
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_40%_at_50%_60%,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_40%,rgba(0,0,0,0.55)_100%)]" />
+          <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-28 pb-24 text-center">
+            {/* Torah - Top Left (Yellow border for Jewish tradition) */}
+            <button
+              data-book="Torah"
+              onClick={() => handleScriptureClick('judaism')}
+              className="absolute bg-transparent border-2 border-yellow-400 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 w-20 h-28 sm:w-24 sm:h-32 md:w-28 md:h-36 lg:w-32 lg:h-40 pointer-events-auto rounded"
+              style={{ top: "15%", left: "25%", transform: "rotate(-15deg)" }}
+              title="Explore Torah - Sacred Jewish text"
+              aria-label="Explore Torah"
+            />
+            
+            {/* Quran - Top Center (Teal border for Islamic tradition) */}
+            <button
+              data-book="Quran"
+              onClick={() => handleScriptureClick('islam')}
+              className="absolute bg-transparent border-2 border-teal-400 hover:border-teal-300 hover:bg-teal-400/10 transition-all duration-300 hover:scale-105 z-20 w-20 h-28 sm:w-24 sm:h-32 md:w-28 md:h-36 lg:w-32 lg:h-40 pointer-events-auto rounded"
+              style={{ top: "8%", left: "50%", transform: "translateX(-50%)" }}
+              title="Explore Quran - Sacred Islamic text"
+              aria-label="Explore Quran"
+            />
+            
+            {/* Bible - Top Right (Blue border for Christian tradition) */}
+            <button
+              data-book="Bible"
+              onClick={() => handleScriptureClick('christianity')}
+              className="absolute bg-transparent border-2 border-blue-400 hover:border-blue-300 hover:bg-blue-400/10 transition-all duration-300 hover:scale-105 z-20 w-20 h-28 sm:w-24 sm:h-32 md:w-28 md:h-36 lg:w-32 lg:h-40 pointer-events-auto rounded"
+              style={{ top: "15%", right: "25%", transform: "rotate(15deg)" }}
+              title="Explore Bible - Sacred Christian text"
+              aria-label="Explore Bible"
+            />
+            
+            {/* Tripitaka - Bottom Left (Purple border for Buddhist tradition) */}
+            <button
+              data-book="Tripitaka"
+              onClick={() => handleScriptureClick('buddhism')}
+              className="absolute bg-transparent border-2 border-purple-400 hover:border-purple-300 hover:bg-purple-400/10 transition-all duration-300 hover:scale-105 z-20 w-20 h-28 sm:w-24 sm:h-32 md:w-28 md:h-36 lg:w-32 lg:h-40 pointer-events-auto rounded"
+              style={{ bottom: "25%", left: "20%", transform: "rotate(-10deg)" }}
+              title="Explore Tripitaka - Sacred Buddhist texts"
+              aria-label="Explore Tripitaka"
+            />
+            
+            {/* Bhagavad Gita - Bottom Right (Orange border for Hindu tradition) */}
+            <button
+              data-book="Bhagavad Gita"
+              onClick={() => handleScriptureClick('hinduism')}
+              className="absolute bg-transparent border-2 border-orange-400 hover:border-orange-300 hover:bg-orange-400/10 transition-all duration-300 hover:scale-105 z-20 w-20 h-28 sm:w-24 sm:h-32 md:w-28 md:h-36 lg:w-32 lg:h-40 pointer-events-auto rounded"
+              style={{ bottom: "25%", right: "20%", transform: "rotate(10deg)" }}
+              title="Explore Bhagavad Gita - Sacred Hindu text"
+              aria-label="Explore Bhagavad Gita"
+            />
+          </div>
           
           {/* Center content overlay */}
           <div className="absolute inset-0 flex items-center justify-center">
