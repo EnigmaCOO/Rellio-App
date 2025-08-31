@@ -78,71 +78,73 @@ export default function LandingPage({
       const { width, height } = container.getBoundingClientRect();
       
       if (isMobile) {
-        // Mobile positioning - based on contain background sizing
+        // Mobile positioning - creating borders AROUND books, not on them
+        const borderOffset = 8; // pixels to offset the border from book edges
         setBookPositions({
           torah: { 
-            top: height * 0.33, 
-            left: width * 0.15, 
-            width: 64, 
-            height: 92 
+            top: height * 0.33 - borderOffset, 
+            left: width * 0.15 - borderOffset, 
+            width: 64 + (borderOffset * 2), 
+            height: 92 + (borderOffset * 2) 
           },
           quran: { 
-            top: height * 0.32, 
-            left: width * 0.5 - 40, // Center minus half width
-            width: 80, 
-            height: 100 
+            top: height * 0.32 - borderOffset, 
+            left: width * 0.5 - 40 - borderOffset, // Center minus half width minus offset
+            width: 80 + (borderOffset * 2), 
+            height: 100 + (borderOffset * 2) 
           },
           bible: { 
-            top: height * 0.33, 
-            right: width * 0.16, 
-            width: 68, 
-            height: 94 
+            top: height * 0.33 - borderOffset, 
+            right: width * 0.16 - borderOffset, 
+            width: 68 + (borderOffset * 2), 
+            height: 94 + (borderOffset * 2) 
           },
           tripitaka: { 
-            top: height * 0.46, 
-            left: width * 0.085, 
-            width: 60, 
-            height: 84 
+            top: height * 0.46 - borderOffset, 
+            left: width * 0.085 - borderOffset, 
+            width: 60 + (borderOffset * 2), 
+            height: 84 + (borderOffset * 2) 
           },
           bhagavadGita: { 
-            top: height * 0.465, 
-            right: width * 0.07, 
-            width: 72, 
-            height: 90 
+            top: height * 0.465 - borderOffset, 
+            right: width * 0.07 - borderOffset, 
+            width: 72 + (borderOffset * 2), 
+            height: 90 + (borderOffset * 2) 
           }
         });
       } else {
-        // Desktop positioning - based on cover background sizing
+        // Desktop positioning - creating borders AROUND books, not on them
+        const borderOffset = 12; // pixels to offset the border from book edges
         setBookPositions({
           torah: { 
-            top: height * 0.28, 
-            left: width * 0.26, 
-            width: 72, 
-            height: 104 
+            top: height * 0.28 - borderOffset, 
+            left: width * 0.26 - borderOffset, 
+            width: 72 + (borderOffset * 2), 
+            height: 104 + (borderOffset * 2) 
           },
           quran: { 
-            top: height * 0.30, 
-            left: width * 0.5 - 46, // Center minus half width
-            width: 92, 
-            height: 116 
+            top: height * 0.30 - borderOffset, 
+            left: width * 0.5 - 46 - borderOffset, // Center minus half width minus offset
+            width: 92 + (borderOffset * 2), 
+            height: 116 + (borderOffset * 2) 
           },
           bible: { 
-            top: height * 0.28, 
-            right: width * 0.27, 
-            width: 76, 
-            height: 106 
+            top: height * 0.28 - borderOffset, 
+            right: width * 0.27 - borderOffset, 
+            width: 76 + (borderOffset * 2), 
+            height: 106 + (borderOffset * 2) 
           },
           tripitaka: { 
-            top: height * 0.52, 
-            left: width * 0.21, 
-            width: 68, 
-            height: 96 
+            top: height * 0.52 - borderOffset, 
+            left: width * 0.21 - borderOffset, 
+            width: 68 + (borderOffset * 2), 
+            height: 96 + (borderOffset * 2) 
           },
           bhagavadGita: { 
-            top: height * 0.52, 
-            right: width * 0.21, 
-            width: 80, 
-            height: 102 
+            top: height * 0.52 - borderOffset, 
+            right: width * 0.21 - borderOffset, 
+            width: 80 + (borderOffset * 2), 
+            height: 102 + (borderOffset * 2) 
           }
         });
       }
