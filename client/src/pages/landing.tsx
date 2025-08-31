@@ -161,7 +161,7 @@ export default function LandingPage({
             {/* Bible - Custom size to match book dimensions */}
             <button
               onClick={() => handleScriptureClick('christianity')}
-              className="absolute top-[30%] right-[24%] w-[60px] h-[86px] md:top-[32%] md:right-[23%] md:w-[68px] md:h-[98px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
+              className="absolute top-[28%] right-[26%] w-[60px] h-[86px] md:top-[32%] md:right-[23%] md:w-[68px] md:h-[98px] transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
               title="Explore Bible"
               aria-label="Explore Bible"
             >
