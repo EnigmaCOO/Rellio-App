@@ -133,7 +133,7 @@ export default function LandingPage({
             {/* Torah - Top Left */}
             <button
               onClick={() => handleScriptureClick('judaism')}
-              className="absolute top-[24%] left-[24%] w-20 h-28 md:w-24 md:h-32 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
+              className="absolute top-[20%] left-[15%] w-16 h-24 md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(255,215,0,0.8)] z-10"
               title="Explore Torah"
               aria-label="Explore Torah"
             >
@@ -143,7 +143,7 @@ export default function LandingPage({
             {/* Quran - Top Center */}
             <button
               onClick={() => handleScriptureClick('islam')}
-              className="absolute top-[28%] left-1/2 -translate-x-1/2 w-20 h-28 md:w-24 md:h-32 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
+              className="absolute top-[18%] left-1/2 -translate-x-1/2 w-16 h-24 md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(0,213,255,0.8)] z-10"
               title="Explore Quran"
               aria-label="Explore Quran"
             >
@@ -153,7 +153,7 @@ export default function LandingPage({
             {/* Bible - Top Right */}
             <button
               onClick={() => handleScriptureClick('christianity')}
-              className="absolute top-[24%] right-[24%] w-20 h-28 md:w-24 md:h-32 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
+              className="absolute top-[20%] right-[15%] w-16 h-24 md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(59,130,246,0.8)] z-10"
               title="Explore Bible"
               aria-label="Explore Bible"
             >
@@ -163,7 +163,7 @@ export default function LandingPage({
             {/* Tripitaka - Middle Left */}
             <button
               onClick={() => handleScriptureClick('buddhism')}
-              className="absolute top-[48%] left-[18%] w-20 h-28 md:w-24 md:h-32 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(147,51,234,0.8)] z-10"
+              className="absolute top-[42%] left-[12%] w-16 h-24 md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(147,51,234,0.8)] z-10"
               title="Explore Tripitaka"
               aria-label="Explore Tripitaka"
             >
@@ -173,7 +173,7 @@ export default function LandingPage({
             {/* Bhagavad Gita - Middle Right */}
             <button
               onClick={() => handleScriptureClick('hinduism')}
-              className="absolute top-[48%] right-[18%] w-20 h-28 md:w-24 md:h-32 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(249,115,22,0.8)] z-10"
+              className="absolute top-[42%] right-[12%] w-16 h-24 md:w-20 md:h-28 transition-all duration-300 hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_30px_rgba(249,115,22,0.8)] z-10"
               title="Explore Bhagavad Gita"
               aria-label="Explore Bhagavad Gita"
             >
