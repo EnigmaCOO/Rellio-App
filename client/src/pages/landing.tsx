@@ -60,15 +60,33 @@ export default function LandingPage({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
   
-  // Debug image dimensions on load
+  // Debug image dimensions and verify coordinates
   useEffect(() => {
     const img = heroImageRef.current;
     if (img && img.complete) {
       console.log('Hero image dimensions:', {
         natural: { width: img.naturalWidth, height: img.naturalHeight },
-        rendered: { width: img.width, height: img.height }
+        rendered: { width: img.width, height: img.height },
+        aspectRatio: img.naturalWidth / img.naturalHeight
       });
+      console.log('Image map coordinates are based on natural dimensions');
     }
+  }, []);
+  
+  // Add resize listener for debugging
+  useEffect(() => {
+    const handleResize = () => {
+      const img = heroImageRef.current;
+      if (img) {
+        console.log('Window resized - Image size:', {
+          rendered: { width: img.width, height: img.height },
+          viewport: { width: window.innerWidth, height: window.innerHeight }
+        });
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const handleGetStarted = () => setLocation("/dashboard");
@@ -144,7 +162,7 @@ export default function LandingPage({
             ref={heroImageRef}
             src={isMobile ? mobileHeroImage : heroImage}
             alt="Rellio cosmic hero with sacred scriptures"
-            className="w-full h-auto min-h-screen object-cover"
+            className="w-full h-auto min-h-screen object-cover sm:object-contain md:object-cover"
             useMap="#scriptureBookMap"
             style={{
               transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
@@ -153,64 +171,88 @@ export default function LandingPage({
             onLoad={() => {
               const img = heroImageRef.current;
               if (img) {
-                console.log('Hero image loaded:', {
+                console.log('Hero image loaded - Dimensions and coordinate mapping:', {
                   natural: { width: img.naturalWidth, height: img.naturalHeight },
-                  rendered: { width: img.width, height: img.height }
+                  rendered: { width: img.width, height: img.height },
+                  aspectRatio: (img.naturalWidth / img.naturalHeight).toFixed(2),
+                  coordinateSystem: 'Based on 840x560 natural dimensions',
+                  books: {
+                    Torah: 'coords="195,160,275,250" - Top Left',
+                    Quran: 'coords="380,135,480,235" - Top Center', 
+                    Bible: 'coords="565,160,645,250" - Top Right',
+                    Tripitaka: 'coords="155,300,235,390" - Bottom Left',
+                    BhagavadGita: 'coords="605,300,685,390" - Bottom Right'
+                  }
                 });
               }
             }}
           />
           
-          {/* Image Map for Scripture Books */}
+          {/* Image Map for Scripture Books - Based on actual image positions */}
           <map name="scriptureBookMap">
-            {/* Torah - Top Left */}
+            {/* Debug: Add temporary visual borders to verify alignment */}
+            <style>{`
+              area[title*="Torah"]:hover, 
+              area[title*="Quran"]:hover, 
+              area[title*="Bible"]:hover, 
+              area[title*="Tripitaka"]:hover, 
+              area[title*="Bhagavad"]:hover {
+                cursor: pointer !important;
+              }
+            `}</style>
+            {/* Torah - Top Left (green book with Hebrew text) */}
             <area
               shape="rect"
-              coords="240,270,360,450"
+              coords="195,160,275,250"
               alt="Torah"
               title="Explore Torah - Sacred Jewish text"
               onClick={() => handleScriptureClick('judaism')}
-              className="cursor-pointer"
+              className="cursor-pointer hover:opacity-80"
+              style={{ outline: 'none' }}
             />
             
-            {/* Quran - Top Center */}
+            {/* Quran - Top Center (dark green book with Arabic text) */}
             <area
               shape="rect"
-              coords="540,144,660,324"
+              coords="380,135,480,235"
               alt="Quran"
               title="Explore Quran - Sacred Islamic text"
               onClick={() => handleScriptureClick('islam')}
-              className="cursor-pointer"
+              className="cursor-pointer hover:opacity-80"
+              style={{ outline: 'none' }}
             />
             
-            {/* Bible - Top Right */}
+            {/* Bible - Top Right (brown book with cross) */}
             <area
               shape="rect"
-              coords="840,270,960,450"
+              coords="565,160,645,250"
               alt="Bible"
               title="Explore Bible - Sacred Christian text"
               onClick={() => handleScriptureClick('christianity')}
-              className="cursor-pointer"
+              className="cursor-pointer hover:opacity-80"
+              style={{ outline: 'none' }}
             />
             
-            {/* Tripitaka - Bottom Left */}
+            {/* Tripitaka - Bottom Left (dark book with sun symbol) */}
             <area
               shape="rect"
-              coords="180,1350,300,1530"
+              coords="155,300,235,390"
               alt="Tripitaka"
               title="Explore Tripitaka - Sacred Buddhist texts"
               onClick={() => handleScriptureClick('buddhism')}
-              className="cursor-pointer"
+              className="cursor-pointer hover:opacity-80"
+              style={{ outline: 'none' }}
             />
             
-            {/* Bhagavad Gita - Bottom Right */}
+            {/* Bhagavad Gita - Bottom Right (orange/red book with sun symbol) */}
             <area
               shape="rect"
-              coords="900,1350,1020,1530"
+              coords="605,300,685,390"
               alt="Bhagavad Gita"
               title="Explore Bhagavad Gita - Sacred Hindu text"
               onClick={() => handleScriptureClick('hinduism')}
-              className="cursor-pointer"
+              className="cursor-pointer hover:opacity-80"
+              style={{ outline: 'none' }}
             />
           </map>
           
