@@ -26,6 +26,7 @@ import {
 import heroImage from "@assets/rellio-hero-latest.png";
 import mobileHeroImage from "@assets/rellio-mobile-hero.png";
 import compassLogo from "@assets/rellio-compass-logo.png";
+import ExperienceAIWisdom from "@/components/ExperienceAIWisdom";
 
 export default function LandingPage({
   bgUrl = "/assets/rellio-hero.jpg",
@@ -296,6 +297,9 @@ export default function LandingPage({
             </div>
           </div>
         </section>
+
+        {/* EXPERIENCE AI WISDOM SECTION */}
+        <ExperienceAIWisdom />
 
         {/* FEATURES SECTION */}
         <section id="features" className="bg-[#0c0f12] pb-16 text-yellow-100/85">
