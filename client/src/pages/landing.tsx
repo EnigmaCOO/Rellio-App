@@ -255,10 +255,9 @@ export default function LandingPage({
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={{ 
                 top: "26%", 
-                left: "50%", 
+                left: "26%", 
                 width: "12%", 
-                height: "20%",
-                transform: "translateX(-50%)"
+                height: "20%"
               }}
               title="Explore Bible - Sacred Christian text"
               aria-label="Explore Bible"
