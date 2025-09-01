@@ -1,0 +1,130 @@
+You are a senior UI/UX engineer tasked with refining the Rellio landing page (client/src/pages/landing.tsx) to ensure clickable golden-bordered placeholders for the scripture books (Qur’an, Bible, Torah, Bhagavad Gita, Tripitaka) form perfect rectangular frames around each book in `/assets/rellio-hero.jpg`, aligning with the latest positioning and adapting responsively across all screen sizes. Preserve all existing functionality, routing, and APIs, and align with Rellio’s "Guiding Wisdom. Eternal Connection" brand.
+
+- Preserve existing functionality (e.g., `handleScriptureClick`, CTAs, parallax).
+- Modify only styles, markup, and minimal JavaScript in `landing.tsx`.
+- Write accessible, responsive, and performant code using Tailwind CSS.
+- Produce a single PR with clear commits (e.g., "fix(ui): ensure book frames align across screens", "refactor: optimize button overlays").
+- Maintain Rellio’s luxury-spiritual essence.
+
+#### TASK BRIEF (paste after system block)
+Goal: Refine the `LandingPage.tsx` hero section to ensure the golden-bordered `<button>` overlays form perfect rectangular frames around each book in `/assets/rellio-hero.jpg`, using the latest reported positions (Torah at 18% top, 31% left, etc.) and adapting responsively across all screen sizes. Resolve any misalignment or random placement, ensuring the background image remains visible and buttons are clickable. Add debug features to validate the solution.
+
+1) **Button Overlay and Frame Implementation**
+   - Use `<button>` overlays with `border-yellow-400/80` and `hover:border-yellow-300`, explicitly set as rectangular frames with defined `width` and `height`.
+   - Position buttons based on the latest coordinates, ensuring they frame the books:
+     - Torah: `top: 18%`, `left: 31%`, `-18deg`, `w-28 h-36`
+     - Quran: `top: 12%`, `left: 50%`, `translateX(-50%)`, `w-28 h-36`
+     - Bible: `top: 18%`, `right: 31%`, `18deg`, `w-28 h-36`
+     - Tripitaka: `bottom: 37%`, `left: 24%`, `-25deg`, `w-28 h-36`
+     - Bhagavad Gita: `bottom: 37%`, `right: 24%`, `25deg`, `w-28 h-36`
+   - Use Tailwind breakpoints to scale sizes responsively:
+     - Mobile (0-639px): `w-16 h-22`
+     - Small (640-767px): `w-20 h-26`
+     - Medium (768-1023px): `w-24 h-30`
+     - Large (1024px+): `w-28 h-36`
+   - Ensure the background image is visible with `z-10` for the image and `z-20` for buttons, adjusting gradient opacity.
+   - Example structure:
+     ```tsx
+     const heroRef = useRef<HTMLDivElement>(null);
+
+     useEffect(() => {
+       const hero = heroRef.current;
+       if (hero) {
+         console.log("Hero dimensions:", hero.getBoundingClientRect()); // Debug
+       }
+     }, []);
+
+     return (
+       <section
+         ref={heroRef}
+         aria-label="Rellio hero"
+         className="relative isolate flex min-h-screen items-center justify-center overflow-hidden"
+       >
+         <div
+           className="hero-bg absolute inset-0 z-10 bg-cover bg-center"
+           style={{
+             backgroundImage: `url(${bgUrl})`,
+             transform: `translateY(${prefersReduced ? 0 : offset * 0.6}px)`,
+             willChange: "transform",
+           }}
+         />
+         <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-black/50 via-black/20 to-black/30" />
+         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_40%_at_50%_60%,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_40%,rgba(0,0,0,0.2)_100%)]" />
+         <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-28 pb-24 text-center">
+           <button
+             data-book="Torah"
+             onClick={() => handleScriptureClick("judaism")}
+             className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 z-20 w-16 h-22 sm:w-20 sm:h-26 md:w-24 md:h-30 lg:w-28 lg:h-36"
+             style={{ top: "18%", left: "31%", transform: "rotate(-18deg)" }}
+           >
+             <div className="w-full h-full bg-gray-800/20 opacity-0 hover:opacity-10 transition-opacity" /> {/* Debug fill */}
+           </button>
+           <button
+             data-book="Quran"
+             onClick={() => handleScriptureClick("islam")}
+             className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 z-20 w-16 h-22 sm:w-20 sm:h-26 md:w-24 md:h-30 lg:w-28 lg:h-36"
+             style={{ top: "12%", left: "50%", transform: "translateX(-50%)" }}
+           >
+             <div className="w-full h-full bg-gray-800/20 opacity-0 hover:opacity-10 transition-opacity" />
+           </button>
+           <button
+             data-book="Bible"
+             onClick={() => handleScriptureClick("christianity")}
+             className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 z-20 w-16 h-22 sm:w-20 sm:h-26 md:w-24 md:h-30 lg:w-28 lg:h-36"
+             style={{ top: "18%", right: "31%", transform: "rotate(18deg)" }}
+           >
+             <div className="w-full h-full bg-gray-800/20 opacity-0 hover:opacity-10 transition-opacity" />
+           </button>
+           <button
+             data-book="Tripitaka"
+             onClick={() => handleScriptureClick("buddhism")}
+             className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 z-20 w-16 h-22 sm:w-20 sm:h-26 md:w-24 md:h-30 lg:w-28 lg:h-36"
+             style={{ bottom: "37%", left: "24%", transform: "rotate(-25deg)" }}
+           >
+             <div className="w-full h-full bg-gray-800/20 opacity-0 hover:opacity-10 transition-opacity" />
+           </button>
+           <button
+             data-book="Bhagavad Gita"
+             onClick={() => handleScriptureClick("hinduism")}
+             className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 z-20 w-16 h-22 sm:w-20 sm:h-26 md:w-24 md:h-30 lg:w-28 lg:h-36"
+             style={{ bottom: "37%", right: "24%", transform: "rotate(25deg)" }}
+           >
+             <div className="w-full h-full bg-gray-800/20 opacity-0 hover:opacity-10 transition-opacity" />
+           </button>
+           {/* Logo, tagline, CTAs, labels */}
+         </div>
+       </section>
+     );
+     ```
+
+2) **Responsive Design**
+   - Use Tailwind breakpoints (`sm:`, `md:`, `lg:`) to scale button sizes progressively and adjust positions if needed (e.g., `md:top-1/6` for fine-tuning).
+   - Ensure the hero container uses `min-h-screen` and `max-w-5xl` with flexible padding.
+
+3) **Debugging and Validation**
+   - Add a debug `<div>` inside each button with `bg-gray-800/20` to visualize the rectangular frame.
+   - Use `console.log` to output `hero.getBoundingClientRect()` and button styles.
+   - Test on mobile (320px), tablet (768px), and desktop (1280px) to confirm alignment.
+
+4) **Acceptance Criteria**
+   - Background image is fully visible with reduced gradient opacity.
+   - Book buttons form rectangular golden frames around `/assets/rellio-hero.jpg` books, matching the screenshot’s placement.
+   - Buttons are clickable, triggering `handleScriptureClick`.
+   - No random lines or drift; borders maintain consistent framing across all screen sizes.
+   - Parallax, CTAs, and other features remain functional.
+   - No console errors; Lighthouse Performance ≥ 90.
+
+5) **Implementation Steps**
+   1. Update the hero section in `LandingPage.tsx` with the refined overlay structure.
+   2. Add debug `<div>` inside buttons to verify framing.
+   3. Test clickability and alignment across devices, tweaking percentages/rotations if needed.
+   4. Commit with: "fix(ui): ensure book frames align across screens", "refactor: optimize button overlays".
+
+#### FINAL INSTRUCTION
+Implement the fix, submit a PR passing acceptance criteria and lint/build checks. Preserve existing logic, adding only the overlay adjustments and debug elements. Ensure a seamless, luxurious spiritual experience with perfectly framed, clickable books across all screen sizes. If issues persist (e.g., misalignment or unclickable buttons), share the updated code, console logs, or a deployed URL—let’s get this exactly right!
+
+#### Additional Notes
+- **Verify Coordinates**: Cross-check percentages (e.g., `18%`) with your screenshot; adjust if the image’s aspect ratio (e.g., 1200x1800) differs.
+- **Debug Fill**: Remove the `bg-gray-800/20` `<div>` after testing confirms frames.
+- **Responsiveness**: If drift occurs, add `sm:`, `md:`, `lg:` adjustments to `top`/`left` values.
+- **Clickability**: If buttons don’t respond, add `pointer-events-auto` and retest z-index.
