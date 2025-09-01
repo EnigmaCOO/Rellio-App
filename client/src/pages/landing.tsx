@@ -214,6 +214,94 @@ export default function LandingPage({
           <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-black/50 via-black/20 to-black/30" />
           <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_40%_at_50%_60%,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_40%,rgba(0,0,0,0.2)_100%)]" />
           
+          {/* Clickable Book Overlays - Positioned based on actual image dimensions (1536x1024) */}
+          <div className="absolute inset-0 z-30">
+            {/* Torah - Top Left */}
+            <button
+              onClick={() => handleScriptureClick('judaism')}
+              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
+              style={{ 
+                top: "20%", 
+                left: "20%", 
+                width: "8%", 
+                height: "18%",
+                transform: "rotate(-15deg)" 
+              }}
+              title="Explore Torah - Sacred Jewish text"
+              aria-label="Explore Torah"
+            >
+              <div className="w-full h-full bg-yellow-400/30 opacity-0 hover:opacity-100 transition-opacity rounded" />
+            </button>
+            
+            {/* Quran - Top Center */}
+            <button
+              onClick={() => handleScriptureClick('islam')}
+              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
+              style={{ 
+                top: "15%", 
+                left: "50%", 
+                width: "7%", 
+                height: "20%",
+                transform: "translateX(-50%)" 
+              }}
+              title="Explore Quran - Sacred Islamic text"
+              aria-label="Explore Quran"
+            >
+              <div className="w-full h-full bg-yellow-400/30 opacity-0 hover:opacity-100 transition-opacity rounded" />
+            </button>
+            
+            {/* Bible - Top Right */}
+            <button
+              onClick={() => handleScriptureClick('christianity')}
+              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
+              style={{ 
+                top: "20%", 
+                right: "20%", 
+                width: "8%", 
+                height: "18%",
+                transform: "rotate(15deg)" 
+              }}
+              title="Explore Bible - Sacred Christian text"
+              aria-label="Explore Bible"
+            >
+              <div className="w-full h-full bg-yellow-400/30 opacity-0 hover:opacity-100 transition-opacity rounded" />
+            </button>
+            
+            {/* Tripitaka - Bottom Left */}
+            <button
+              onClick={() => handleScriptureClick('buddhism')}
+              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
+              style={{ 
+                bottom: "25%", 
+                left: "15%", 
+                width: "7%", 
+                height: "16%",
+                transform: "rotate(-20deg)" 
+              }}
+              title="Explore Tripitaka - Sacred Buddhist texts"
+              aria-label="Explore Tripitaka"
+            >
+              <div className="w-full h-full bg-yellow-400/30 opacity-0 hover:opacity-100 transition-opacity rounded" />
+            </button>
+            
+            {/* Bhagavad Gita - Bottom Right */}
+            <button
+              onClick={() => handleScriptureClick('hinduism')}
+              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
+              style={{ 
+                bottom: "25%", 
+                right: "15%", 
+                width: "8%", 
+                height: "17%",
+                transform: "rotate(20deg)" 
+              }}
+              title="Explore Bhagavad Gita - Sacred Hindu text"
+              aria-label="Explore Bhagavad Gita"
+            >
+              <div className="w-full h-full bg-yellow-400/30 opacity-0 hover:opacity-100 transition-opacity rounded" />
+            </button>
+          </div>
+          
           <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-28 pb-24 text-center">
             {/* Content overlay for logo, tagline, and CTAs */}
           </div>
