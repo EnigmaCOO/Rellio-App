@@ -271,7 +271,7 @@ export default function LandingPage({
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={{ 
                 bottom: "32%", 
-                left: "16%", 
+                left: "18.2%", 
                 width: "12%", 
                 height: "18%"
               }}
