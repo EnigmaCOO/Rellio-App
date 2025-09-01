@@ -1,7 +1,20 @@
 import { ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
 import sacredScholarsImage from "@assets/sacred-scholars.jpg";
+import sacredScholarsMobileImage from "@assets/sacred-scholars-mobile.jpg";
 
 export default function ExperienceAIWisdom() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   const handleSacredScholars = () => {
     console.log("Ask Our Sacred Scholars clicked");
     // Future: Route to specialized scholar interface
@@ -22,7 +35,7 @@ export default function ExperienceAIWisdom() {
       {/* Background Image */}
       <div className="absolute inset-0">
         <img
-          src={sacredScholarsImage}
+          src={isMobile ? sacredScholarsMobileImage : sacredScholarsImage}
           alt="Sacred scholars representing different religious traditions"
           className="w-full h-full object-cover opacity-90"
         />

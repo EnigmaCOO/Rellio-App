@@ -298,30 +298,32 @@ export default function LandingPage({
           </div>
         </section>
 
+        {/* CALL TO ACTION BUTTONS */}
+        <section className="bg-[#0c0f12] py-16">
+          <div className="flex flex-col items-center gap-4">
+            <button
+              onClick={handleGetStarted}
+              className="inline-flex items-center justify-center rounded-lg border-2 border-yellow-300/60 bg-black/30 backdrop-blur-sm px-10 py-3 font-serif text-sm font-semibold tracking-[0.2em] text-yellow-200 transition-all duration-300 hover:border-yellow-200 hover:bg-yellow-200/10 hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+              aria-label="Enter the Rellio spiritual community"
+            >
+              ENTER THE CIRCLE
+            </button>
+            <button
+              onClick={handleWatchDemo}
+              className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-yellow-600/90 to-yellow-500/90 backdrop-blur-sm px-8 py-2 font-serif text-xs font-semibold tracking-[0.2em] text-black transition-all duration-300 hover:from-yellow-500 hover:to-yellow-400 hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+              aria-label="Explore sacred scriptures"
+            >
+              EXPLORE SCRIPTURES
+            </button>
+          </div>
+        </section>
+
         {/* EXPERIENCE AI WISDOM SECTION */}
         <ExperienceAIWisdom />
 
         {/* FEATURES SECTION */}
         <section id="features" className="bg-[#0c0f12] pb-16 text-yellow-100/85">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            {/* CTAs positioned above features */}
-            <div className="flex flex-col items-center gap-4 mb-16">
-              <button
-                onClick={handleGetStarted}
-                className="inline-flex items-center justify-center rounded-lg border-2 border-yellow-300/60 bg-black/30 backdrop-blur-sm px-10 py-3 font-serif text-sm font-semibold tracking-[0.2em] text-yellow-200 transition-all duration-300 hover:border-yellow-200 hover:bg-yellow-200/10 hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
-                aria-label="Enter the Rellio spiritual community"
-              >
-                ENTER THE CIRCLE
-              </button>
-              <button
-                onClick={handleWatchDemo}
-                className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-yellow-600/90 to-yellow-500/90 backdrop-blur-sm px-8 py-2 font-serif text-xs font-semibold tracking-[0.2em] text-black transition-all duration-300 hover:from-yellow-500 hover:to-yellow-400 hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
-                aria-label="Explore sacred scriptures"
-              >
-                EXPLORE SCRIPTURES
-              </button>
-            </div>
-            
             <h2 className="font-serif text-2xl tracking-[0.3em] text-yellow-200 mb-16 text-center">FEATURES</h2>
             
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
