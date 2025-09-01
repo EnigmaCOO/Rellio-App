@@ -146,13 +146,12 @@ export default function LandingPage({
           aria-label="Rellio hero" 
           className="relative isolate flex min-h-screen items-center justify-center overflow-hidden"
         >
-          {/* Hero Image with Image Map */}
+          {/* Hero Image */}
           <img
             ref={heroImageRef}
             src={isMobile ? mobileHeroImage : heroImage}
             alt="Rellio cosmic hero with floating scriptures - Torah, Quran, Bible, Tripitaka, and Bhagavad Gita"
             className="w-full h-auto min-h-screen object-cover z-10"
-            useMap="#bookMap"
             style={{
               transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
               willChange: "transform"
@@ -166,61 +165,22 @@ export default function LandingPage({
             }}
           />
           
-          {/* Image Map for Clickable Scripture Books */}
-          <map name="bookMap">
-            {/* Torah - Top Left */}
-            <area
-              shape="rect"
-              coords="300,270,420,450"
-              alt="Torah - Sacred Jewish text"
-              title="Explore Torah"
-              onClick={() => handleScriptureClick('judaism')}
-            />
-            {/* Quran - Top Center */}
-            <area
-              shape="rect"
-              coords="540,216,660,396"
-              alt="Quran - Sacred Islamic text"
-              title="Explore Quran"
-              onClick={() => handleScriptureClick('islam')}
-            />
-            {/* Bible - Top Right */}
-            <area
-              shape="rect"
-              coords="780,270,900,450"
-              alt="Bible - Sacred Christian text"
-              title="Explore Bible"
-              onClick={() => handleScriptureClick('christianity')}
-            />
-            {/* Tripitaka - Bottom Left */}
-            <area
-              shape="rect"
-              coords="216,1080,336,1260"
-              alt="Tripitaka - Sacred Buddhist texts"
-              title="Explore Tripitaka"
-              onClick={() => handleScriptureClick('buddhism')}
-            />
-            {/* Bhagavad Gita - Bottom Right */}
-            <area
-              shape="rect"
-              coords="864,1080,984,1260"
-              alt="Bhagavad Gita - Sacred Hindu text"
-              title="Explore Bhagavad Gita"
-              onClick={() => handleScriptureClick('hinduism')}
-            />
-          </map>
-          
           {/* Light gradient overlay for text readability */}
           <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-black/50 via-black/20 to-black/30" />
           <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_40%_at_50%_60%,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_40%,rgba(0,0,0,0.2)_100%)]" />
           
-          {/* Clickable Book Overlays - Positioned based on actual image dimensions (1536x1024) */}
+          {/* Clickable Book Overlays - Responsive positioning for desktop and mobile */}
           <div className="absolute inset-0 z-30">
-            {/* Torah - Top Left */}
+            {/* Torah */}
             <button
               onClick={() => handleScriptureClick('judaism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
-              style={{ 
+              style={isMobile ? { 
+                top: "25%", 
+                left: "15%", 
+                width: "22%", 
+                height: "12%"
+              } : { 
                 top: "25.5%", 
                 left: "23%", 
                 width: "12%", 
@@ -232,16 +192,21 @@ export default function LandingPage({
               <div className="w-full h-full bg-yellow-400/30 opacity-0 hover:opacity-100 transition-opacity rounded" />
             </button>
             
-            {/* Quran - Top Center */}
+            {/* Quran */}
             <button
               onClick={() => handleScriptureClick('islam')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
-              style={{ 
+              style={isMobile ? { 
+                top: "37%", 
+                left: "39%", 
+                width: "22%", 
+                height: "12%"
+              } : { 
                 top: "28%", 
                 left: "47.5%", 
                 width: "12%", 
                 height: "20%",
-                transform: "translateX(-50%)" 
+                transform: "translateX(-50%)"
               }}
               title="Explore Quran - Sacred Islamic text"
               aria-label="Explore Quran"
@@ -249,11 +214,16 @@ export default function LandingPage({
               <div className="w-full h-full bg-yellow-400/30 opacity-0 hover:opacity-100 transition-opacity rounded" />
             </button>
             
-            {/* Bible - Top Right */}
+            {/* Bible */}
             <button
               onClick={() => handleScriptureClick('christianity')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
-              style={{ 
+              style={isMobile ? { 
+                top: "25%", 
+                right: "15%", 
+                width: "22%", 
+                height: "12%"
+              } : { 
                 top: "26%", 
                 right: "27%", 
                 width: "12%", 
@@ -265,11 +235,16 @@ export default function LandingPage({
               <div className="w-full h-full bg-yellow-400/30 opacity-0 hover:opacity-100 transition-opacity rounded" />
             </button>
             
-            {/* Tripitaka - Bottom Left */}
+            {/* Tripitaka */}
             <button
               onClick={() => handleScriptureClick('buddhism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
-              style={{ 
+              style={isMobile ? { 
+                bottom: "35%", 
+                left: "15%", 
+                width: "22%", 
+                height: "12%"
+              } : { 
                 bottom: "32%", 
                 left: "18.2%", 
                 width: "12%", 
@@ -281,11 +256,16 @@ export default function LandingPage({
               <div className="w-full h-full bg-yellow-400/30 opacity-0 hover:opacity-100 transition-opacity rounded" />
             </button>
             
-            {/* Bhagavad Gita - Bottom Right */}
+            {/* Bhagavad Gita */}
             <button
               onClick={() => handleScriptureClick('hinduism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
-              style={{ 
+              style={isMobile ? { 
+                bottom: "35%", 
+                right: "15%", 
+                width: "22%", 
+                height: "12%"
+              } : { 
                 bottom: "32%", 
                 right: "23.1%", 
                 width: "12%", 
