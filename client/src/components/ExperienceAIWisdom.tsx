@@ -31,14 +31,13 @@ export default function ExperienceAIWisdom() {
   };
 
   return (
-    <section className="relative min-h-[800px] md:min-h-[700px] bg-transparent overflow-hidden">
+    <section className="relative min-h-[900px] md:min-h-[800px] bg-gradient-to-b from-[#0c0f12] via-[#1a1d2e] to-[#0c0f12] overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
         <img
           src={isMobile ? sacredScholarsMobileImage : sacredScholarsImage}
           alt="Sacred scholars representing different religious traditions"
-          className="w-full h-full object-cover opacity-95"
-          style={{ objectPosition: "center top" }}
+          className="w-full h-full object-contain opacity-95"
         />
         {/* Minimal overlay for text readability while keeping it see-through */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
