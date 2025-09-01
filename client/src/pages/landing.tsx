@@ -159,10 +159,10 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('judaism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
               style={{ 
-                top: "17%", 
-                left: "26%", 
-                width: "80px", 
-                height: "100px",
+                top: "19%", 
+                left: "27%", 
+                width: "78px", 
+                height: "98px",
                 transform: "rotate(-18deg)" 
               }}
               title="Explore Torah - Sacred Jewish text"
@@ -177,10 +177,10 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('islam')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
               style={{ 
-                top: "5%", 
+                top: "2%", 
                 left: "50%", 
-                width: "85px", 
-                height: "110px",
+                width: "82px", 
+                height: "108px",
                 transform: "translateX(-50%)" 
               }}
               title="Explore Quran - Sacred Islamic text"
@@ -195,10 +195,10 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('christianity')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
               style={{ 
-                top: "17%", 
-                right: "26%", 
-                width: "80px", 
-                height: "100px",
+                top: "19%", 
+                right: "27%", 
+                width: "78px", 
+                height: "98px",
                 transform: "rotate(18deg)" 
               }}
               title="Explore Bible - Sacred Christian text"
@@ -213,10 +213,10 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('buddhism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
               style={{ 
-                bottom: "38%", 
-                left: "18%", 
-                width: "75px", 
-                height: "95px",
+                bottom: "40%", 
+                left: "19%", 
+                width: "72px", 
+                height: "92px",
                 transform: "rotate(-25deg)" 
               }}
               title="Explore Tripitaka - Sacred Buddhist texts"
@@ -231,10 +231,10 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('hinduism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
               style={{ 
-                bottom: "38%", 
-                right: "18%", 
-                width: "85px", 
-                height: "105px",
+                bottom: "40%", 
+                right: "19%", 
+                width: "82px", 
+                height: "102px",
                 transform: "rotate(25deg)" 
               }}
               title="Explore Bhagavad Gita - Sacred Hindu text"
