@@ -284,7 +284,7 @@ export default function LandingPage({
           
           {/* Tagline positioned below the figure */}
           <div className="absolute bottom-1/4 left-1/2 transform -translate-x-1/2 z-30">
-            <p className="font-serif text-lg md:text-xl tracking-[0.3em] text-yellow-300/90 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] text-center whitespace-nowrap">
+            <p className="font-serif text-sm md:text-xl tracking-[0.3em] text-yellow-300/90 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] text-center whitespace-nowrap">
               GUIDING WISDOM. ETERNAL CONNECTION
             </p>
           </div>
