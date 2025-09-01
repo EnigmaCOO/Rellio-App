@@ -140,7 +140,7 @@ export default function LandingPage({
         >
           {/* Hero Background Image */}
           <div
-            className="hero-bg absolute inset-0 -z-10 bg-cover bg-center"
+            className="hero-bg absolute inset-0 z-10 bg-cover bg-center"
             style={{
               backgroundImage: `url(${isMobile ? mobileHeroImage : heroImage})`,
               transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
@@ -149,59 +149,99 @@ export default function LandingPage({
           />
           
           {/* Reduced opacity gradients for better image visibility */}
-          <div className="pointer-events-none absolute inset-0 -z-20 bg-gradient-to-t from-black/50 via-black/20 to-black/40" />
-          <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(60%_40%_at_50%_60%,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_40%,rgba(0,0,0,0.3)_100%)]" />
+          <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-black/50 via-black/20 to-black/30" />
+          <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_40%_at_50%_60%,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_40%,rgba(0,0,0,0.2)_100%)]" />
           
           <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-28 pb-24 text-center">
             {/* Torah - Top Left (Golden border framing the book) */}
             <button
               data-book="Torah"
               onClick={() => handleScriptureClick('judaism')}
-              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 w-16 h-22 sm:w-20 sm:h-26 md:w-24 md:h-30 lg:w-28 lg:h-34 pointer-events-auto rounded"
-              style={{ top: "13%", left: "24%", transform: "rotate(-18deg)" }}
+              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
+              style={{ 
+                top: "13%", 
+                left: "24%", 
+                width: "112px", 
+                height: "144px",
+                transform: "rotate(-18deg)" 
+              }}
               title="Explore Torah - Sacred Jewish text"
               aria-label="Explore Torah"
-            />
+            >
+              <div className="w-full h-full bg-gray-800/20 opacity-0 hover:opacity-10 transition-opacity rounded" />
+            </button>
             
             {/* Quran - Top Center (Golden border framing the book) */}
             <button
               data-book="Quran"
               onClick={() => handleScriptureClick('islam')}
-              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 w-18 h-24 sm:w-22 sm:h-28 md:w-26 md:h-32 lg:w-30 lg:h-36 pointer-events-auto rounded"
-              style={{ top: "10%", left: "50%", transform: "translateX(-50%)" }}
+              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
+              style={{ 
+                top: "10%", 
+                left: "50%", 
+                width: "112px", 
+                height: "144px",
+                transform: "translateX(-50%)" 
+              }}
               title="Explore Quran - Sacred Islamic text"
               aria-label="Explore Quran"
-            />
+            >
+              <div className="w-full h-full bg-gray-800/20 opacity-0 hover:opacity-10 transition-opacity rounded" />
+            </button>
             
             {/* Bible - Top Right (Golden border framing the book) */}
             <button
               data-book="Bible"
               onClick={() => handleScriptureClick('christianity')}
-              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 w-16 h-22 sm:w-20 sm:h-26 md:w-24 md:h-30 lg:w-28 lg:h-34 pointer-events-auto rounded"
-              style={{ top: "13%", right: "24%", transform: "rotate(18deg)" }}
+              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
+              style={{ 
+                top: "13%", 
+                right: "24%", 
+                width: "112px", 
+                height: "144px",
+                transform: "rotate(18deg)" 
+              }}
               title="Explore Bible - Sacred Christian text"
               aria-label="Explore Bible"
-            />
+            >
+              <div className="w-full h-full bg-gray-800/20 opacity-0 hover:opacity-10 transition-opacity rounded" />
+            </button>
             
             {/* Tripitaka - Bottom Left (Golden border framing the book) */}
             <button
               data-book="Tripitaka"
               onClick={() => handleScriptureClick('buddhism')}
-              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 w-16 h-22 sm:w-20 sm:h-26 md:w-24 md:h-30 lg:w-28 lg:h-34 pointer-events-auto rounded"
-              style={{ bottom: "32%", left: "20%", transform: "rotate(-25deg)" }}
+              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
+              style={{ 
+                bottom: "32%", 
+                left: "20%", 
+                width: "112px", 
+                height: "144px",
+                transform: "rotate(-25deg)" 
+              }}
               title="Explore Tripitaka - Sacred Buddhist texts"
               aria-label="Explore Tripitaka"
-            />
+            >
+              <div className="w-full h-full bg-gray-800/20 opacity-0 hover:opacity-10 transition-opacity rounded" />
+            </button>
             
             {/* Bhagavad Gita - Bottom Right (Golden border framing the book) */}
             <button
               data-book="Bhagavad Gita"
               onClick={() => handleScriptureClick('hinduism')}
-              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 w-16 h-22 sm:w-20 sm:h-26 md:w-24 md:h-30 lg:w-28 lg:h-34 pointer-events-auto rounded"
-              style={{ bottom: "32%", right: "20%", transform: "rotate(25deg)" }}
+              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
+              style={{ 
+                bottom: "32%", 
+                right: "20%", 
+                width: "112px", 
+                height: "144px",
+                transform: "rotate(25deg)" 
+              }}
               title="Explore Bhagavad Gita - Sacred Hindu text"
               aria-label="Explore Bhagavad Gita"
-            />
+            >
+              <div className="w-full h-full bg-gray-800/20 opacity-0 hover:opacity-10 transition-opacity rounded" />
+            </button>
           </div>
           
           {/* Tagline positioned under the light and sun */}
