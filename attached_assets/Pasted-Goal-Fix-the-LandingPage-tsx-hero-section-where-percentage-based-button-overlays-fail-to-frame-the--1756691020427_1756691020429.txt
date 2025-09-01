@@ -1,0 +1,135 @@
+Goal: Fix the LandingPage.tsx hero section where percentage-based button overlays fail to frame the books in /assets/rellio-hero.jpg due to scaling issues. Implement a responsive image map using an <img> element with <area> tags, defining precise pixel coordinates based on the image’s natural dimensions (verify as 1200x1800), ensuring golden-bordered frames are clickable and aligned across all screen sizes. Preserve the cosmic hero design (golden compass, seeker silhouette, unity orb) and add debug features. Include a fallback <div> overlay if needed.
+
+Image Map Implementation
+
+Replace the background <div> with an <img> element (src={bgUrl}, alt="Rellio cosmic hero") and use a <map> with <area> tags to define clickable regions.
+Use the natural dimensions of /assets/rellio-hero.jpg (assumed 1200x1800; verify with new Image().width) to calculate pixel coordinates for each book’s frame.
+Define <area> shapes as rectangles with coordinates framing each book, styled with a golden border effect via a fallback <div> overlay if needed.
+Example structure:
+tsxconst heroRef = useRef<HTMLImageElement>(null);
+
+useEffect(() => {
+  const img = heroRef.current;
+  if (img) {
+    console.log("Image dimensions:", img.naturalWidth, img.naturalHeight); // Debug
+  }
+}, []);
+
+return (
+  <section
+    aria-label="Rellio hero"
+    className="relative isolate flex min-h-screen items-center justify-center overflow-hidden"
+  >
+    <img
+      ref={heroRef}
+      src={bgUrl}
+      alt="Rellio cosmic hero with scriptures"
+      className="w-full h-auto min-h-screen object-cover z-10"
+      useMap="#bookMap"
+      style={{ transform: `translateY(${prefersReduced ? 0 : offset * 0.6}px)` }}
+    />
+    <map name="bookMap">
+      <area
+        shape="rect"
+        coords="300,216,420,396" // Torah frame (25%, 18% to 35%, 33% of 1200x1800)
+        alt="Torah"
+        title="Explore Torah"
+        onClick={() => handleScriptureClick("judaism")}
+        style={{ outline: "2px solid rgba(212, 175, 55, 0.8)", outlineOffset: "8px" }} // Fallback border
+      />
+      <area
+        shape="rect"
+        coords="540,144,660,324" // Quran frame (45%, 12% to 55%, 27%)
+        alt="Quran"
+        title="Explore Quran"
+        onClick={() => handleScriptureClick("islam")}
+        style={{ outline: "2px solid rgba(212, 175, 55, 0.8)", outlineOffset: "8px" }}
+      />
+      <area
+        shape="rect"
+        coords="780,216,900,396" // Bible frame (65%, 18% to 75%, 33%)
+        alt="Bible"
+        title="Explore Bible"
+        onClick={() => handleScriptureClick("christianity")}
+        style={{ outline: "2px solid rgba(212, 175, 55, 0.8)", outlineOffset: "8px" }}
+      />
+      <area
+        shape="rect"
+        coords="240,1260,360,1440" // Tripitaka frame (20%, 70% to 30%, 80%)
+        alt="Tripitaka"
+        title="Explore Tripitaka"
+        onClick={() => handleScriptureClick("buddhism")}
+        style={{ outline: "2px solid rgba(212, 175, 55, 0.8)", outlineOffset: "8px" }}
+      />
+      <area
+        shape="rect"
+        coords="840,1260,960,1440" // Bhagavad Gita frame (70%, 70% to 80%, 80%)
+        alt="Bhagavad Gita"
+        title="Explore Bhagavad Gita"
+        onClick={() => handleScriptureClick("hinduism")}
+        style={{ outline: "2px solid rgba(212, 175, 55, 0.8)", outlineOffset: "8px" }}
+      />
+    </map>
+    <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-black/50 via-black/20 to-black/30" />
+    <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_40%_at_50%_60%,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_40%,rgba(0,0,0,0.2)_100%)]" />
+    <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-28 pb-24 text-center">
+      {/* Logo, tagline, CTAs, labels */}
+    </div>
+  </section>
+);
+
+Adjust coords using a tool (e.g., https://www.image-map.net/) with the actual image to match book boundaries.
+
+
+Responsive Design
+
+Use Tailwind’s sm:, md:, lg: to adjust <area> sizes or add a fallback <div> overlay with scaled buttons if needed.
+Ensure the <img> uses object-cover and min-h-screen for parallax consistency.
+
+
+Fallback Overlay (if Image Map Fails)
+
+If <area> clicks don’t work, overlay <div> frames with golden borders:
+tsx<div
+  onClick={() => handleScriptureClick("judaism")}
+  className="absolute border-2 border-yellow-400/80 hover:border-yellow-300 z-20 w-28 h-36"
+  style={{ top: "18%", left: "31%", transform: "rotate(-18deg)" }}
+/>
+
+Apply to all books with respective coordinates.
+
+
+Debugging and Validation
+
+Add console.log to verify naturalWidth and naturalHeight.
+Use a temporary outline on <area> or border on <div> fallbacks to visualize frames.
+Test on mobile (320px), tablet (768px), and desktop (1280px).
+
+
+Acceptance Criteria
+
+Background image is fully visible with reduced gradient opacity.
+Book frames align with /assets/rellio-hero.jpg books, forming golden rectangles.
+Frames are clickable, triggering handleScriptureClick.
+No random lines or drift across all screen sizes.
+Parallax, CTAs, and other features remain functional.
+No console errors; Lighthouse Performance ≥ 90.
+
+
+Implementation Steps
+
+Replace the hero background <div> with an <img> and <map> in landing.tsx.
+Define <area> coordinates based on the image’s natural size.
+Add fallback <div> overlays if needed.
+Test clickability and alignment, adjusting coords or positions.
+Commit with: "fix(ui): implement image map for book frames", "refactor: enhance hero alignment".
+
+
+
+FINAL INSTRUCTION
+Implement the fix, submit a PR passing acceptance criteria and lint/build checks. Preserve existing logic, adding only the image map and fallback. Ensure a seamless, luxurious spiritual experience with perfectly framed, clickable books. If issues persist (e.g., unclickable areas or misalignment), share the updated code, console logs, or a deployed URL—let’s perfect this together!
+Additional Notes
+
+Verify Image Size: Check /assets/rellio-hero.jpg dimensions and adjust coords (e.g., scale to 1200x1800).
+Coordinate Tool: Use an image map editor to pinpoint exact book boundaries.
+Fallback Activation: If <area> fails, prioritize the <div> overlay and adjust z-index (z-20) accordingly.
