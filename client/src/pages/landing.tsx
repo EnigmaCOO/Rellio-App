@@ -176,8 +176,8 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('judaism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
-                top: "34%", 
-                left: "6%", 
+                top: "31%", 
+                left: "10%", 
                 width: "20%", 
                 height: "13%"
               } : { 
@@ -198,7 +198,7 @@ export default function LandingPage({
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
                 top: "31%", 
-                left: "40%", 
+                left: "36%", 
                 width: "20%", 
                 height: "13%"
               } : { 
@@ -240,8 +240,8 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('buddhism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
-                bottom: "36%", 
-                left: "6%", 
+                bottom: "40%", 
+                left: "3%", 
                 width: "20%", 
                 height: "13%"
               } : { 
@@ -261,8 +261,8 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('hinduism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
-                bottom: "36%", 
-                right: "6%", 
+                bottom: "40%", 
+                right: "8%", 
                 width: "20%", 
                 height: "13%"
               } : { 
