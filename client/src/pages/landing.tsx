@@ -221,7 +221,7 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('judaism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={{ 
-                top: "20%", 
+                top: "30%", 
                 left: "20%", 
                 width: "8%", 
                 height: "18%"
@@ -237,7 +237,7 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('islam')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={{ 
-                top: "15%", 
+                top: "25%", 
                 left: "50%", 
                 width: "7%", 
                 height: "20%",
@@ -254,7 +254,7 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('christianity')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={{ 
-                top: "20%", 
+                top: "30%", 
                 right: "20%", 
                 width: "8%", 
                 height: "18%"
