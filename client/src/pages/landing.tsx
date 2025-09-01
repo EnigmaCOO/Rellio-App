@@ -239,7 +239,7 @@ export default function LandingPage({
               style={{ 
                 top: "28%", 
                 left: "50%", 
-                width: "10%", 
+                width: "12%", 
                 height: "20%",
                 transform: "translateX(-50%)" 
               }}
