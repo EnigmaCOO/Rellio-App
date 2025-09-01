@@ -151,7 +151,7 @@ export default function LandingPage({
             ref={heroImageRef}
             src={isMobile ? mobileHeroImage : heroImage}
             alt="Rellio cosmic hero with floating scriptures - Torah, Quran, Bible, Tripitaka, and Bhagavad Gita"
-            className="w-full h-auto min-h-screen object-cover z-10"
+            className={isMobile ? "w-full h-screen object-contain z-10" : "w-full h-auto min-h-screen object-cover z-10"}
             style={{
               transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
               willChange: "transform"
@@ -176,10 +176,10 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('judaism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
-                top: "25%", 
-                left: "15%", 
-                width: "22%", 
-                height: "12%"
+                top: "20%", 
+                left: "20%", 
+                width: "25%", 
+                height: "15%"
               } : { 
                 top: "25.5%", 
                 left: "23%", 
@@ -197,10 +197,10 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('islam')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
-                top: "37%", 
-                left: "39%", 
-                width: "22%", 
-                height: "12%"
+                top: "32%", 
+                left: "37.5%", 
+                width: "25%", 
+                height: "15%"
               } : { 
                 top: "28%", 
                 left: "47.5%", 
@@ -219,10 +219,10 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('christianity')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
-                top: "25%", 
-                right: "15%", 
-                width: "22%", 
-                height: "12%"
+                top: "20%", 
+                right: "20%", 
+                width: "25%", 
+                height: "15%"
               } : { 
                 top: "26%", 
                 right: "27%", 
@@ -240,10 +240,10 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('buddhism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
-                bottom: "35%", 
-                left: "15%", 
-                width: "22%", 
-                height: "12%"
+                bottom: "25%", 
+                left: "20%", 
+                width: "25%", 
+                height: "15%"
               } : { 
                 bottom: "32%", 
                 left: "18.2%", 
@@ -261,10 +261,10 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('hinduism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
-                bottom: "35%", 
-                right: "15%", 
-                width: "22%", 
-                height: "12%"
+                bottom: "25%", 
+                right: "20%", 
+                width: "25%", 
+                height: "15%"
               } : { 
                 bottom: "32%", 
                 right: "23.1%", 
