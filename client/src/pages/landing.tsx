@@ -222,9 +222,9 @@ export default function LandingPage({
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={{ 
                 top: "28%", 
-                left: "20%", 
+                left: "22.5%", 
                 width: "12%", 
-                height: "18%"
+                height: "20%"
               }}
               title="Explore Torah - Sacred Jewish text"
               aria-label="Explore Torah"
@@ -255,9 +255,9 @@ export default function LandingPage({
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={{ 
                 top: "28%", 
-                right: "20%", 
+                right: "22.5%", 
                 width: "12%", 
-                height: "18%"
+                height: "20%"
               }}
               title="Explore Bible - Sacred Christian text"
               aria-label="Explore Bible"
@@ -270,10 +270,10 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('buddhism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={{ 
-                bottom: "25%", 
-                left: "15%", 
-                width: "10%", 
-                height: "16%"
+                bottom: "27.5%", 
+                left: "17.5%", 
+                width: "12%", 
+                height: "18%"
               }}
               title="Explore Tripitaka - Sacred Buddhist texts"
               aria-label="Explore Tripitaka"
@@ -286,10 +286,10 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('hinduism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={{ 
-                bottom: "25%", 
-                right: "15%", 
+                bottom: "27.5%", 
+                right: "17.5%", 
                 width: "12%", 
-                height: "17%"
+                height: "18%"
               }}
               title="Explore Bhagavad Gita - Sacred Hindu text"
               aria-label="Explore Bhagavad Gita"
