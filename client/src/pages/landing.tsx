@@ -221,8 +221,8 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('judaism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={{ 
-                top: "28%", 
-                left: "22.5%", 
+                top: "24%", 
+                left: "18%", 
                 width: "12%", 
                 height: "20%"
               }}
@@ -254,8 +254,8 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('christianity')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={{ 
-                top: "28%", 
-                right: "22.5%", 
+                top: "22%", 
+                right: "18%", 
                 width: "12%", 
                 height: "20%"
               }}
@@ -270,8 +270,8 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('buddhism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={{ 
-                bottom: "27.5%", 
-                left: "17.5%", 
+                bottom: "32%", 
+                left: "13%", 
                 width: "12%", 
                 height: "18%"
               }}
@@ -286,8 +286,8 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('hinduism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={{ 
-                bottom: "27.5%", 
-                right: "17.5%", 
+                bottom: "32%", 
+                right: "13%", 
                 width: "12%", 
                 height: "18%"
               }}
