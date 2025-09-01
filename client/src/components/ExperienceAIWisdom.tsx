@@ -31,16 +31,14 @@ export default function ExperienceAIWisdom() {
   };
 
   return (
-    <section className="relative min-h-[900px] md:min-h-[800px] bg-gradient-to-b from-[#0c0f12] via-[#1a1d2e] to-[#0c0f12] overflow-hidden">
+    <section className="relative min-h-[900px] md:min-h-[800px] bg-transparent overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
         <img
           src={isMobile ? sacredScholarsMobileImage : sacredScholarsImage}
           alt="Sacred scholars representing different religious traditions"
-          className="w-full h-full object-contain opacity-95"
+          className="w-full h-full object-contain opacity-100"
         />
-        {/* Minimal overlay for text readability while keeping it see-through */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
       </div>
 
       {/* Content - Desktop: Centered overlay, Mobile: Below image */}
@@ -52,7 +50,7 @@ export default function ExperienceAIWisdom() {
         <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12 md:py-0">
           <div className="max-w-4xl w-full">
             {/* Desktop: Backdrop for text overlay */}
-            <div className="hidden md:block absolute inset-x-0 top-1/2 -translate-y-1/2 bg-black/10 backdrop-blur-xl border border-gold/50 rounded-2xl mx-4 lg:mx-auto lg:max-w-4xl">
+            <div className="hidden md:block absolute inset-x-0 top-1/2 -translate-y-1/2 bg-transparent backdrop-blur-sm border border-gold/60 rounded-2xl mx-4 lg:mx-auto lg:max-w-4xl">
               <div className="p-12 text-center">
                 <h2 className="font-serif text-4xl lg:text-5xl tracking-[0.2em] text-gold mb-8 animate-bounce">
                   EXPERIENCE AI WISDOM
@@ -78,7 +76,7 @@ export default function ExperienceAIWisdom() {
                 </div>
 
                 {/* Wisdom Content */}
-                <div className="border border-gold/50 rounded-lg p-6 bg-black/5 backdrop-blur-xl">
+                <div className="border border-gold/60 rounded-lg p-6 bg-transparent backdrop-blur-sm">
                   <h3 className="font-serif text-lg text-gold mb-4 tracking-wide">
                     Q: What is the meaning of peace across religious traditions?
                   </h3>
@@ -105,7 +103,7 @@ export default function ExperienceAIWisdom() {
             </div>
 
             {/* Mobile: Content below image */}
-            <div className="md:hidden bg-black/10 backdrop-blur-xl border border-gold/50 rounded-2xl p-8">
+            <div className="md:hidden bg-transparent backdrop-blur-sm border border-gold/60 rounded-2xl p-8">
               <h2 className="font-serif text-3xl tracking-[0.2em] text-gold mb-6 text-center animate-bounce">
                 EXPERIENCE AI WISDOM
               </h2>
@@ -130,7 +128,7 @@ export default function ExperienceAIWisdom() {
               </div>
 
               {/* Mobile Wisdom Content */}
-              <div className="border border-gold/50 rounded-lg p-6 bg-black/5 backdrop-blur-xl mb-6">
+              <div className="border border-gold/60 rounded-lg p-6 bg-transparent backdrop-blur-sm mb-6">
                 <h3 className="font-serif text-base text-gold mb-3 tracking-wide">
                   Q: What is the meaning of peace across religious traditions?
                 </h3>
