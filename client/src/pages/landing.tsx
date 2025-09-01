@@ -136,100 +136,109 @@ export default function LandingPage({
         <section 
           ref={heroContainerRef}
           aria-label="Rellio hero" 
-          className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-black"
+          className="relative isolate flex min-h-screen items-center justify-center overflow-hidden"
         >
-          {/* Background Glow Effect */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,215,0,0.15)_0%,rgba(255,215,0,0.08)_30%,transparent_70%)]" />
+          {/* Hero Background Image - RESTORED */}
+          <div
+            className="hero-bg absolute inset-0 z-10 bg-cover bg-center"
+            style={{
+              backgroundImage: `url(${isMobile ? mobileHeroImage : heroImage})`,
+              transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
+              willChange: "transform"
+            }}
+          />
+          
+          {/* Light gradient overlay for text readability */}
+          <div className="pointer-events-none absolute inset-0 z-15 bg-gradient-to-t from-black/30 via-transparent to-black/20" />
           
           <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-28 pb-24 text-center">
-            {/* Central Meditation Figure */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-              <div className="w-16 h-24 md:w-20 md:h-28 bg-black/90 relative">
-                {/* Simple meditation silhouette */}
-                <div className="absolute inset-0 bg-black/90" style={{
-                  clipPath: "polygon(50% 10%, 45% 20%, 40% 30%, 30% 40%, 25% 55%, 30% 70%, 40% 80%, 50% 90%, 60% 80%, 70% 70%, 75% 55%, 70% 40%, 60% 30%, 55% 20%)"
-                }} />
-                {/* Inner glow */}
-                <div className="absolute inset-0 bg-gradient-radial from-yellow-400/30 to-transparent" />
-              </div>
-            </div>
+            {/* Transparent clickable overlays positioned over each book in the image */}
             
-            {/* Golden connecting lines */}
-            <svg className="absolute inset-0 w-full h-full z-5" viewBox="0 0 100 100" preserveAspectRatio="none">
-              <g stroke="rgb(255, 215, 0)" strokeWidth="0.2" fill="none" opacity="0.4">
-                <line x1="50" y1="50" x2="30" y2="25" /> {/* To Torah */}
-                <line x1="50" y1="50" x2="50" y2="15" /> {/* To Quran */}
-                <line x1="50" y1="50" x2="70" y2="25" /> {/* To Bible */}
-                <line x1="50" y1="50" x2="25" y2="75" /> {/* To Tripitaka */}
-                <line x1="50" y1="50" x2="75" y2="75" /> {/* To Bhagavad Gita */}
-              </g>
-            </svg>
-            
-            {/* Torah - Top Left */}
+            {/* Torah - Top Left Book Overlay */}
             <button
+              data-book="Torah"
               onClick={() => handleScriptureClick('judaism')}
-              className="absolute group z-20 transition-all duration-300 hover:scale-105"
-              style={{ top: "20%", left: "25%", transform: "rotate(-15deg)" }}
-            >
-              <div className="bg-teal-600/90 border-2 border-yellow-400/60 rounded-lg p-3 w-20 h-28 md:w-24 md:h-32 flex flex-col items-center justify-center text-center group-hover:border-yellow-300 group-hover:bg-teal-500/90 transition-all">
-                <div className="text-base md:text-lg mb-1 text-yellow-100 font-serif">תורה</div>
-                <div className="text-[9px] md:text-[10px] font-serif tracking-widest text-yellow-200/90">TORAH</div>
-              </div>
-            </button>
+              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
+              style={{ 
+                top: "15%", 
+                left: "28%", 
+                width: "80px", 
+                height: "100px",
+                transform: "rotate(-15deg)" 
+              }}
+              title="Explore Torah - Sacred Jewish text"
+              aria-label="Explore Torah"
+            />
             
-            {/* Quran - Top Center */}
+            {/* Quran - Top Center Book Overlay */}
             <button
+              data-book="Quran"
               onClick={() => handleScriptureClick('islam')}
-              className="absolute group z-20 transition-all duration-300 hover:scale-105"
-              style={{ top: "12%", left: "50%", transform: "translateX(-50%)" }}
-            >
-              <div className="bg-teal-600/90 border-2 border-yellow-400/60 rounded-lg p-3 w-20 h-28 md:w-24 md:h-32 flex flex-col items-center justify-center text-center group-hover:border-yellow-300 group-hover:bg-teal-500/90 transition-all">
-                <div className="text-base md:text-lg mb-1 text-yellow-100 font-serif">قرآن</div>
-                <div className="text-[9px] md:text-[10px] font-serif tracking-widest text-yellow-200/90">QURAN</div>
-              </div>
-            </button>
+              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
+              style={{ 
+                top: "8%", 
+                left: "50%", 
+                width: "85px", 
+                height: "110px",
+                transform: "translateX(-50%)" 
+              }}
+              title="Explore Quran - Sacred Islamic text"
+              aria-label="Explore Quran"
+            />
             
-            {/* Bible - Top Right */}
+            {/* Bible - Top Right Book Overlay */}
             <button
+              data-book="Bible"
               onClick={() => handleScriptureClick('christianity')}
-              className="absolute group z-20 transition-all duration-300 hover:scale-105"
-              style={{ top: "20%", right: "25%", transform: "rotate(15deg)" }}
-            >
-              <div className="bg-amber-700/90 border-2 border-yellow-400/60 rounded-lg p-3 w-20 h-28 md:w-24 md:h-32 flex flex-col items-center justify-center text-center group-hover:border-yellow-300 group-hover:bg-amber-600/90 transition-all">
-                <div className="text-xl md:text-2xl mb-1 text-yellow-100">✝</div>
-                <div className="text-[9px] md:text-[10px] font-serif tracking-widest text-yellow-200/90">BIBLE</div>
-              </div>
-            </button>
+              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
+              style={{ 
+                top: "15%", 
+                right: "28%", 
+                width: "80px", 
+                height: "100px",
+                transform: "rotate(15deg)" 
+              }}
+              title="Explore Bible - Sacred Christian text"
+              aria-label="Explore Bible"
+            />
             
-            {/* Tripitaka - Bottom Left */}
+            {/* Tripitaka - Bottom Left Book Overlay */}
             <button
+              data-book="Tripitaka"
               onClick={() => handleScriptureClick('buddhism')}
-              className="absolute group z-20 transition-all duration-300 hover:scale-105"
-              style={{ bottom: "30%", left: "20%", transform: "rotate(-20deg)" }}
-            >
-              <div className="bg-slate-700/90 border-2 border-yellow-400/60 rounded-lg p-3 w-18 h-24 md:w-20 md:h-28 flex flex-col items-center justify-center text-center group-hover:border-yellow-300 group-hover:bg-slate-600/90 transition-all">
-                <div className="text-base md:text-lg mb-1 text-yellow-100">☸</div>
-                <div className="text-[8px] md:text-[9px] font-serif tracking-widest text-yellow-200/90">TRIPITAKA</div>
-              </div>
-            </button>
+              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
+              style={{ 
+                bottom: "35%", 
+                left: "22%", 
+                width: "70px", 
+                height: "90px",
+                transform: "rotate(-20deg)" 
+              }}
+              title="Explore Tripitaka - Sacred Buddhist texts"
+              aria-label="Explore Tripitaka"
+            />
             
-            {/* Bhagavad Gita - Bottom Right */}
+            {/* Bhagavad Gita - Bottom Right Book Overlay */}
             <button
+              data-book="Bhagavad Gita"
               onClick={() => handleScriptureClick('hinduism')}
-              className="absolute group z-20 transition-all duration-300 hover:scale-105"
-              style={{ bottom: "30%", right: "20%", transform: "rotate(20deg)" }}
-            >
-              <div className="bg-orange-700/90 border-2 border-yellow-400/60 rounded-lg p-3 w-18 h-24 md:w-20 md:h-28 flex flex-col items-center justify-center text-center group-hover:border-yellow-300 group-hover:bg-orange-600/90 transition-all">
-                <div className="text-base md:text-lg mb-1 text-yellow-100">☀</div>
-                <div className="text-[7px] md:text-[8px] font-serif tracking-widest text-yellow-200/90">BHAGAVAD<br/>GITA</div>
-              </div>
-            </button>
+              className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
+              style={{ 
+                bottom: "35%", 
+                right: "22%", 
+                width: "80px", 
+                height: "95px",
+                transform: "rotate(20deg)" 
+              }}
+              title="Explore Bhagavad Gita - Sacred Hindu text"
+              aria-label="Explore Bhagavad Gita"
+            />
           </div>
           
           {/* Tagline positioned below the figure */}
-          <div className="absolute bottom-1/3 left-1/2 transform -translate-x-1/2 z-30">
-            <p className="font-serif text-sm md:text-lg tracking-[0.3em] text-yellow-300/90 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] text-center whitespace-nowrap">
-              GUIDING WISDOM. ETERNAL CONNECTION.
+          <div className="absolute bottom-1/4 left-1/2 transform -translate-x-1/2 z-30">
+            <p className="font-serif text-lg md:text-xl tracking-[0.3em] text-yellow-300/90 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] text-center whitespace-nowrap">
+              ONE SCRIPTURE ACROSS WORLDS
             </p>
           </div>
           
