@@ -223,7 +223,7 @@ export default function LandingPage({
               style={{ 
                 top: "28%", 
                 left: "20%", 
-                width: "8%", 
+                width: "12%", 
                 height: "18%"
               }}
               title="Explore Torah - Sacred Jewish text"
@@ -239,7 +239,7 @@ export default function LandingPage({
               style={{ 
                 top: "28%", 
                 left: "50%", 
-                width: "7%", 
+                width: "10%", 
                 height: "20%",
                 transform: "translateX(-50%)" 
               }}
@@ -256,7 +256,7 @@ export default function LandingPage({
               style={{ 
                 top: "28%", 
                 right: "20%", 
-                width: "8%", 
+                width: "12%", 
                 height: "18%"
               }}
               title="Explore Bible - Sacred Christian text"
@@ -272,7 +272,7 @@ export default function LandingPage({
               style={{ 
                 bottom: "25%", 
                 left: "15%", 
-                width: "7%", 
+                width: "10%", 
                 height: "16%"
               }}
               title="Explore Tripitaka - Sacred Buddhist texts"
@@ -288,7 +288,7 @@ export default function LandingPage({
               style={{ 
                 bottom: "25%", 
                 right: "15%", 
-                width: "8%", 
+                width: "12%", 
                 height: "17%"
               }}
               title="Explore Bhagavad Gita - Sacred Hindu text"
