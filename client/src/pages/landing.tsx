@@ -163,8 +163,8 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('judaism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
               style={{ 
-                top: "18%", 
-                left: "31%", 
+                top: "22%", 
+                left: "26%", 
                 width: "64px", 
                 height: "88px",
                 transform: "rotate(-18deg)" 
@@ -181,7 +181,7 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('islam')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
               style={{ 
-                top: "12%", 
+                top: "18%", 
                 left: "50%", 
                 width: "68px", 
                 height: "92px",
@@ -199,8 +199,8 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('christianity')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
               style={{ 
-                top: "18%", 
-                right: "31%", 
+                top: "22%", 
+                right: "26%", 
                 width: "64px", 
                 height: "88px",
                 transform: "rotate(18deg)" 
@@ -217,8 +217,8 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('buddhism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
               style={{ 
-                bottom: "37%", 
-                left: "24%", 
+                bottom: "42%", 
+                left: "18%", 
                 width: "60px", 
                 height: "80px",
                 transform: "rotate(-25deg)" 
@@ -235,8 +235,8 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('hinduism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 pointer-events-auto rounded"
               style={{ 
-                bottom: "37%", 
-                right: "24%", 
+                bottom: "42%", 
+                right: "18%", 
                 width: "70px", 
                 height: "90px",
                 transform: "rotate(25deg)" 
