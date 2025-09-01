@@ -1,0 +1,57 @@
+Updated Placement in LandingPage.tsx
+The ExperienceAIWisdom section should be inserted right before the Features section in your existing LandingPage.tsx. Based on the structure you shared earlier, this means placing it after the hero section and before the
+. Here’s how it fits into the flow:
+
+// ... (Helmet, Nav, Hero Section)
+
+
+
+
+  // ... (Features content)
+
+
+// ... (rest of the sections)
+Engineered Prompt for Integration
+SYSTEM / GUARDRAILS (paste first)
+You are a senior UI/UX engineer tasked with updating the Rellio landing page (client/src/pages/landing.tsx) to integrate a new ExperienceAIWisdom section immediately above the Features section. This section enhances the luxurious, spiritual “Guiding Wisdom. Eternal Connection” brand with a futuristic aesthetic, preparing for future virtual scholar features (priest/rabbi/mufti/guru/monk). Preserve all existing functionality, routing, and APIs, and ensure seamless styling with the current theme.
+* Preserve existing functionality (e.g., handleScriptureClick, CTAs, parallax).
+* Modify only markup and imports in landing.tsx; avoid altering existing logic.
+* Write accessible, responsive, and performant code using Tailwind CSS, matching the existing theme (e.g., gold accents, cosmic gradients).
+* Produce a single PR with clear commits (e.g., “feat(ui): add ExperienceAIWisdom section above Features”, “style: align new section with Rellio theme”).
+* Maintain Rellio’s luxury-spiritual essence.
+TASK BRIEF (paste after system block)
+Goal: Integrate the ExperienceAIWisdom component into client/src/pages/landing.tsx, placing it immediately after the hero section and before the Features section. Ensure the section uses the provided background image (/assets/sacred-scholars.jpg) and displays text as specified (desktop overlay, mobile below), with futuristic animations and hover effects. Preserve the existing layout flow and styling consistency.
+1. Component Integration
+    * Import the ExperienceAIWisdom component at the top of landing.tsx: import ExperienceAIWisdom from './components/ExperienceAIWisdom'; // Adjust path as needed
+    * 
+    * Insert the component after the hero section ( ) and before the Features section (): // ... (Helmet, Nav, Hero Section)
+    * 
+    * 
+    *   // ... (Features content)
+    * 
+    * // ... (rest of the sections)
+    *   
+2. Styling and Responsiveness
+    * Ensure the section’s Tailwind classes (bg-deep-indigo, text-text, border-gold/60) align with the existing theme (update tailwind.config.js if deep-indigo or text aren’t defined).
+    * Verify the desktop overlay (centered text with backdrop) and mobile layout (text below image) work as intended, using the provided CSS animations (fade-in).
+3. Assets and Dependencies
+    * Add /assets/sacred-scholars.jpg to the public/assets directory, ensuring it’s a high-resolution image (e.g., 1200x800) compatible with bg-cover.
+    * Ensure lucide-react is installed (npm i lucide-react) for the ChevronRight icon.
+4. Debugging and Validation
+    * Add console.log("ExperienceAIWisdom mounted"); in the component’s useEffect (if added) to confirm rendering.
+    * Test on mobile (320px), tablet (768px), and desktop (1280px) to verify text placement and hover effects.
+5. Acceptance Criteria
+    * ExperienceAIWisdom section renders above Features, with the background image visible and text styled per desktop/mobile specs.
+    * Buttons (“ASK OUR SACRED SCHOLARS”, “ASK OUR AI GUIDE”, “BEGIN YOUR SACRED JOURNEY”) are clickable and trigger hover effects.
+    * Text content (e.g., peace across traditions) displays correctly with animations.
+    * No layout conflicts with hero or Features sections; image remains prominent.
+    * No console errors; Lighthouse Performance ≥ 90, Accessibility ≥ 95.
+6. Implementation Steps
+    1. Create ExperienceAIWisdom.tsx in src/components/ with the provided code.
+    2. Import and insert the component in landing.tsx as specified.
+    3. Add the background image to public/assets.
+    4. Update tailwind.config.js with any new colors (e.g., deep-indigo: '#060a1a', text: '#F2F5FA').
+    5. Test responsiveness and commit with: “feat(ui): add ExperienceAIWisdom section above Features”, “style: align new section with Rellio theme”.
+FINAL INSTRUCTION
+Implement the integration, submit a PR passing acceptance criteria and lint/build checks. Preserve existing logic, adding only the new component and imports. Ensure a mesmerizing, futuristic spiritual experience that elevates Rellio, preparing for virtual scholars. If issues arise (e.g., layout conflicts or missing assets), share the updated code or console logs—let’s make this a stunning addition!
+
