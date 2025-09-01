@@ -157,8 +157,8 @@ export default function LandingPage({
             <button
               data-book="Torah"
               onClick={() => handleScriptureClick('judaism')}
-              className="absolute bg-transparent border-2 border-yellow-400 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 w-16 h-24 sm:w-20 sm:h-28 md:w-24 md:h-32 lg:w-28 lg:h-36 pointer-events-auto rounded"
-              style={{ top: "18%", left: "22%", transform: "rotate(-15deg)" }}
+              className="absolute bg-transparent border-2 border-yellow-400 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 z-20 w-14 h-20 sm:w-16 sm:h-24 md:w-20 md:h-28 lg:w-24 lg:h-32 pointer-events-auto rounded"
+              style={{ top: "25%", left: "25%", transform: "rotate(-25deg)" }}
               title="Explore Torah - Sacred Jewish text"
               aria-label="Explore Torah"
             />
@@ -167,8 +167,8 @@ export default function LandingPage({
             <button
               data-book="Quran"
               onClick={() => handleScriptureClick('islam')}
-              className="absolute bg-transparent border-2 border-teal-400 hover:border-teal-300 hover:bg-teal-400/10 transition-all duration-300 hover:scale-105 z-20 w-16 h-24 sm:w-20 sm:h-28 md:w-24 md:h-32 lg:w-28 lg:h-36 pointer-events-auto rounded"
-              style={{ top: "14%", left: "50%", transform: "translateX(-50%)" }}
+              className="absolute bg-transparent border-2 border-teal-400 hover:border-teal-300 hover:bg-teal-400/10 transition-all duration-300 hover:scale-105 z-20 w-14 h-20 sm:w-16 sm:h-24 md:w-20 md:h-28 lg:w-24 lg:h-32 pointer-events-auto rounded"
+              style={{ top: "20%", left: "50%", transform: "translateX(-50%)" }}
               title="Explore Quran - Sacred Islamic text"
               aria-label="Explore Quran"
             />
@@ -177,8 +177,8 @@ export default function LandingPage({
             <button
               data-book="Bible"
               onClick={() => handleScriptureClick('christianity')}
-              className="absolute bg-transparent border-2 border-blue-400 hover:border-blue-300 hover:bg-blue-400/10 transition-all duration-300 hover:scale-105 z-20 w-16 h-24 sm:w-20 sm:h-28 md:w-24 md:h-32 lg:w-28 lg:h-36 pointer-events-auto rounded"
-              style={{ top: "18%", right: "22%", transform: "rotate(15deg)" }}
+              className="absolute bg-transparent border-2 border-blue-400 hover:border-blue-300 hover:bg-blue-400/10 transition-all duration-300 hover:scale-105 z-20 w-14 h-20 sm:w-16 sm:h-24 md:w-20 md:h-28 lg:w-24 lg:h-32 pointer-events-auto rounded"
+              style={{ top: "25%", right: "25%", transform: "rotate(25deg)" }}
               title="Explore Bible - Sacred Christian text"
               aria-label="Explore Bible"
             />
@@ -187,8 +187,8 @@ export default function LandingPage({
             <button
               data-book="Tripitaka"
               onClick={() => handleScriptureClick('buddhism')}
-              className="absolute bg-transparent border-2 border-purple-400 hover:border-purple-300 hover:bg-purple-400/10 transition-all duration-300 hover:scale-105 z-20 w-16 h-24 sm:w-20 sm:h-28 md:w-24 md:h-32 lg:w-28 lg:h-36 pointer-events-auto rounded"
-              style={{ bottom: "32%", left: "18%", transform: "rotate(-10deg)" }}
+              className="absolute bg-transparent border-2 border-purple-400 hover:border-purple-300 hover:bg-purple-400/10 transition-all duration-300 hover:scale-105 z-20 w-14 h-20 sm:w-16 sm:h-24 md:w-20 md:h-28 lg:w-24 lg:h-32 pointer-events-auto rounded"
+              style={{ bottom: "20%", left: "16%", transform: "rotate(-20deg)" }}
               title="Explore Tripitaka - Sacred Buddhist texts"
               aria-label="Explore Tripitaka"
             />
@@ -197,15 +197,15 @@ export default function LandingPage({
             <button
               data-book="Bhagavad Gita"
               onClick={() => handleScriptureClick('hinduism')}
-              className="absolute bg-transparent border-2 border-orange-400 hover:border-orange-300 hover:bg-orange-400/10 transition-all duration-300 hover:scale-105 z-20 w-16 h-24 sm:w-20 sm:h-28 md:w-24 md:h-32 lg:w-28 lg:h-36 pointer-events-auto rounded"
-              style={{ bottom: "32%", right: "18%", transform: "rotate(10deg)" }}
+              className="absolute bg-transparent border-2 border-orange-400 hover:border-orange-300 hover:bg-orange-400/10 transition-all duration-300 hover:scale-105 z-20 w-14 h-20 sm:w-16 sm:h-24 md:w-20 md:h-28 lg:w-24 lg:h-32 pointer-events-auto rounded"
+              style={{ bottom: "20%", right: "16%", transform: "rotate(20deg)" }}
               title="Explore Bhagavad Gita - Sacred Hindu text"
               aria-label="Explore Bhagavad Gita"
             />
           </div>
           
           {/* Tagline positioned under the light and sun */}
-          <div className="absolute top-[75%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30">
+          <div className="absolute top-[80%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30">
             <p className="font-serif text-xs sm:text-sm md:text-base tracking-[0.3em] text-yellow-300/90 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] text-center whitespace-nowrap">
               GUIDING WISDOM. ETERNAL CONNECTION.
             </p>
