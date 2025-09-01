@@ -177,7 +177,7 @@ export default function LandingPage({
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
                 top: "31%", 
-                left: "10%", 
+                left: "8%", 
                 width: "20%", 
                 height: "13%"
               } : { 
@@ -219,8 +219,8 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('christianity')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
-                top: "34%", 
-                right: "6%", 
+                top: "30%", 
+                right: "8%", 
                 width: "20%", 
                 height: "13%"
               } : { 
@@ -240,7 +240,7 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('buddhism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
-                bottom: "40%", 
+                bottom: "42%", 
                 left: "3%", 
                 width: "20%", 
                 height: "13%"
@@ -261,7 +261,7 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('hinduism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
-                bottom: "40%", 
+                bottom: "42%", 
                 right: "8%", 
                 width: "20%", 
                 height: "13%"
