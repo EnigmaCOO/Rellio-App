@@ -1,7 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import sacredScholarsImage from "@assets/sacred-scholars.jpg";
-import sacredScholarsMobileImage from "@assets/sacred-scholars-mobile.jpg";
+import sacredScholarsMobileImage from "@assets/relliomobile_1757027214950.png";
 
 export default function ExperienceAIWisdom() {
   const [isMobile, setIsMobile] = useState(false);
