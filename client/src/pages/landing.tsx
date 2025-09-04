@@ -177,10 +177,10 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('judaism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
-                top: "24%", 
-                left: "12%", 
-                width: "25%", 
-                height: "16%"
+                top: "34%", 
+                left: "15%", 
+                width: "18%", 
+                height: "12%"
               } : { 
                 top: "25.5%", 
                 left: "23%", 
@@ -198,10 +198,10 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('islam')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
-                top: "24%", 
-                left: "38%", 
-                width: "25%", 
-                height: "16%"
+                top: "34%", 
+                left: "41%", 
+                width: "18%", 
+                height: "12%"
               } : { 
                 top: "28%", 
                 left: "47.5%", 
@@ -220,10 +220,10 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('christianity')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
-                top: "24%", 
-                right: "12%", 
-                width: "25%", 
-                height: "16%"
+                top: "34%", 
+                right: "15%", 
+                width: "18%", 
+                height: "12%"
               } : { 
                 top: "26%", 
                 right: "27%", 
@@ -241,10 +241,10 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('buddhism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
-                bottom: "35%", 
-                left: "12%", 
-                width: "25%", 
-                height: "16%"
+                bottom: "37%", 
+                left: "15%", 
+                width: "18%", 
+                height: "12%"
               } : { 
                 bottom: "32%", 
                 left: "18.2%", 
@@ -262,10 +262,10 @@ export default function LandingPage({
               onClick={() => handleScriptureClick('hinduism')}
               className="absolute bg-transparent border-2 border-yellow-400/80 hover:border-yellow-300 hover:bg-yellow-400/10 transition-all duration-300 hover:scale-105 rounded"
               style={isMobile ? { 
-                bottom: "35%", 
-                right: "12%", 
-                width: "25%", 
-                height: "16%"
+                bottom: "37%", 
+                right: "15%", 
+                width: "18%", 
+                height: "12%"
               } : { 
                 bottom: "32%", 
                 right: "23.1%", 
