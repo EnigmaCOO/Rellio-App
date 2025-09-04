@@ -322,7 +322,7 @@ export default function LandingPage({
         <ExperienceAIWisdom />
 
         {/* FEATURES SECTION */}
-        <section id="features" className="bg-[#0c0f12] pb-16 text-yellow-100/85">
+        <section id="features" className="bg-[#0c0f12] pt-24 pb-16 text-yellow-100/85">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <h2 className="font-serif text-2xl tracking-[0.3em] text-yellow-200 mb-16 text-center">FEATURES</h2>
             
