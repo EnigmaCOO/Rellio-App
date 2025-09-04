@@ -31,7 +31,7 @@ export default function ExperienceAIWisdom() {
   };
 
   return (
-    <section className="relative min-h-[1200px] md:min-h-[1000px] bg-transparent overflow-hidden">
+    <section className="relative min-h-[600px] md:min-h-[700px] bg-transparent overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
         <img
