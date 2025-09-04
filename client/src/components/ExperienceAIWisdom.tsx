@@ -50,7 +50,7 @@ export default function ExperienceAIWisdom() {
         <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12 md:py-0">
           <div className="max-w-4xl w-full">
             {/* Desktop: Backdrop for text overlay */}
-            <div className="hidden md:block absolute inset-x-0 top-64 bg-transparent backdrop-blur-sm border border-gold/60 rounded-2xl mx-4 lg:mx-auto lg:max-w-4xl">
+            <div className="hidden md:block absolute inset-x-0 top-85 bg-transparent backdrop-blur-sm border border-gold/60 rounded-2xl mx-4 lg:mx-auto lg:max-w-4xl">
               <div className="p-12 text-center">
                 <h2 className="font-serif text-4xl lg:text-5xl tracking-[0.2em] text-gold mb-8 animate-bounce">
                   EXPERIENCE AI WISDOM
