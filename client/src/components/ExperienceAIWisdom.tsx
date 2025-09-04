@@ -50,7 +50,7 @@ export default function ExperienceAIWisdom() {
         <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12 md:py-0">
           <div className="max-w-4xl w-full">
             {/* Desktop: Backdrop for text overlay */}
-            <div className="hidden md:block absolute inset-x-0 top-80 bg-transparent backdrop-blur-sm border border-gold/60 rounded-2xl mx-4 lg:mx-auto lg:max-w-4xl">
+            <div className="hidden md:block absolute inset-x-0 top-80 bg-transparent border border-gold/60 rounded-2xl mx-4 lg:mx-auto lg:max-w-4xl">
               <div className="p-12 text-center">
                 <h2 className="font-serif text-4xl lg:text-5xl tracking-[0.2em] text-gold mb-8 animate-bounce">
                   EXPERIENCE AI WISDOM
@@ -60,7 +60,7 @@ export default function ExperienceAIWisdom() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
                   <button
                     onClick={handleSacredScholars}
-                    className="inline-flex items-center justify-center rounded-lg border-2 border-gold/60 bg-transparent backdrop-blur-sm px-6 py-3 font-serif text-sm font-semibold tracking-[0.15em] text-gold transition-all duration-300 hover:border-gold hover:bg-gold/10 hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold group"
+                    className="inline-flex items-center justify-center rounded-lg border-2 border-gold/60 bg-transparent px-6 py-3 font-serif text-sm font-semibold tracking-[0.15em] text-gold transition-all duration-300 hover:border-gold hover:bg-gold/10 hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold group"
                   >
                     ASK OUR SACRED SCHOLARS
                     <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -68,7 +68,7 @@ export default function ExperienceAIWisdom() {
                   
                   <button
                     onClick={handleAIGuide}
-                    className="inline-flex items-center justify-center rounded-lg border-2 border-gold/60 bg-transparent backdrop-blur-sm px-6 py-3 font-serif text-sm font-semibold tracking-[0.15em] text-gold transition-all duration-300 hover:border-gold hover:bg-gold/10 hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold group"
+                    className="inline-flex items-center justify-center rounded-lg border-2 border-gold/60 bg-transparent px-6 py-3 font-serif text-sm font-semibold tracking-[0.15em] text-gold transition-all duration-300 hover:border-gold hover:bg-gold/10 hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold group"
                   >
                     ASK OUR AI GUIDE
                     <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -76,7 +76,7 @@ export default function ExperienceAIWisdom() {
                 </div>
 
                 {/* Wisdom Content */}
-                <div className="border border-gold/60 rounded-lg p-6 bg-transparent backdrop-blur-sm">
+                <div className="border border-gold/60 rounded-lg p-6 bg-transparent">
                   <h3 className="font-serif text-lg text-gold mb-4 tracking-wide">
                     Q: What is the meaning of peace across religious traditions?
                   </h3>
@@ -93,7 +93,7 @@ export default function ExperienceAIWisdom() {
                 <div className="mt-8">
                   <button
                     onClick={handleBeginJourney}
-                    className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-gold/90 to-gold/80 backdrop-blur-sm px-8 py-3 font-serif text-sm font-semibold tracking-[0.2em] text-deep-indigo transition-all duration-300 hover:from-gold hover:to-gold/90 hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold group"
+                    className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-gold/90 to-gold/80 px-8 py-3 font-serif text-sm font-semibold tracking-[0.2em] text-deep-indigo transition-all duration-300 hover:from-gold hover:to-gold/90 hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold group"
                   >
                     BEGIN YOUR SACRED JOURNEY
                     <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -103,7 +103,7 @@ export default function ExperienceAIWisdom() {
             </div>
 
             {/* Mobile: Content below image */}
-            <div className="md:hidden bg-transparent backdrop-blur-sm border border-gold/60 rounded-2xl p-8">
+            <div className="md:hidden bg-transparent border border-gold/60 rounded-2xl p-8">
               <h2 className="font-serif text-3xl tracking-[0.2em] text-gold mb-6 text-center animate-bounce">
                 EXPERIENCE AI WISDOM
               </h2>
@@ -112,7 +112,7 @@ export default function ExperienceAIWisdom() {
               <div className="space-y-3 mb-8">
                 <button
                   onClick={handleSacredScholars}
-                  className="w-full inline-flex items-center justify-center rounded-lg border-2 border-gold/60 bg-transparent backdrop-blur-sm px-6 py-3 font-serif text-sm font-semibold tracking-[0.15em] text-gold transition-all duration-300 hover:border-gold hover:bg-gold/10 hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold group"
+                  className="w-full inline-flex items-center justify-center rounded-lg border-2 border-gold/60 bg-transparent px-6 py-3 font-serif text-sm font-semibold tracking-[0.15em] text-gold transition-all duration-300 hover:border-gold hover:bg-gold/10 hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold group"
                 >
                   ASK OUR SACRED SCHOLARS
                   <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -120,7 +120,7 @@ export default function ExperienceAIWisdom() {
                 
                 <button
                   onClick={handleAIGuide}
-                  className="w-full inline-flex items-center justify-center rounded-lg border-2 border-gold/60 bg-transparent backdrop-blur-sm px-6 py-3 font-serif text-sm font-semibold tracking-[0.15em] text-gold transition-all duration-300 hover:border-gold hover:bg-gold/10 hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold group"
+                  className="w-full inline-flex items-center justify-center rounded-lg border-2 border-gold/60 bg-transparent px-6 py-3 font-serif text-sm font-semibold tracking-[0.15em] text-gold transition-all duration-300 hover:border-gold hover:bg-gold/10 hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold group"
                 >
                   ASK OUR AI GUIDE
                   <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -128,7 +128,7 @@ export default function ExperienceAIWisdom() {
               </div>
 
               {/* Mobile Wisdom Content */}
-              <div className="border border-gold/60 rounded-lg p-6 bg-transparent backdrop-blur-sm mb-6">
+              <div className="border border-gold/60 rounded-lg p-6 bg-transparent mb-6">
                 <h3 className="font-serif text-base text-gold mb-3 tracking-wide">
                   Q: What is the meaning of peace across religious traditions?
                 </h3>
@@ -145,7 +145,7 @@ export default function ExperienceAIWisdom() {
               <div className="text-center">
                 <button
                   onClick={handleBeginJourney}
-                  className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-gold/90 to-gold/80 backdrop-blur-sm px-8 py-3 font-serif text-sm font-semibold tracking-[0.2em] text-deep-indigo transition-all duration-300 hover:from-gold hover:to-gold/90 hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold group"
+                  className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-gold/90 to-gold/80 px-8 py-3 font-serif text-sm font-semibold tracking-[0.2em] text-deep-indigo transition-all duration-300 hover:from-gold hover:to-gold/90 hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold group"
                 >
                   BEGIN YOUR SACRED JOURNEY
                   <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
