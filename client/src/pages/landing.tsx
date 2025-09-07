@@ -214,9 +214,9 @@ export default function LandingPage({
         <ExperienceAIWisdom />
 
         {/* FEATURES SECTION */}
-        <section id="features" className="bg-[#0c0f12] pt-8 pb-16 text-yellow-100/85">
+        <section id="features" className="bg-[#0c0f12] pt-8 pb-8 text-yellow-100/85">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <h2 className="font-serif text-2xl tracking-[0.3em] text-yellow-200 mb-16 text-center">FEATURES</h2>
+            <h2 className="font-serif text-2xl tracking-[0.3em] text-yellow-200 mb-8 text-center">FEATURES</h2>
             
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {/* Sacred Texts */}
@@ -311,9 +311,9 @@ export default function LandingPage({
         </section>
 
         {/* ABOUT US SECTION */}
-        <section id="about" className="bg-[#0c0f12] py-24 text-yellow-100/85">
+        <section id="about" className="bg-[#0c0f12] py-8 text-yellow-100/85">
           <div className="mx-auto max-w-4xl px-4 sm:px-6 text-center">
-            <h2 className="font-serif text-2xl tracking-[0.3em] text-yellow-200 mb-12">ABOUT US</h2>
+            <h2 className="font-serif text-2xl tracking-[0.3em] text-yellow-200 mb-6">ABOUT US</h2>
             <p className="text-lg leading-relaxed text-yellow-100/80">
               Rellio bridges spiritual traditions through AI-powered dialogue, creating a sanctuary where ancient wisdom meets modern technology. 
               Our platform unites the world's sacred texts - Bible, Qur'an, Torah, Bhagavad Gita, and Tripitaka - in one accessible experience. 
@@ -324,9 +324,9 @@ export default function LandingPage({
         </section>
 
         {/* FAQ SECTION */}
-        <section id="faq" className="bg-[#0c0f12] py-24 text-yellow-100/85">
+        <section id="faq" className="bg-[#0c0f12] py-8 text-yellow-100/85">
           <div className="mx-auto max-w-4xl px-4 sm:px-6">
-            <h2 className="font-serif text-2xl tracking-[0.3em] text-yellow-200 mb-12 text-center">FAQ</h2>
+            <h2 className="font-serif text-2xl tracking-[0.3em] text-yellow-200 mb-6 text-center">FAQ</h2>
             <div className="space-y-4">
               {[
                 {
@@ -365,9 +365,9 @@ export default function LandingPage({
         </section>
 
         {/* CONTACT SECTION */}
-        <section id="contact" className="bg-black py-24 text-yellow-100/85">
+        <section id="contact" className="bg-black py-8 text-yellow-100/85">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="text-center mb-16">
+            <div className="text-center mb-8">
               <h2 className="font-serif text-2xl tracking-[0.3em] text-yellow-200 mb-4">CONNECT WITH US</h2>
               <p className="font-serif text-lg tracking-[0.2em] text-yellow-200/80">GET IN TOUCH</p>
               <p className="font-serif text-sm tracking-[0.3em] text-yellow-300/60 mt-2">SACRED CONNECTIONS</p>
@@ -377,7 +377,7 @@ export default function LandingPage({
               {/* Contact Information */}
               <div className="space-y-8">
                 <div className="text-center lg:text-left">
-                  <h3 className="font-serif text-xl tracking-[0.2em] text-yellow-200 mb-8">Follow Our Journey</h3>
+                  <h3 className="font-serif text-xl tracking-[0.2em] text-yellow-200 mb-4">Follow Our Journey</h3>
                   
                   <div className="space-y-6">
                     {/* Email */}
@@ -416,7 +416,7 @@ export default function LandingPage({
               {/* Contact Form */}
               <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-8">
                 <h3 className="font-serif text-xl tracking-[0.2em] text-yellow-200 mb-2 text-center">Send us a Message</h3>
-                <p className="text-sm text-yellow-100/70 mb-8 text-center">We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
+                <p className="text-sm text-yellow-100/70 mb-4 text-center">We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
                 
                 <form className="space-y-6">
                   {/* Name Field */}
