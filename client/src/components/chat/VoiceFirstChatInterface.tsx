@@ -1496,57 +1496,55 @@ function VoiceFirstChatInterfaceInner({
           </div>
         )}
 
-        {/* Enhanced Text Input with better styling for unsupported browsers */}
-        {showTextInput && (
-          <form onSubmit={handleTextSubmit} className="mb-4">
-            <div className={cn(
-              "flex gap-3 transition-all duration-300",
-              inputIsolated && "opacity-50 pointer-events-none"
-            )}>
-              <input
-                type="text"
-                value={textInputValue}
-                onChange={(e) => setTextInputValue(e.target.value)}
-                disabled={inputIsolated || isAudioIsolated || sendMessageMutation.isPending}
-                placeholder={
-                  inputIsolated ? "Input locked - AI is speaking..." :
-                  isAudioIsolated ? "Audio isolated - Please wait..." :
-                  !isSupported ? "Ask about spiritual wisdom, sacred texts, or life guidance..." :
-                  "Type your spiritual question..."
-                }
-                className={cn(
-                  "flex-1 px-4 py-3 text-sm transition-all duration-300",
-                  "bg-white border-2 border-gray-200 rounded-xl shadow-md",
-                  "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-300",
-                  "placeholder:text-gray-500",
-                  (inputIsolated || isAudioIsolated) ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-300" : "text-gray-800 hover:border-gray-300"
-                )}
-              />
-              <Button
-                type="submit"
-                disabled={!textInputValue.trim() || inputIsolated || isAudioIsolated || sendMessageMutation.isPending}
-                className={cn(
-                  "px-6 py-3 rounded-xl font-medium transition-all duration-300 shadow-md",
-                  (inputIsolated || isAudioIsolated)
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700 hover:shadow-lg transform hover:scale-105 active:scale-95"
-                )}
-              >
-                {sendMessageMutation.isPending ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  "Send"
-                )}
-              </Button>
-            </div>
-            {inputIsolated && (
-              <p className="text-xs text-red-600 mt-2 animate-pulse flex items-center gap-1">
-                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                Input locked - AI is speaking. Wait for completion or interrupt to continue.
-              </p>
-            )}
-          </form>
-        )}
+        {/* Text Input - Always visible */}
+        <form onSubmit={handleTextSubmit} className="mb-4">
+          <div className={cn(
+            "flex gap-3 transition-all duration-300",
+            inputIsolated && "opacity-50 pointer-events-none"
+          )}>
+            <input
+              type="text"
+              value={textInputValue}
+              onChange={(e) => setTextInputValue(e.target.value)}
+              disabled={inputIsolated || isAudioIsolated || sendMessageMutation.isPending}
+              placeholder={
+                inputIsolated ? "Input locked - AI is speaking..." :
+                isAudioIsolated ? "Audio isolated - Please wait..." :
+                !isSupported ? "Ask about spiritual wisdom, sacred texts, or life guidance..." :
+                "Type your spiritual question or use voice input..."
+              }
+              className={cn(
+                "flex-1 px-4 py-3 text-sm transition-all duration-300",
+                "bg-white border-2 border-gray-200 rounded-xl shadow-md",
+                "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-300",
+                "placeholder:text-gray-500",
+                (inputIsolated || isAudioIsolated) ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-300" : "text-gray-800 hover:border-gray-300"
+              )}
+            />
+            <Button
+              type="submit"
+              disabled={!textInputValue.trim() || inputIsolated || isAudioIsolated || sendMessageMutation.isPending}
+              className={cn(
+                "px-6 py-3 rounded-xl font-medium transition-all duration-300 shadow-md",
+                (inputIsolated || isAudioIsolated)
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700 hover:shadow-lg transform hover:scale-105 active:scale-95"
+              )}
+            >
+              {sendMessageMutation.isPending ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                "Send"
+              )}
+            </Button>
+          </div>
+          {inputIsolated && (
+            <p className="text-xs text-red-600 mt-2 animate-pulse flex items-center gap-1">
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+              Input locked - AI is speaking. Wait for completion or interrupt to continue.
+            </p>
+          )}
+        </form>
 
         {/* Voice Controls - Only show if supported */}
         {isSupported ? (

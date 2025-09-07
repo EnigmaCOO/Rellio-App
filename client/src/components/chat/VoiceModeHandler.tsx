@@ -23,6 +23,7 @@ export interface VoiceModeHandlerProps {
   confidenceThreshold?: number;
   interruptionSensitivity?: number;
   voiceId?: string;
+  preventAutoSend?: boolean; // New prop to prevent auto-send when user is typing
 }
 
 export interface VoiceModeHandlerReturn {
@@ -153,7 +154,8 @@ export function useVoiceModeHandler({
   autoSendDelay = 800,
   confidenceThreshold = 0.6,
   interruptionSensitivity = 0.2,
-  voiceId = 'ErXwobaYiN019PkySvjV'
+  voiceId = 'ErXwobaYiN019PkySvjV',
+  preventAutoSend = false
 }: VoiceModeHandlerProps): VoiceModeHandlerReturn {
 
   // Enhanced state management with useReducer
@@ -500,8 +502,8 @@ export function useVoiceModeHandler({
                     autoSendTimeoutRef.current = null;
                   }
 
-                  // Enhanced auto-send with better conditions
-                  if (!isProcessingFinal && cleanFinalTranscript.length > 2 && confidence >= confidenceThreshold) {
+                  // Enhanced auto-send with better conditions - check preventAutoSend flag
+                  if (!isProcessingFinal && cleanFinalTranscript.length > 2 && confidence >= confidenceThreshold && !preventAutoSend) {
                     isProcessingFinal = true;
 
                     console.log('🚀 AUTO-SEND triggered for:', cleanFinalTranscript);
@@ -532,7 +534,8 @@ export function useVoiceModeHandler({
                       textLength: cleanFinalTranscript.length,
                       hasText: !!cleanFinalTranscript,
                       confidence,
-                      threshold: confidenceThreshold
+                      threshold: confidenceThreshold,
+                      preventAutoSend
                     });
                   }
                 } else {
