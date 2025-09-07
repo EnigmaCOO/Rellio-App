@@ -199,11 +199,11 @@ function VoiceFirstChatInterfaceInner({
             setTextInputValue(text);
             setWasLastMessageVoice(true); // Mark as voice-initiated for auto-play
             setIsProcessingVoice(false);
-            
+
             // Send the message
             console.log('📤 Sending voice message via mutation:', text);
             sendMessageMutation.mutate(text);
-            
+
             // Clear input after sending
             setTextInputValue('');
           } catch (error) {
@@ -402,7 +402,7 @@ function VoiceFirstChatInterfaceInner({
 
   // Auto-clear when switching personas
   useEffect(() => {
-    const currentPersonaKey = selectedPersona?.name || (context.religion ? `${context.religion}-${context.book}` : 'Universal Scholar');
+    const currentPersonaKey = selectedPersona?.name || (context.religion ? `${context.religion}-${context.book}` : 'Universal Wisdom');
     const currentContextKey = `${context.religion || 'universal'}-${context.book}`;
 
     // If we have a previous persona and it's different from current
@@ -817,13 +817,13 @@ function VoiceFirstChatInterfaceInner({
       if (latestAIMessage?.type === 'ai' && latestAIMessage.content && latestAIMessage.content !== lastAIMessage) {
         console.log('🔊 Auto-playing AI response with ElevenLabs');
         console.log('🎤 Message content:', latestAIMessage.content.substring(0, 100) + '...');
-        
+
         // Update last AI message to prevent re-playing
         setLastAIMessage(latestAIMessage.content);
-        
+
         // Set playing state immediately
         setPlayingMessageId(latestAIMessage.id);
-        
+
         // Play with ElevenLabs
         playAIText(latestAIMessage.content)
           .then(() => {
@@ -1599,7 +1599,7 @@ function VoiceFirstChatInterfaceInner({
                 <Button
                   onClick={async (e) => {
                     console.log('🎤 Voice button clicked');
-                    
+
                     e.preventDefault();
                     e.stopPropagation();
 
@@ -1620,7 +1620,7 @@ function VoiceFirstChatInterfaceInner({
                         stopAIPlayback();
                         setPlayingMessageId(null);
                         setIsAISpeaking(false);
-                        
+
                         // Brief delay to ensure audio stops before starting listening
                         setTimeout(async () => {
                           const result = await toggleListening();
@@ -1644,7 +1644,7 @@ function VoiceFirstChatInterfaceInner({
 
                       try {
                         const result = await toggleListening();
-                        
+
                         if (result) {
                           setWasLastMessageVoice(true);
                           console.log('✅ Voice listening started successfully');
