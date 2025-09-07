@@ -179,92 +179,50 @@ function VoiceFirstChatInterfaceInner({
     volume: 0.8
   });
 
-  // Use the working VoiceModeHandler with error boundary protection
-  const voiceHandlerResult = (() => {
-    try {
-      return useVoiceModeHandler({
-        onTranscript: (text, isInterim) => {
-          try {
-            console.log('📝 Voice transcript:', text, 'isInterim:', isInterim);
-            setIsProcessingVoice(text.length > 0);
-            // Update text input with live transcript so user can see and edit it
-            setTextInputValue(text);
-          } catch (error) {
-            console.error('🚨 Voice transcript error:', error);
-          }
-        },
-        onAutoSend: (text) => {
-          try {
-            console.log('🚀 VOICE MODE: Auto-sending voice message:', text);
-            setTextInputValue(text);
-            setWasLastMessageVoice(true); // Mark as voice-initiated for auto-play
-            setIsProcessingVoice(false);
+  // Use the VoiceModeHandler directly without try-catch wrapper
+  const voiceHandlerResult = useVoiceModeHandler({
+    onTranscript: (text, isInterim) => {
+      console.log('📝 Voice transcript:', text, 'isInterim:', isInterim);
+      setIsProcessingVoice(text.length > 0);
+      // Update text input with live transcript so user can see and edit it
+      setTextInputValue(text);
+    },
+    onAutoSend: (text) => {
+      console.log('🚀 VOICE MODE: Auto-sending voice message:', text);
+      setTextInputValue(text);
+      setWasLastMessageVoice(true); // Mark as voice-initiated for auto-play
+      setIsProcessingVoice(false);
 
-            // Send the message
-            console.log('📤 Sending voice message via mutation:', text);
-            sendMessageMutation.mutate(text);
+      // Send the message
+      console.log('📤 Sending voice message via mutation:', text);
+      sendMessageMutation.mutate(text);
 
-            // Clear input after sending
-            setTextInputValue('');
-          } catch (error) {
-            console.error('🚨 Voice auto-send error:', error);
-          }
-        },
-        onStateChange: (state) => {
-          try {
-            console.log('🎤 Voice state changed:', state);
-            if (state === 'speaking') {
-              setIsAISpeaking(true);
-            } else if (state === 'idle' || state === 'interrupted') {
-              setIsAISpeaking(false);
-              setIsProcessingVoice(false);
-            }
-          } catch (error) {
-            console.error('🚨 Voice state change error:', error);
-          }
-        },
-        onInterrupt: () => {
-          try {
-            console.log('🚨 Voice interrupted AI');
-            if (isAIPlaying) {
-              stopAIPlayback();
-            }
-            setIsAISpeaking(false);
-            setPlayingMessageId(null);
-          } catch (error) {
-            console.error('🚨 Voice interrupt error:', error);
-          }
-        },
-        disabled: false,
-        isAIResponding: isAIPlaying,
-        autoSendDelay: settings.autoSendDelay,
-        confidenceThreshold: settings.confidenceThreshold,
-        voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV'
-      });
-    } catch (error) {
-      console.error('🚨 Voice handler initialization error:', error);
-      // Return safe defaults if voice handler fails
-      return {
-        isListening: false,
-        currentTranscript: '',
-        confidence: 0,
-        voiceState: 'idle' as const,
-        audioLevel: 0,
-        startListening: async () => { console.warn('Voice disabled due to error'); return false; },
-        stopListening: () => { console.warn('Voice disabled due to error'); },
-        toggleListening: async () => { console.warn('Voice disabled due to error'); return false; },
-        isSupported: false,
-        hasPermission: false,
-        interruptAI: () => { console.warn('Voice disabled due to error'); },
-        playText: async () => { console.warn('Voice disabled due to error'); },
-        stopPlayback: () => { console.warn('Voice disabled due to error'); },
-        isPlaying: false,
-        isLoading: false,
-        volume: 0,
-        setVolume: () => { console.warn('Voice disabled due to error'); }
-      };
-    }
-  })();
+      // Clear input after sending
+      setTextInputValue('');
+    },
+    onStateChange: (state) => {
+      console.log('🎤 Voice state changed:', state);
+      if (state === 'speaking') {
+        setIsAISpeaking(true);
+      } else if (state === 'idle' || state === 'interrupted') {
+        setIsAISpeaking(false);
+        setIsProcessingVoice(false);
+      }
+    },
+    onInterrupt: () => {
+      console.log('🚨 Voice interrupted AI');
+      if (isAIPlaying) {
+        stopAIPlayback();
+      }
+      setIsAISpeaking(false);
+      setPlayingMessageId(null);
+    },
+    disabled: false,
+    isAIResponding: isAIPlaying,
+    autoSendDelay: settings.autoSendDelay,
+    confidenceThreshold: settings.confidenceThreshold,
+    voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV'
+  });
 
   const {
     isListening,

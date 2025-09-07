@@ -183,7 +183,7 @@ export function useVoiceModeHandler({
   const activeRequestRef = useRef<string | null>(null);
   const elevenLabsStreamingRef = useRef<any>(null); // For ElevenLabs TTS
 
-  // Simplified and more permissive support check
+  // Enhanced voice support detection
   useEffect(() => {
     const checkSupportAndPermissions = async () => {
       try {
@@ -192,14 +192,24 @@ export function useVoiceModeHandler({
 
         console.log('🔍 Checking voice support:', { 
           userAgent: userAgent.substring(0, 50), 
-          hasSpeechAPI: !!SpeechRecognition 
+          hasSpeechAPI: !!SpeechRecognition,
+          isChrome: userAgent.includes('chrome'),
+          isEdge: userAgent.includes('edge'),
+          isFirefox: userAgent.includes('firefox'),
+          isSafari: userAgent.includes('safari') && !userAgent.includes('chrome')
         });
 
-        // More permissive browser support - if the API exists, allow it
-        const supported = !!SpeechRecognition;
+        // Enhanced browser support check
+        const supported = !!SpeechRecognition && (
+          userAgent.includes('chrome') || 
+          userAgent.includes('edge') || 
+          userAgent.includes('webkit')
+        );
         
         if (supported) {
-          console.log('✅ Speech Recognition API found - voice input enabled');
+          console.log('✅ Speech Recognition API found and browser supported - voice input enabled');
+        } else if (SpeechRecognition) {
+          console.log('⚠️ Speech Recognition API found but browser may have limited support');
         } else {
           console.log('❌ Speech Recognition API not found');
         }
@@ -209,9 +219,12 @@ export function useVoiceModeHandler({
 
         console.log('🎤 Voice system initialized:', { supported, hasPermission });
         dispatch({ type: 'SET_SUPPORT', payload: { supported, permission: hasPermission } });
+        
+        // Clear any previous errors on successful initialization
+        setHasError(false);
       } catch (error) {
         console.error('🚨 Voice support check failed:', error);
-        // More permissive fallback
+        // Don't set error state here, just log and continue
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         dispatch({ type: 'SET_SUPPORT', payload: { supported: !!SpeechRecognition, permission: false } });
       }
@@ -956,53 +969,19 @@ export function useVoiceModeHandler({
     fullUserAgent: navigator.userAgent
   };
 
-  // Early return if in error state
-  if (hasError) {
-    console.warn('🚨 Voice handler in error state, returning safe defaults');
-    return {
-      isListening: false,
-      currentTranscript: '',
-      confidence: 0,
-      voiceState: 'idle' as const,
-      audioLevel: 0,
-      startListening: async () => { 
-        console.warn('Voice handler disabled due to error - attempting reset...');
-        resetVoiceSystem();
-        return false; 
-      },
-      stopListening: () => { 
-        console.warn('Voice handler disabled due to error');
-        resetVoiceSystem();
-      },
-      toggleListening: async () => { 
-        console.warn('Voice handler disabled due to error - attempting reset...');
-        resetVoiceSystem();
-        return false; 
-      },
-      isSupported: false,
-      hasPermission: false,
-      interruptAI: () => { 
-        console.warn('Voice handler disabled due to error');
-        resetVoiceSystem();
-      },
-      playText: async () => { 
-        console.warn('Voice handler disabled due to error');
-        resetVoiceSystem();
-      },
-      stopPlayback: () => { 
-        console.warn('Voice handler disabled due to error');
-        resetVoiceSystem();
-      },
-      isPlaying: false,
-      isLoading: false,
-      volume: 0,
-      setVolume: () => { 
-        console.warn('Voice handler disabled due to error');
-        resetVoiceSystem();
-      },
-      browserInfo
-    };
-  }
+  // Auto-reset error state after a brief delay to allow recovery
+  useEffect(() => {
+    if (hasError) {
+      console.log('🔄 Voice system error detected, attempting auto-recovery in 2 seconds...');
+      const timer = setTimeout(() => {
+        console.log('🔄 Auto-resetting voice system...');
+        setHasError(false);
+        dispatch({ type: 'RESET' });
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [hasError]);
 
   return {
     isListening: state.isListening,
