@@ -179,26 +179,21 @@ function VoiceFirstChatInterfaceInner({
     volume: 0.8
   });
 
-  // Use the VoiceModeHandler directly without try-catch wrapper
+  // Use the VoiceModeHandler with GROK-STYLE manual control
   const voiceHandlerResult = useVoiceModeHandler({
     onTranscript: (text, isInterim) => {
-      console.log('📝 Voice transcript:', text, 'isInterim:', isInterim);
-      setIsProcessingVoice(text.length > 0);
+      console.log('📝 GROK MODE: Voice transcript:', text, 'isInterim:', isInterim);
+      setIsProcessingVoice(text.length > 0 && isInterim);
       // Update text input with live transcript so user can see and edit it
       setTextInputValue(text);
     },
     onAutoSend: (text) => {
-      console.log('🚀 VOICE MODE: Auto-sending voice message:', text);
+      // DISABLED: No auto-send in Grok mode - user controls when to send
+      console.log('🚫 GROK MODE: Auto-send disabled, user controls sending');
+      // Just update the input, don't actually send
       setTextInputValue(text);
-      setWasLastMessageVoice(true); // Mark as voice-initiated for auto-play
+      setWasLastMessageVoice(true);
       setIsProcessingVoice(false);
-
-      // Send the message
-      console.log('📤 Sending voice message via mutation:', text);
-      sendMessageMutation.mutate(text);
-
-      // Clear input after sending
-      setTextInputValue('');
     },
     onStateChange: (state) => {
       console.log('🎤 Voice state changed:', state);
@@ -768,12 +763,12 @@ function VoiceFirstChatInterfaceInner({
     return result;
   }, [hasNewAIMessage, autoPlayEnabled, playingMessageId, voiceState, wasLastMessageVoice]);
 
-  // Enhanced auto-play trigger for voice mode
+  // Enhanced auto-play trigger for voice mode - ACTUALLY PLAY AI RESPONSES
   useEffect(() => {
     if (shouldAutoPlay && messages.length > 0) {
       const latestAIMessage = messages[messages.length - 1];
       if (latestAIMessage?.type === 'ai' && latestAIMessage.content && latestAIMessage.content !== lastAIMessage) {
-        console.log('🔊 Auto-playing AI response with ElevenLabs');
+        console.log('🔊 GROK-STYLE: Auto-playing AI response with voice');
         console.log('🎤 Message content:', latestAIMessage.content.substring(0, 100) + '...');
 
         // Update last AI message to prevent re-playing
@@ -782,15 +777,42 @@ function VoiceFirstChatInterfaceInner({
         // Set playing state immediately
         setPlayingMessageId(latestAIMessage.id);
 
-        // Play with ElevenLabs
-        playAIText(latestAIMessage.content)
+        // Clean text for speech (remove perspective tags)
+        const cleanText = latestAIMessage.content
+          .replace(/<perspective>.*?<\/perspective>/g, '')
+          .replace(/\n+/g, ' ')
+          .trim();
+
+        // Play with ElevenLabs - ENSURE this actually works
+        playAIText(cleanText)
           .then(() => {
-            console.log('✅ ElevenLabs auto-play completed successfully');
+            console.log('✅ GROK-STYLE: AI voice playback completed successfully');
             setPlayingMessageId(null);
           })
           .catch(error => {
-            console.error('🚨 ElevenLabs auto-play failed:', error);
-            setPlayingMessageId(null);
+            console.error('🚨 GROK-STYLE: AI voice playback failed, trying browser fallback:', error);
+            
+            // Fallback to browser speech synthesis
+            if ('speechSynthesis' in window) {
+              const utterance = new SpeechSynthesisUtterance(cleanText);
+              utterance.rate = 0.9;
+              utterance.pitch = 1.0;
+              utterance.volume = 0.8;
+              
+              utterance.onend = () => {
+                setPlayingMessageId(null);
+                console.log('✅ Browser speech synthesis completed');
+              };
+              
+              utterance.onerror = () => {
+                setPlayingMessageId(null);
+                console.error('🚨 Browser speech synthesis also failed');
+              };
+              
+              speechSynthesis.speak(utterance);
+            } else {
+              setPlayingMessageId(null);
+            }
           });
       }
     }
@@ -1603,7 +1625,12 @@ function VoiceFirstChatInterfaceInner({
 
                         if (result) {
                           setWasLastMessageVoice(true);
-                          console.log('✅ Voice listening started successfully');
+                          console.log('✅ GROK MODE: Voice listening started - user controls sending');
+                          toast({
+                            title: "🎤 Listening Started",
+                            description: "Speak your message. You control when to send it.",
+                            variant: "default"
+                          });
                         } else {
                           console.warn('🚫 Failed to start voice listening');
                           if (!hasPermission) {
@@ -1705,7 +1732,7 @@ function VoiceFirstChatInterfaceInner({
                     <div className="text-xs text-gray-500">
                       {!hasPermission ? "Need Permission" : 
                        inputIsolated ? "Inputs Locked" :
-                       "Click to speak"}
+                       "Grok-style Voice"}
                     </div>
                   ) : null}
                 </div>

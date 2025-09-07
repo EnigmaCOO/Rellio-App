@@ -502,42 +502,12 @@ export function useVoiceModeHandler({
                     autoSendTimeoutRef.current = null;
                   }
 
-                  // Enhanced auto-send with better conditions - check preventAutoSend flag
-                  if (!isProcessingFinal && cleanFinalTranscript.length > 2 && confidence >= confidenceThreshold && !preventAutoSend) {
-                    isProcessingFinal = true;
-
-                    console.log('🚀 AUTO-SEND triggered for:', cleanFinalTranscript);
-
-                    // Immediate auto-send for better responsiveness
-                    autoSendTimeoutRef.current = setTimeout(() => {
-                      try {
-                        console.log('📤 SENDING voice message:', cleanFinalTranscript);
-                        dispatch({ type: 'UPDATE_REQUEST_TIME', payload: Date.now() });
-                        onAutoSend(cleanFinalTranscript);
-                        updateVoiceState('processing');
-
-                        // Clear transcript after sending
-                        dispatch({
-                          type: 'SET_TRANSCRIPT',
-                          payload: { text: '', confidence: 0 }
-                        });
-
-                        cleanup(); // Stop listening after auto-send
-                      } catch (error) {
-                        console.error('🚨 Auto-send timeout error:', error);
-                        setHasError(true);
-                      }
-                    }, 500); // Slightly longer delay to ensure completion
-                  } else {
-                    console.log('⚠️ Auto-send skipped:', {
-                      isProcessingFinal,
-                      textLength: cleanFinalTranscript.length,
-                      hasText: !!cleanFinalTranscript,
-                      confidence,
-                      threshold: confidenceThreshold,
-                      preventAutoSend
-                    });
-                  }
+                  // GROK-STYLE: Only update transcript, no auto-send
+                  // User has full control over when to send the message
+                  console.log('✅ GROK MODE: Final transcript ready for manual send:', cleanFinalTranscript);
+                  
+                  // Just update the transcript state for user to see and manually send
+                  // No auto-send - user controls when to send like Grok
                 } else {
                   // Show interim results for immediate feedback
                   interimTranscript += transcript;
