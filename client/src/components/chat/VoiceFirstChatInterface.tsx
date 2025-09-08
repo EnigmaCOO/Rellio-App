@@ -1790,8 +1790,20 @@ function VoiceFirstChatInterfaceInner({
                         } else {
                           console.warn('🚫 Failed to start voice listening');
                           if (!hasPermission) {
-                            console.log('🎤 Permission needed but not showing annoying toast');
-                            // Removed annoying permission required toast
+                            toast({
+                              title: "🎤 Microphone Access Needed",
+                              description: "Please allow microphone access to use voice features",
+                              variant: "default",
+                              duration: 5000,
+                              className: "border-blue-200 bg-blue-50 text-blue-800"
+                            });
+                          } else if (!isSupported) {
+                            toast({
+                              title: "🚫 Voice Not Supported",
+                              description: "Try using Chrome, Edge, or Safari for voice features",
+                              variant: "destructive",
+                              duration: 5000
+                            });
                           }
                         }
                       } catch (error) {

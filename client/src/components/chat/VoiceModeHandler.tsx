@@ -474,14 +474,38 @@ export function useVoiceModeHandler({
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-          console.error('🚫 Speech Recognition API not available');
+          console.error('🚫 Speech Recognition API not available in this browser');
+          console.log('💡 Try using Chrome, Edge, or Safari for voice features');
           resolve(false);
           return;
         }
 
-        // Initialize audio context for isolation
+        // Check microphone permissions first
+        try {
+          console.log('🎤 Checking microphone permissions...');
+          const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+          
+          if (permissionStatus.state === 'denied') {
+            console.error('🚫 Microphone permission denied');
+            dispatch({ type: 'SET_SUPPORT', payload: { supported: true, permission: false } });
+            resolve(false);
+            return;
+          }
+
+          console.log('✅ Microphone permission:', permissionStatus.state);
+        } catch (permError) {
+          console.log('⚠️ Could not check permissions, proceeding with caution:', permError);
+        }
+
+        // Initialize audio context for isolation - with better error handling
         console.log('🔊 Initializing audio context...');
-        await initializeAudioContext();
+        try {
+          await initializeAudioContext();
+        } catch (audioError) {
+          console.error('🚫 Audio context initialization failed:', audioError);
+          // Continue without audio context - basic recognition can still work
+          console.log('⚠️ Continuing without audio context...');
+        }
 
         console.log('🎤 Creating new SpeechRecognition instance...');
         const recognition = new SpeechRecognition();
@@ -613,11 +637,41 @@ export function useVoiceModeHandler({
             recognitionRef.current = null;
           };
 
-          recognition.start();
+          // Try to start recognition with better error handling
+          try {
+            console.log('🎤 Starting speech recognition...');
+            recognition.start();
+            console.log('✅ Speech recognition started successfully');
+          } catch (startError) {
+            console.error('🚫 Failed to start speech recognition:', startError);
+            if (startError instanceof DOMException) {
+              if (startError.name === 'NotAllowedError') {
+                console.error('🚫 Microphone permission denied by user');
+                dispatch({ type: 'SET_SUPPORT', payload: { supported: true, permission: false } });
+              } else if (startError.name === 'InvalidStateError') {
+                console.error('🚫 Speech recognition already running');
+              }
+            }
+            resolve(false);
+            return;
+          }
         
       } catch (error) {
-        console.error('🚨 Start listening error:', error);
+        console.error('🚨 Critical voice system error:', error);
         setHasError(true);
+        
+        // Provide user-friendly error message
+        let errorMessage = 'Voice recognition failed to start';
+        if (error instanceof Error) {
+          if (error.message.includes('not-allowed')) {
+            errorMessage = 'Microphone permission required';
+          } else if (error.message.includes('not supported')) {
+            errorMessage = 'Voice recognition not supported in this browser';
+          }
+        }
+        
+        console.log('💡 User-friendly error:', errorMessage);
+        
         // Direct cleanup to avoid dependency
         if (recognitionRef.current) {
           recognitionRef.current.abort();
