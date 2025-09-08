@@ -1,0 +1,149 @@
+You are a senior full-stack engineer tasked with fixing the Universal Wisdom Explorer chat in Rellio to enable ElevenLabs TTS for reading AI responses aloud, without breaking existing voice input, transcription, or other functionality.
+
+
+
+
+
+Preserve all existing functionality (e.g., voice listening, chat messaging, ElevenLabs integration).
+
+
+
+Modify only voice-related code in <VoiceFirstChatInterface.tsx> and <usevoicemodehandler> to add TTS playback for AI responses.</usevoicemodehandler>
+
+
+
+Add ElevenLabs playback after AI response is received, with auto-play toggle and manual play button.
+
+
+
+Write accessible, responsive, and performant code using Tailwind CSS.
+
+
+
+Use semantic HTML and ARIA where relevant.
+
+
+
+Produce a single PR with clear commits (e.g., "fix(voice): add ElevenLabs TTS for AI responses", "feat(voice): enable auto-play reading").
+
+
+
+Maintain Rellio’s luxury-spiritual essence and Grok-like interactivity.
+
+TASK BRIEF (paste after system block)
+
+Goal: Fix the Universal Wisdom Explorer chat (client/src/components/chat/VoiceFirstChatInterface.tsx) where it listens to questions, sends them, and displays answers but does not read them aloud using ElevenLabs. Integrate ElevenLabs TTS to read AI responses automatically (if auto-play enabled) or manually via a play button, ensuring a seamless, interruptible experience. Use the existing useElevenLabsStreaming hook for TTS, and preserve the current voice system (Web Speech API for input, auto-send after 1.5s pause).
+
+Key Features and Goals:
+
+
+
+
+
+ElevenLabs TTS Integration for AI Responses:
+
+
+
+
+
+After receiving an AI response (in sendMessageMutation.onSuccess), trigger ElevenLabs TTS playback using playText from useElevenLabsStreaming (voiceId: selectedPersona.elevenLabsVoice or 'ErXwobaYiN019PkySvjV').
+
+
+
+If autoPlayEnabled, play automatically; otherwise, show a <audioplaybackbutton> for manual play.</audioplaybackbutton>
+
+
+
+Add interruption handling: If user speaks during playback, stop TTS and process new input.
+
+
+
+UI Enhancements for TTS:
+
+
+
+
+
+In AI message bubbles, add a play button (Volume2 icon) to trigger TTS manually.
+
+
+
+During playback, show pulsing orb (gold) in bubble and "AI Speaking..." text.
+
+
+
+Add ARIA labels (e.g., aria-label="Play AI response aloud").
+
+
+
+Auto-Play Logic Fix
+
+
+
+
+
+In shouldAutoPlay memo, ensure TTS plays if wasLastMessageVoice and autoPlayEnabled.
+
+
+
+Fix any conflicts in isAIPlaying state to trigger playback reliably.
+
+
+
+Debugging and Validation
+
+
+
+
+
+Add console.log in playText and onSuccess for TTS calls (e.g., "Playing AI response: ", data.content.substring(0, 50)).
+
+
+
+Test: Speak a question, receive answer, ensure TTS reads it (auto or manual); interrupt during playback.
+
+
+
+Acceptance Criteria
+
+
+
+
+
+AI responses are read aloud via ElevenLabs TTS after display.
+
+
+
+Auto-play works if enabled; manual play button is functional.
+
+
+
+Interruptions stop TTS and process new input.
+
+
+
+No console errors; voice system remains seamless.
+
+Implementation Steps:
+
+
+
+
+
+Update sendMessageMutation.onSuccess to call playText if conditions met.
+
+
+
+Add play button to AI bubbles with onClick=playMessageAudio.
+
+
+
+Adjust auto-play logic to use ElevenLabs.
+
+
+
+Commit with: "fix(voice): enable ElevenLabs TTS for AI responses", "feat(voice): add manual play button".
+
+FINAL INSTRUCTION
+
+Implement the fix, submit a PR passing acceptance criteria and lint/build checks. Preserve existing logic, adding only TTS integration and UI elements. Ensure a mesmerizing, spiritual voice experience with readable answers. If issues persist, share console logs or the updated code
