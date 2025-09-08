@@ -38,6 +38,7 @@ export interface VoiceModeHandlerReturn {
   isSupported: boolean;
   hasPermission: boolean;
   interruptAI: () => void;
+  startBackgroundListening: () => Promise<void>; // Add background listening for voice interruption
   // ElevenLabs TTS integration
   playText: (text: string) => Promise<void>;
   stopPlayback: () => void;
@@ -730,8 +731,8 @@ export function useVoiceModeHandler({
           const transcript = result[0].transcript.trim();
           const confidence = result[0].confidence || 0.8;
 
-          // More sensitive interruption detection
-          if (transcript.length > 2 && confidence > 0.2) {
+          // More sensitive interruption detection - lowered threshold for easier voice interruption
+          if (transcript.length > 1 && confidence > 0.1) {
             console.log('🚨 INTERRUPTION DETECTED:', transcript, 'confidence:', confidence);
             isInterrupting = true;
             
@@ -744,13 +745,14 @@ export function useVoiceModeHandler({
             // Immediate interruption
             interruptAI();
 
-            // Update transcript and trigger new listening
+            // Update transcript and trigger new listening with the interrupting speech
             setTimeout(() => {
               dispatch({ type: 'SET_TRANSCRIPT', payload: { text: transcript, confidence } });
               onTranscript(transcript, false);
 
-              // Start new main listening session
+              // Start new main listening session to continue capturing the full question
               if (!recognitionRef.current) {
+                console.log('🎤 VOICE INTERRUPTION: Starting main listening to capture full question');
                 startListening().catch(console.error);
               }
             }, 200);
@@ -1036,6 +1038,7 @@ export function useVoiceModeHandler({
     isSupported: state.isSupported,
     hasPermission: state.hasPermission,
     interruptAI,
+    startBackgroundListening, // Add background listening for voice interruption
     // ElevenLabs TTS methods
     playText,
     stopPlayback,

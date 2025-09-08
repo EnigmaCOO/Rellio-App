@@ -152,7 +152,7 @@ function VoiceFirstChatInterfaceInner({
     voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV',
     autoPlay: false, // Disable auto-play to prevent conflicts
     onStart: () => {
-      console.log('🔊 AI started speaking - MUTING MICROPHONE');
+      console.log('🔊 AI started speaking - ACTIVATING VOICE INTERRUPTION');
       setIsAISpeaking(true);
       setInputIsolated(true); // Lock input during AI speech
       setIsAudioIsolated(true); // Mute mic during AI speech
@@ -162,6 +162,14 @@ function VoiceFirstChatInterfaceInner({
         gainNodeRef.current.gain.value = 0; // Completely mute microphone
         console.log('🔇 Microphone muted during AI speech to prevent loops');
       }
+      
+      // VOICE INTERRUPTION: Start background listening for voice-activated interruption
+      setTimeout(() => {
+        if (isAISpeaking) { // Only start if still speaking
+          console.log('🎤 VOICE INTERRUPTION: Starting background listening for voice-activated interruption');
+          startBackgroundListening();
+        }
+      }, 500); // Small delay to avoid self-interruption
     },
     onEnd: () => {
       console.log('🔊 AI finished speaking - UNMUTING MICROPHONE');
@@ -190,6 +198,9 @@ function VoiceFirstChatInterfaceInner({
         setIsAudioIsolated(false);
         console.log('🔊 Microphone unmuted immediately due to interruption');
       }
+      
+      // Stop any background listening to prevent conflicts
+      console.log('🎤 CLEANUP: Stopping background listening after interruption');
     },
     onError: (error) => {
       console.log('🔊 AI speech error:', error);
@@ -306,6 +317,7 @@ function VoiceFirstChatInterfaceInner({
     isSupported,
     hasPermission,
     interruptAI,
+    startBackgroundListening,
     playText,
     stopPlayback,
     isPlaying: voiceIsPlaying,
