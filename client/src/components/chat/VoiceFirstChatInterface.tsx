@@ -349,9 +349,7 @@ function VoiceFirstChatInterfaceInner({
   const gainNodeRef = useRef<GainNode | null>(null);
   const destinationRef = useRef<MediaStreamAudioDestinationNode | null>(null);
   
-  // GROK-STYLE: State management for isolation and interruption
-  const [isInputIsolated, setInputIsolated] = useState(false);
-  const [isAudioIsolated, setIsAudioIsolated] = useState(false);
+  // Removed duplicate - using existing isAudioIsolated from line 135
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const elevenLabsStreamRef = useRef<any>(null); // This ref seems unused currently
 
