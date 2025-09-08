@@ -37,7 +37,7 @@ import {
   Bookmark
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useElevenLabsStreaming } from '@/hooks/useElevenLabsStreaming';
+// Removed useElevenLabsStreaming - now using VoiceModeHandler's reliable TTS
 import { GrokStyleOrb } from './GrokStyleOrb';
 import { AudioWaveform } from './AudioWaveform';
 import { VoiceTalkBackHandler } from './VoiceTalkBackHandler';
@@ -140,48 +140,7 @@ function VoiceFirstChatInterfaceInner({
   const [isPostInterruption, setIsPostInterruption] = useState(false); // Tracks if we're in post-interruption voice mode
   const [interruptionCooldown, setInterruptionCooldown] = useState(false); // Prevents loops after interruption
 
-  // Enhanced ElevenLabs Integration with proper interruption support
-  const {
-    isPlaying: isAIPlaying,
-    isLoading: isAILoading,
-    playText: playAIText,
-    stopPlayback: stopAIPlayback,
-    volume: aiVolume,
-    setVolume: setAIVolume
-  } = useElevenLabsStreaming({
-    voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV',
-    autoPlay: true,
-    onStart: () => {
-      console.log('🔊 AI TTS started - enabling interruption detection');
-      setIsAISpeaking(true);
-      setPlayingMessageId(messages[messages.length - 1]?.id || null);
-      
-      // Start background listening for interruption after brief delay
-      setTimeout(() => {
-        if (isAISpeaking && hasPermission) {
-          console.log('🎤 Starting background interruption detection...');
-          startBackgroundListening().catch(error => {
-            console.warn('Background listening failed:', error);
-          });
-        }
-      }, 800); // Delay to avoid self-interruption
-    },
-    onEnd: () => {
-      console.log('🔊 AI TTS ended normally');
-      setIsAISpeaking(false);
-      setPlayingMessageId(null);
-    },
-    onInterrupted: () => {
-      console.log('🚨 AI TTS interrupted by user');
-      setIsAISpeaking(false);
-      setPlayingMessageId(null);
-    },
-    onError: (error) => {
-      console.error('🔊 TTS error:', error);
-      setIsAISpeaking(false);
-      setPlayingMessageId(null);
-    }
-  });
+  // VoiceModeHandler's reliable TTS - mapped after voiceHandlerResult is available
 
   // Settings and persona change tracking
   const [settings, setSettings] = useState({
@@ -219,17 +178,18 @@ function VoiceFirstChatInterfaceInner({
     onStateChange: (state) => {
       console.log('🎤 Voice state changed:', state);
       if (state === 'speaking') {
+        console.log('🔊 AI TTS started - enabling interruption detection');
         setIsAISpeaking(true);
+        setPlayingMessageId(messages[messages.length - 1]?.id || null);
       } else if (state === 'idle' || state === 'interrupted') {
+        console.log('🔊 AI TTS ended or interrupted');
         setIsAISpeaking(false);
+        setPlayingMessageId(null);
         setIsProcessingVoice(false);
       }
     },
     onInterrupt: () => {
       console.log('🚨 VOICE INTERRUPTION: AI speech interrupted');
-      if (isAIPlaying) {
-        stopAIPlayback();
-      }
       setIsAISpeaking(false);
       setPlayingMessageId(null);
 
@@ -242,7 +202,7 @@ function VoiceFirstChatInterfaceInner({
       });
     },
     disabled: false,
-    isAIResponding: isAIPlaying,
+    isAIResponding: isAISpeaking,
     autoSendDelay: 1500, // 1.5s auto-send delay
     confidenceThreshold: 0.7, // Reasonable confidence threshold
     voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV',
@@ -269,6 +229,23 @@ function VoiceFirstChatInterfaceInner({
     volume: voiceVolume,
     setVolume: setVoiceVolume
   } = voiceHandlerResult;
+
+  // Map VoiceModeHandler's TTS to the expected interface
+  const {
+    isPlaying: isAIPlaying,
+    isLoading: isAILoading,
+    playText: playAIText,
+    stopPlayback: stopAIPlayback,
+    volume: aiVolume,
+    setVolume: setAIVolume
+  } = {
+    isPlaying: voiceIsPlaying,
+    isLoading: voiceIsLoading,
+    playText: playText,
+    stopPlayback: stopPlayback,
+    volume: voiceVolume,
+    setVolume: setVoiceVolume
+  };
 
   // Compare Mode state
   const [isCompareMode, setIsCompareMode] = useState(false);
