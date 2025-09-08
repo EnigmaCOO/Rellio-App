@@ -502,12 +502,13 @@ export function useVoiceModeHandler({
                     autoSendTimeoutRef.current = null;
                   }
 
-                  // GROK-STYLE: Only update transcript, no auto-send
+                  // GROK-STYLE: Only update transcript, NEVER auto-send
                   // User has full control over when to send the message
                   console.log('✅ GROK MODE: Final transcript ready for manual send:', cleanFinalTranscript);
+                  console.log('🚫 GROK MODE: No auto-send - user controls when to send');
                   
                   // Just update the transcript state for user to see and manually send
-                  // No auto-send - user controls when to send like Grok
+                  // NO auto-send behavior at all - pure Grok style
                 } else {
                   // Show interim results for immediate feedback
                   interimTranscript += transcript;
