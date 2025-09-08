@@ -797,129 +797,25 @@ function VoiceFirstChatInterfaceInner({
 
         console.log('🔊 Playing cleaned text:', cleanText.substring(0, 50) + '...');
 
-        // Direct ElevenLabs API call with proper error handling
+        // Use the properly configured ElevenLabs hook for TTS
         const startElevenLabsTTS = async () => {
           try {
-            console.log('🎙️ Starting ElevenLabs TTS with voice:', selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV');
+            console.log('🎙️ Starting ElevenLabs TTS using hook with voice:', selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV');
+            console.log('🔊 Playing AI response:', cleanText.substring(0, 50) + '...');
             
-            setIsAISpeaking(true);
-            
-            // Direct API call to ElevenLabs endpoint
-            const response = await fetch('/api/elevenlabs/speak', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                text: cleanText,
-                voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV',
-                settings: {
-                  stability: 0.5,
-                  similarityBoost: 0.8,
-                  style: 0.0,
-                  useSpeakerBoost: true
-                }
-              })
-            });
-
-            if (!response.ok) {
-              throw new Error(`ElevenLabs API error: ${response.status}`);
-            }
-
-            console.log('✅ ElevenLabs API response received');
-            
-            // Create audio blob and play
-            const audioBlob = await response.blob();
-            const audioUrl = URL.createObjectURL(audioBlob);
-            
-            const audio = new Audio(audioUrl);
-            audio.volume = Math.min(aiVolume || 0.8, 1.0);
-            
-            audio.onplay = () => {
-              console.log('🔊 ElevenLabs audio started playing');
-              setIsAISpeaking(true);
-            };
-            
-            audio.onended = () => {
-              console.log('✅ ElevenLabs audio completed');
-              URL.revokeObjectURL(audioUrl);
-              setPlayingMessageId(null);
-              setIsAISpeaking(false);
-            };
-            
-            audio.onerror = (error) => {
-              console.error('🚨 ElevenLabs audio playback error:', error);
-              URL.revokeObjectURL(audioUrl);
-              setPlayingMessageId(null);
-              setIsAISpeaking(false);
-              // Don't show error to user, just fail silently and continue
-            };
-            
-            await audio.play();
-            console.log('✅ ElevenLabs TTS started successfully');
+            // Use the existing ElevenLabs hook which handles all the complexity
+            await playAIText(cleanText);
+            console.log('✅ ElevenLabs TTS started successfully via hook');
             
           } catch (elevenLabsError) {
-            console.warn('⚠️ ElevenLabs failed, using browser TTS fallback:', elevenLabsError);
+            console.warn('⚠️ ElevenLabs TTS failed:', elevenLabsError);
             
-            // Robust browser TTS fallback
-            try {
-              if ('speechSynthesis' in window) {
-                // Clear any existing speech
-                speechSynthesis.cancel();
-                
-                // Short delay to ensure cancellation takes effect
-                await new Promise(resolve => setTimeout(resolve, 100));
-                
-                const utterance = new SpeechSynthesisUtterance(cleanText);
-                utterance.rate = 0.85;
-                utterance.pitch = 1.0;
-                utterance.volume = 0.8;
-                utterance.lang = 'en-US';
-                
-                // Try to use a better voice if available
-                const voices = speechSynthesis.getVoices();
-                const preferredVoice = voices.find(v => 
-                  v.lang.includes('en') && (v.name.includes('Google') || v.name.includes('Microsoft') || v.name.includes('Alex'))
-                );
-                if (preferredVoice) {
-                  utterance.voice = preferredVoice;
-                  console.log('🔊 Using browser voice:', preferredVoice.name);
-                }
-                
-                utterance.onstart = () => {
-                  console.log('🔊 Browser TTS started');
-                  setIsAISpeaking(true);
-                };
-                
-                utterance.onend = () => {
-                  console.log('✅ Browser TTS completed');
-                  setPlayingMessageId(null);
-                  setIsAISpeaking(false);
-                };
-                
-                utterance.onerror = (error) => {
-                  console.error('🚨 Browser TTS error:', error);
-                  setPlayingMessageId(null);
-                  setIsAISpeaking(false);
-                };
-                
-                speechSynthesis.speak(utterance);
-                
-              } else {
-                throw new Error('Speech synthesis not available');
-              }
-            } catch (browserError) {
-              console.error('🚨 All TTS methods failed:', browserError);
-              setPlayingMessageId(null);
-              setIsAISpeaking(false);
-              
-              // Only show error for critical failures
-              toast({
-                title: "Voice Unavailable",
-                description: "Voice playback is temporarily unavailable.",
-                variant: "default"
-              });
-            }
+            // Reset playing state on error
+            setPlayingMessageId(null);
+            setIsAISpeaking(false);
+            
+            // Error handling is already done by the hook's fallback mechanism
+            console.log('🔊 Hook will handle fallback to browser TTS if available');
           }
         };
 
