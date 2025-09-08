@@ -56,9 +56,12 @@ export const VoiceTalkBackHandler = React.memo(({
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
     
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws/voice`;
+    // Fix for undefined port issue - ensure we have a proper host with port
+    const host = window.location.host || 'localhost:5000';
+    const wsUrl = `${protocol}//${host}/ws/voice`;
     
     try {
+      console.log('🔊 Attempting WebSocket connection to:', wsUrl);
       wsRef.current = new WebSocket(wsUrl);
       
       wsRef.current.onopen = () => {
@@ -86,12 +89,14 @@ export const VoiceTalkBackHandler = React.memo(({
       
       wsRef.current.onerror = (error) => {
         console.error('Voice WebSocket error:', error);
+        console.log('🔊 WebSocket failed, falling back to HTTP streaming');
         // Fallback to HTTP streaming
         fallbackToHttpStreaming();
       };
       
     } catch (error) {
       console.error('Failed to setup WebSocket:', error);
+      console.log('🔊 WebSocket setup failed, using HTTP streaming instead');
       fallbackToHttpStreaming();
     }
   }, [isPlaying, onError]);
