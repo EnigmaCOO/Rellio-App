@@ -140,7 +140,7 @@ function VoiceFirstChatInterfaceInner({
   const [isPostInterruption, setIsPostInterruption] = useState(false); // Tracks if we're in post-interruption voice mode
   const [interruptionCooldown, setInterruptionCooldown] = useState(false); // Prevents loops after interruption
 
-  // Simplified ElevenLabs Integration (moved up to be available for handlers)
+  // Enhanced ElevenLabs Integration with proper interruption support
   const {
     isPlaying: isAIPlaying,
     isLoading: isAILoading,
@@ -150,69 +150,35 @@ function VoiceFirstChatInterfaceInner({
     setVolume: setAIVolume
   } = useElevenLabsStreaming({
     voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV',
-    autoPlay: true, // Enable auto-play for voice responses
+    autoPlay: true,
     onStart: () => {
-      console.log('🔊 AI started speaking - ACTIVATING VOICE INTERRUPTION');
+      console.log('🔊 AI TTS started - enabling interruption detection');
       setIsAISpeaking(true);
-      setInputIsolated(true); // Lock input during AI speech
-      setIsAudioIsolated(true); // Mute mic during AI speech
-
-      // CRITICAL: Reduce microphone gain during AI playback but allow interruption detection
-      if (gainNodeRef.current) {
-        gainNodeRef.current.gain.value = 0.1; // Reduce gain significantly but allow interruption detection
-        console.log('🔇 Microphone gain reduced during AI speech (0.1) - allowing interruption detection');
-      }
-
-      // VOICE INTERRUPTION: Start background listening for voice-activated interruption
+      setPlayingMessageId(messages[messages.length - 1]?.id || null);
+      
+      // Start background listening for interruption after brief delay
       setTimeout(() => {
-        console.log('🎤 VOICE INTERRUPTION: Checking conditions...');
-        console.log('🎤 VOICE INTERRUPTION: isAISpeaking:', isAISpeaking, 'isSupported:', isSupported, 'hasPermission:', hasPermission);
-        console.log('🎤 VOICE INTERRUPTION: audioContext exists:', !!audioContextRef.current, 'gainNode exists:', !!gainNodeRef.current);
-
-        if (isAISpeaking) { // Only start if still speaking
-          console.log('🎤 VOICE INTERRUPTION: AI still speaking, starting background listening...');
+        if (isAISpeaking && hasPermission) {
+          console.log('🎤 Starting background interruption detection...');
           startBackgroundListening().catch(error => {
-            console.error('🚨 VOICE INTERRUPTION: Failed to start background listening:', error);
+            console.warn('Background listening failed:', error);
           });
-        } else {
-          console.log('🎤 VOICE INTERRUPTION: Skipped - AI no longer speaking');
         }
-      }, 500); // Small delay to avoid self-interruption
+      }, 800); // Delay to avoid self-interruption
     },
     onEnd: () => {
-      console.log('🔊 AI finished speaking - UNMUTING MICROPHONE');
+      console.log('🔊 AI TTS ended normally');
       setIsAISpeaking(false);
       setPlayingMessageId(null);
-      setInputIsolated(false); // Unlock input after AI speech
-
-      // CRITICAL: Restore full microphone gain after AI finishes with 2s cooldown
-      setTimeout(() => {
-        if (gainNodeRef.current) {
-          gainNodeRef.current.gain.value = 1; // Restore full microphone gain
-          setIsAudioIsolated(false);
-          console.log('🔊 Microphone fully restored after AI speech with 2s cooldown');
-        }
-      }, 2000); // 2 second cooldown to prevent immediate loops
     },
     onInterrupted: () => {
-      console.log('🚨 AI speech interrupted - UNMUTING MICROPHONE IMMEDIATELY');
+      console.log('🚨 AI TTS interrupted by user');
       setIsAISpeaking(false);
       setPlayingMessageId(null);
-      setInputIsolated(false); // Unlock input immediately on interruption
-
-      // CRITICAL: Immediate unmute on interruption for Grok-like experience
-      if (gainNodeRef.current) {
-        gainNodeRef.current.gain.value = 1; // Restore full microphone gain immediately
-        setIsAudioIsolated(false);
-        console.log('🔊 Microphone fully restored immediately due to interruption');
-      }
-
-      // Stop any background listening to prevent conflicts
-      console.log('🎤 CLEANUP: Stopping background listening after interruption');
     },
     onError: (error) => {
-      console.log('🔊 AI speech error:', error);
-      setIsAISpeaking(false); // Use setIsAISpeaking for internal state
+      console.error('🔊 TTS error:', error);
+      setIsAISpeaking(false);
       setPlayingMessageId(null);
     }
   });
@@ -241,24 +207,13 @@ function VoiceFirstChatInterfaceInner({
       }
     },
     onAutoSend: (text) => {
-      // Enable auto-send only in post-interruption mode for seamless Grok-like experience
-      if (isPostInterruption && !interruptionCooldown && text.trim().length > 0) {
-        console.log('🎤 POST-INTERRUPTION AUTO-SEND: Sending message automatically:', text);
+      // Auto-send for voice messages with 1.5s delay
+      if (text.trim().length > 0) {
+        console.log('🎤 AUTO-SEND: Sending voice message:', text);
         setWasLastMessageVoice(true);
         setIsProcessingVoice(false);
         setTextInputValue(text);
         handleSendMessage(text);
-
-        // Reset post-interruption state after auto-send
-        setIsPostInterruption(false);
-        console.log('🎤 POST-INTERRUPTION AUTO-SEND: Reset state after successful send');
-      } else {
-        // Normal Grok mode - user controls when to send
-        console.log('🚫 GROK MODE: Manual send mode - user controls sending');
-        setTextInputValue(text);
-        setWasLastMessageVoice(true);
-        setIsProcessingVoice(false);
-        console.log('🎤 VOICE INPUT: Setting wasLastMessageVoice = true');
       }
     },
     onStateChange: (state) => {
@@ -271,46 +226,27 @@ function VoiceFirstChatInterfaceInner({
       }
     },
     onInterrupt: () => {
-      console.log('🚨 GROK-STYLE INTERRUPTION: Voice interrupted AI');
+      console.log('🚨 VOICE INTERRUPTION: AI speech interrupted');
       if (isAIPlaying) {
         stopAIPlayback();
       }
       setIsAISpeaking(false);
       setPlayingMessageId(null);
 
-      // Enable post-interruption mode for auto-send
-      setIsPostInterruption(true);
-      console.log('🎤 POST-INTERRUPTION MODE: Enabled for auto-transcription and auto-send');
-
       // Show user feedback
       toast({
         title: "🎤 Interrupted—Listening...",
-        description: "Ask your next question - I'll automatically send it after you finish speaking",
+        description: "Continue speaking your question",
         variant: "default",
         className: "border-emerald-200 bg-emerald-50 text-emerald-800"
       });
-
-      // Set interruption cooldown to prevent immediate loops
-      setInterruptionCooldown(true);
-      setTimeout(() => {
-        setInterruptionCooldown(false);
-        console.log('🎤 INTERRUPTION COOLDOWN: Cleared after 1s');
-      }, 1000); // 1s cooldown to prevent loops
-
-      // GROK-STYLE: Enable instant listening after interruption
-      setTimeout(() => {
-        if (!isListening) {
-          console.log('🎤 AUTO-RESTART LISTENING: Restarting after interruption for new question');
-          startListening();
-        }
-      }, 100); // Very short delay for smooth experience
     },
     disabled: false,
     isAIResponding: isAIPlaying,
-    autoSendDelay: isPostInterruption ? 1500 : 0, // Enable 1.5s auto-send delay in post-interruption mode
-    confidenceThreshold: isPostInterruption ? 0.85 : 1.0, // Lower threshold for post-interruption auto-send
+    autoSendDelay: 1500, // 1.5s auto-send delay
+    confidenceThreshold: 0.7, // Reasonable confidence threshold
     voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV',
-    preventAutoSend: !isPostInterruption // Allow auto-send only in post-interruption mode
+    preventAutoSend: false // Enable auto-send for voice messages
   });
 
   const {

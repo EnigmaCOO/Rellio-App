@@ -706,79 +706,68 @@ export function useVoiceModeHandler({
 
   // Enhanced background listening for interruption during AI speech
   const startBackgroundListening = useCallback(async (): Promise<void> => {
-    console.log('🎤 BACKGROUND LISTENING: Attempting to start...');
-    console.log('🎤 BACKGROUND LISTENING: isSupported:', state.isSupported, 'hasPermission:', state.hasPermission, 'hasError:', hasError);
+    console.log('🎤 Starting background interruption detection...');
     
-    if (!state.isSupported || hasError) {
-      console.log('🚫 BACKGROUND LISTENING: Blocked by conditions - isSupported:', state.isSupported, 'hasError:', hasError);
+    if (!state.isSupported || hasError || !state.hasPermission) {
+      console.log('🚫 Background listening blocked:', { 
+        supported: state.isSupported, 
+        hasError, 
+        permission: state.hasPermission 
+      });
       return;
-    }
-    
-    // Try to get permission if not already granted
-    if (!state.hasPermission) {
-      console.log('🎤 BACKGROUND LISTENING: No permission yet, attempting to request...');
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach(track => track.stop()); // Stop immediately, we just needed permission
-        dispatch({ type: 'SET_SUPPORT', payload: { supported: true, permission: true } });
-        console.log('✅ BACKGROUND LISTENING: Permission granted');
-      } catch (error) {
-        console.log('🚫 BACKGROUND LISTENING: Permission denied:', error);
-        return;
-      }
     }
 
     try {
-      console.log('🎤 Starting enhanced background listening for interruption detection...');
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const backgroundRecognition = new SpeechRecognition();
 
-      // Enhanced configuration for better interruption detection
+      // Configure for interruption detection
       backgroundRecognition.continuous = true;
       backgroundRecognition.interimResults = true;
       backgroundRecognition.lang = 'en-US';
       backgroundRecognition.maxAlternatives = 1;
 
-      let isInterrupting = false;
+      let hasDetectedSpeech = false;
 
       backgroundRecognition.onstart = () => {
-        console.log('🎤 Enhanced background listening active for interruption');
-        isInterrupting = false;
+        console.log('✅ Background interruption detection active');
+        hasDetectedSpeech = false;
       };
 
       backgroundRecognition.onresult = (event: SpeechRecognitionEvent) => {
-        if (isInterrupting) return; // Prevent multiple interruptions
+        if (hasDetectedSpeech) return;
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           const transcript = result[0].transcript.trim();
           const confidence = result[0].confidence || 0.8;
 
-          // More sensitive interruption detection - lowered threshold for easier voice interruption
-          if (transcript.length > 1 && confidence > 0.1) {
-            console.log('🚨 INTERRUPTION DETECTED:', transcript, 'confidence:', confidence);
-            isInterrupting = true;
+          // Detect any speech for interruption
+          if (transcript.length > 0 && confidence > 0.3) {
+            console.log('🚨 SPEECH DETECTED - INTERRUPTING AI:', transcript);
+            hasDetectedSpeech = true;
             
+            // Stop background recognition
             try {
               backgroundRecognition.stop();
             } catch (e) {
-              console.log('Background recognition already stopped');
+              console.log('Background recognition stop error:', e);
             }
 
-            // Immediate interruption
+            // Trigger interruption
             interruptAI();
 
-            // Update transcript and trigger new listening with the interrupting speech
+            // Start new listening session with the detected speech
             setTimeout(() => {
               dispatch({ type: 'SET_TRANSCRIPT', payload: { text: transcript, confidence } });
               onTranscript(transcript, false);
-
-              // Start new main listening session to continue capturing the full question
-              if (!recognitionRef.current) {
-                console.log('🎤 VOICE INTERRUPTION: Starting main listening to capture full question');
+              
+              // Continue listening for the full question
+              if (!state.isListening) {
+                console.log('🎤 Starting new listening session after interruption');
                 startListening().catch(console.error);
               }
-            }, 200);
+            }, 300);
             break;
           }
         }
@@ -786,34 +775,24 @@ export function useVoiceModeHandler({
 
       backgroundRecognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.log('🎤 Background recognition error:', event.error);
-        // Don't treat this as a critical error - just log it
-        if (event.error === 'aborted' || event.error === 'no-speech') {
-          console.log('🎤 Background recognition stopped normally');
-        }
       };
 
       backgroundRecognition.onend = () => {
         console.log('🎤 Background recognition ended');
       };
 
-      // Start with error handling
-      try {
-        backgroundRecognition.start();
-        
-        // Store reference for cleanup
-        if (recognitionRef.current) {
-          recognitionRef.current.backgroundRecognition = backgroundRecognition;
-        }
-      } catch (error) {
-        console.error('🚨 Failed to start background recognition:', error);
-        // Don't set hasError - this is not critical
+      // Start background recognition
+      backgroundRecognition.start();
+      
+      // Store reference for cleanup
+      if (recognitionRef.current) {
+        recognitionRef.current.backgroundRecognition = backgroundRecognition;
       }
 
     } catch (error) {
-      console.error('🚨 Could not initialize background listening:', error);
-      // Don't set hasError - fallback to other interruption methods
+      console.error('🚨 Background listening setup failed:', error);
     }
-  }, [state.isSupported, state.hasPermission, interruptAI, onTranscript, hasError, startListening]);
+  }, [state.isSupported, state.hasPermission, state.isListening, hasError, interruptAI, onTranscript, startListening]);
 
   // Enhanced ElevenLabs TTS integration with Grok-like interruption
   const playText = useCallback(async (text: string): Promise<void> => {

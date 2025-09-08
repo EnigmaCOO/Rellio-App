@@ -50,6 +50,9 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isInterruptedRef = useRef(false);
   const activeRequestRef = useRef<string | null>(null); // Track active requests to prevent duplicates
+  const audioElementRef = useRef<HTMLAudioElement | null>(null); // Ref for the current audio element
+  const isLoadingRef = useRef(false); // Ref to track loading state
+  const isPlayingRef = useRef(false); // Ref to track playing state
 
   // Check browser support
   useEffect(() => {
@@ -59,10 +62,13 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
   // Cleanup audio on unmount
   useEffect(() => {
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-        audioRef.current = null;
+      if (audioElementRef.current) {
+        audioElementRef.current.pause();
+        audioElementRef.current.src = '';
+        audioElementRef.current = null;
+      }
+      if (window.speechSynthesis?.speaking) {
+        window.speechSynthesis.cancel();
       }
     };
   }, []);
@@ -217,7 +223,7 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
             try {
               console.log('🔊 Starting audio playback after delay...');
               const playPromise = audio.play();
-              
+
               if (playPromise !== undefined) {
                 await playPromise;
                 console.log('🔊 Audio playback started successfully');
@@ -271,65 +277,117 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       .trim();
   }, []);
 
+  // Fallback TTS function
+  const fallbackToBrowserTTS = useCallback((text: string) => {
+    if (!('speechSynthesis' in window)) {
+      console.log('🔊 No TTS available');
+      onError?.(new Error('No TTS available'));
+      return;
+    }
+
+    console.log('🔊 Using browser TTS fallback');
+
+    // Cancel any ongoing speech synthesis to prevent overlap
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.volume = volume;
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+
+    // Attempt to use a more natural-sounding voice
+    const voices = window.speechSynthesis.getVoices();
+    const englishVoice = voices.find(voice =>
+      voice.lang.includes('en') && (voice.name.includes('Google') || voice.name.includes('Microsoft') || voice.name.includes('Natural'))
+    );
+
+    if (englishVoice) {
+      utterance.voice = englishVoice;
+      console.log('🔊 Using enhanced voice for fallback:', englishVoice.name);
+    } else {
+      console.log('🔊 Using default system voice for fallback');
+    }
+
+    utterance.onstart = () => {
+      console.log('🔊 Browser TTS started');
+      setIsPlaying(true);
+      isPlayingRef.current = true;
+      onStart?.(); // Call onStart when browser TTS begins
+    };
+
+    utterance.onend = () => {
+      console.log('🔊 Browser TTS ended');
+      setIsPlaying(false);
+      isPlayingRef.current = false;
+      setCurrentAudio(null); // Ensure currentAudio is null when using browser TTS
+      onEnd?.();
+    };
+
+    utterance.onerror = (event) => {
+      console.error('🔊 Browser TTS error:', event.error);
+      setIsPlaying(false);
+      isPlayingRef.current = false;
+      setCurrentAudio(null);
+      onError?.(new Error(`Browser TTS failed: ${event.error}`));
+    };
+
+    // Speak the utterance
+    try {
+      window.speechSynthesis.speak(utterance);
+      console.log('✅ Browser TTS activated');
+    } catch (speakError) {
+      console.error('🔊 Error speaking utterance:', speakError);
+      onError?.(new Error('Failed to initiate browser TTS'));
+    }
+  }, [volume, onStart, onEnd, onError]);
+
+
   // Enhanced playText function with better ElevenLabs integration
   const playText = useCallback(async (text: string): Promise<void> => {
-    if (!isSupported) {
-      console.log('🔊 Audio not supported in this browser');
+    if (!text.trim() || isLoadingRef.current || isPlayingRef.current) {
+      console.log('🔊 Skipping TTS - conditions not met:', {
+        hasText: !!text.trim(),
+        isLoading: isLoadingRef.current,
+        isPlaying: isPlayingRef.current
+      });
       return;
     }
 
-    if (!text.trim()) {
-      console.log('🔊 No text provided');
+    // Prevent duplicate requests with server-side deduplication backup
+    const textHash = btoa(text.slice(0, 100)).slice(0, 16);
+    if (activeRequestRef.current === textHash) {
+      console.log('🔊 Skipping duplicate TTS request');
       return;
     }
-
-    // Clean text first to remove perspective tags and HTML
-    const cleanedText = cleanTextForSpeech(text);
-
-    // Create request ID for deduplication
-    const requestId = `${cleanedText.substring(0, 50)}_${voiceId}`;
-
-    // Prevent duplicate requests
-    if (activeRequestRef.current === requestId) {
-      console.log('🚫 Duplicate request blocked:', requestId);
-      return;
-    }
-
-    // Stop any existing audio and mark as active
-    if (isPlaying || isLoading) {
-      console.log('🛑 Stopping existing playback for new request');
-      stopPlayback();
-    }
-
-    activeRequestRef.current = requestId;
-    isInterruptedRef.current = false; // Reset interruption flag
-
-    if (!cleanedText.trim()) {
-      console.log('🔊 No readable text after cleaning');
-      activeRequestRef.current = null;
-      return;
-    }
-
-    // Limit text length for faster voice synthesis
-    const maxLength = 500; // Shorter for faster synthesis
-    const textToSpeak = cleanedText.length > maxLength ? cleanedText.substring(0, maxLength) + '...' : cleanedText;
-
-    setIsLoading(true);
+    activeRequestRef.current = textHash;
 
     try {
-      console.log('🔊 Starting ElevenLabs TTS request for:', textToSpeak.substring(0, 50) + '...');
-      console.log('🎙️ Using voice ID:', voiceId);
+      console.log('🔊 Starting ElevenLabs TTS for text:', text.substring(0, 50) + '...');
+      setIsLoading(true);
+      isLoadingRef.current = true;
 
-      if (isInterruptedRef.current) {
-        console.log('🔊 Playback was interrupted, aborting');
+      // Call onStart callback
+      onStart?.();
+
+      // Enhanced text cleaning for better speech synthesis
+      const cleanedText = text
+        .replace(/<perspective>.*?<\/perspective>/g, '')
+        .replace(/<[^>]*>/g, '')
+        .replace(/\n+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (!cleanedText) {
+        console.log('🔊 No clean text after processing, skipping TTS');
         setIsLoading(false);
-        activeRequestRef.current = null;
+        isLoadingRef.current = false;
+        activeRequestRef.current = null; // Clear request hash if no text
         return;
       }
 
-      // Direct ElevenLabs API call with timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      console.log('🔊 Requesting TTS from server...');
 
       const response = await fetch('/api/elevenlabs/speak', {
         method: 'POST',
@@ -337,152 +395,193 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          text: textToSpeak,
-          voiceId: voiceId,
-          settings: {
-            stability: 0.5,
-            similarityBoost: 0.8,
-            style: 0.0,
-            useSpeakerBoost: true
+          text: cleanedText,
+          voice_id: voiceId,
+          voice_settings: {
+            stability: 0.6,
+            similarity_boost: 0.8,
+            style: 0.3,
+            use_speaker_boost: true
           }
         }),
-        signal: controller.signal
       });
 
-      clearTimeout(timeoutId);
-
-      console.log('🔊 ElevenLabs API response status:', response.status);
-
       if (!response.ok) {
-        const errorText = await response.text().catch(() => 'Unknown error');
+        const errorText = await response.text();
         console.error('🚨 ElevenLabs API error:', response.status, errorText);
         throw new Error(`ElevenLabs API error: ${response.status}`);
       }
 
-      if (isInterruptedRef.current) {
-        console.log('🔊 Playback was interrupted after API call, aborting');
-        setIsLoading(false);
-        activeRequestRef.current = null;
-        return;
-      }
+      console.log('✅ ElevenLabs response received, creating audio...');
 
-      console.log('🔊 Creating audio blob from response...');
+      // Get the audio blob from the response
       const audioBlob = await response.blob();
-      console.log('🔊 Audio blob created, size:', audioBlob.size, 'bytes');
+      const audioUrl = URL.createObjectURL(audioBlob);
 
-      if (audioBlob.size === 0) {
-        throw new Error('Empty audio response from ElevenLabs');
-      }
+      // Create and configure audio element
+      const audio = new Audio(audioUrl);
+      audioElementRef.current = audio;
+      audio.volume = volume;
+      audio.preload = 'auto';
 
-      if (isInterruptedRef.current) {
-        console.log('🔊 Playback was interrupted, aborting');
+      // Enhanced audio event handlers
+      const handleCanPlay = () => {
+        console.log('🔊 Audio ready to play');
+      };
+
+      const handlePlay = () => {
+        console.log('🔊 Audio playback started');
+        setIsPlaying(true);
         setIsLoading(false);
-        activeRequestRef.current = null;
-        return;
-      }
+        isPlayingRef.current = true;
+        isLoadingRef.current = false;
+      };
 
-      // TEMPORARY FIX: Skip ElevenLabs audio and go directly to browser speech
-      console.log('🔊 Skipping ElevenLabs audio, using browser speech directly...');
-      throw new Error('Using browser speech directly for reliable audio');
+      const handleEnded = () => {
+        console.log('🔊 Audio playback ended naturally');
+        setIsPlaying(false);
+        setIsLoading(false);
+        isPlayingRef.current = false;
+        isLoadingRef.current = false;
 
-    } catch (error) {
-      console.log('🔊 ElevenLabs audio failed, using browser speech fallback:', error);
-      setIsLoading(false);
-      activeRequestRef.current = null;
+        // Cleanup
+        URL.revokeObjectURL(audioUrl);
+        audioElementRef.current = null;
 
-      // Always use browser speech synthesis as fallback when ElevenLabs audio fails
-      if ('speechSynthesis' in window && window.speechSynthesis && !isInterruptedRef.current) {
-        try {
-          console.log('🔊 Using browser speech synthesis fallback - this should work');
+        // Call onEnd callback
+        onEnd?.();
+      };
 
-          // Clear any existing speech
-          window.speechSynthesis.cancel();
-          await new Promise(resolve => setTimeout(resolve, 100));
+      const handleError = (event: Event) => {
+        console.error('🔊 Audio playback error:', event);
+        setIsPlaying(false);
+        setIsLoading(false);
+        isPlayingRef.current = false;
+        isLoadingRef.current = false;
 
-          const utterance = new SpeechSynthesisUtterance(textToSpeak);
-          utterance.volume = Math.min(volume, 1.0);
-          utterance.rate = 0.9;
-          utterance.pitch = 1.0;
-          utterance.lang = 'en-US';
+        // Cleanup
+        URL.revokeObjectURL(audioUrl);
+        audioElementRef.current = null;
 
-          // Try to use a better voice if available
-          const voices = window.speechSynthesis.getVoices();
-          const englishVoice = voices.find(voice =>
-            voice.lang.includes('en') && (voice.name.includes('Google') || voice.name.includes('Microsoft') || voice.name.includes('Natural'))
-          );
-          if (englishVoice) {
-            utterance.voice = englishVoice;
-            console.log('🔊 Using enhanced voice for fallback:', englishVoice.name);
-          } else {
-            console.log('🔊 Using default system voice for fallback');
-          }
+        // Call onError callback
+        onError?.('Audio playback failed');
 
-          utterance.onstart = () => {
-            console.log('🔊 Browser speech fallback started - you should hear this');
-            setIsPlaying(true);
-            setIsLoading(false);
-            onStart?.();
-          };
+        // Fallback to browser TTS for critical functionality
+        console.log('🔊 Attempting browser TTS fallback...');
+        fallbackToBrowserTTS(cleanedText);
+      };
 
-          utterance.onend = () => {
-            console.log('🔊 Browser speech fallback completed');
-            setIsPlaying(false);
-            setCurrentAudio(null);
-            activeRequestRef.current = null;
-            onEnd?.();
-          };
+      const handlePause = () => {
+        console.log('🔊 Audio paused/interrupted');
+        setIsPlaying(false);
+        isPlayingRef.current = false;
 
-          utterance.onerror = (event) => {
-            console.log('🔊 Browser speech fallback error:', event.error);
-            setIsPlaying(false);
-            setIsLoading(false);
-            setCurrentAudio(null);
-            activeRequestRef.current = null;
-            onEnd?.();
-          };
+        // Call onInterrupted callback if this was not a natural end
+        if (audio.currentTime < audio.duration - 0.1) {
+          onInterrupted?.();
+        }
+      };
 
-          if (!isInterruptedRef.current) {
-            console.log('🔊 Starting browser speech fallback now...');
-            window.speechSynthesis.speak(utterance);
-            console.log('🔊 Browser speech fallback initiated');
-          }
+      // Attach event listeners
+      audio.addEventListener('canplay', handleCanPlay);
+      audio.addEventListener('play', handlePlay);
+      audio.addEventListener('ended', handleEnded);
+      audio.addEventListener('error', handleError);
+      audio.addEventListener('pause', handlePause);
 
-        } catch (fallbackError) {
-          console.error('🔊 Browser speech synthesis also failed:', fallbackError);
-          setIsLoading(false);
-          activeRequestRef.current = null;
-          onEnd?.();
+      // Auto-play if enabled, with user interaction check
+      if (autoPlay) {
+        console.log('🔊 Auto-playing TTS audio...');
+
+        // Promise-based play with proper error handling
+        const playPromise = audio.play();
+
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log('✅ TTS audio started successfully');
+            })
+            .catch((error) => {
+              console.error('🔊 Play failed:', error);
+
+              // Handle specific audio errors without showing error messages for common issues
+              if (error.name === 'NotAllowedError') {
+                console.log('🔊 User interaction required for audio - user needs to click first');
+                // Don't show error - this is normal browser behavior
+              } else if (error.name === 'AbortError') {
+                console.log('🔊 Audio was interrupted - this is normal during cleanup');
+                // This happens during normal interruption, don't treat as error
+              } else if (error.name === 'NotSupportedError') {
+                console.log('🔊 Audio format not supported');
+                // Try with a simpler approach
+                try {
+                  audio.load();
+                  await audio.play();
+                } catch (retryError) {
+                  console.log('🔊 Audio retry also failed, continuing without voice');
+                  fallbackToBrowserTTS(cleanedText);
+                }
+              } else {
+                console.log('🔊 Audio play failed, continuing without voice');
+                fallbackToBrowserTTS(cleanedText);
+              }
+            });
         }
       } else {
-        console.log('🔊 No browser speech synthesis available');
-        onEnd?.();
+        // If not auto-playing, still mark as ready
+        setIsLoading(false);
+        isLoadingRef.current = false;
+        console.log('🔊 TTS audio ready (auto-play disabled)');
       }
+
+    } catch (error) {
+      console.error('🔊 ElevenLabs TTS error:', error);
+      setIsPlaying(false);
+      setIsLoading(false);
+      isPlayingRef.current = false;
+      isLoadingRef.current = false;
+
+      // Call onError callback
+      onError?.(typeof error === 'string' ? error : 'TTS failed');
+
+      // Fallback to browser TTS for critical functionality
+      console.log('🔊 Attempting browser TTS fallback...');
+      fallbackToBrowserTTS(cleanedText);
+    } finally {
+      // Always clear active request hash after processing
+      activeRequestRef.current = null;
     }
-  }, [isSupported, voiceId, volume, onStart, onEnd, cleanTextForSpeech]);
+  }, [voiceId, volume, autoPlay, onStart, onEnd, onError, onInterrupted, fallbackToBrowserTTS, cleanTextForSpeech]);
 
   // Enhanced stop playback with immediate response
   const stopPlayback = useCallback(() => {
     console.log('🔊 Interruption detected - stopping all audio immediately');
-    isInterruptedRef.current = true;
+    isInterruptedRef.current = true; // Set interruption flag
 
     // Immediate state updates for responsive feel
     setIsPlaying(false);
     setIsLoading(false);
+    isPlayingRef.current = false;
+    isLoadingRef.current = false;
 
     // Stop current audio immediately
-    if (currentAudio) {
+    if (audioElementRef.current) {
       try {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-        currentAudio.src = '';
+        audioElementRef.current.pause();
+        audioElementRef.current.currentTime = 0;
+        const currentSrc = audioElementRef.current.src;
+        audioElementRef.current.src = ''; // Clear source
+        if (currentSrc && currentSrc.startsWith('blob:')) {
+          URL.revokeObjectURL(currentSrc); // Revoke blob URL
+        }
       } catch (error) {
-        console.warn('🔊 Error stopping audio:', error);
+        console.warn('🔊 Error stopping audio element:', error);
       }
-      setCurrentAudio(null);
+      audioElementRef.current = null; // Clear ref
     }
 
     // Stop browser speech synthesis
-    if (window.speechSynthesis?.speaking) {
+    if ('speechSynthesis' in window && window.speechSynthesis?.speaking) {
       try {
         window.speechSynthesis.cancel();
         console.log('🔊 Browser speech synthesis cancelled');
@@ -496,70 +595,56 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
 
     // Notify interruption
     onInterrupted?.();
-    
-    console.log('✅ Audio playback stopped and cleaned up');rrentAudio(null);
 
-    // Stop ElevenLabs audio
-    if (audioRef.current) {
-      try {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-
-        // Clean up audio URL
-        const oldSrc = audioRef.current.src;
-        audioRef.current.src = '';
-        if (oldSrc && oldSrc.startsWith('blob:')) {
-          URL.revokeObjectURL(oldSrc);
-        }
-      } catch (error) {
-        console.warn('🔊 Audio cleanup error (non-critical):', error);
-      }
-    }
-
-    // Stop browser speech synthesis immediately
-    if ('speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.resume(); // Ensure it's not paused before canceling
-        console.log('🔊 Browser speech synthesis stopped immediately');
-      } catch (error) {
-        console.warn('🔊 Browser speech stop error:', error);
-      }
-    }
-
-    onInterrupted?.();
+    console.log('✅ Audio playback stopped and cleaned up');
   }, [onInterrupted]);
 
   // Pause current playback
   const pausePlayback = useCallback(() => {
-    if (audioRef.current && !audioRef.current.paused) {
+    if (audioElementRef.current && !audioElementRef.current.paused) {
       console.log('🔊 Pausing playback');
-      audioRef.current.pause();
+      audioElementRef.current.pause();
+      setIsPlaying(false); // Update state
+      isPlayingRef.current = false;
+    } else if ('speechSynthesis' in window && window.speechSynthesis?.speaking) {
+      console.log('🔊 Pausing browser speech synthesis');
+      window.speechSynthesis.pause();
+      setIsPlaying(false); // Update state
+      isPlayingRef.current = false;
     }
   }, []);
 
   // Resume paused playback
   const resumePlayback = useCallback(() => {
-    if (audioRef.current && audioRef.current.paused) {
+    if (audioElementRef.current && audioElementRef.current.paused) {
       console.log('🔊 Resuming playback');
-      audioRef.current.play().catch(error => {
+      audioElementRef.current.play().then(() => {
+        setIsPlaying(true); // Update state
+        isPlayingRef.current = true;
+        console.log('✅ Resumed playback');
+      }).catch(error => {
         console.error('🔊 Resume play failed:', error);
         onError?.('Failed to resume playback');
       });
+    } else if ('speechSynthesis' in window && !window.speechSynthesis?.speaking) {
+      console.log('🔊 Resuming browser speech synthesis');
+      window.speechSynthesis.resume();
+      setIsPlaying(true); // Update state
+      isPlayingRef.current = true;
     }
   }, [onError]);
 
   // Update volume when changed
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
+    if (audioElementRef.current) {
+      audioElementRef.current.volume = volume;
     }
   }, [volume]);
 
   return {
     isPlaying,
     isLoading,
-    currentAudio,
+    currentAudio: audioElementRef.current, // Return the ref's current value
     playText,
     stopPlayback,
     pausePlayback,
