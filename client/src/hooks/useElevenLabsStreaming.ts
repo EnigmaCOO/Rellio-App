@@ -209,36 +209,44 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       audio.src = audioUrl;
       audio.load();
 
-      // Attempt to play with proper error handling and user interaction check
+      // Attempt to play with proper error handling and race condition prevention
       if (autoPlay && !isInterruptedRef.current) {
-        // Check if user has interacted with the page first
-        const playAudio = async () => {
-          try {
-            await audio.play();
-            console.log('🔊 Audio playback started successfully');
-          } catch (error: any) {
-            console.error('🔊 Play failed:', error);
-
-            // Handle specific audio errors without showing error messages for common issues
-            if (error.name === 'NotAllowedError') {
-              console.log('🔊 User interaction required for audio');
-              // Don't show error - this is normal browser behavior
-            } else if (error.name === 'NotSupportedError') {
-              console.log('🔊 Audio format not supported');
-              // Try with a simpler approach
-              try {
-                audio.load();
-                await audio.play();
-              } catch (retryError) {
-                console.log('🔊 Audio retry also failed, continuing without voice');
+        // Add a small delay to prevent race conditions with cleanup
+        setTimeout(async () => {
+          if (!isInterruptedRef.current && audio && !audio.paused) {
+            try {
+              console.log('🔊 Starting audio playback after delay...');
+              const playPromise = audio.play();
+              
+              if (playPromise !== undefined) {
+                await playPromise;
+                console.log('🔊 Audio playback started successfully');
               }
-            } else {
-              console.log('🔊 Audio play failed, continuing without voice');
+            } catch (error: any) {
+              console.error('🔊 Play failed:', error);
+
+              // Handle specific audio errors without showing error messages for common issues
+              if (error.name === 'NotAllowedError') {
+                console.log('🔊 User interaction required for audio - user needs to click first');
+                // Don't show error - this is normal browser behavior
+              } else if (error.name === 'AbortError') {
+                console.log('🔊 Audio was interrupted - this is normal during cleanup');
+                // This happens during normal interruption, don't treat as error
+              } else if (error.name === 'NotSupportedError') {
+                console.log('🔊 Audio format not supported');
+                // Try with a simpler approach
+                try {
+                  audio.load();
+                  await audio.play();
+                } catch (retryError) {
+                  console.log('🔊 Audio retry also failed, continuing without voice');
+                }
+              } else {
+                console.log('🔊 Audio play failed, continuing without voice');
+              }
             }
           }
-        };
-
-        playAudio();
+        }, 100); // Small delay to prevent race conditions
       }
 
       audioRef.current = audio;
