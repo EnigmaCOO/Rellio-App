@@ -157,68 +157,82 @@ function VoiceFirstChatInterfaceInner({
       setInputIsolated(true); // Lock input during AI speech
       setIsAudioIsolated(true); // Mute mic during AI speech
       
-      // CRITICAL: Force audio context initialization for interruption detection
-      if (!audioContextRef.current) {
-        console.log('🎤 INTERRUPTION: Audio context not initialized, forcing initialization...');
-        setTimeout(() => {
-          // Force initialization by requesting microphone access
-          navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-              console.log('🎤 INTERRUPTION: Microphone access granted for interruption detection');
-              // Set up basic audio monitoring for interruption
-              const audioContext = new AudioContext();
-              const analyser = audioContext.createAnalyser();
-              const microphone = audioContext.createMediaStreamSource(stream);
-              const gainNode = audioContext.createGain();
+      // SIMPLE APPROACH: Use existing voice recognition for interruption
+      console.log('🎤 SIMPLE INTERRUPTION: Starting voice recognition during AI speech...');
+      setTimeout(() => {
+        if (isAISpeaking && isSupported) {
+          console.log('🎤 SIMPLE INTERRUPTION: AI still speaking, starting background voice recognition...');
+          
+          // Create a simple speech recognition instance for interruption
+          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (SpeechRecognition) {
+            const interruptRecognition = new SpeechRecognition();
+            interruptRecognition.continuous = true;
+            interruptRecognition.interimResults = true;
+            interruptRecognition.lang = 'en-US';
+            
+            interruptRecognition.onstart = () => {
+              console.log('🎤 SIMPLE INTERRUPTION: Voice recognition active for interruption');
+            };
+            
+            interruptRecognition.onresult = (event) => {
+              console.log('🚨 SIMPLE INTERRUPTION: Speech detected during AI!');
               
-              gainNode.gain.value = 0.1; // Low gain to prevent feedback
-              microphone.connect(gainNode);
-              gainNode.connect(analyser);
+              // Stop AI immediately
+              stopAIPlayback();
+              setIsAISpeaking(false);
+              setIsPostInterruption(true);
               
-              audioContextRef.current = audioContext;
-              analyserRef.current = analyser;
-              gainNodeRef.current = gainNode;
+              // Stop this recognition
+              try {
+                interruptRecognition.stop();
+              } catch (e) {
+                console.log('Recognition already stopped');
+              }
               
-              console.log('🎤 INTERRUPTION: Simple audio monitoring set up for voice interruption');
+              // Get the speech
+              let transcript = '';
+              for (let i = event.resultIndex; i < event.results.length; i++) {
+                transcript += event.results[i][0].transcript;
+              }
               
-              // Start simple audio level monitoring
-              const monitorForInterruption = () => {
-                if (analyserRef.current && isAISpeaking) {
-                  const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-                  analyserRef.current.getByteFrequencyData(dataArray);
-                  const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-                  
-                  if (average > 25) {
-                    console.log('🚨 SIMPLE INTERRUPTION: Voice detected during AI speech!', average);
-                    stopAIPlayback();
-                    setIsAISpeaking(false);
-                    setIsPostInterruption(true);
-                    
-                    toast({
-                      title: "🎤 Interrupted—Listening...",
-                      description: "Continue speaking - I'll send when you finish",
-                      variant: "default",
-                      className: "border-emerald-200 bg-emerald-50 text-emerald-800"
-                    });
-                    
-                    // Start listening for the full question
-                    setTimeout(() => startListening(), 200);
-                    return; // Stop monitoring after interruption
-                  }
-                  
-                  if (isAISpeaking) {
-                    requestAnimationFrame(monitorForInterruption);
-                  }
-                }
-              };
+              console.log('🎤 INTERRUPTION: Captured speech:', transcript);
               
-              monitorForInterruption();
-            })
-            .catch(error => {
-              console.log('🚨 INTERRUPTION: Failed to get microphone access:', error);
-            });
-        }, 100);
-      }
+              // Show feedback
+              toast({
+                title: "🎤 Interrupted—Listening...",
+                description: "Continue speaking - I'll send when you finish",
+                variant: "default",
+                className: "border-emerald-200 bg-emerald-50 text-emerald-800"
+              });
+              
+              // Start main listening with the captured speech
+              setTimeout(() => {
+                console.log('🎤 INTERRUPTION: Starting main listening...');
+                setTextInputValue(transcript); // Pre-fill with captured speech
+                startListening().then(() => {
+                  console.log('✅ INTERRUPTION: Main listening started');
+                }).catch(error => {
+                  console.error('🚨 Failed to start main listening:', error);
+                });
+              }, 200);
+            };
+            
+            interruptRecognition.onerror = (event) => {
+              console.log('🎤 SIMPLE INTERRUPTION: Recognition error:', event.error);
+            };
+            
+            try {
+              interruptRecognition.start();
+              console.log('✅ SIMPLE INTERRUPTION: Voice recognition started');
+            } catch (error) {
+              console.error('🚨 SIMPLE INTERRUPTION: Failed to start voice recognition:', error);
+            }
+          } else {
+            console.log('🚫 SIMPLE INTERRUPTION: Speech Recognition not available');
+          }
+        }
+      }, 1000); // Start after 1 second to avoid self-interruption
       
       // CRITICAL: Reduce microphone gain during AI playback but allow interruption detection
       if (gainNodeRef.current) {
