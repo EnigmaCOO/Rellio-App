@@ -278,7 +278,7 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
   }, []);
 
   // Fallback TTS function
-  const fallbackToBrowserTTS = useCallback((text: string) => {
+  const fallbackToBrowserTTS = useCallback(async (text: string) => {
     if (!('speechSynthesis' in window)) {
       console.log('🔊 No TTS available');
       onError?.('No TTS available');
@@ -525,11 +525,15 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
                   }
                 } catch (retryError) {
                   console.log('🔊 Audio retry also failed, continuing without voice');
-                  fallbackToBrowserTTS(cleanedText);
+                  fallbackToBrowserTTS(cleanedText).catch(error => {
+                    console.warn('🔊 Fallback TTS also failed:', error);
+                  });
                 }
               } else {
                 console.log('🔊 Audio play failed, continuing without voice');
-                fallbackToBrowserTTS(cleanedText);
+                fallbackToBrowserTTS(cleanedText).catch(error => {
+                  console.warn('🔊 Fallback TTS also failed:', error);
+                });
               }
             });
         }
@@ -558,7 +562,7 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
         .replace(/\n+/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
-      fallbackToBrowserTTS(cleanText);
+      await fallbackToBrowserTTS(cleanText);
     } finally {
       // Always clear active request hash after processing
       activeRequestRef.current = null;
