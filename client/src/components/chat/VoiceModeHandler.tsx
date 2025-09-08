@@ -812,88 +812,35 @@ export function useVoiceModeHandler({
     }
   }, [state.isSupported, state.hasPermission, state.isListening, hasError, interruptAI, onTranscript, startListening]);
 
-  // Enhanced ElevenLabs TTS integration with Grok-like interruption
+  // Simple and reliable TTS integration with voice interruption
   const playText = useCallback(async (text: string): Promise<void> => {
     if (!text.trim() || hasError) return;
 
+    console.log('🔊 Playing text with reliable TTS + voice interruption:', text.substring(0, 50) + '...');
+
+    // Simple active request tracking
+    if (activeRequestRef.current) {
+      console.log('🔄 TTS already active, skipping duplicate');
+      return;
+    }
+
+    const requestId = `${Date.now()}-${Math.random()}`;
+    activeRequestRef.current = requestId;
+
     try {
-      console.log('🔊 Playing text with ElevenLabs + Grok-style interruption:', text.substring(0, 50) + '...');
+      // Start background listening for voice interruption after a small delay
+      setTimeout(() => startBackgroundListening(), 500);
 
-      // Check auto-play permissions
-      if (!canAutoPlay()) {
-        console.log('🚫 Auto-play blocked by enhanced controls');
-        return;
-      }
-
-      dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: true } });
-      updateVoiceState('speaking');
-
-      // Start background listening for Grok-style interruption
-      setTimeout(() => startBackgroundListening(), 500); // Small delay to avoid self-interruption
-
-      // Simple active request tracking
-      if (activeRequestRef.current) {
-        console.log('🔄 TTS already active, skipping duplicate');
-        return;
-      }
-
-      const requestId = `${Date.now()}-${Math.random()}`;
-      activeRequestRef.current = requestId;
-
-      // Placeholder for ElevenLabs streaming integration
-      // In a real scenario, this would involve a streaming API call
-      // For now, simulate TTS response
-      const simulatedAudioUrl = await simulateElevenLabsTTS(text, voiceId);
-      const audio = new Audio(simulatedAudioUrl);
-      audioRef.current = audio;
-      audio.volume = state.volume;
-
-      // Mute microphone during AI speech (enhanced isolation)
+      // Mute microphone during AI speech to prevent feedback
       if (gainNodeRef.current) {
         gainNodeRef.current.gain.value = 0;
       }
 
-      audio.onloadstart = () => {
-        dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: true } });
-      };
+      // Use the reliable TTS system - this will trigger the onStart callback
+      await reliableTTS.playText(text);
 
-      audio.oncanplaythrough = () => {
-        dispatch({ type: 'SET_TTS_STATE', payload: { playing: true, loading: false } });
-        dispatch({ type: 'UPDATE_AUTOPLAY_TIME', payload: Date.now() });
-      };
+      // Unmute microphone after AI speech ends - this happens in the TTS onEnd callback
 
-      audio.onended = () => {
-        console.log('🔊 TTS playback ended');
-        dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
-        updateVoiceState('idle');
-
-        // Restore microphone gain
-        if (gainNodeRef.current) {
-          gainNodeRef.current.gain.value = 1;
-        }
-
-        URL.revokeObjectURL(simulatedAudioUrl);
-        audioRef.current = null;
-        activeRequestRef.current = null;
-      };
-
-      audio.onerror = (error) => {
-        console.error('🚨 TTS playback error:', error);
-        dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
-        updateVoiceState('idle');
-
-        // Restore microphone gain
-        if (gainNodeRef.current) {
-          gainNodeRef.current.gain.value = 1;
-        }
-
-        URL.revokeObjectURL(simulatedAudioUrl);
-        audioRef.current = null;
-        activeRequestRef.current = null;
-        setHasError(true);
-      };
-
-      await audio.play();
     } catch (error) {
       console.error('🚨 TTS error:', error);
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
@@ -907,16 +854,8 @@ export function useVoiceModeHandler({
       activeRequestRef.current = null;
       setHasError(true);
     }
-  }, [state.volume, voiceId, canAutoPlay, updateVoiceState, startBackgroundListening, hasError]);
+  }, [hasError, updateVoiceState, startBackgroundListening, reliableTTS]);
 
-  // Mock function to simulate ElevenLabs TTS response
-  const simulateElevenLabsTTS = async (text: string, voiceId: string): Promise<string> => {
-    // In a real application, this would fetch an audio stream from ElevenLabs
-    // For demonstration, we'll create a placeholder audio blob
-    console.log('Simulating ElevenLabs TTS for:', text);
-    const audioBlob = new Blob([`This is synthesized speech for: "${text}"`], { type: 'audio/wav' });
-    return URL.createObjectURL(audioBlob);
-  };
 
   const stopPlayback = useCallback(() => {
     if (audioRef.current) {
