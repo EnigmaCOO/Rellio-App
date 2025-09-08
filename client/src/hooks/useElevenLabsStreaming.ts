@@ -562,7 +562,9 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
         .replace(/\n+/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
-      await fallbackToBrowserTTS(cleanText);
+      fallbackToBrowserTTS(cleanText).catch(error => {
+        console.warn('🔊 Fallback TTS also failed:', error);
+      });
     } finally {
       // Always clear active request hash after processing
       activeRequestRef.current = null;
