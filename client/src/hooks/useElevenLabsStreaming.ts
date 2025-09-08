@@ -281,7 +281,7 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
   const fallbackToBrowserTTS = useCallback((text: string) => {
     if (!('speechSynthesis' in window)) {
       console.log('🔊 No TTS available');
-      onError?.(new Error('No TTS available'));
+      onError?.('No TTS available');
       return;
     }
 
@@ -330,7 +330,7 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       setIsPlaying(false);
       isPlayingRef.current = false;
       setCurrentAudio(null);
-      onError?.(new Error(`Browser TTS failed: ${event.error}`));
+      onError?.(`Browser TTS failed: ${event.error}`);
     };
 
     // Speak the utterance
@@ -339,7 +339,7 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       console.log('✅ Browser TTS activated');
     } catch (speakError) {
       console.error('🔊 Error speaking utterance:', speakError);
-      onError?.(new Error('Failed to initiate browser TTS'));
+      onError?.('Failed to initiate browser TTS');
     }
   }, [volume, onStart, onEnd, onError]);
 
@@ -552,7 +552,13 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
 
       // Fallback to browser TTS for critical functionality
       console.log('🔊 Attempting browser TTS fallback...');
-      fallbackToBrowserTTS(cleanedText);
+      const cleanText = text
+        .replace(/<perspective>.*?<\/perspective>/g, '')
+        .replace(/<[^>]*>/g, '')
+        .replace(/\n+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      fallbackToBrowserTTS(cleanText);
     } finally {
       // Always clear active request hash after processing
       activeRequestRef.current = null;
