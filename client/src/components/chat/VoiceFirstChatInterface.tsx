@@ -833,7 +833,7 @@ function VoiceFirstChatInterfaceInner({
             const audioUrl = URL.createObjectURL(audioBlob);
             
             const audio = new Audio(audioUrl);
-            audio.volume = Math.min(volume || 0.8, 1.0);
+            audio.volume = Math.min(aiVolume || 0.8, 1.0);
             
             audio.onplay = () => {
               console.log('🔊 ElevenLabs audio started playing');
@@ -927,7 +927,7 @@ function VoiceFirstChatInterfaceInner({
         startElevenLabsTTS();
       }
     }
-  }, [shouldAutoPlay, messages, lastAIMessage, selectedPersona?.elevenLabsVoice, volume, toast]);
+  }, [shouldAutoPlay, messages, lastAIMessage, selectedPersona?.elevenLabsVoice, aiVolume, toast]);
 
   // Enhanced message parsing for multi-perspective responses with colors and clickable references
   const parseMessageContent = useCallback((content: string) => {
