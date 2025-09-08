@@ -531,13 +531,24 @@ export function useVoiceModeHandler({
                     autoSendTimeoutRef.current = null;
                   }
 
-                  // GROK-STYLE: Only update transcript, NEVER auto-send
-                  // User has full control over when to send the message
-                  console.log('✅ GROK MODE: Final transcript ready for manual send:', cleanFinalTranscript);
-                  console.log('🚫 GROK MODE: No auto-send - user controls when to send');
-                  
-                  // Just update the transcript state for user to see and manually send
-                  // NO auto-send behavior at all - pure Grok style
+                  // Conditional auto-send based on preventAutoSend prop and settings
+                  if (!preventAutoSend && autoSendDelay > 0 && confidence >= confidenceThreshold && cleanFinalTranscript.length > 0) {
+                    console.log('🎤 POST-INTERRUPTION AUTO-SEND: Scheduling auto-send with', autoSendDelay, 'ms delay');
+                    console.log('🎤 AUTO-SEND: confidence:', confidence, 'threshold:', confidenceThreshold);
+                    
+                    // Set timeout for auto-send after pause
+                    autoSendTimeoutRef.current = setTimeout(() => {
+                      const messageToSend = cleanFinalTranscript.trim();
+                      if (messageToSend.length > 0) {
+                        console.log('🚀 AUTO-SENDING MESSAGE:', messageToSend);
+                        onAutoSend(messageToSend);
+                      }
+                    }, autoSendDelay);
+                  } else {
+                    // Normal Grok mode - user controls when to send
+                    console.log('✅ GROK MODE: Final transcript ready for manual send:', cleanFinalTranscript);
+                    console.log('🚫 GROK MODE: No auto-send - user controls when to send');
+                  }
                 } else {
                   // Show interim results for immediate feedback
                   interimTranscript += transcript;
