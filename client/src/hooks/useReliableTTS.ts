@@ -56,13 +56,17 @@ export function useReliableTTS({
     }
 
     try {
-      if (!('speechSynthesis' in window)) {
+      if (!('speechSynthesis' in window) || !window.speechSynthesis) {
         throw new Error('Browser speech synthesis not supported');
       }
 
-      // Clear any existing speech
-      window.speechSynthesis.cancel();
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Clear any existing speech with error handling
+      try {
+        window.speechSynthesis.cancel();
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (cancelError) {
+        console.warn('🔊 Could not cancel existing speech:', cancelError);
+      }
 
       const utterance = new SpeechSynthesisUtterance(cleanedText);
       utterance.volume = Math.min(volume, 1.0);
@@ -70,20 +74,37 @@ export function useReliableTTS({
       utterance.pitch = 1.0;
       utterance.lang = 'en-US';
 
-      // Get the best available voice
-      const voices = window.speechSynthesis.getVoices();
-      const preferredVoice = voices.find(voice =>
-        voice.lang.includes('en') && (
-          voice.name.includes('Google') || 
-          voice.name.includes('Microsoft') || 
-          voice.name.includes('Natural') ||
-          voice.name.includes('Enhanced')
-        )
-      ) || voices.find(voice => voice.lang.includes('en'));
+      // Get the best available voice with defensive programming
+      let voices: SpeechSynthesisVoice[] = [];
+      try {
+        voices = window.speechSynthesis.getVoices() || [];
+        
+        // If no voices yet, wait a moment and try again (common browser issue)
+        if (voices.length === 0) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+          voices = window.speechSynthesis.getVoices() || [];
+        }
+      } catch (error) {
+        console.warn('🔊 Could not get voices:', error);
+        voices = [];
+      }
       
-      if (preferredVoice) {
-        utterance.voice = preferredVoice;
-        console.log('🔊 Using voice:', preferredVoice.name);
+      if (voices.length > 0) {
+        const preferredVoice = voices.find(voice =>
+          voice && voice.lang && voice.lang.includes('en') && voice.name && (
+            voice.name.includes('Google') || 
+            voice.name.includes('Microsoft') || 
+            voice.name.includes('Natural') ||
+            voice.name.includes('Enhanced')
+          )
+        ) || voices.find(voice => voice && voice.lang && voice.lang.includes('en'));
+        
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+          console.log('🔊 Using voice:', preferredVoice.name);
+        }
+      } else {
+        console.log('🔊 Using default system voice (no voices available yet)');
       }
 
       utterance.onstart = () => {
