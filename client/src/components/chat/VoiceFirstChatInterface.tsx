@@ -735,7 +735,14 @@ function VoiceFirstChatInterfaceInner({
   const hasNewAIMessage = useCallback(() => {
     if (messages.length === 0) return false;
     const lastMessage = messages[messages.length - 1];
-    return lastMessage?.type === 'ai' && lastMessage.content !== lastAIMessage;
+    const isNewAIMessage = lastMessage?.type === 'ai' && lastMessage.content !== lastAIMessage;
+    console.log('🔍 Checking for new AI message:', { 
+      hasMessages: messages.length > 0,
+      lastMessageType: lastMessage?.type,
+      isNewContent: lastMessage?.content !== lastAIMessage,
+      result: isNewAIMessage
+    });
+    return isNewAIMessage;
   }, [messages, lastAIMessage]);
 
   // Enhanced auto-play logic for voice mode
@@ -745,7 +752,7 @@ function VoiceFirstChatInterfaceInner({
     const voiceNotActivelyListening = voiceState !== 'listening';
     const notProcessing = voiceState !== 'processing';
 
-    // Simplified auto-play logic: play AI responses when auto-play is enabled and nothing is currently playing
+    // Auto-play when we have a new AI message, auto-play is enabled, and we're not busy
     const result = hasLatestAI &&
                    autoPlayEnabled &&
                    !isCurrentlyPlaying &&
@@ -757,12 +764,11 @@ function VoiceFirstChatInterfaceInner({
       autoPlayEnabled,
       isCurrentlyPlaying,
       voiceState,
-      wasLastMessageVoice,
       result
     });
 
     return result;
-  }, [hasNewAIMessage, autoPlayEnabled, playingMessageId, voiceState, wasLastMessageVoice]);
+  }, [hasNewAIMessage, autoPlayEnabled, playingMessageId, voiceState]);
 
   // Enhanced auto-play trigger for voice mode - ACTUALLY PLAY AI RESPONSES
   useEffect(() => {
@@ -787,41 +793,54 @@ function VoiceFirstChatInterfaceInner({
 
         console.log('🔊 Playing cleaned text:', cleanText.substring(0, 50) + '...');
 
-        // Always use browser speech synthesis for reliability
-        if ('speechSynthesis' in window) {
-          // Stop any existing speech
-          speechSynthesis.cancel();
-          
-          const utterance = new SpeechSynthesisUtterance(cleanText);
-          utterance.rate = 0.9;
-          utterance.pitch = 1.0;
-          utterance.volume = 0.8;
-          
-          utterance.onstart = () => {
-            console.log('🔊 AI speech started');
-            setIsAISpeaking(true);
-          };
-          
-          utterance.onend = () => {
-            console.log('✅ AI speech completed');
-            setPlayingMessageId(null);
-            setIsAISpeaking(false);
-          };
-          
-          utterance.onerror = (error) => {
-            console.error('🚨 Speech synthesis error:', error);
-            setPlayingMessageId(null);
-            setIsAISpeaking(false);
-          };
-          
-          speechSynthesis.speak(utterance);
-        } else {
-          console.error('🚨 Speech synthesis not supported');
-          setPlayingMessageId(null);
-        }
+        // First try ElevenLabs for high-quality voice
+        const tryElevenLabs = async () => {
+          try {
+            console.log('🎙️ Attempting ElevenLabs TTS...');
+            await playAIText(cleanText);
+            console.log('✅ ElevenLabs TTS successful');
+          } catch (error) {
+            console.warn('⚠️ ElevenLabs failed, falling back to browser TTS:', error);
+            // Fallback to browser speech synthesis
+            if ('speechSynthesis' in window) {
+              speechSynthesis.cancel();
+              
+              const utterance = new SpeechSynthesisUtterance(cleanText);
+              utterance.rate = 0.9;
+              utterance.pitch = 1.0;
+              utterance.volume = 0.8;
+              
+              utterance.onstart = () => {
+                console.log('🔊 Browser TTS started');
+                setIsAISpeaking(true);
+              };
+              
+              utterance.onend = () => {
+                console.log('✅ Browser TTS completed');
+                setPlayingMessageId(null);
+                setIsAISpeaking(false);
+              };
+              
+              utterance.onerror = (error) => {
+                console.error('🚨 Browser TTS error:', error);
+                setPlayingMessageId(null);
+                setIsAISpeaking(false);
+              };
+              
+              speechSynthesis.speak(utterance);
+            } else {
+              console.error('🚨 No TTS method available');
+              setPlayingMessageId(null);
+              setIsAISpeaking(false);
+            }
+          }
+        };
+
+        // Execute TTS with fallback
+        tryElevenLabs();
       }
     }
-  }, [shouldAutoPlay, messages, lastAIMessage]);
+  }, [shouldAutoPlay, messages, lastAIMessage, playAIText]);
 
   // Enhanced message parsing for multi-perspective responses with colors and clickable references
   const parseMessageContent = useCallback((content: string) => {
