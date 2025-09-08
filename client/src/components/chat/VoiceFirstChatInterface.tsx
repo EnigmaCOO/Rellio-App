@@ -148,19 +148,44 @@ function VoiceFirstChatInterfaceInner({
     voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV',
     autoPlay: false, // Disable auto-play to prevent conflicts
     onStart: () => {
-      console.log('🔊 AI started speaking');
-      setIsAISpeaking(true); // Use setIsAISpeaking for internal state
-      // playingMessageId will be set by the auto-play logic before this fires
+      console.log('🔊 AI started speaking - MUTING MICROPHONE');
+      setIsAISpeaking(true);
+      setInputIsolated(true); // Lock input during AI speech
+      setIsAudioIsolated(true); // Mute mic during AI speech
+      
+      // CRITICAL: Mute microphone during AI playback to prevent mixing
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.value = 0; // Completely mute microphone
+        console.log('🔇 Microphone muted during AI speech to prevent loops');
+      }
     },
     onEnd: () => {
-      console.log('🔊 AI finished speaking');
-      setIsAISpeaking(false); // Use setIsAISpeaking for internal state
+      console.log('🔊 AI finished speaking - UNMUTING MICROPHONE');
+      setIsAISpeaking(false);
       setPlayingMessageId(null);
+      setInputIsolated(false); // Unlock input after AI speech
+      
+      // CRITICAL: Unmute microphone after AI finishes with 2s cooldown
+      setTimeout(() => {
+        if (gainNodeRef.current) {
+          gainNodeRef.current.gain.value = 1; // Restore microphone
+          setIsAudioIsolated(false);
+          console.log('🔊 Microphone unmuted after AI speech with 2s cooldown');
+        }
+      }, 2000); // 2 second cooldown to prevent immediate loops
     },
     onInterrupted: () => {
-      console.log('🚨 AI speech interrupted');
-      setIsAISpeaking(false); // Use setIsAISpeaking for internal state
+      console.log('🚨 AI speech interrupted - UNMUTING MICROPHONE IMMEDIATELY');
+      setIsAISpeaking(false);
       setPlayingMessageId(null);
+      setInputIsolated(false); // Unlock input immediately on interruption
+      
+      // CRITICAL: Immediate unmute on interruption for Grok-like experience
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.value = 1; // Restore microphone immediately
+        setIsAudioIsolated(false);
+        console.log('🔊 Microphone unmuted immediately due to interruption');
+      }
     },
     onError: (error) => {
       console.log('🔊 AI speech error:', error);
@@ -186,10 +211,10 @@ function VoiceFirstChatInterfaceInner({
       setIsProcessingVoice(text.length > 0 && isInterim);
       // Update text input with live transcript so user can see and edit it
       setTextInputValue(text);
-      // CRITICAL: Mark that voice input is being used
-      if (text.length > 0) {
+      // CRITICAL: Mark that voice input is being used - set flag immediately
+      if (text.length > 0 && !isInterim) {
         setWasLastMessageVoice(true);
-        console.log('🎤 VOICE INPUT ACTIVE: Setting wasLastMessageVoice = true');
+        console.log('🎤 VOICE INPUT COMPLETE: Setting wasLastMessageVoice = true');
       }
     },
     onAutoSend: (text) => {
@@ -521,6 +546,11 @@ function VoiceFirstChatInterfaceInner({
         // Clear voice processing state to allow auto-play
         setIsProcessingVoice(false);
         
+        // ENHANCED: Force auto-play for voice messages immediately
+        if (wasLastMessageVoice) {
+          console.log('🎤 VOICE MESSAGE SENT: Auto-play will be triggered');
+        }
+        
         // Note: Auto-play is now handled by the useEffect watching shouldAutoPlay
         // This prevents duplicate playback attempts
       } catch (error) {
@@ -561,9 +591,20 @@ function VoiceFirstChatInterfaceInner({
   const handleSendMessage = useCallback((message: string) => {
     if (!message.trim()) return;
     
-    // Voice input flag is now set in the transcript handler
-    console.log('📤 SENDING MESSAGE - wasLastMessageVoice:', wasLastMessageVoice);
-
+    // ENHANCED: More reliable voice detection for Grok-like experience
+    const isCurrentlyVoiceInput = textInputValue.length > 0 && (
+      isListening || 
+      voiceState === 'processing' || 
+      currentTranscript.trim() === textInputValue.trim() ||
+      wasLastMessageVoice
+    );
+    
+    if (isCurrentlyVoiceInput) {
+      setWasLastMessageVoice(true);
+      console.log('🎤 VOICE MESSAGE CONFIRMED: Setting wasLastMessageVoice = true');
+    }
+    
+    console.log('📤 SENDING MESSAGE - wasLastMessageVoice:', wasLastMessageVoice || isCurrentlyVoiceInput);
     console.log('📤 Sending message:', message);
     sendMessageMutation.mutate(message);
 
@@ -571,7 +612,7 @@ function VoiceFirstChatInterfaceInner({
     if (showTextInput) {
       setTextInputValue('');
     }
-  }, [sendMessageMutation, showTextInput, isListening, voiceState, textInputValue, currentTranscript]);
+  }, [sendMessageMutation, showTextInput, isListening, voiceState, textInputValue, currentTranscript, wasLastMessageVoice]);
 
   // Speech input is now handled by VoiceModeHandler
 
@@ -765,9 +806,12 @@ function VoiceFirstChatInterfaceInner({
     const notProcessing = voiceState !== 'processing' && !isProcessingVoice;
     const notCurrentlySpeaking = !isAISpeaking && !isAIPlaying;
 
-    // SIMPLIFIED: Auto-play when we have a new AI message AND (auto-play is enabled OR last message was voice)
+    // GROK-STYLE: Always auto-play for voice input, respect setting for text input
+    const shouldAutoPlayForVoice = wasLastMessageVoice; // Always play for voice
+    const shouldAutoPlayForText = autoPlayEnabled && !wasLastMessageVoice; // Respect setting for text
+    
     const result = hasLatestAI &&
-                   (autoPlayEnabled || wasLastMessageVoice) &&
+                   (shouldAutoPlayForVoice || shouldAutoPlayForText) &&
                    !isCurrentlyPlaying &&
                    notCurrentlySpeaking;
 

@@ -1,0 +1,63 @@
+You are a senior full-stack engineer tasked with fixing the Universal Wisdom Explorer chat in Rellio to prevent AI voice mixing with user transcript, eliminate loops, and enable seamless, interruptible conversations like Grok's voice mode, without breaking existing functionality or logic. Align with Rellio's "Guiding Wisdom. Eternal Connection" brand and prepare for future 3-D model characters (like Valentine/Good Rudi/Ani companions) for personas (Islamic Mufti, Jewish Rabbi, Christian Priest, etc.).
+
+Preserve all existing functionality (e.g., voice listening, auto-send, ElevenLabs integration, persona switching, chat messaging).
+Modify only voice-related code in <VoiceFirstChatInterface.tsx> and <usevoicemodehandler> to fix mixing/loops and add interruptions.</usevoicemodehandler>
+Add ElevenLabs TTS playback for AI responses, with auto-play toggle and manual button.
+Implement mic muting during AI speech and background listening for interruptions.
+Write accessible, responsive, and performant code using Tailwind CSS.
+Use semantic HTML and ARIA where relevant.
+Produce a single PR with clear commits (e.g., "fix(voice): prevent AI voice mixing and loops", "feat(voice): add Grok-like interruptions").
+Test for loops, interruptions, and context retention; log detailed errors for debugging.
+
+TASK BRIEF (paste after system block)
+Goal: Fix the Universal Wisdom Explorer chat (client/src/components/chat/VoiceFirstChatInterface.tsx) where AI ElevenLabs voice mixes with user transcript/text input, creating continuous loops. Implement mic muting during AI playback, background listening for interruptions, and seamless context switching like Grok's voice mode. Ensure personas (Islamic Mufti, Jewish Rabbi, Christian Priest, Hindu Guru, Buddhist Monk) have unique voices and handle interruptions gracefully. Prepare for future 3-D model characters as user companions for research/insight.
+Key Features and Goals:
+
+Prevent AI Voice Mixing and Loops:
+
+Mute microphone input during AI playback using Web Audio API (gainNode.gain.value = 0 in SPEAKING state).
+Disable Web Speech API recognition during playback (speechRecognition.stop()) to prevent AI audio transcription.
+Add 2s cooldown post-playback before re-enabling mic to avoid immediate loops.
+
+
+Grok-Like Interruptible Conversations:
+
+Enable background SpeechRecognition during AI playback (continuous=true, interimResults=false, low sensitivity 0.3).
+On user speech detection (onspeechstart, confidence >0.7), pause ElevenLabs (fade-out 300ms), stop recognition, append interrupted response to history, and process new query with context (e.g., "You interrupted—continuing on your new question...").
+Retain conversation context (last 5 turns) for personas; switch voices based on selectedPersona.elevenLabsVoice.
+
+
+ElevenLabs TTS for AI Responses:
+
+In sendMessageMutation.onSuccess, trigger playText from useElevenLabsStreaming if autoPlayEnabled or manual play clicked.
+Add play button to AI bubbles (Volume2 icon) for manual TTS; show pulsing orb during playback.
+
+
+Persona and UI Enhancements:
+
+Interruptions adapt to persona (e.g., Mufti resumes authoritatively).
+UI: Single mic button with status (Listening..., AI Speaking..., Interrupted); add tooltip for instructions.
+
+
+Debugging and Validation:
+
+Add console.log for voice states, mic gain changes, and interruptions (e.g., "Mic muted during AI speech").
+Test: Speak while AI reads (interrupt), confirm no mixing/loops, context retention.
+
+
+
+Acceptance Criteria:
+
+AI voice doesn't mix with user transcript; no loops.
+Interruptions pause AI and process new input seamlessly.
+TTS reads answers aloud; manual/auto play works.
+No console errors; voice system is stable.
+
+Implementation Steps:
+
+Update useVoiceModeHandler with mic muting and background listener.
+Adjust VoiceFirstChatInterface for single mic button and play icon.
+Test interruptions and loops; commit with: "fix(voice): prevent mixing and loops", "feat(voice): add Grok-like interruptions".
+
+FINAL INSTRUCTION
+Implement the fix, submit a PR passing acceptance criteria and lint/build checks. Preserve existing logic, adding only voice enhancements. Ensure a seamless, interruptible experience like Grok's. If issues persist, share the updated code or console logs
