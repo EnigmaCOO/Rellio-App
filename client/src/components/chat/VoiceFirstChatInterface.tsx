@@ -554,6 +554,13 @@ function VoiceFirstChatInterfaceInner({
   // Consolidated send message function (moved up to fix hoisting issue)
   const handleSendMessage = useCallback((message: string) => {
     if (!message.trim()) return;
+    
+    // CRITICAL: Check if this message came from voice input
+    const isVoiceMessage = isListening || voiceState === 'processing' || textInputValue === currentTranscript;
+    if (isVoiceMessage) {
+      setWasLastMessageVoice(true);
+      console.log('🎤 VOICE MESSAGE DETECTED: Setting wasLastMessageVoice = true');
+    }
 
     console.log('📤 Sending message:', message);
     sendMessageMutation.mutate(message);
@@ -562,7 +569,7 @@ function VoiceFirstChatInterfaceInner({
     if (showTextInput) {
       setTextInputValue('');
     }
-  }, [sendMessageMutation, showTextInput]);
+  }, [sendMessageMutation, showTextInput, isListening, voiceState, textInputValue, currentTranscript]);
 
   // Speech input is now handled by VoiceModeHandler
 
@@ -1602,7 +1609,7 @@ function VoiceFirstChatInterfaceInner({
                         setTimeout(async () => {
                           const result = await toggleListening();
                           if (result) {
-                            setWasLastMessageVoice(true);
+                            // Don't set wasLastMessageVoice here - it will be set when message is sent
                             // Ensure auto-play is enabled for voice responses
                             if (!autoPlayEnabled) {
                               setAutoPlayEnabled(true);
@@ -1624,7 +1631,7 @@ function VoiceFirstChatInterfaceInner({
                         const result = await toggleListening();
 
                         if (result) {
-                          setWasLastMessageVoice(true);
+                          // Don't set wasLastMessageVoice here - it will be set when message is sent
                           // Ensure auto-play is enabled for voice responses
                           if (!autoPlayEnabled) {
                             setAutoPlayEnabled(true);
