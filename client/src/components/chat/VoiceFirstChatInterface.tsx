@@ -236,12 +236,20 @@ function VoiceFirstChatInterfaceInner({
       }
     },
     onInterrupt: () => {
-      console.log('🚨 Voice interrupted AI');
+      console.log('🚨 GROK-STYLE INTERRUPTION: Voice interrupted AI');
       if (isAIPlaying) {
         stopAIPlayback();
       }
       setIsAISpeaking(false);
       setPlayingMessageId(null);
+      
+      // GROK-STYLE: Enable instant listening after interruption
+      setTimeout(() => {
+        if (!isListening) {
+          console.log('🎤 AUTO-RESTART LISTENING: Restarting after interruption');
+          startListening();
+        }
+      }, 100); // Very short delay for smooth experience
     },
     disabled: false,
     isAIResponding: isAIPlaying,
@@ -340,6 +348,10 @@ function VoiceFirstChatInterfaceInner({
   const streamRef = useRef<MediaStream | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
   const destinationRef = useRef<MediaStreamAudioDestinationNode | null>(null);
+  
+  // GROK-STYLE: State management for isolation and interruption
+  const [isInputIsolated, setInputIsolated] = useState(false);
+  const [isAudioIsolated, setIsAudioIsolated] = useState(false);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const elevenLabsStreamRef = useRef<any>(null); // This ref seems unused currently
 
