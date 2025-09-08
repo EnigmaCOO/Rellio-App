@@ -1261,16 +1261,50 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
   app.post("/api/elevenlabs/speak", async (req, res) => {
     try {
       if (!elevenLabsService) {
+        console.log('❌ ElevenLabs service not available');
         return res.status(503).json({ error: "ElevenLabs service not available" });
       }
 
-      const { text, voiceId, options } = req.body;
+      const { text, voiceId, settings } = req.body;
       
       if (!text || !voiceId) {
+        console.log('❌ Missing required fields:', { hasText: !!text, hasVoiceId: !!voiceId });
         return res.status(400).json({ error: "Text and voiceId are required" });
       }
 
-      console.log('🔊 ElevenLabs TTS request:', { textLength: text.length, voiceId, options });
+      console.log('🔊 ElevenLabs speak request:', { 
+        textLength: text.length, 
+        voiceId: voiceId.substring(0, 10) + '...',
+        hasSettings: !!settings 
+      });
+
+      const audioBuffer = await elevenLabsService.generateSpeech(text, voiceId, settings || {
+        stability: 0.5,
+        similarityBoost: 0.8,
+        style: 0.0,
+        useSpeakerBoost: true
+      });
+      
+      console.log('✅ ElevenLabs audio generated:', audioBuffer.length, 'bytes');
+      
+      res.set({
+        'Content-Type': 'audio/mpeg',
+        'Content-Length': audioBuffer.length.toString(),
+        'Cache-Control': 'no-cache'
+      });
+      
+      res.send(audioBuffer);
+      
+    } catch (error) {
+      console.error("❌ ElevenLabs speak error:", error);
+      res.status(500).json({ 
+        error: "Failed to generate speech", 
+        details: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  console.log('🔊 ElevenLabs TTS request:', { textLength: text.length, voiceId, options });
 
       const audioBuffer = await elevenLabsService.generateSpeech(text, voiceId, options || {});
       
