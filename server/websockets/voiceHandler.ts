@@ -26,7 +26,8 @@ export class VoiceWebSocketHandler {
     this.wss = new WebSocketServer({ 
       server, 
       path: '/ws/voice',
-      perMessageDeflate: false // Disable compression for lower latency
+      perMessageDeflate: false, // Disable compression for lower latency
+      host: '0.0.0.0' // Ensure it binds to all interfaces in Replit
     });
     
     this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });

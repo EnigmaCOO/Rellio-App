@@ -57,7 +57,13 @@ export const VoiceTalkBackHandler = React.memo(({
     
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     // Fix for undefined port issue - ensure we have a proper host with port
-    const host = window.location.host || 'localhost:5000';
+    let host = window.location.host;
+    
+    // Fallback to localhost:5000 if host is empty or doesn't include port
+    if (!host || host === 'localhost' || !host.includes(':')) {
+      host = 'localhost:5000';
+    }
+    
     const wsUrl = `${protocol}//${host}/ws/voice`;
     
     try {
