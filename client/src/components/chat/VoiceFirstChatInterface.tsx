@@ -556,10 +556,21 @@ function VoiceFirstChatInterfaceInner({
     if (!message.trim()) return;
     
     // CRITICAL: Check if this message came from voice input
-    const isVoiceMessage = isListening || voiceState === 'processing' || textInputValue === currentTranscript;
+    const isVoiceMessage = isListening || voiceState === 'processing' || textInputValue === currentTranscript || currentTranscript.length > 0;
+    console.log('🎤 VOICE DETECTION CHECK:', {
+      isListening,
+      voiceState,
+      textInputValue,
+      currentTranscript,
+      isVoiceMessage,
+      currentWasLastMessageVoice: wasLastMessageVoice
+    });
+    
     if (isVoiceMessage) {
       setWasLastMessageVoice(true);
       console.log('🎤 VOICE MESSAGE DETECTED: Setting wasLastMessageVoice = true');
+    } else {
+      console.log('🖱️ TEXT MESSAGE DETECTED: Keeping wasLastMessageVoice as', wasLastMessageVoice);
     }
 
     console.log('📤 Sending message:', message);
@@ -771,15 +782,19 @@ function VoiceFirstChatInterfaceInner({
                    notProcessing &&
                    notCurrentlySpeaking;
 
-    console.log('🔊 Auto-play check:', {
+    console.log('🔊 AUTO-PLAY CHECK DETAILED:', {
       hasLatestAI,
       autoPlayEnabled,
       wasLastMessageVoice,
       shouldAutoPlayDueToVoice: autoPlayEnabled || wasLastMessageVoice,
       isCurrentlyPlaying,
+      playingMessageId,
       voiceState,
       isProcessingVoice,
+      isAISpeaking,
+      isAIPlaying,
       notCurrentlySpeaking,
+      messagesLength: messages.length,
       result
     });
 
