@@ -157,17 +157,19 @@ function VoiceFirstChatInterfaceInner({
       setInputIsolated(true); // Lock input during AI speech
       setIsAudioIsolated(true); // Mute mic during AI speech
       
-      // CRITICAL: Mute microphone during AI playback to prevent mixing
+      // CRITICAL: Reduce microphone gain during AI playback but allow interruption detection
       if (gainNodeRef.current) {
-        gainNodeRef.current.gain.value = 0; // Completely mute microphone
-        console.log('🔇 Microphone muted during AI speech to prevent loops');
+        gainNodeRef.current.gain.value = 0.1; // Reduce gain significantly but allow interruption detection
+        console.log('🔇 Microphone gain reduced during AI speech (0.1) - allowing interruption detection');
       }
       
       // VOICE INTERRUPTION: Start background listening for voice-activated interruption
       setTimeout(() => {
+        console.log('🎤 VOICE INTERRUPTION: Checking conditions...');
+        console.log('🎤 VOICE INTERRUPTION: isAISpeaking:', isAISpeaking, 'isSupported:', isSupported, 'hasPermission:', hasPermission);
+        
         if (isAISpeaking) { // Only start if still speaking
-          console.log('🎤 VOICE INTERRUPTION: Starting background listening for voice-activated interruption');
-          console.log('🎤 VOICE INTERRUPTION: isSupported:', isSupported, 'hasPermission:', hasPermission);
+          console.log('🎤 VOICE INTERRUPTION: AI still speaking, starting background listening...');
           startBackgroundListening().catch(error => {
             console.error('🚨 VOICE INTERRUPTION: Failed to start background listening:', error);
           });
@@ -182,12 +184,12 @@ function VoiceFirstChatInterfaceInner({
       setPlayingMessageId(null);
       setInputIsolated(false); // Unlock input after AI speech
       
-      // CRITICAL: Unmute microphone after AI finishes with 2s cooldown
+      // CRITICAL: Restore full microphone gain after AI finishes with 2s cooldown
       setTimeout(() => {
         if (gainNodeRef.current) {
-          gainNodeRef.current.gain.value = 1; // Restore microphone
+          gainNodeRef.current.gain.value = 1; // Restore full microphone gain
           setIsAudioIsolated(false);
-          console.log('🔊 Microphone unmuted after AI speech with 2s cooldown');
+          console.log('🔊 Microphone fully restored after AI speech with 2s cooldown');
         }
       }, 2000); // 2 second cooldown to prevent immediate loops
     },
@@ -199,9 +201,9 @@ function VoiceFirstChatInterfaceInner({
       
       // CRITICAL: Immediate unmute on interruption for Grok-like experience
       if (gainNodeRef.current) {
-        gainNodeRef.current.gain.value = 1; // Restore microphone immediately
+        gainNodeRef.current.gain.value = 1; // Restore full microphone gain immediately
         setIsAudioIsolated(false);
-        console.log('🔊 Microphone unmuted immediately due to interruption');
+        console.log('🔊 Microphone fully restored immediately due to interruption');
       }
       
       // Stop any background listening to prevent conflicts
@@ -737,10 +739,10 @@ function VoiceFirstChatInterfaceInner({
             console.log(`🔊 DEBUG: Audio level: ${average}, AI speaking: ${isAISpeaking}, Voice state: ${voiceState}`);
           }
 
-          // Enhanced interruption detection (backup to onspeechstart)
-          if ((voiceState === 'speaking' || isAISpeaking) && average > 50) { // Threshold based on settings.interruptionSensitivity?
+          // Enhanced interruption detection (backup to voice recognition)
+          if ((voiceState === 'speaking' || isAISpeaking) && average > 25) { // Lowered threshold for easier interruption
             console.log('🚨 AUDIO-LEVEL INTERRUPTION! High audio detected during AI speech');
-            console.log(`🔊 Audio level: ${average}, Threshold: 50`);
+            console.log(`🔊 Audio level: ${average}, Threshold: 25`);
 
             // Trigger interruption
             if (stopAIPlayback) {
@@ -753,6 +755,29 @@ function VoiceFirstChatInterfaceInner({
             setIsTalkingBack(false);
             setInputIsolated(false);
             setIsAudioIsolated(false);
+            
+            // Enable post-interruption mode for auto-send
+            setIsPostInterruption(true);
+            setInterruptionCooldown(true);
+            setTimeout(() => setInterruptionCooldown(false), 1000);
+            
+            // Show user feedback
+            toast({
+              title: "🎤 Interrupted—Listening...",
+              description: "Continue speaking - I'll automatically send when you finish",
+              variant: "default",
+              className: "border-emerald-200 bg-emerald-50 text-emerald-800"
+            });
+            
+            // Start listening for the new question after brief delay
+            setTimeout(() => {
+              if (!isListening) {
+                console.log('🎤 AUDIO-LEVEL INTERRUPTION: Starting listening for new question');
+                startListening().catch(error => {
+                  console.error('🚨 Failed to start listening after audio interruption:', error);
+                });
+              }
+            }, 300);
           }
         }
 
