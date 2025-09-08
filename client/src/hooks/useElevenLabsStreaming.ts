@@ -494,7 +494,36 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
     // Immediate state updates for responsive feel
     setIsPlaying(false);
     setIsLoading(false);
-    setCurrentAudio(null);
+
+    // Stop current audio immediately
+    if (currentAudio) {
+      try {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio.src = '';
+      } catch (error) {
+        console.warn('🔊 Error stopping audio:', error);
+      }
+      setCurrentAudio(null);
+    }
+
+    // Stop browser speech synthesis
+    if (window.speechSynthesis?.speaking) {
+      try {
+        window.speechSynthesis.cancel();
+        console.log('🔊 Browser speech synthesis cancelled');
+      } catch (error) {
+        console.warn('🔊 Error cancelling speech synthesis:', error);
+      }
+    }
+
+    // Clear active request
+    activeRequestRef.current = null;
+
+    // Notify interruption
+    onInterrupted?.();
+    
+    console.log('✅ Audio playback stopped and cleaned up');rrentAudio(null);
 
     // Stop ElevenLabs audio
     if (audioRef.current) {

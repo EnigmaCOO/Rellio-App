@@ -1,4 +1,3 @@
-
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,20 +21,45 @@ export class VoiceErrorBoundary extends Component<Props, State> {
   };
 
   public static getDerivedStateFromError(error: Error): State {
-    return {
-      hasError: true,
-      error,
-      errorInfo: null
-    };
+    console.error('🚨 Voice Error Boundary caught error:', error);
+
+    // Filter out devtools and non-critical errors
+    const errorString = error.toString().toLowerCase();
+    const errorStack = error.stack?.toLowerCase() || '';
+
+    // Ignore devtools errors (like Eruda)
+    if (errorString.includes('eruda') || 
+        errorStack.includes('eruda') ||
+        errorString.includes('devtools') ||
+        errorStack.includes('devtools')) {
+      console.log('📝 Devtools error ignored:', error.message);
+      return { hasError: false, error: null };
+    }
+
+    return { hasError: true, error, errorInfo: null };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('🚨 Voice System Error:', error, errorInfo);
-    
-    this.setState({
-      error,
-      errorInfo
-    });
+    console.error('🚨 Voice Error Details:', error, errorInfo);
+
+    // Don't show error UI for certain non-critical errors
+    const errorString = error.toString().toLowerCase();
+    const errorStack = error.stack?.toLowerCase() || '';
+
+    if (errorString.includes('network') || 
+        errorString.includes('fetch') ||
+        errorString.includes('speech') ||
+        errorString.includes('eruda') ||
+        errorStack.includes('eruda') ||
+        errorString.includes('devtools')) {
+      console.log('📝 Non-critical or devtools error, continuing...');
+      this.setState({ hasError: false, error: null });
+    } else {
+      this.setState({
+        error,
+        errorInfo
+      });
+    }
   }
 
   private handleRetry = () => {
@@ -56,12 +80,12 @@ export class VoiceErrorBoundary extends Component<Props, State> {
               Voice System Error
             </h3>
           </div>
-          
+
           <div className="space-y-4">
             <p className="text-red-700">
               The voice system encountered an error and needs to be reset.
             </p>
-            
+
             {this.state.error && (
               <details className="bg-red-100 p-3 rounded text-sm">
                 <summary className="cursor-pointer font-medium text-red-800">
@@ -73,7 +97,7 @@ export class VoiceErrorBoundary extends Component<Props, State> {
                 </pre>
               </details>
             )}
-            
+
             <Button 
               onClick={this.handleRetry}
               className="bg-red-600 hover:bg-red-700 text-white"

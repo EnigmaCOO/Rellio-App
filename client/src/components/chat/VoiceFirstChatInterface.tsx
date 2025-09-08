@@ -719,18 +719,20 @@ function VoiceFirstChatInterfaceInner({
     console.log('🎤 VoiceFirstChatInterface mounted with voice support:', { isSupported, hasPermission });
   }, [isSupported, hasPermission]);
 
-  // HARDWARE AUDIO ISOLATION: Mute microphone during AI speech
+  // ENHANCED AUDIO ISOLATION: Smart microphone control during AI speech
   useEffect(() => {
     if (gainNodeRef.current && audioContextRef.current) {
       const currentTime = audioContextRef.current.currentTime;
 
-      // Mute microphone during AI speech to prevent feedback loops
+      // Smart microphone control: Allow low-level monitoring for interruption
       if (isAISpeaking || isAIPlaying || playingMessageId) {
-        gainNodeRef.current.gain.setValueAtTime(0, currentTime);
-        console.log('🔇 MICROPHONE MUTED: AI speaking, preventing feedback');
+        // Reduce gain significantly but don't completely mute for interruption detection
+        gainNodeRef.current.gain.setValueAtTime(0.1, currentTime);
+        console.log('🔇 MICROPHONE REDUCED: AI speaking, allowing interruption detection');
       } else {
+        // Full gain for normal user input
         gainNodeRef.current.gain.setValueAtTime(1, currentTime);
-        console.log('🎤 MICROPHONE UNMUTED: Ready for user input');
+        console.log('🎤 MICROPHONE FULL: Ready for user input');
       }
     }
   }, [isAISpeaking, isAIPlaying, playingMessageId]);
@@ -1809,6 +1811,22 @@ function VoiceFirstChatInterfaceInner({
                   size="md"
                   color="teal"
                 />
+              )}
+
+              {/* Interruption Button during AI speech */}
+              {(isAISpeaking || isAIPlaying || playingMessageId) && (
+                <div className="flex flex-col items-center">
+                  <Button
+                    onClick={handleInterruption}
+                    className="w-12 h-12 rounded-full bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
+                    title="Interrupt AI response"
+                  >
+                    <Square className="w-5 h-5" />
+                  </Button>
+                  <div className="text-xs text-red-600 font-medium mt-1">
+                    Interrupt
+                  </div>
+                </div>
               )}
             </div>
           </VoiceErrorBoundary>

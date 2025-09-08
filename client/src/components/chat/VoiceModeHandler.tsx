@@ -243,9 +243,9 @@ export function useVoiceModeHandler({
     }
   }, [hasError]); // Remove onStateChange from dependencies
 
-  // Fast cleanup function - STABLE with minimal dependencies
+  // Enhanced cleanup function with proper background recognition handling
   const cleanup = useCallback(() => {
-    console.log('🎤 Voice handler cleanup');
+    console.log('🎤 Enhanced voice handler cleanup');
     try {
       // Clear all timeouts
       [autoSendTimeoutRef, debounceTimeoutRef, silenceDetectionRef].forEach(ref => {
@@ -255,51 +255,84 @@ export function useVoiceModeHandler({
         }
       });
 
-      // Stop main recognition
-      if (recognitionRef.current) {
+      // Stop background recognition first
+      if (recognitionRef.current?.backgroundRecognition) {
         try {
-          // Stop background recognition if it exists
-          if (recognitionRef.current.backgroundRecognition) {
-            recognitionRef.current.backgroundRecognition.abort();
-            recognitionRef.current.backgroundRecognition = null;
-          }
-
-          recognitionRef.current.abort();
-          recognitionRef.current = null;
+          console.log('🎤 Stopping background recognition...');
+          recognitionRef.current.backgroundRecognition.abort();
+          recognitionRef.current.backgroundRecognition = null;
         } catch (error) {
-          console.warn('🚨 Error aborting recognition:', error);
+          console.warn('🚨 Error stopping background recognition:', error);
         }
       }
 
-      // Clean up audio context
-      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-        audioContextRef.current.close();
-        audioContextRef.current = null;
+      // Stop main recognition
+      if (recognitionRef.current) {
+        try {
+          console.log('🎤 Stopping main recognition...');
+          recognitionRef.current.abort();
+          recognitionRef.current = null;
+        } catch (error) {
+          console.warn('🚨 Error aborting main recognition:', error);
+        }
+      }
+
+      // Clean up audio context with better error handling
+      if (audioContextRef.current) {
+        try {
+          if (audioContextRef.current.state !== 'closed') {
+            audioContextRef.current.close();
+          }
+          audioContextRef.current = null;
+        } catch (error) {
+          console.warn('🚨 Error closing audio context:', error);
+        }
       }
 
       // Clean up media stream
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
+        try {
+          streamRef.current.getTracks().forEach(track => {
+            try {
+              track.stop();
+            } catch (e) {
+              console.warn('🚨 Error stopping track:', e);
+            }
+          });
+          streamRef.current = null;
+        } catch (error) {
+          console.warn('🚨 Error cleaning up media stream:', error);
+        }
       }
 
       // Stop TTS audio
       if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-        audioRef.current = null;
+        try {
+          audioRef.current.pause();
+          audioRef.current.src = '';
+          audioRef.current = null;
+        } catch (error) {
+          console.warn('🚨 Error stopping TTS audio:', error);
+        }
       }
 
       // Clear any pending TTS
       if (elevenLabsStreamingRef.current?.stopPlayback) {
-        elevenLabsStreamingRef.current.stopPlayback();
+        try {
+          elevenLabsStreamingRef.current.stopPlayback();
+        } catch (error) {
+          console.warn('🚨 Error stopping ElevenLabs playback:', error);
+        }
       }
 
+      // Reset state
       dispatch({ type: 'SET_LISTENING', payload: false });
       dispatch({ type: 'SET_STATE', payload: 'idle' });
+      
+      console.log('✅ Voice handler cleanup completed');
     } catch (error) {
-      console.error('🚨 Cleanup error:', error);
-      setHasError(true);
+      console.error('🚨 Critical cleanup error:', error);
+      // Don't set hasError during cleanup as it can cause infinite loops
     }
   }, []); // NO dependencies to prevent infinite loops
 
@@ -656,68 +689,95 @@ export function useVoiceModeHandler({
     onInterrupt();
   }, [updateVoiceState, onInterrupt]);
 
-  // Grok-style background listening for interruption during AI speech
+  // Enhanced background listening for interruption during AI speech
   const startBackgroundListening = useCallback(async (): Promise<void> => {
     if (!state.isSupported || !state.hasPermission || hasError) return;
 
     try {
-      console.log('🎤 Starting background listening for interruption detection...');
+      console.log('🎤 Starting enhanced background listening for interruption detection...');
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const backgroundRecognition = new SpeechRecognition();
 
-      // Configure for interruption detection (low sensitivity)
+      // Enhanced configuration for better interruption detection
       backgroundRecognition.continuous = true;
       backgroundRecognition.interimResults = true;
       backgroundRecognition.lang = 'en-US';
+      backgroundRecognition.maxAlternatives = 1;
+
+      let isInterrupting = false;
 
       backgroundRecognition.onstart = () => {
-        console.log('🎤 Background listening started for interruption');
+        console.log('🎤 Enhanced background listening active for interruption');
+        isInterrupting = false;
       };
 
       backgroundRecognition.onresult = (event: SpeechRecognitionEvent) => {
+        if (isInterrupting) return; // Prevent multiple interruptions
+
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           const transcript = result[0].transcript.trim();
           const confidence = result[0].confidence || 0.8;
 
-          // Grok-style interruption: even interim results can trigger interruption
-          if (transcript.length > 3 && confidence > 0.3) {
-            console.log('🚨 GROK-STYLE INTERRUPTION DETECTED:', transcript, 'confidence:', confidence);
-            backgroundRecognition.stop();
+          // More sensitive interruption detection
+          if (transcript.length > 2 && confidence > 0.2) {
+            console.log('🚨 INTERRUPTION DETECTED:', transcript, 'confidence:', confidence);
+            isInterrupting = true;
+            
+            try {
+              backgroundRecognition.stop();
+            } catch (e) {
+              console.log('Background recognition already stopped');
+            }
+
+            // Immediate interruption
             interruptAI();
 
-            // Start new listening session with the interrupting text
+            // Update transcript and trigger new listening
             setTimeout(() => {
               dispatch({ type: 'SET_TRANSCRIPT', payload: { text: transcript, confidence } });
               onTranscript(transcript, false);
 
-              // Auto-send the interrupting text
-              if (confidence > 0.6) {
-                console.log('🚀 Auto-sending interruption:', transcript);
-                onAutoSend(`You interrupted to say: "${transcript}". `);
+              // Start new main listening session
+              if (!recognitionRef.current) {
+                startListening().catch(console.error);
               }
-            }, 100);
+            }, 200);
             break;
           }
         }
       };
 
       backgroundRecognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.log('🎤 Background recognition error (normal during interruption):', event.error);
+        console.log('🎤 Background recognition error:', event.error);
+        // Don't treat this as a critical error - just log it
+        if (event.error === 'aborted' || event.error === 'no-speech') {
+          console.log('🎤 Background recognition stopped normally');
+        }
       };
 
-      backgroundRecognition.start();
+      backgroundRecognition.onend = () => {
+        console.log('🎤 Background recognition ended');
+      };
 
-      // Store reference for cleanup
-      if (recognitionRef.current) {
-        recognitionRef.current.backgroundRecognition = backgroundRecognition;
+      // Start with error handling
+      try {
+        backgroundRecognition.start();
+        
+        // Store reference for cleanup
+        if (recognitionRef.current) {
+          recognitionRef.current.backgroundRecognition = backgroundRecognition;
+        }
+      } catch (error) {
+        console.error('🚨 Failed to start background recognition:', error);
+        // Don't set hasError - this is not critical
       }
 
     } catch (error) {
-      console.error('🚨 Could not start background listening:', error);
-      setHasError(true);
+      console.error('🚨 Could not initialize background listening:', error);
+      // Don't set hasError - fallback to other interruption methods
     }
-  }, [state.isSupported, state.hasPermission, interruptAI, onTranscript, onAutoSend, hasError]);
+  }, [state.isSupported, state.hasPermission, interruptAI, onTranscript, hasError, startListening]);
 
   // Enhanced ElevenLabs TTS integration with Grok-like interruption
   const playText = useCallback(async (text: string): Promise<void> => {
