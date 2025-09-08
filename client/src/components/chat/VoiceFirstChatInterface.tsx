@@ -150,7 +150,7 @@ function VoiceFirstChatInterfaceInner({
     setVolume: setAIVolume
   } = useElevenLabsStreaming({
     voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV',
-    autoPlay: false, // Disable auto-play to prevent conflicts
+    autoPlay: true, // Enable auto-play for voice responses
     onStart: () => {
       console.log('🔊 AI started speaking - ACTIVATING VOICE INTERRUPTION');
       setIsAISpeaking(true);
