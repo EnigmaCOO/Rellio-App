@@ -381,17 +381,9 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
         return;
       }
 
-      // Use the proper audio element creation function with all the setup
-      console.log('🔊 Creating proper audio element for playback...');
-      const audio = createAudioElement(audioBlob);
-      
-      if (!audio) {
-        throw new Error('Failed to create audio element');
-      }
-
-      setCurrentAudio(audio);
-      setIsLoading(false);
-      console.log('🔊 Audio element created and ready for playback');
+      // TEMPORARY FIX: Skip ElevenLabs audio and go directly to browser speech
+      console.log('🔊 Skipping ElevenLabs audio, using browser speech directly...');
+      throw new Error('Using browser speech directly for reliable audio');
 
     } catch (error) {
       console.log('🔊 ElevenLabs audio failed, using browser speech fallback:', error);
