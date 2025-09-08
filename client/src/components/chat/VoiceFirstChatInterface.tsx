@@ -1769,10 +1769,27 @@ function VoiceFirstChatInterfaceInner({
                         return;
                       }
 
-                      // Handle permission requests quietly
+                      // Handle permission requests with better UX
                       if (!hasPermission) {
                         console.log('🎤 Requesting microphone permission...');
-                        // Removed annoying permission toast
+                        try {
+                          // Proactively request microphone permission
+                          await navigator.mediaDevices.getUserMedia({ audio: true });
+                          console.log('✅ Microphone permission granted');
+                          
+                          // Small delay to allow permission state to update
+                          await new Promise(resolve => setTimeout(resolve, 100));
+                        } catch (permError) {
+                          console.error('🚫 Microphone permission denied:', permError);
+                          toast({
+                            title: "🎤 Microphone Permission Required",
+                            description: "Click 'Allow' when prompted, or enable microphone in browser settings",
+                            variant: "default",
+                            duration: 6000,
+                            className: "border-orange-200 bg-orange-50 text-orange-800"
+                          });
+                          return; // Exit early if permission denied
+                        }
                       }
 
                       try {
@@ -1786,23 +1803,33 @@ function VoiceFirstChatInterfaceInner({
                             console.log('🔊 Auto-play enabled for voice conversation');
                           }
                           console.log('✅ GROK MODE: Voice listening started - user controls sending');
-                          // Removed annoying listening started toast
-                        } else {
-                          console.warn('🚫 Failed to start voice listening');
+                          // Show success feedback only if we had to request permission
                           if (!hasPermission) {
                             toast({
-                              title: "🎤 Microphone Access Needed",
-                              description: "Please allow microphone access to use voice features",
+                              title: "🎤 Voice Activated!",
+                              description: "Speak naturally - I'll auto-send after a 1.5s pause",
                               variant: "default",
-                              duration: 5000,
-                              className: "border-blue-200 bg-blue-50 text-blue-800"
+                              duration: 3000,
+                              className: "border-green-200 bg-green-50 text-green-800"
                             });
-                          } else if (!isSupported) {
+                          }
+                        } else {
+                          console.warn('🚫 Failed to start voice listening');
+                          
+                          // More specific error handling
+                          if (!isSupported) {
                             toast({
                               title: "🚫 Voice Not Supported",
-                              description: "Try using Chrome, Edge, or Safari for voice features",
+                              description: "Voice features work best in Chrome, Edge, or Safari",
                               variant: "destructive",
                               duration: 5000
+                            });
+                          } else {
+                            toast({
+                              title: "🔧 Voice System Issue",
+                              description: "Unable to start voice recognition. Try refreshing the page.",
+                              variant: "destructive",
+                              duration: 4000
                             });
                           }
                         }
@@ -1823,14 +1850,16 @@ function VoiceFirstChatInterfaceInner({
                       });
                     }
                   }}
-                  disabled={!isSupported}
+                  disabled={!isSupported || hasError}
                   className={cn(
                     "w-16 h-16 rounded-full transition-all duration-300 transform shadow-md",
-                    // Disabled state for unsupported browsers
-                    !isSupported
+                    // Disabled state for unsupported browsers or errors
+                    !isSupported || hasError
                       ? "bg-gray-300 cursor-not-allowed opacity-60 hover:scale-100"
                       : inputIsolated
                       ? "bg-gray-400 cursor-not-allowed opacity-50 hover:scale-100"
+                      : !hasPermission
+                      ? "bg-orange-400 hover:bg-orange-500 hover:scale-105 focus:scale-105 active:scale-95 animate-pulse"
                       : "hover:scale-105 focus:scale-105 active:scale-95",
                     // Grok-like button states with enhanced visual feedback (only when supported)
                     isSupported && voiceState === 'listening'
@@ -1847,8 +1876,8 @@ function VoiceFirstChatInterfaceInner({
                   )}
                   title={
                     !isSupported ? "Voice not supported - use text input or switch to Chrome/Edge" :
-                    hasError ? "Voice system error - click Reset above" :
-                    !hasPermission ? "Click to request microphone permission" :
+                    hasError ? "Voice system error - please refresh the page" :
+                    !hasPermission ? "Click to grant microphone permission - required for voice features" :
                     voiceState === 'listening' ? "Listening... Click to stop" :
                     voiceState === 'speaking' ? "AI is speaking... Just speak to interrupt" :
                     inputIsolated ? "Input locked during AI speech" :
