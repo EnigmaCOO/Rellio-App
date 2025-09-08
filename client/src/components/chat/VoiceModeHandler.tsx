@@ -201,12 +201,8 @@ export function useVoiceModeHandler({
           isSafari: userAgent.includes('safari') && !userAgent.includes('chrome')
         });
 
-        // Enhanced browser support check
-        const supported = !!SpeechRecognition && (
-          userAgent.includes('chrome') || 
-          userAgent.includes('edge') || 
-          userAgent.includes('webkit')
-        );
+        // Simplified browser support check - if the API exists, assume it works
+        const supported = !!SpeechRecognition;
         
         if (supported) {
           console.log('✅ Speech Recognition API found and browser supported - voice input enabled');
