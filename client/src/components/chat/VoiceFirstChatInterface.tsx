@@ -1597,14 +1597,10 @@ function VoiceFirstChatInterfaceInner({
                         return;
                       }
 
-                      // Handle permission requests
+                      // Handle permission requests quietly
                       if (!hasPermission) {
                         console.log('🎤 Requesting microphone permission...');
-                        toast({
-                          title: "Requesting Permission",
-                          description: "Please allow microphone access when prompted.",
-                          variant: "default"
-                        });
+                        // Removed annoying permission toast
                       }
 
                       try {
@@ -1613,19 +1609,12 @@ function VoiceFirstChatInterfaceInner({
                         if (result) {
                           setWasLastMessageVoice(true);
                           console.log('✅ GROK MODE: Voice listening started - user controls sending');
-                          toast({
-                            title: "🎤 Listening Started",
-                            description: "Speak your message. You control when to send it.",
-                            variant: "default"
-                          });
+                          // Removed annoying listening started toast
                         } else {
                           console.warn('🚫 Failed to start voice listening');
                           if (!hasPermission) {
-                            toast({
-                              title: "Permission Required",
-                              description: "Microphone access is needed for voice input. Please allow access in your browser.",
-                              variant: "destructive"
-                            });
+                            console.log('🎤 Permission needed but not showing annoying toast');
+                            // Removed annoying permission required toast
                           }
                         }
                       } catch (error) {

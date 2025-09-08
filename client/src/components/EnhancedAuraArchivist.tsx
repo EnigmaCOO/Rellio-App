@@ -374,11 +374,7 @@ export function EnhancedAuraArchivist({
         }, 3000);
         setBannerTimeout(timeout);
         
-        toast({
-          title: "Spiritual Guide Available",
-          description: `${religionPersona.name} is ready to guide you through ${context.religion === 'christianity' ? 'the Bible' : context.religion === 'islam' ? 'the Quran' : context.religion === 'judaism' ? 'the Torah' : context.religion === 'hinduism' ? 'Hindu scriptures' : 'Buddhist texts'}`,
-          variant: "default"
-        });
+        // Removed annoying toast notification
       }
     } else {
       // Clear persona when not in any religious text
