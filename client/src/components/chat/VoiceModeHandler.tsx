@@ -1,4 +1,5 @@
 import { useReducer, useEffect, useRef, useCallback, useState } from 'react';
+import { useReliableTTS } from '@/hooks/useReliableTTS';
 
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
@@ -184,7 +185,26 @@ export function useVoiceModeHandler({
   const isInitializingRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const activeRequestRef = useRef<string | null>(null);
-  const elevenLabsStreamingRef = useRef<any>(null); // For ElevenLabs TTS
+
+  // Initialize reliable TTS system
+  const reliableTTS = useReliableTTS({
+    volume: state.volume,
+    onStart: () => {
+      dispatch({ type: 'SET_TTS_STATE', payload: { playing: true, loading: false } });
+      updateVoiceState('speaking');
+    },
+    onEnd: () => {
+      dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
+      updateVoiceState('idle');
+      activeRequestRef.current = null;
+    },
+    onError: (error) => {
+      console.error('🔊 TTS Error:', error);
+      dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
+      updateVoiceState('idle');
+      activeRequestRef.current = null;
+    }
+  });
 
   // Enhanced voice support detection
   useEffect(() => {
@@ -317,13 +337,11 @@ export function useVoiceModeHandler({
         }
       }
 
-      // Clear any pending TTS
-      if (elevenLabsStreamingRef.current?.stopPlayback) {
-        try {
-          elevenLabsStreamingRef.current.stopPlayback();
-        } catch (error) {
-          console.warn('🚨 Error stopping ElevenLabs playback:', error);
-        }
+      // Stop reliable TTS
+      try {
+        reliableTTS.stopPlayback();
+      } catch (error) {
+        console.warn('🚨 Error stopping TTS playback:', error);
       }
 
       // Reset state
@@ -1014,13 +1032,6 @@ export function useVoiceModeHandler({
     fullUserAgent: navigator.userAgent
   };
 
-  // Manual error recovery only - no auto-loops
-  const resetVoiceSystem = useCallback(() => {
-    console.log('🔄 Manual voice system reset');
-    setHasError(false);
-    dispatch({ type: 'RESET' });
-    cleanup();
-  }, [cleanup]);
 
   return {
     isListening: state.isListening,
