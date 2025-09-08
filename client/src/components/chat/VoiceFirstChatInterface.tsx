@@ -135,6 +135,10 @@ function VoiceFirstChatInterfaceInner({
   const [isAudioIsolated, setIsAudioIsolated] = useState(false); // Mutes mic during AI speech
   const [isProcessingVoice, setIsProcessingVoice] = useState<boolean>(false); // Tracks if voice processing is active
   const [hasError, setHasError] = useState(false); // Tracks if voice system has encountered an error
+  
+  // Post-interruption state tracking for auto-send functionality
+  const [isPostInterruption, setIsPostInterruption] = useState(false); // Tracks if we're in post-interruption voice mode
+  const [interruptionCooldown, setInterruptionCooldown] = useState(false); // Prevents loops after interruption
 
   // Simplified ElevenLabs Integration (moved up to be available for handlers)
   const {
@@ -218,13 +222,25 @@ function VoiceFirstChatInterfaceInner({
       }
     },
     onAutoSend: (text) => {
-      // DISABLED: No auto-send in Grok mode - user controls when to send
-      console.log('🚫 GROK MODE: Auto-send disabled, user controls sending');
-      // Just update the input, don't actually send
-      setTextInputValue(text);
-      setWasLastMessageVoice(true);
-      setIsProcessingVoice(false);
-      console.log('🎤 VOICE AUTO-SEND: Setting wasLastMessageVoice = true');
+      // Enable auto-send only in post-interruption mode for seamless Grok-like experience
+      if (isPostInterruption && !interruptionCooldown && text.trim().length > 0) {
+        console.log('🎤 POST-INTERRUPTION AUTO-SEND: Sending message automatically:', text);
+        setWasLastMessageVoice(true);
+        setIsProcessingVoice(false);
+        setTextInputValue(text);
+        handleSendMessage(text);
+        
+        // Reset post-interruption state after auto-send
+        setIsPostInterruption(false);
+        console.log('🎤 POST-INTERRUPTION AUTO-SEND: Reset state after successful send');
+      } else {
+        // Normal Grok mode - user controls when to send
+        console.log('🚫 GROK MODE: Manual send mode - user controls sending');
+        setTextInputValue(text);
+        setWasLastMessageVoice(true);
+        setIsProcessingVoice(false);
+        console.log('🎤 VOICE INPUT: Setting wasLastMessageVoice = true');
+      }
     },
     onStateChange: (state) => {
       console.log('🎤 Voice state changed:', state);
@@ -243,20 +259,31 @@ function VoiceFirstChatInterfaceInner({
       setIsAISpeaking(false);
       setPlayingMessageId(null);
       
+      // Enable post-interruption mode for auto-send
+      setIsPostInterruption(true);
+      console.log('🎤 POST-INTERRUPTION MODE: Enabled for auto-transcription and auto-send');
+      
+      // Set interruption cooldown to prevent immediate loops
+      setInterruptionCooldown(true);
+      setTimeout(() => {
+        setInterruptionCooldown(false);
+        console.log('🎤 INTERRUPTION COOLDOWN: Cleared after 1s');
+      }, 1000); // 1s cooldown to prevent loops
+      
       // GROK-STYLE: Enable instant listening after interruption
       setTimeout(() => {
         if (!isListening) {
-          console.log('🎤 AUTO-RESTART LISTENING: Restarting after interruption');
+          console.log('🎤 AUTO-RESTART LISTENING: Restarting after interruption for new question');
           startListening();
         }
       }, 100); // Very short delay for smooth experience
     },
     disabled: false,
     isAIResponding: isAIPlaying,
-    autoSendDelay: 0, // Disable auto-send
-    confidenceThreshold: 1.0, // Prevent auto-send
+    autoSendDelay: isPostInterruption ? 1500 : 0, // Enable 1.5s auto-send delay in post-interruption mode
+    confidenceThreshold: isPostInterruption ? 0.85 : 1.0, // Lower threshold for post-interruption auto-send
     voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV',
-    preventAutoSend: true // Explicitly prevent auto-send
+    preventAutoSend: !isPostInterruption // Allow auto-send only in post-interruption mode
   });
 
   const {
