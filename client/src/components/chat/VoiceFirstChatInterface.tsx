@@ -157,6 +157,69 @@ function VoiceFirstChatInterfaceInner({
       setInputIsolated(true); // Lock input during AI speech
       setIsAudioIsolated(true); // Mute mic during AI speech
       
+      // CRITICAL: Force audio context initialization for interruption detection
+      if (!audioContextRef.current) {
+        console.log('🎤 INTERRUPTION: Audio context not initialized, forcing initialization...');
+        setTimeout(() => {
+          // Force initialization by requesting microphone access
+          navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+              console.log('🎤 INTERRUPTION: Microphone access granted for interruption detection');
+              // Set up basic audio monitoring for interruption
+              const audioContext = new AudioContext();
+              const analyser = audioContext.createAnalyser();
+              const microphone = audioContext.createMediaStreamSource(stream);
+              const gainNode = audioContext.createGain();
+              
+              gainNode.gain.value = 0.1; // Low gain to prevent feedback
+              microphone.connect(gainNode);
+              gainNode.connect(analyser);
+              
+              audioContextRef.current = audioContext;
+              analyserRef.current = analyser;
+              gainNodeRef.current = gainNode;
+              
+              console.log('🎤 INTERRUPTION: Simple audio monitoring set up for voice interruption');
+              
+              // Start simple audio level monitoring
+              const monitorForInterruption = () => {
+                if (analyserRef.current && isAISpeaking) {
+                  const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+                  analyserRef.current.getByteFrequencyData(dataArray);
+                  const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+                  
+                  if (average > 25) {
+                    console.log('🚨 SIMPLE INTERRUPTION: Voice detected during AI speech!', average);
+                    stopAIPlayback();
+                    setIsAISpeaking(false);
+                    setIsPostInterruption(true);
+                    
+                    toast({
+                      title: "🎤 Interrupted—Listening...",
+                      description: "Continue speaking - I'll send when you finish",
+                      variant: "default",
+                      className: "border-emerald-200 bg-emerald-50 text-emerald-800"
+                    });
+                    
+                    // Start listening for the full question
+                    setTimeout(() => startListening(), 200);
+                    return; // Stop monitoring after interruption
+                  }
+                  
+                  if (isAISpeaking) {
+                    requestAnimationFrame(monitorForInterruption);
+                  }
+                }
+              };
+              
+              monitorForInterruption();
+            })
+            .catch(error => {
+              console.log('🚨 INTERRUPTION: Failed to get microphone access:', error);
+            });
+        }, 100);
+      }
+      
       // CRITICAL: Reduce microphone gain during AI playback but allow interruption detection
       if (gainNodeRef.current) {
         gainNodeRef.current.gain.value = 0.1; // Reduce gain significantly but allow interruption detection
@@ -167,6 +230,7 @@ function VoiceFirstChatInterfaceInner({
       setTimeout(() => {
         console.log('🎤 VOICE INTERRUPTION: Checking conditions...');
         console.log('🎤 VOICE INTERRUPTION: isAISpeaking:', isAISpeaking, 'isSupported:', isSupported, 'hasPermission:', hasPermission);
+        console.log('🎤 VOICE INTERRUPTION: audioContext exists:', !!audioContextRef.current, 'gainNode exists:', !!gainNodeRef.current);
         
         if (isAISpeaking) { // Only start if still speaking
           console.log('🎤 VOICE INTERRUPTION: AI still speaking, starting background listening...');
@@ -725,6 +789,7 @@ function VoiceFirstChatInterfaceInner({
       destinationRef.current = destination;
 
       console.log('🎤 Enhanced audio context with isolation controls ready');
+      console.log('🎤 DEBUGGING: Audio context initialized, starting audio monitoring...');
 
       // Start audio level monitoring
       const monitorAudioLevel = () => {
@@ -733,10 +798,15 @@ function VoiceFirstChatInterfaceInner({
           analyserRef.current.getByteFrequencyData(dataArray);
 
           const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+          
+          // DEBUG: Log every few seconds to show monitoring is working
+          if (Date.now() % 3000 < 50) { // Log roughly every 3 seconds
+            console.log(`🎤 MONITORING: Audio level: ${average}, isAISpeaking: ${isAISpeaking}, voiceState: ${voiceState}`);
+          }
 
-          // DEBUG: Log audio levels when AI is speaking
-          if (isAISpeaking) {
-            console.log(`🔊 DEBUG: Audio level: ${average}, AI speaking: ${isAISpeaking}, Voice state: ${voiceState}`);
+          // DEBUG: Log audio levels continuously when AI is speaking for troubleshooting
+          if (isAISpeaking && average > 0) {
+            console.log(`🔊 DEBUG: Audio level: ${average}, AI speaking: ${isAISpeaking}, Voice state: ${voiceState}, Threshold: 25`);
           }
 
           // Enhanced interruption detection (backup to voice recognition)
