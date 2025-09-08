@@ -1304,26 +1304,6 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
     }
   });
 
-  console.log('🔊 ElevenLabs TTS request:', { textLength: text.length, voiceId, options });
-
-      const audioBuffer = await elevenLabsService.generateSpeech(text, voiceId, options || {});
-      
-      console.log('🔊 Generated audio buffer:', audioBuffer.length, 'bytes');
-      
-      res.set({
-        'Content-Type': 'audio/mpeg',
-        'Content-Length': audioBuffer.length,
-        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
-        'Accept-Ranges': 'bytes'
-      });
-      
-      res.send(audioBuffer);
-    } catch (error) {
-      console.error("Error generating speech:", error);
-      res.status(500).json({ error: "Failed to generate speech", details: error instanceof Error ? error.message : String(error) });
-    }
-  });
-
   // ===== SPIRITUAL JOURNEY PROGRESS TRACKING API =====
   
   // Get user's spiritual journey overview
