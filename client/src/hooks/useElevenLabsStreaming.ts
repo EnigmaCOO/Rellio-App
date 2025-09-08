@@ -373,47 +373,17 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
         return;
       }
 
-      // Create audio URL and element
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-      audio.volume = Math.min(volume, 1.0);
+      // Use the proper audio element creation function with all the setup
+      console.log('🔊 Creating proper audio element for playback...');
+      const audio = createAudioElement(audioBlob);
+      
+      if (!audio) {
+        throw new Error('Failed to create audio element');
+      }
 
-      // Set up event handlers
-      audio.onplay = () => {
-        console.log('🔊 ElevenLabs audio playback started');
-        setIsPlaying(true);
-        setIsLoading(false);
-        setCurrentAudio(audio);
-        onStart?.();
-      };
-
-      audio.onended = () => {
-        console.log('✅ ElevenLabs audio playback completed');
-        URL.revokeObjectURL(audioUrl);
-        setIsPlaying(false);
-        setCurrentAudio(null);
-        activeRequestRef.current = null;
-        onEnd?.();
-      };
-
-      audio.onerror = (event) => {
-        console.error('🚨 ElevenLabs audio playback error:', event);
-        URL.revokeObjectURL(audioUrl);
-        setIsPlaying(false);
-        setIsLoading(false);
-        setCurrentAudio(null);
-        activeRequestRef.current = null;
-        // Don't call onError for audio playback issues, just end gracefully
-        onEnd?.();
-      };
-
-      // Assign to ref for control
-      audioRef.current = audio;
-
-      // Start playing
-      console.log('🔊 Starting ElevenLabs audio playback...');
-      await audio.play();
-      console.log('🔊 ElevenLabs audio.play() succeeded');
+      setCurrentAudio(audio);
+      setIsLoading(false);
+      console.log('🔊 Audio element created and ready for playback');
 
     } catch (error) {
       console.log('🔊 ElevenLabs failed, falling back to browser speech:', error);
