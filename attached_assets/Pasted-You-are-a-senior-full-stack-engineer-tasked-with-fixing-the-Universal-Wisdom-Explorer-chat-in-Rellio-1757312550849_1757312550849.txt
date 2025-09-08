@@ -1,0 +1,61 @@
+You are a senior full-stack engineer tasked with fixing the Universal Wisdom Explorer chat in Rellio to enable automatic transcription and auto-sending after interrupting the AI response, ensuring a seamless, Grok-like voice mode experience, without breaking existing functionality or logic. Align with Rellio's "Guiding Wisdom. Eternal Connection" brand and prepare for future 3-D model characters for personas.
+
+Preserve all existing functionality (e.g., voice listening, TTS playback, interruption button, auto-send, persona switching, chat messaging).
+Modify only voice-related code in <VoiceFirstChatInterface.tsx> and <usevoicemodehandler> to add auto-transcription and auto-sending post-interruption.</usevoicemodehandler>
+Add automatic mic reactivation after interruption to transcribe the next question, with auto-send after 1.5s pause.
+Write accessible, responsive, and performant code using Tailwind CSS.
+Use semantic HTML and ARIA where relevant.
+Produce a single PR with clear commits (e.g., "fix(voice): enable auto-transcription after interruption", "feat(voice): add auto-send in voice mode").
+Test for interruptions, auto-transcription, and loops; log detailed errors for debugging.
+
+TASK BRIEF (paste after system block)
+Goal: Fix the Universal Wisdom Explorer chat (client/src/components/chat/VoiceFirstChatInterface.tsx) where the interruption button stops the AI answer but doesn't transcribe the next question or auto-send it. Implement automatic mic reactivation post-interruption to start transcribing the user's next speech, with auto-send after 1.5s pause (onspeechend, confidence >0.85), replicating Grok's seamless voice mode. Ensure personas (Islamic Mufti, Jewish Rabbi, Christian Priest, etc.) handle interruptions gracefully, retaining context.
+Key Features and Goals:
+
+Interruption Handling Enhancement:
+
+In interruptAI or onInterrupt callback, stop TTS playback (fade-out 300ms), then immediately reactivate the mic (startListening) for new transcription.
+Append interrupted response to history and process new input with context (e.g., "You interrupted—now on your new question...").
+
+
+Auto-Transcription and Auto-Send Post-Interruption:
+
+In toggleListening or startListening, ensure continuous listening (continuous=true, interimResults=true) restarts after interruption.
+In onresult event, auto-send final transcript if in voice mode (after pause, no manual confirm needed).
+Prevent loops by adding 1s cooldown post-interruption before auto-send.
+
+
+Voice Mode Behavior:
+
+When in voice mode (isListening true), auto-send transcripts without user intervention, mimicking Grok's flow.
+UI: Show "Interrupted—Listening..." toast or orb flash (red to teal) after interruption.
+
+
+Persona and UI Sync:
+
+Interruptions adapt to persona (e.g., Rabbi resumes thoughtfully); switch voices on restart.
+
+
+Debugging and Validation:
+
+Add console.log for interruption events, mic restarts, and auto-sends (e.g., "Interrupted at: ", interruptedAt, "Restarting mic...").
+Test: Interrupt AI, confirm new transcription starts and auto-sends after pause.
+
+
+
+Acceptance Criteria:
+
+Interruption button stops AI and immediately transcribes next question.
+Auto-send works in voice mode after 1.5s pause.
+No loops or mixing; context retained.
+No console errors; voice system is stable.
+
+Implementation Steps:
+
+Update interruptAI to call startListening after stopPlayback.
+Adjust onresult in useVoiceModeHandler for auto-send if !preventAutoSend.
+Add UI feedback for post-interruption listening.
+Test interruptions and auto-send; commit with: "fix(voice): enable auto-transcription after interruption", "feat(voice): add auto-send in voice mode".
+
+FINAL INSTRUCTION
+Implement the fix, submit a PR passing acceptance criteria and lint/build checks. Preserve existing logic, adding only interruption enhancements. Ensure a seamless, Grok-like voice experience with auto-transcription and sending. If issues persist, share console logs or the updated code.
