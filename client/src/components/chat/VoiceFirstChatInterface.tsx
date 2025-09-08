@@ -167,7 +167,12 @@ function VoiceFirstChatInterfaceInner({
       setTimeout(() => {
         if (isAISpeaking) { // Only start if still speaking
           console.log('🎤 VOICE INTERRUPTION: Starting background listening for voice-activated interruption');
-          startBackgroundListening();
+          console.log('🎤 VOICE INTERRUPTION: isSupported:', isSupported, 'hasPermission:', hasPermission);
+          startBackgroundListening().catch(error => {
+            console.error('🚨 VOICE INTERRUPTION: Failed to start background listening:', error);
+          });
+        } else {
+          console.log('🎤 VOICE INTERRUPTION: Skipped - AI no longer speaking');
         }
       }, 500); // Small delay to avoid self-interruption
     },
@@ -1797,7 +1802,7 @@ function VoiceFirstChatInterfaceInner({
                     !isSupported ? "Voice not supported - use text input or switch to Chrome/Edge" :
                     !hasPermission ? "Click to request microphone permission" :
                     voiceState === 'listening' ? "Listening... Click to stop" :
-                    voiceState === 'speaking' ? "AI is speaking... Click to interrupt" :
+                    voiceState === 'speaking' ? "AI is speaking... Just speak to interrupt" :
                     inputIsolated ? "Input locked during AI speech" :
                     "Click to speak - Grok-style voice input"
                   }
@@ -1861,18 +1866,14 @@ function VoiceFirstChatInterfaceInner({
                 />
               )}
 
-              {/* Interruption Button during AI speech */}
+              {/* Voice Interruption Status - No manual button needed */}
               {(isAISpeaking || isAIPlaying || playingMessageId) && (
                 <div className="flex flex-col items-center">
-                  <Button
-                    onClick={handleInterruption}
-                    className="w-12 h-12 rounded-full bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
-                    title="Interrupt AI response"
-                  >
-                    <Square className="w-5 h-5" />
-                  </Button>
-                  <div className="text-xs text-red-600 font-medium mt-1">
-                    Interrupt
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg flex items-center justify-center animate-pulse">
+                    <Mic className="w-5 h-5" />
+                  </div>
+                  <div className="text-xs text-emerald-600 font-medium mt-1">
+                    Just speak to interrupt
                   </div>
                 </div>
               )}

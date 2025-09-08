@@ -703,7 +703,27 @@ export function useVoiceModeHandler({
 
   // Enhanced background listening for interruption during AI speech
   const startBackgroundListening = useCallback(async (): Promise<void> => {
-    if (!state.isSupported || !state.hasPermission || hasError) return;
+    console.log('🎤 BACKGROUND LISTENING: Attempting to start...');
+    console.log('🎤 BACKGROUND LISTENING: isSupported:', state.isSupported, 'hasPermission:', state.hasPermission, 'hasError:', hasError);
+    
+    if (!state.isSupported || hasError) {
+      console.log('🚫 BACKGROUND LISTENING: Blocked by conditions - isSupported:', state.isSupported, 'hasError:', hasError);
+      return;
+    }
+    
+    // Try to get permission if not already granted
+    if (!state.hasPermission) {
+      console.log('🎤 BACKGROUND LISTENING: No permission yet, attempting to request...');
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop()); // Stop immediately, we just needed permission
+        dispatch({ type: 'SET_SUPPORT', payload: { supported: true, permission: true } });
+        console.log('✅ BACKGROUND LISTENING: Permission granted');
+      } catch (error) {
+        console.log('🚫 BACKGROUND LISTENING: Permission denied:', error);
+        return;
+      }
+    }
 
     try {
       console.log('🎤 Starting enhanced background listening for interruption detection...');
