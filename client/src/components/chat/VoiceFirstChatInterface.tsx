@@ -186,6 +186,11 @@ function VoiceFirstChatInterfaceInner({
       setIsProcessingVoice(text.length > 0 && isInterim);
       // Update text input with live transcript so user can see and edit it
       setTextInputValue(text);
+      // CRITICAL: Mark that voice input is being used
+      if (text.length > 0) {
+        setWasLastMessageVoice(true);
+        console.log('🎤 VOICE INPUT ACTIVE: Setting wasLastMessageVoice = true');
+      }
     },
     onAutoSend: (text) => {
       // DISABLED: No auto-send in Grok mode - user controls when to send
@@ -194,6 +199,7 @@ function VoiceFirstChatInterfaceInner({
       setTextInputValue(text);
       setWasLastMessageVoice(true);
       setIsProcessingVoice(false);
+      console.log('🎤 VOICE AUTO-SEND: Setting wasLastMessageVoice = true');
     },
     onStateChange: (state) => {
       console.log('🎤 Voice state changed:', state);
@@ -555,23 +561,8 @@ function VoiceFirstChatInterfaceInner({
   const handleSendMessage = useCallback((message: string) => {
     if (!message.trim()) return;
     
-    // CRITICAL: Check if this message came from voice input
-    const isVoiceMessage = isListening || voiceState === 'processing' || textInputValue === currentTranscript || currentTranscript.length > 0;
-    console.log('🎤 VOICE DETECTION CHECK:', {
-      isListening,
-      voiceState,
-      textInputValue,
-      currentTranscript,
-      isVoiceMessage,
-      currentWasLastMessageVoice: wasLastMessageVoice
-    });
-    
-    if (isVoiceMessage) {
-      setWasLastMessageVoice(true);
-      console.log('🎤 VOICE MESSAGE DETECTED: Setting wasLastMessageVoice = true');
-    } else {
-      console.log('🖱️ TEXT MESSAGE DETECTED: Keeping wasLastMessageVoice as', wasLastMessageVoice);
-    }
+    // Voice input flag is now set in the transcript handler
+    console.log('📤 SENDING MESSAGE - wasLastMessageVoice:', wasLastMessageVoice);
 
     console.log('📤 Sending message:', message);
     sendMessageMutation.mutate(message);
@@ -774,12 +765,10 @@ function VoiceFirstChatInterfaceInner({
     const notProcessing = voiceState !== 'processing' && !isProcessingVoice;
     const notCurrentlySpeaking = !isAISpeaking && !isAIPlaying;
 
-    // Auto-play when we have a new AI message, (auto-play is enabled OR last message was voice), and we're not busy
+    // SIMPLIFIED: Auto-play when we have a new AI message AND (auto-play is enabled OR last message was voice)
     const result = hasLatestAI &&
                    (autoPlayEnabled || wasLastMessageVoice) &&
                    !isCurrentlyPlaying &&
-                   voiceNotActivelyListening &&
-                   notProcessing &&
                    notCurrentlySpeaking;
 
     console.log('🔊 AUTO-PLAY CHECK DETAILED:', {
