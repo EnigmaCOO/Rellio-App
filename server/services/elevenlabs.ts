@@ -25,7 +25,7 @@ export class ElevenLabsService {
     console.log('ElevenLabs API key loaded:', this.apiKey ? `${this.apiKey.substring(0, 6)}...` : 'NOT FOUND');
   }
 
-  // Check available quota before making requests
+  // Check available quota before making requests with better error handling
   async getQuotaInfo(): Promise<{ remaining: number; total: number }> {
     try {
       const response = await fetch(`${this.baseUrl}/user`, {
@@ -36,27 +36,35 @@ export class ElevenLabsService {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          console.warn('⚠️ ElevenLabs API key invalid or expired');
+          // Return very low quota to trigger fallback
+          return { remaining: 0, total: 0 };
+        }
         throw new Error(`Failed to check quota: ${response.status}`);
       }
 
       const data = await response.json() as any;
       // ElevenLabs API returns characters used, not remaining
       const used = data.subscription?.character_count || 0;
-      const total = data.subscription?.character_limit || 100000;
+      const total = data.subscription?.character_limit || 10000;
       const remaining = Math.max(0, total - used);
       
-      // Cache quota info for 1 minute
+      // Cache quota info for 30 seconds for frequent checks
       this.quotaCache = { remaining, lastChecked: Date.now() };
       
-      console.log(`💳 ElevenLabs quota - Remaining: ${remaining}, Total: ${total}`);
+      console.log(`💳 ElevenLabs quota - Used: ${used}, Remaining: ${remaining}, Total: ${total}`);
       return { remaining, total };
     } catch (error) {
       console.error('Error checking ElevenLabs quota:', error);
-      // Return cached data if available
-      if (this.quotaCache && (Date.now() - this.quotaCache.lastChecked) < 5 * 60 * 1000) {
-        return { remaining: this.quotaCache.remaining, total: 100000 };
+      // Return cached data if available and recent
+      if (this.quotaCache && (Date.now() - this.quotaCache.lastChecked) < 2 * 60 * 1000) {
+        console.log('📋 Using cached quota info');
+        return { remaining: this.quotaCache.remaining, total: 10000 };
       }
-      throw error;
+      // Return minimal quota to allow some attempts
+      console.log('🔄 Quota check failed, allowing limited attempts');
+      return { remaining: 100, total: 10000 };
     }
   }
 
@@ -188,38 +196,44 @@ export class ElevenLabsService {
 
       console.log(`🔊 ElevenLabs TTS request: { textLength: ${text.length}, voiceId: '${voiceId}' }`);
 
-      // Check quota before processing
+      // Check quota before processing with improved handling
       try {
         const quotaInfo = await this.getQuotaInfo();
+        
+        // If no quota available, fail immediately
+        if (quotaInfo.remaining <= 0) {
+          throw new Error('ElevenLabs quota depleted. Please check your account.');
+        }
+        
+        // If text is longer than available quota, truncate smartly
         if (quotaInfo.remaining < text.length) {
-          console.warn(`⚠️ Insufficient quota: ${quotaInfo.remaining} remaining, ${text.length} required`);
+          console.warn(`⚠️ Limited quota: ${quotaInfo.remaining} remaining, ${text.length} required`);
           
-          // Calculate safe chunk size based on remaining quota
-          const safeChunkSize = Math.min(Math.floor(quotaInfo.remaining * 0.8), 350);
-          if (safeChunkSize < 50) {
-            throw new Error(`ElevenLabs quota insufficient: ${quotaInfo.remaining} characters remaining`);
+          // Use 80% of remaining quota to leave buffer
+          const safeLength = Math.floor(quotaInfo.remaining * 0.8);
+          
+          if (safeLength < 50) {
+            throw new Error(`ElevenLabs quota too low: ${quotaInfo.remaining} characters remaining`);
           }
           
-          console.log(`📝 Splitting text into chunks of ${safeChunkSize} characters`);
-          const chunks = this.splitTextIntoChunks(text, safeChunkSize);
+          // Truncate at sentence boundaries if possible
+          const truncated = text.substring(0, safeLength);
+          const lastSentence = truncated.lastIndexOf('.');
           
-          // Process only the first chunk to conserve quota
-          if (chunks.length > 0) {
-            console.log(`🎯 Processing first chunk (${chunks[0].length} chars): "${chunks[0].substring(0, 50)}..."`);
-            text = chunks[0];
-            
-            if (chunks.length > 1) {
-              console.warn(`⚠️ Truncated message to fit quota. ${chunks.length - 1} chunks omitted.`);
-            }
+          if (lastSentence > safeLength * 0.5) {
+            text = truncated.substring(0, lastSentence + 1);
+          } else {
+            text = truncated;
           }
+          
+          console.log(`📝 Text truncated to ${text.length} characters to fit quota`);
         }
       } catch (quotaError) {
-        console.warn('Could not check quota, proceeding with original text:', quotaError);
-        // If we can't check quota, try with a smaller chunk
-        if (text.length > 400) {
-          const chunks = this.splitTextIntoChunks(text, 400);
-          text = chunks[0];
-          console.log(`🎯 Using first chunk due to quota check failure: "${text.substring(0, 50)}..."`);
+        console.warn('Quota check failed, using fallback limits:', quotaError);
+        // Conservative fallback - limit to 300 characters
+        if (text.length > 300) {
+          text = text.substring(0, 300);
+          console.log(`🎯 Fallback truncation to 300 characters: "${text.substring(0, 50)}..."`);
         }
       }
 

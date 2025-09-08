@@ -773,13 +773,13 @@ function VoiceFirstChatInterfaceInner({
     return result;
   }, [hasNewAIMessage, autoPlayEnabled, playingMessageId, voiceState, isAISpeaking, isAIPlaying]);
 
-  // Enhanced auto-play trigger for voice mode - ACTUALLY PLAY AI RESPONSES
+  // Enhanced auto-play trigger for voice mode - FIXED ElevenLabs Integration
   useEffect(() => {
     if (shouldAutoPlay && messages.length > 0) {
       const latestAIMessage = messages[messages.length - 1];
       if (latestAIMessage?.type === 'ai' && latestAIMessage.content && latestAIMessage.content !== lastAIMessage) {
         console.log('🔊 AUTO-PLAY TRIGGERED: Starting TTS for AI response');
-        console.log('🎤 Message content:', latestAIMessage.content.substring(0, 100) + '...');
+        console.log('🎤 Message content:', latestAIMessage.content.substring(0, 50) + '...');
 
         // Update last AI message to prevent re-playing
         setLastAIMessage(latestAIMessage.content);
@@ -795,18 +795,68 @@ function VoiceFirstChatInterfaceInner({
           .replace(/\s+/g, ' ') // Replace multiple spaces with single space
           .trim();
 
-        console.log('🔊 Playing cleaned text:', cleanText.substring(0, 100) + '...');
+        console.log('🔊 Playing cleaned text:', cleanText.substring(0, 50) + '...');
 
-        // Enhanced TTS with better error handling and immediate playback
-        const startTTS = async () => {
+        // Direct ElevenLabs API call with proper error handling
+        const startElevenLabsTTS = async () => {
           try {
             console.log('🎙️ Starting ElevenLabs TTS with voice:', selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV');
             
-            // Use the ElevenLabs streaming hook directly
             setIsAISpeaking(true);
-            await playAIText(cleanText);
             
-            console.log('✅ ElevenLabs TTS completed successfully');
+            // Direct API call to ElevenLabs endpoint
+            const response = await fetch('/api/elevenlabs/speak', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                text: cleanText,
+                voiceId: selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV',
+                settings: {
+                  stability: 0.5,
+                  similarityBoost: 0.8,
+                  style: 0.0,
+                  useSpeakerBoost: true
+                }
+              })
+            });
+
+            if (!response.ok) {
+              throw new Error(`ElevenLabs API error: ${response.status}`);
+            }
+
+            console.log('✅ ElevenLabs API response received');
+            
+            // Create audio blob and play
+            const audioBlob = await response.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            
+            const audio = new Audio(audioUrl);
+            audio.volume = Math.min(volume || 0.8, 1.0);
+            
+            audio.onplay = () => {
+              console.log('🔊 ElevenLabs audio started playing');
+              setIsAISpeaking(true);
+            };
+            
+            audio.onended = () => {
+              console.log('✅ ElevenLabs audio completed');
+              URL.revokeObjectURL(audioUrl);
+              setPlayingMessageId(null);
+              setIsAISpeaking(false);
+            };
+            
+            audio.onerror = (error) => {
+              console.error('🚨 ElevenLabs audio playback error:', error);
+              URL.revokeObjectURL(audioUrl);
+              setPlayingMessageId(null);
+              setIsAISpeaking(false);
+              // Don't show error to user, just fail silently and continue
+            };
+            
+            await audio.play();
+            console.log('✅ ElevenLabs TTS started successfully');
             
           } catch (elevenLabsError) {
             console.warn('⚠️ ElevenLabs failed, using browser TTS fallback:', elevenLabsError);
@@ -833,7 +883,7 @@ function VoiceFirstChatInterfaceInner({
                 );
                 if (preferredVoice) {
                   utterance.voice = preferredVoice;
-                  console.log('🔊 Using voice:', preferredVoice.name);
+                  console.log('🔊 Using browser voice:', preferredVoice.name);
                 }
                 
                 utterance.onstart = () => {
@@ -863,20 +913,21 @@ function VoiceFirstChatInterfaceInner({
               setPlayingMessageId(null);
               setIsAISpeaking(false);
               
+              // Only show error for critical failures
               toast({
-                title: "Voice Playback Failed",
-                description: "Could not play AI response audio. Check your audio settings.",
-                variant: "destructive"
+                title: "Voice Unavailable",
+                description: "Voice playback is temporarily unavailable.",
+                variant: "default"
               });
             }
           }
         };
 
         // Start TTS immediately
-        startTTS();
+        startElevenLabsTTS();
       }
     }
-  }, [shouldAutoPlay, messages, lastAIMessage, playAIText, selectedPersona?.elevenLabsVoice, toast]);
+  }, [shouldAutoPlay, messages, lastAIMessage, selectedPersona?.elevenLabsVoice, volume, toast]);
 
   // Enhanced message parsing for multi-perspective responses with colors and clickable references
   const parseMessageContent = useCallback((content: string) => {
