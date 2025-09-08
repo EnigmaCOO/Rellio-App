@@ -394,14 +394,14 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
       console.log('🔊 Audio element created and ready for playback');
 
     } catch (error) {
-      console.log('🔊 ElevenLabs failed, falling back to browser speech:', error);
+      console.log('🔊 ElevenLabs audio failed, using browser speech fallback:', error);
       setIsLoading(false);
       activeRequestRef.current = null;
 
-      // Enhanced browser speech synthesis fallback
+      // Always use browser speech synthesis as fallback when ElevenLabs audio fails
       if ('speechSynthesis' in window && window.speechSynthesis && !isInterruptedRef.current) {
         try {
-          console.log('🔊 Using browser speech synthesis fallback');
+          console.log('🔊 Using browser speech synthesis fallback - this should work');
 
           // Clear any existing speech
           window.speechSynthesis.cancel();
@@ -416,22 +416,24 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
           // Try to use a better voice if available
           const voices = window.speechSynthesis.getVoices();
           const englishVoice = voices.find(voice =>
-            voice.lang.includes('en') && (voice.name.includes('Google') || voice.name.includes('Microsoft'))
+            voice.lang.includes('en') && (voice.name.includes('Google') || voice.name.includes('Microsoft') || voice.name.includes('Natural'))
           );
           if (englishVoice) {
             utterance.voice = englishVoice;
-            console.log('🔊 Using enhanced voice:', englishVoice.name);
+            console.log('🔊 Using enhanced voice for fallback:', englishVoice.name);
+          } else {
+            console.log('🔊 Using default system voice for fallback');
           }
 
           utterance.onstart = () => {
-            console.log('🔊 Browser speech started');
+            console.log('🔊 Browser speech fallback started - you should hear this');
             setIsPlaying(true);
             setIsLoading(false);
             onStart?.();
           };
 
           utterance.onend = () => {
-            console.log('🔊 Browser speech completed');
+            console.log('🔊 Browser speech fallback completed');
             setIsPlaying(false);
             setCurrentAudio(null);
             activeRequestRef.current = null;
@@ -439,7 +441,7 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
           };
 
           utterance.onerror = (event) => {
-            console.log('🔊 Browser speech error:', event.error);
+            console.log('🔊 Browser speech fallback error:', event.error);
             setIsPlaying(false);
             setIsLoading(false);
             setCurrentAudio(null);
@@ -448,17 +450,19 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
           };
 
           if (!isInterruptedRef.current) {
+            console.log('🔊 Starting browser speech fallback now...');
             window.speechSynthesis.speak(utterance);
+            console.log('🔊 Browser speech fallback initiated');
           }
 
         } catch (fallbackError) {
-          console.error('🔊 Browser speech synthesis failed:', fallbackError);
+          console.error('🔊 Browser speech synthesis also failed:', fallbackError);
           setIsLoading(false);
           activeRequestRef.current = null;
           onEnd?.();
         }
       } else {
-        console.log('🔊 No fallback speech available');
+        console.log('🔊 No browser speech synthesis available');
         onEnd?.();
       }
     }
