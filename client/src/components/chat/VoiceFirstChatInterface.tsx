@@ -1595,6 +1595,11 @@ function VoiceFirstChatInterfaceInner({
                           const result = await toggleListening();
                           if (result) {
                             setWasLastMessageVoice(true);
+                            // Ensure auto-play is enabled for voice responses
+                            if (!autoPlayEnabled) {
+                              setAutoPlayEnabled(true);
+                              console.log('🔊 Auto-play enabled for voice conversation');
+                            }
                             console.log('✅ Voice listening started after interruption');
                           }
                         }, 100);
@@ -1612,6 +1617,11 @@ function VoiceFirstChatInterfaceInner({
 
                         if (result) {
                           setWasLastMessageVoice(true);
+                          // Ensure auto-play is enabled for voice responses
+                          if (!autoPlayEnabled) {
+                            setAutoPlayEnabled(true);
+                            console.log('🔊 Auto-play enabled for voice conversation');
+                          }
                           console.log('✅ GROK MODE: Voice listening started - user controls sending');
                           // Removed annoying listening started toast
                         } else {
