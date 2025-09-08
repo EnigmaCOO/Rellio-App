@@ -1673,7 +1673,7 @@ function VoiceFirstChatInterfaceInner({
         )}
 
         {/* Permission Warning for Supported Browsers */}
-        {isSupported && !hasPermission && (
+        {isSupported && !hasPermission && !hasError && (
           <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <Headphones className="w-4 h-4 text-blue-600" />
@@ -1683,6 +1683,34 @@ function VoiceFirstChatInterfaceInner({
             </div>
             <p className="text-xs text-blue-700 mb-3">
               Voice input needs microphone permission. Click the microphone button below to request access.
+            </p>
+          </div>
+        )}
+
+        {/* Voice System Reset for Errors */}
+        {hasError && (
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                <p className="text-sm text-yellow-800 font-medium">
+                  Voice System Issue
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setHasError(false);
+                  window.location.reload();
+                }}
+                className="text-xs px-2 py-1 border-yellow-300 hover:bg-yellow-100"
+              >
+                Reset
+              </Button>
+            </div>
+            <p className="text-xs text-yellow-700">
+              Voice input encountered an issue. Click Reset to try again.
             </p>
           </div>
         )}
@@ -1830,6 +1858,7 @@ function VoiceFirstChatInterfaceInner({
                   )}
                   title={
                     !isSupported ? "Voice not supported - use text input or switch to Chrome/Edge" :
+                    hasError ? "Voice system error - click Reset above" :
                     !hasPermission ? "Click to request microphone permission" :
                     voiceState === 'listening' ? "Listening... Click to stop" :
                     voiceState === 'speaking' ? "AI is speaking... Just speak to interrupt" :

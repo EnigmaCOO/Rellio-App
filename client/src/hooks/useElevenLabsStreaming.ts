@@ -516,7 +516,13 @@ export function useElevenLabsStreaming(options: ElevenLabsStreamingOptions = {})
                 // Try with a simpler approach
                 try {
                   audio.load();
-                  await audio.play();
+                  const retryPromise = audio.play();
+                  if (retryPromise) {
+                    retryPromise.catch(() => {
+                      console.log('🔊 Audio retry also failed, continuing without voice');
+                      fallbackToBrowserTTS(cleanedText);
+                    });
+                  }
                 } catch (retryError) {
                   console.log('🔊 Audio retry also failed, continuing without voice');
                   fallbackToBrowserTTS(cleanedText);

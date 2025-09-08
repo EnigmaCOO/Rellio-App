@@ -202,15 +202,17 @@ export function useVoiceModeHandler({
           isSafari: userAgent.includes('safari') && !userAgent.includes('chrome')
         });
 
-        // Simplified browser support check - if the API exists, assume it works
-        const supported = !!SpeechRecognition;
+        // Consistent browser support check
+        const supported = !!SpeechRecognition && (
+          userAgent.includes('chrome') || 
+          userAgent.includes('edge') || 
+          userAgent.includes('edg/')
+        );
         
         if (supported) {
           console.log('✅ Speech Recognition API found and browser supported - voice input enabled');
-        } else if (SpeechRecognition) {
-          console.log('⚠️ Speech Recognition API found but browser may have limited support');
         } else {
-          console.log('❌ Speech Recognition API not found');
+          console.log('❌ Voice not supported in this browser - use Chrome or Edge');
         }
 
         // Don't check permissions upfront - let user trigger the permission request
@@ -223,9 +225,7 @@ export function useVoiceModeHandler({
         setHasError(false);
       } catch (error) {
         console.error('🚨 Voice support check failed:', error);
-        // Don't set error state here, just log and continue
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        dispatch({ type: 'SET_SUPPORT', payload: { supported: !!SpeechRecognition, permission: false } });
+        dispatch({ type: 'SET_SUPPORT', payload: { supported: false, permission: false } });
       }
     };
 
@@ -1014,19 +1014,13 @@ export function useVoiceModeHandler({
     fullUserAgent: navigator.userAgent
   };
 
-  // Auto-reset error state after a brief delay to allow recovery
-  useEffect(() => {
-    if (hasError) {
-      console.log('🔄 Voice system error detected, attempting auto-recovery in 2 seconds...');
-      const timer = setTimeout(() => {
-        console.log('🔄 Auto-resetting voice system...');
-        setHasError(false);
-        dispatch({ type: 'RESET' });
-      }, 2000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [hasError]);
+  // Manual error recovery only - no auto-loops
+  const resetVoiceSystem = useCallback(() => {
+    console.log('🔄 Manual voice system reset');
+    setHasError(false);
+    dispatch({ type: 'RESET' });
+    cleanup();
+  }, [cleanup]);
 
   return {
     isListening: state.isListening,
