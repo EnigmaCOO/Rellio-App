@@ -150,7 +150,7 @@ function VoiceFirstChatInterfaceInner({
     onStart: () => {
       console.log('🔊 AI started speaking');
       setIsAISpeaking(true); // Use setIsAISpeaking for internal state
-      setPlayingMessageId(playingMessageId);
+      // playingMessageId will be set by the auto-play logic before this fires
     },
     onEnd: () => {
       console.log('🔊 AI finished speaking');
@@ -512,6 +512,9 @@ function VoiceFirstChatInterfaceInner({
 
         console.log('✅ Message sent successfully, voice flag:', wasLastMessageVoice);
 
+        // Clear voice processing state to allow auto-play
+        setIsProcessingVoice(false);
+        
         // Note: Auto-play is now handled by the useEffect watching shouldAutoPlay
         // This prevents duplicate playback attempts
       } catch (error) {
@@ -750,7 +753,7 @@ function VoiceFirstChatInterfaceInner({
     const hasLatestAI = hasNewAIMessage();
     const isCurrentlyPlaying = !!playingMessageId;
     const voiceNotActivelyListening = voiceState !== 'listening';
-    const notProcessing = voiceState !== 'processing';
+    const notProcessing = voiceState !== 'processing' && !isProcessingVoice;
     const notCurrentlySpeaking = !isAISpeaking && !isAIPlaying;
 
     // Auto-play when we have a new AI message, auto-play is enabled, and we're not busy
@@ -766,12 +769,13 @@ function VoiceFirstChatInterfaceInner({
       autoPlayEnabled,
       isCurrentlyPlaying,
       voiceState,
+      isProcessingVoice,
       notCurrentlySpeaking,
       result
     });
 
     return result;
-  }, [hasNewAIMessage, autoPlayEnabled, playingMessageId, voiceState, isAISpeaking, isAIPlaying]);
+  }, [hasNewAIMessage, autoPlayEnabled, playingMessageId, voiceState, isProcessingVoice, isAISpeaking, isAIPlaying]);
 
   // Enhanced auto-play trigger for voice mode - FIXED ElevenLabs Integration
   useEffect(() => {
