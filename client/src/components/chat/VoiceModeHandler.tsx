@@ -532,23 +532,26 @@ export function useVoiceModeHandler({
                     autoSendTimeoutRef.current = null;
                   }
 
-                  // Conditional auto-send based on preventAutoSend prop and settings
+                  // Simple & Reliable Auto-Send: 1.5s pause after speech ends
                   if (!preventAutoSend && autoSendDelay > 0 && confidence >= confidenceThreshold && cleanFinalTranscript.length > 0) {
-                    console.log('🎤 POST-INTERRUPTION AUTO-SEND: Scheduling auto-send with', autoSendDelay, 'ms delay');
-                    console.log('🎤 AUTO-SEND: confidence:', confidence, 'threshold:', confidenceThreshold);
+                    console.log('🎤 SCHEDULING AUTO-SEND: 1.5s after speech ends');
+                    console.log('🎤 TRANSCRIPT:', cleanFinalTranscript, 'confidence:', confidence);
                     
-                    // Set timeout for auto-send after pause
+                    // Clear any existing timeout
+                    if (autoSendTimeoutRef.current) {
+                      clearTimeout(autoSendTimeoutRef.current);
+                    }
+                    
+                    // Set 1.5s auto-send timeout
                     autoSendTimeoutRef.current = setTimeout(() => {
                       const messageToSend = cleanFinalTranscript.trim();
                       if (messageToSend.length > 0) {
-                        console.log('🚀 AUTO-SENDING MESSAGE:', messageToSend);
+                        console.log('🚀 AUTO-SENDING after 1.5s pause:', messageToSend);
                         onAutoSend(messageToSend);
                       }
-                    }, autoSendDelay);
+                    }, 1500); // Fixed 1.5s delay as requested
                   } else {
-                    // Normal Grok mode - user controls when to send
-                    console.log('✅ GROK MODE: Final transcript ready for manual send:', cleanFinalTranscript);
-                    console.log('🚫 GROK MODE: No auto-send - user controls when to send');
+                    console.log('✅ GROK MODE: Manual send - user controls timing');
                   }
                 } else {
                   // Show interim results for immediate feedback

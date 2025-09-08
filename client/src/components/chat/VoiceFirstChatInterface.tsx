@@ -135,7 +135,7 @@ function VoiceFirstChatInterfaceInner({
   const [isAudioIsolated, setIsAudioIsolated] = useState(false); // Mutes mic during AI speech
   const [isProcessingVoice, setIsProcessingVoice] = useState<boolean>(false); // Tracks if voice processing is active
   const [hasError, setHasError] = useState(false); // Tracks if voice system has encountered an error
-  
+
   // Post-interruption state tracking for auto-send functionality
   const [isPostInterruption, setIsPostInterruption] = useState(false); // Tracks if we're in post-interruption voice mode
   const [interruptionCooldown, setInterruptionCooldown] = useState(false); // Prevents loops after interruption
@@ -156,13 +156,13 @@ function VoiceFirstChatInterfaceInner({
       setIsAISpeaking(true);
       setInputIsolated(true); // Lock input during AI speech
       setIsAudioIsolated(true); // Mute mic during AI speech
-      
+
       // SIMPLE APPROACH: Use existing voice recognition for interruption
       console.log('🎤 SIMPLE INTERRUPTION: Starting voice recognition during AI speech...');
       setTimeout(() => {
         if (isAISpeaking && isSupported) {
           console.log('🎤 SIMPLE INTERRUPTION: AI still speaking, starting background voice recognition...');
-          
+
           // Create a simple speech recognition instance for interruption
           const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
           if (SpeechRecognition) {
@@ -170,34 +170,34 @@ function VoiceFirstChatInterfaceInner({
             interruptRecognition.continuous = true;
             interruptRecognition.interimResults = true;
             interruptRecognition.lang = 'en-US';
-            
+
             interruptRecognition.onstart = () => {
               console.log('🎤 SIMPLE INTERRUPTION: Voice recognition active for interruption');
             };
-            
+
             interruptRecognition.onresult = (event) => {
               console.log('🚨 SIMPLE INTERRUPTION: Speech detected during AI!');
-              
+
               // Stop AI immediately
               stopAIPlayback();
               setIsAISpeaking(false);
               setIsPostInterruption(true);
-              
+
               // Stop this recognition
               try {
                 interruptRecognition.stop();
               } catch (e) {
                 console.log('Recognition already stopped');
               }
-              
+
               // Get the speech
               let transcript = '';
               for (let i = event.resultIndex; i < event.results.length; i++) {
                 transcript += event.results[i][0].transcript;
               }
-              
+
               console.log('🎤 INTERRUPTION: Captured speech:', transcript);
-              
+
               // Show feedback
               toast({
                 title: "🎤 Interrupted—Listening...",
@@ -205,7 +205,7 @@ function VoiceFirstChatInterfaceInner({
                 variant: "default",
                 className: "border-emerald-200 bg-emerald-50 text-emerald-800"
               });
-              
+
               // Start main listening with the captured speech
               setTimeout(() => {
                 console.log('🎤 INTERRUPTION: Starting main listening...');
@@ -217,11 +217,11 @@ function VoiceFirstChatInterfaceInner({
                 });
               }, 200);
             };
-            
+
             interruptRecognition.onerror = (event) => {
               console.log('🎤 SIMPLE INTERRUPTION: Recognition error:', event.error);
             };
-            
+
             try {
               interruptRecognition.start();
               console.log('✅ SIMPLE INTERRUPTION: Voice recognition started');
@@ -233,19 +233,19 @@ function VoiceFirstChatInterfaceInner({
           }
         }
       }, 1000); // Start after 1 second to avoid self-interruption
-      
+
       // CRITICAL: Reduce microphone gain during AI playback but allow interruption detection
       if (gainNodeRef.current) {
         gainNodeRef.current.gain.value = 0.1; // Reduce gain significantly but allow interruption detection
         console.log('🔇 Microphone gain reduced during AI speech (0.1) - allowing interruption detection');
       }
-      
+
       // VOICE INTERRUPTION: Start background listening for voice-activated interruption
       setTimeout(() => {
         console.log('🎤 VOICE INTERRUPTION: Checking conditions...');
         console.log('🎤 VOICE INTERRUPTION: isAISpeaking:', isAISpeaking, 'isSupported:', isSupported, 'hasPermission:', hasPermission);
         console.log('🎤 VOICE INTERRUPTION: audioContext exists:', !!audioContextRef.current, 'gainNode exists:', !!gainNodeRef.current);
-        
+
         if (isAISpeaking) { // Only start if still speaking
           console.log('🎤 VOICE INTERRUPTION: AI still speaking, starting background listening...');
           startBackgroundListening().catch(error => {
@@ -261,7 +261,7 @@ function VoiceFirstChatInterfaceInner({
       setIsAISpeaking(false);
       setPlayingMessageId(null);
       setInputIsolated(false); // Unlock input after AI speech
-      
+
       // CRITICAL: Restore full microphone gain after AI finishes with 2s cooldown
       setTimeout(() => {
         if (gainNodeRef.current) {
@@ -276,14 +276,14 @@ function VoiceFirstChatInterfaceInner({
       setIsAISpeaking(false);
       setPlayingMessageId(null);
       setInputIsolated(false); // Unlock input immediately on interruption
-      
+
       // CRITICAL: Immediate unmute on interruption for Grok-like experience
       if (gainNodeRef.current) {
         gainNodeRef.current.gain.value = 1; // Restore full microphone gain immediately
         setIsAudioIsolated(false);
         console.log('🔊 Microphone fully restored immediately due to interruption');
       }
-      
+
       // Stop any background listening to prevent conflicts
       console.log('🎤 CLEANUP: Stopping background listening after interruption');
     },
@@ -325,7 +325,7 @@ function VoiceFirstChatInterfaceInner({
         setIsProcessingVoice(false);
         setTextInputValue(text);
         handleSendMessage(text);
-        
+
         // Reset post-interruption state after auto-send
         setIsPostInterruption(false);
         console.log('🎤 POST-INTERRUPTION AUTO-SEND: Reset state after successful send');
@@ -354,11 +354,11 @@ function VoiceFirstChatInterfaceInner({
       }
       setIsAISpeaking(false);
       setPlayingMessageId(null);
-      
+
       // Enable post-interruption mode for auto-send
       setIsPostInterruption(true);
       console.log('🎤 POST-INTERRUPTION MODE: Enabled for auto-transcription and auto-send');
-      
+
       // Show user feedback
       toast({
         title: "🎤 Interrupted—Listening...",
@@ -366,14 +366,14 @@ function VoiceFirstChatInterfaceInner({
         variant: "default",
         className: "border-emerald-200 bg-emerald-50 text-emerald-800"
       });
-      
+
       // Set interruption cooldown to prevent immediate loops
       setInterruptionCooldown(true);
       setTimeout(() => {
         setInterruptionCooldown(false);
         console.log('🎤 INTERRUPTION COOLDOWN: Cleared after 1s');
       }, 1000); // 1s cooldown to prevent loops
-      
+
       // GROK-STYLE: Enable instant listening after interruption
       setTimeout(() => {
         if (!isListening) {
@@ -480,7 +480,8 @@ function VoiceFirstChatInterfaceInner({
   const streamRef = useRef<MediaStream | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
   const destinationRef = useRef<MediaStreamAudioDestinationNode | null>(null);
-  
+  const backgroundRecognitionRef = useRef<any>(null); // Ref for background recognition instance
+
   // Removed duplicate - using existing isAudioIsolated from line 135
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const elevenLabsStreamRef = useRef<any>(null); // This ref seems unused currently
@@ -687,12 +688,12 @@ function VoiceFirstChatInterfaceInner({
 
         // Clear voice processing state to allow auto-play
         setIsProcessingVoice(false);
-        
+
         // ENHANCED: Force auto-play for voice messages immediately
         if (wasLastMessageVoice) {
           console.log('🎤 VOICE MESSAGE SENT: Auto-play will be triggered');
         }
-        
+
         // Note: Auto-play is now handled by the useEffect watching shouldAutoPlay
         // This prevents duplicate playback attempts
       } catch (error) {
@@ -732,20 +733,20 @@ function VoiceFirstChatInterfaceInner({
   // Consolidated send message function (moved up to fix hoisting issue)
   const handleSendMessage = useCallback((message: string) => {
     if (!message.trim()) return;
-    
+
     // ENHANCED: More reliable voice detection for Grok-like experience
     const isCurrentlyVoiceInput = textInputValue.length > 0 && (
-      isListening || 
-      voiceState === 'processing' || 
+      isListening ||
+      voiceState === 'processing' ||
       currentTranscript.trim() === textInputValue.trim() ||
       wasLastMessageVoice
     );
-    
+
     if (isCurrentlyVoiceInput) {
       setWasLastMessageVoice(true);
       console.log('🎤 VOICE MESSAGE CONFIRMED: Setting wasLastMessageVoice = true');
     }
-    
+
     console.log('📤 SENDING MESSAGE - wasLastMessageVoice:', wasLastMessageVoice || isCurrentlyVoiceInput);
     console.log('📤 Sending message:', message);
     sendMessageMutation.mutate(message);
@@ -812,7 +813,7 @@ function VoiceFirstChatInterfaceInner({
           analyserRef.current.getByteFrequencyData(dataArray);
 
           const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-          
+
           // DEBUG: Log every few seconds to show monitoring is working
           if (Date.now() % 3000 < 50) { // Log roughly every 3 seconds
             console.log(`🎤 MONITORING: Audio level: ${average}, isAISpeaking: ${isAISpeaking}, voiceState: ${voiceState}`);
@@ -839,12 +840,12 @@ function VoiceFirstChatInterfaceInner({
             setIsTalkingBack(false);
             setInputIsolated(false);
             setIsAudioIsolated(false);
-            
+
             // Enable post-interruption mode for auto-send
             setIsPostInterruption(true);
             setInterruptionCooldown(true);
             setTimeout(() => setInterruptionCooldown(false), 1000);
-            
+
             // Show user feedback
             toast({
               title: "🎤 Interrupted—Listening...",
@@ -852,7 +853,7 @@ function VoiceFirstChatInterfaceInner({
               variant: "default",
               className: "border-emerald-200 bg-emerald-50 text-emerald-800"
             });
-            
+
             // Start listening for the new question after brief delay
             setTimeout(() => {
               if (!isListening) {
@@ -962,7 +963,7 @@ function VoiceFirstChatInterfaceInner({
     if (messages.length === 0) return false;
     const lastMessage = messages[messages.length - 1];
     const isNewAIMessage = lastMessage?.type === 'ai' && lastMessage.content !== lastAIMessage;
-    console.log('🔍 Checking for new AI message:', { 
+    console.log('🔍 Checking for new AI message:', {
       hasMessages: messages.length > 0,
       lastMessageType: lastMessage?.type,
       isNewContent: lastMessage?.content !== lastAIMessage,
@@ -982,7 +983,7 @@ function VoiceFirstChatInterfaceInner({
     // GROK-STYLE: Always auto-play for voice input, respect setting for text input
     const shouldAutoPlayForVoice = wasLastMessageVoice; // Always play for voice
     const shouldAutoPlayForText = autoPlayEnabled && !wasLastMessageVoice; // Respect setting for text
-    
+
     const result = hasLatestAI &&
                    (shouldAutoPlayForVoice || shouldAutoPlayForText) &&
                    !isCurrentlyPlaying &&
@@ -1017,7 +1018,7 @@ function VoiceFirstChatInterfaceInner({
 
         // Update last AI message to prevent re-playing
         setLastAIMessage(latestAIMessage.content);
-        
+
         // Reset wasLastMessageVoice flag after triggering auto-play
         if (wasLastMessageVoice) {
           setWasLastMessageVoice(false);
@@ -1042,18 +1043,18 @@ function VoiceFirstChatInterfaceInner({
           try {
             console.log('🎙️ Starting ElevenLabs TTS using hook with voice:', selectedPersona?.elevenLabsVoice || 'ErXwobaYiN019PkySvjV');
             console.log('🔊 Playing AI response:', cleanText.substring(0, 50) + '...');
-            
+
             // Use the existing ElevenLabs hook which handles all the complexity
             await playAIText(cleanText);
             console.log('✅ ElevenLabs TTS started successfully via hook');
-            
+
           } catch (elevenLabsError) {
             console.warn('⚠️ ElevenLabs TTS failed:', elevenLabsError);
-            
+
             // Reset playing state on error
             setPlayingMessageId(null);
             setIsAISpeaking(false);
-            
+
             // Error handling is already done by the hook's fallback mechanism
             console.log('🔊 Hook will handle fallback to browser TTS if available');
           }
@@ -1304,6 +1305,67 @@ function VoiceFirstChatInterfaceInner({
       }
     }
   }, [messages, lastAIMessage]);
+
+  // Enhanced cleanup function with background recognition
+  const cleanup = useCallback(() => {
+    console.log('🎤 Voice system cleanup');
+    try {
+      // Stop background recognition first
+      if (backgroundRecognitionRef.current) {
+        try {
+          console.log('🎤 Stopping background recognition...');
+          backgroundRecognitionRef.current.stop();
+          backgroundRecognitionRef.current = null;
+        } catch (error) {
+          console.warn('🚨 Background recognition cleanup error:', error);
+        }
+      }
+
+      // Stop main recognition
+      if (recognitionRef.current) {
+        try {
+          console.log('🎤 Stopping main recognition...');
+          recognitionRef.current.abort();
+          recognitionRef.current = null;
+        } catch (error) {
+          console.warn('🚨 Main recognition cleanup error:', error);
+        }
+      }
+
+      // Stop any active audio playback
+      if (isAIPlaying) {
+        stopAIPlayback();
+      }
+
+      // Close audio context if it exists
+      if (audioContextRef.current) {
+        try {
+          audioContextRef.current.close();
+          audioContextRef.current = null;
+          console.log('🔇 Audio context closed');
+        } catch (error) {
+          console.warn('🚨 Error closing audio context:', error);
+        }
+      }
+
+      // Release microphone stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+        console.log('🎤 Microphone stream released');
+      }
+    } catch (error) {
+      console.error('🚨 Critical error during voice system cleanup:', error);
+    }
+  }, [isAIPlaying, stopAIPlayback]);
+
+  // Effect to perform cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      cleanup();
+    };
+  }, [cleanup]);
+
 
   return (
     <Card className={cn("flex flex-col h-full bg-white shadow-lg", className)}>
@@ -1957,7 +2019,7 @@ function VoiceFirstChatInterfaceInner({
                     </div>
                   ) : voiceState === 'idle' ? (
                     <div className="text-xs text-gray-500">
-                      {!hasPermission ? "Need Permission" : 
+                      {!hasPermission ? "Need Permission" :
                        inputIsolated ? "Inputs Locked" :
                        "Grok-style Voice"}
                     </div>
