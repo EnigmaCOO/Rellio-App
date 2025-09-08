@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 
 interface GrokStyleOrbProps {
-  state: 'idle' | 'listening' | 'processing' | 'responding' | 'interrupted';
+  state: 'idle' | 'listening' | 'processing' | 'responding' | 'interrupted' | 'listening-after-interrupt';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
@@ -60,6 +60,14 @@ export function GrokStyleOrb({
           'animate-bounce shadow-lg shadow-red-200'
         );
 
+      case 'listening-after-interrupt':
+        return cn(
+          baseClasses,
+          'bg-gradient-to-br from-emerald-400 to-teal-500',
+          'border-2 border-emerald-300',
+          'animate-pulse shadow-lg shadow-emerald-200'
+        );
+
       default:
         return baseClasses;
     }
@@ -85,6 +93,16 @@ export function GrokStyleOrb({
       );
     }
 
+    if (state === 'listening-after-interrupt') {
+      return (
+        <div className="absolute inset-0 rounded-full">
+          <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/40 to-transparent animate-pulse" />
+          <div className="absolute top-1/2 left-1/2 w-1 h-1 bg-white rounded-full transform -translate-x-1/2 -translate-y-1/2 animate-ping" />
+          <div className="absolute top-1/2 left-1/2 w-1 h-1 bg-white rounded-full transform -translate-x-1/2 -translate-y-1/2 animate-ping animation-delay-150" />
+        </div>
+      );
+    }
+
     if (state === 'responding') {
       return (
         <div className="absolute inset-0 rounded-full">
@@ -104,6 +122,7 @@ export function GrokStyleOrb({
       case 'processing': return 'Thinking...';
       case 'responding': return 'Responding...';
       case 'interrupted': return 'Interrupted';
+      case 'listening-after-interrupt': return 'Listening for your next question...';
       default: return '';
     }
   };
@@ -114,11 +133,20 @@ export function GrokStyleOrb({
         {getInnerAnimation()}
       </div>
 
-      {/* Ripple effect for listening state */}
+      {/* Ripple effect for listening states */}
       {state === 'listening' && (
         <div className="absolute inset-0 rounded-full">
           <div className="absolute inset-0 rounded-full bg-teal-400 opacity-25 animate-ping" />
           <div className="absolute inset-0 rounded-full bg-teal-400 opacity-20 animate-ping animation-delay-300" />
+        </div>
+      )}
+      
+      {/* Enhanced ripple effect for post-interruption listening */}
+      {state === 'listening-after-interrupt' && (
+        <div className="absolute inset-0 rounded-full">
+          <div className="absolute inset-0 rounded-full bg-emerald-400 opacity-30 animate-ping" />
+          <div className="absolute inset-0 rounded-full bg-emerald-400 opacity-25 animate-ping animation-delay-150" />
+          <div className="absolute inset-0 rounded-full bg-emerald-400 opacity-20 animate-ping animation-delay-300" />
         </div>
       )}
 

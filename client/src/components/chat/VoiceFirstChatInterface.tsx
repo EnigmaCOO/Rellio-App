@@ -263,6 +263,14 @@ function VoiceFirstChatInterfaceInner({
       setIsPostInterruption(true);
       console.log('🎤 POST-INTERRUPTION MODE: Enabled for auto-transcription and auto-send');
       
+      // Show user feedback
+      toast({
+        title: "🎤 Interrupted—Listening...",
+        description: "Ask your next question - I'll automatically send it after you finish speaking",
+        variant: "default",
+        className: "border-emerald-200 bg-emerald-50 text-emerald-800"
+      });
+      
       // Set interruption cooldown to prevent immediate loops
       setInterruptionCooldown(true);
       setTimeout(() => {
@@ -1194,6 +1202,7 @@ function VoiceFirstChatInterfaceInner({
               <GrokStyleOrb
                 state={voiceState === 'speaking' ? 'responding' :
                        voiceState === 'processing' ? 'processing' :
+                       voiceState === 'listening' && isPostInterruption ? 'listening-after-interrupt' :
                        voiceState === 'listening' ? 'listening' :
                        voiceState === 'interrupted' ? 'interrupted' : 'idle'}
                 size="md"
