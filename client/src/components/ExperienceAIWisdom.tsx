@@ -1,10 +1,12 @@
 import { ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import sacredScholarsImage from "@assets/sacred-scholars.jpg";
 import sacredScholarsMobileImage from "@assets/relliomobile_1757027214950.png";
 
 export default function ExperienceAIWisdom() {
   const [isMobile, setIsMobile] = useState(false);
+  const [location, setLocation] = useLocation();
 
   useEffect(() => {
     const checkMobile = () => {
@@ -16,18 +18,18 @@ export default function ExperienceAIWisdom() {
   }, []);
 
   const handleSacredScholars = () => {
-    console.log("Ask Our Sacred Scholars clicked");
-    // Future: Route to specialized scholar interface
+    console.log("Ask Our Sacred Scholars clicked - navigating to dashboard");
+    setLocation("/dashboard");
   };
 
   const handleAIGuide = () => {
-    console.log("Ask Our AI Guide clicked");
-    // Future: Route to general AI guide
+    console.log("Ask Our AI Guide clicked - navigating to dashboard");
+    setLocation("/dashboard");
   };
 
   const handleBeginJourney = () => {
-    console.log("Begin Your Sacred Journey clicked");
-    // Future: Route to dashboard or signup
+    console.log("Begin Your Sacred Journey clicked - navigating to dashboard");
+    setLocation("/dashboard");
   };
 
   return (

@@ -425,7 +425,11 @@ export function useVoiceModeHandler({
       // Enhanced interruption detection (backup to onspeechstart)
       if ((state.voiceState === 'speaking' || isAIResponding) && average > 50) {
         console.log('🚨 AUDIO-LEVEL INTERRUPTION! High audio detected during AI speech');
-        interruptAI();
+        try {
+          interruptAI();
+        } catch (audioInterruptError) {
+          console.error('🚨 Audio-level interruption error:', audioInterruptError);
+        }
       }
 
       requestAnimationFrame(updateLevel);
@@ -480,7 +484,7 @@ export function useVoiceModeHandler({
           return;
         }
 
-        // Check microphone permissions first
+        // Check microphone permissions and device availability
         try {
           console.log('🎤 Checking microphone permissions...');
           const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
@@ -493,6 +497,24 @@ export function useVoiceModeHandler({
           }
 
           console.log('✅ Microphone permission:', permissionStatus.state);
+          
+          // Test if microphone device is actually available
+          try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const audioInputDevices = devices.filter(device => device.kind === 'audioinput');
+            
+            if (audioInputDevices.length === 0) {
+              console.warn('🚫 No microphone devices found');
+              dispatch({ type: 'SET_SUPPORT', payload: { supported: false, permission: false } });
+              resolve(false);
+              return;
+            }
+            
+            console.log('✅ Found audio input devices:', audioInputDevices.length);
+          } catch (deviceError) {
+            console.warn('⚠️ Could not enumerate devices, proceeding anyway:', deviceError);
+          }
+          
         } catch (permError) {
           console.log('⚠️ Could not check permissions, proceeding with caution:', permError);
         }
@@ -761,20 +783,67 @@ export function useVoiceModeHandler({
     }
   }, [state.isListening, state.isSupported, state.hasPermission, disabled, hasError, stopListening, startListening]);
 
-  // Interrupt AI with enhanced controls
+  // Interrupt AI with enhanced controls and error handling
   const interruptAI = useCallback(() => {
     console.log('🚨 Interrupting AI');
 
-    // Stop any playing audio
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
+    try {
+      // Stop any playing audio with error handling
+      if (audioRef.current) {
+        try {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        } catch (audioError) {
+          console.warn('⚠️ Audio stop error (non-critical):', audioError);
+        }
+      }
 
-    dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
-    updateVoiceState('interrupted');
-    onInterrupt();
-  }, [updateVoiceState, onInterrupt]);
+      // Stop browser speech synthesis
+      if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+        try {
+          window.speechSynthesis.cancel();
+          console.log('🔇 Browser speech synthesis interrupted');
+        } catch (synthError) {
+          console.warn('⚠️ Speech synthesis stop error (non-critical):', synthError);
+        }
+      }
+
+      // Stop reliable TTS if active
+      if (reliableTTS) {
+        try {
+          reliableTTS.stopPlayback();
+          console.log('🔇 Reliable TTS interrupted');
+        } catch (ttsError) {
+          console.warn('⚠️ TTS stop error (non-critical):', ttsError);
+        }
+      }
+
+      // Clear any active request
+      if (activeRequestRef.current) {
+        activeRequestRef.current = null;
+      }
+
+      // Update state
+      dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
+      updateVoiceState('interrupted');
+
+      // Call onInterrupt callback with error handling
+      if (onInterrupt && typeof onInterrupt === 'function') {
+        try {
+          onInterrupt();
+        } catch (callbackError) {
+          console.error('🚨 onInterrupt callback error:', callbackError);
+        }
+      }
+      
+      console.log('✅ AI interruption completed successfully');
+    } catch (error) {
+      console.error('🚨 Critical error in interruptAI:', error);
+      // Still try to reset state even if other things failed
+      dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
+      updateVoiceState('idle');
+    }
+  }, [updateVoiceState, onInterrupt, reliableTTS]);
 
   // Enhanced background listening for interruption during AI speech
   const startBackgroundListening = useCallback(async (): Promise<void> => {
@@ -826,18 +895,28 @@ export function useVoiceModeHandler({
               console.log('Background recognition stop error:', e);
             }
 
-            // Trigger interruption
-            interruptAI();
+            // Trigger interruption with error handling
+            try {
+              interruptAI();
+            } catch (interruptError) {
+              console.error('🚨 Interruption error:', interruptError);
+            }
 
             // Start new listening session with the detected speech
             setTimeout(() => {
-              dispatch({ type: 'SET_TRANSCRIPT', payload: { text: transcript, confidence } });
-              onTranscript(transcript, false);
-              
-              // Continue listening for the full question
-              if (!state.isListening) {
-                console.log('🎤 Starting new listening session after interruption');
-                startListening().catch(console.error);
+              try {
+                dispatch({ type: 'SET_TRANSCRIPT', payload: { text: transcript, confidence } });
+                if (onTranscript && typeof onTranscript === 'function') {
+                  onTranscript(transcript, false);
+                }
+                
+                // Continue listening for the full question
+                if (!state.isListening) {
+                  console.log('🎤 Starting new listening session after interruption');
+                  startListening().catch(console.error);
+                }
+              } catch (sessionError) {
+                console.error('🚨 Post-interruption session error:', sessionError);
               }
             }, 300);
             break;

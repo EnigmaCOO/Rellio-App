@@ -1780,15 +1780,31 @@ function VoiceFirstChatInterfaceInner({
                           // Small delay to allow permission state to update
                           await new Promise(resolve => setTimeout(resolve, 100));
                         } catch (permError) {
-                          console.error('🚫 Microphone permission denied:', permError);
+                          console.error('🚫 Microphone access error:', permError);
+                          
+                          let errorTitle = "🎤 Microphone Access Issue";
+                          let errorDescription = "Unable to access microphone";
+                          
+                          if (permError instanceof DOMException) {
+                            if (permError.name === 'NotFoundError') {
+                              errorTitle = "🚫 No Microphone Found";
+                              errorDescription = "No microphone device detected. Please connect a microphone or use text input.";
+                            } else if (permError.name === 'NotAllowedError') {
+                              errorTitle = "🎤 Permission Denied";
+                              errorDescription = "Microphone access was denied. Please enable in browser settings.";
+                            } else if (permError.name === 'NotSupportedError') {
+                              errorTitle = "🚫 Not Supported";
+                              errorDescription = "Voice input not supported in this browser. Please use text input.";
+                            }
+                          }
+                          
                           toast({
-                            title: "🎤 Microphone Permission Required",
-                            description: "Click 'Allow' when prompted, or enable microphone in browser settings",
-                            variant: "default",
-                            duration: 6000,
-                            className: "border-orange-200 bg-orange-50 text-orange-800"
+                            title: errorTitle,
+                            description: errorDescription,
+                            variant: "destructive",
+                            duration: 6000
                           });
-                          return; // Exit early if permission denied
+                          return; // Exit early if microphone unavailable
                         }
                       }
 
@@ -1827,7 +1843,7 @@ function VoiceFirstChatInterfaceInner({
                           } else {
                             toast({
                               title: "🔧 Voice System Issue",
-                              description: "Unable to start voice recognition. Try refreshing the page.",
+                              description: "Voice recognition unavailable. Please use text input instead.",
                               variant: "destructive",
                               duration: 4000
                             });
