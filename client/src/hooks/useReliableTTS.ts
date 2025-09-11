@@ -22,14 +22,28 @@ export function useReliableTTS({
     console.log('🔊 Stopping TTS playback...');
     isInterruptedRef.current = true;
     
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
+    try {
+      if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        console.log('✅ TTS cancelled successfully');
+      }
+    } catch (error) {
+      console.warn('⚠️ TTS cancel error:', error);
     }
     
     setIsPlaying(false);
     setIsLoading(false);
     currentUtteranceRef.current = null;
-  }, []);
+    
+    // Call onEnd callback when stopping (if available)
+    if (onEnd) {
+      try {
+        onEnd();
+      } catch (error) {
+        console.warn('⚠️ onEnd callback error:', error);
+      }
+    }
+  }, [onEnd]);
 
   const playText = useCallback(async (text: string): Promise<void> => {
     if (!text.trim() || isLoading || isPlaying) {
