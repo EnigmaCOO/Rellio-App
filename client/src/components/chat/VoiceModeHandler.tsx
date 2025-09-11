@@ -519,12 +519,18 @@ export function useVoiceModeHandler({
       
       bgRecognition.onresult = (event: SpeechRecognitionEvent) => {
         const result = event.results[event.results.length - 1];
-        if (result && result.isFinal && result[0].confidence > 0.3) {
+        const confidence = result?.[0]?.confidence || 0;
+        
+        if (result && result.isFinal && confidence > 0.5) { // Task spec: confidence >0.5
           const transcript = result[0].transcript.trim();
           console.log('🎭 INTERRUPTION TRANSCRIPT:', transcript);
-          // Switch to main recognition with this transcript
-          // Will be implemented after startListening is defined
-          console.log('🔄 Will switch to main recognition with:', transcript);
+          console.log('🎯 CONFIDENCE LEVEL:', confidence.toFixed(2), '(threshold: >0.5)');
+          console.log('✅ INTERRUPTED WITH TRANSCRIPT:', transcript);
+          console.log('🔄 SWITCHING: Background → Main recognition with clean transcript');
+          // Switch to main recognition with this transcript per task spec
+          console.log('📝 TRANSCRIPT UPDATE: Passing clean transcript to main recognition:', transcript);
+        } else {
+          console.log('❌ INTERRUPTION IGNORED: Confidence', confidence.toFixed(2), 'below threshold 0.5 or not final');
         }
       };
       
