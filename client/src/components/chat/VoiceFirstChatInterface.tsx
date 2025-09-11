@@ -139,6 +139,55 @@ function VoiceFirstChatInterfaceInner({
   // Post-interruption state tracking for auto-send functionality
   const [isPostInterruption, setIsPostInterruption] = useState(false); // Tracks if we're in post-interruption voice mode
   const [interruptionCooldown, setInterruptionCooldown] = useState(false); // Prevents loops after interruption
+  
+  // 3D CHARACTER INTEGRATION HOOKS: Prepare for future 3D character support
+  const [characterModelId, setCharacterModelId] = useState<string | null>(null); // Current 3D character model
+  const [isCharacterAnimating, setIsCharacterAnimating] = useState(false); // Animation state
+  const [characterState, setCharacterState] = useState<'idle' | 'speaking' | 'listening'>('idle'); // Character visual state
+  
+  // ARIA-LIVE STATUS UPDATES: For accessibility and screen readers
+  const [voiceStatus, setVoiceStatus] = useState<string>(''); // Screen reader announcements
+
+  // 3D CHARACTER ANIMATION CALLBACKS: Ready for future character integration
+  const onSpeakAnimation = useCallback((personaName: string) => {
+    console.log('🎭 3D CHARACTER: Triggering speak animation for', personaName);
+    setCharacterState('speaking');
+    setIsCharacterAnimating(true);
+    
+    // Future 3D integration: Map persona to character model
+    const characterModelMap = {
+      'Universal Scholar': 'universal_guide_model',
+      'Christian Scholar': 'priest_model',
+      'Islamic Scholar': 'mufti_model', 
+      'Jewish Scholar': 'rabbi_model',
+      'Hindu Scholar': 'guru_model',
+      'Buddhist Scholar': 'monk_model'
+    };
+    
+    const modelId = characterModelMap[personaName as keyof typeof characterModelMap] || 'universal_guide_model';
+    setCharacterModelId(modelId);
+    
+    // Future: Call 3D animation system
+    // window.character3D?.playAnimation('speaking', modelId);
+  }, []);
+  
+  const onInterruptAnimation = useCallback((personaName: string) => {
+    console.log('🎭 3D CHARACTER: Triggering interrupt animation for', personaName);
+    setCharacterState('listening');
+    setIsCharacterAnimating(true);
+    
+    // Future: Call 3D animation system
+    // window.character3D?.playAnimation('interrupted', characterModelId);
+  }, [characterModelId]);
+  
+  const onIdleAnimation = useCallback((personaName: string) => {
+    console.log('🎭 3D CHARACTER: Returning to idle for', personaName);
+    setCharacterState('idle');
+    setIsCharacterAnimating(false);
+    
+    // Future: Call 3D animation system
+    // window.character3D?.playAnimation('idle', characterModelId);
+  }, [characterModelId]);
 
   // VoiceModeHandler's reliable TTS - mapped after voiceHandlerResult is available
 
@@ -181,17 +230,35 @@ function VoiceFirstChatInterfaceInner({
         console.log('🔊 AI TTS started - enabling interruption detection');
         setIsAISpeaking(true);
         setPlayingMessageId(messages[messages.length - 1]?.id || null);
+        
+        // 3D CHARACTER HOOK: Trigger speaking animation
+        onSpeakAnimation(selectedPersona?.name || 'Universal Scholar');
+        
+        // ARIA-LIVE: Update status for screen readers
+        setVoiceStatus('AI is speaking. You can interrupt by speaking.');
       } else if (state === 'idle' || state === 'interrupted') {
         console.log('🔊 AI TTS ended or interrupted');
         setIsAISpeaking(false);
         setPlayingMessageId(null);
         setIsProcessingVoice(false);
+        
+        // 3D CHARACTER HOOK: Return to idle state
+        onIdleAnimation(selectedPersona?.name || 'Universal Scholar');
+        
+        // ARIA-LIVE: Update status for screen readers
+        setVoiceStatus('Voice system is ready.');
       }
     },
     onInterrupt: () => {
       console.log('🚨 VOICE INTERRUPTION: AI speech interrupted');
       setIsAISpeaking(false);
       setPlayingMessageId(null);
+      
+      // 3D CHARACTER HOOK: Trigger interruption animation
+      onInterruptAnimation(selectedPersona?.name || 'Universal Scholar');
+      
+      // ARIA-LIVE: Update status for screen readers
+      setVoiceStatus('AI speech interrupted. Continue speaking your question.');
 
       // Show user feedback
       toast({
@@ -1204,6 +1271,16 @@ function VoiceFirstChatInterfaceInner({
 
   return (
     <Card className={cn("flex flex-col h-full bg-white shadow-lg", className)}>
+      {/* ARIA-LIVE: Accessibility status announcements for screen readers */}
+      <div 
+        aria-live="polite" 
+        aria-atomic="true"
+        className="sr-only"
+        role="status"
+      >
+        {voiceStatus}
+      </div>
+      
       {/* Enhanced Header with Dynamic Persona Display */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center gap-3">
