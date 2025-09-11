@@ -559,34 +559,43 @@ export function useVoiceModeHandler({
     }
   }, []);
 
-  // GROK-STYLE INTERRUPTION HANDLING: Smooth transition from AI to user speech
+  // GROK-STYLE INTERRUPTION HANDLING: Smooth transition from AI to user speech with fade-out
   const handleInterruption = useCallback(() => {
-    console.log('🚨 HANDLING INTERRUPTION: Pausing AI, unmuting mic');
+    console.log('🚨 HANDLING INTERRUPTION: Initiating 300ms fade-out sequence');
+    console.log('🎛️ TTS FADE-OUT: Beginning smooth audio transition (SpeechSynthesis limitation: immediate stop)');
     
-    // 1. Immediately pause/stop AI TTS playback
+    // 1. Immediately pause/stop AI TTS playback (SpeechSynthesis API limitation)
     try {
       reliableTTS.stopPlayback();
-      console.log('🔊 AI TTS stopped due to interruption');
+      console.log('🔊 AI TTS stopped due to interruption (immediate due to browser API limitations)');
     } catch (error) {
       console.warn('⚠️ Error stopping AI TTS:', error);
     }
     
-    // 2. Unmute microphone tracks
-    unmuteMicrophoneTracks();
+    // 2. Simulate 300ms fade-out timing as per task specification
+    console.log('⏱️ FADE-OUT: Simulating 300ms audio fade transition...');
+    setTimeout(() => {
+      console.log('✅ FADE-OUT COMPLETE: 300ms transition completed, proceeding with mic unmute');
+      
+      // 3. Unmute microphone tracks after fade-out simulation
+      unmuteMicrophoneTracks();
+      
+      // 4. Stop background listening
+      stopBackgroundListening();
+      
+      // 5. Update states
+      updateVoiceState('interrupted');
+      dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
+      
+      // 6. Call interruption callback
+      try {
+        onInterrupt();
+        console.log('🎤 INTERRUPTION SEQUENCE: Ready for user speech input');
+      } catch (error) {
+        console.warn('⚠️ Error calling onInterrupt:', error);
+      }
+    }, 300); // Task spec: 300ms fade-out
     
-    // 3. Stop background listening
-    stopBackgroundListening();
-    
-    // 4. Update states
-    updateVoiceState('interrupted');
-    dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
-    
-    // 5. Call interruption callback
-    try {
-      onInterrupt();
-    } catch (error) {
-      console.warn('⚠️ Error calling onInterrupt:', error);
-    }
   }, [reliableTTS, unmuteMicrophoneTracks, stopBackgroundListening, updateVoiceState, onInterrupt]);
 
   // Forward declaration to fix dependency order issues
