@@ -700,7 +700,8 @@ export function useVoiceModeHandler({
     hasError
   ]); // Minimal dependencies to prevent loops
 
-  // Moved after stopListeningSafely declaration to fix dependency order
+  // Forward declaration to fix dependency order issues
+  const stopListeningSafelyRef = useRef<(() => Promise<void>) | null>(null);
 
   const toggleListening = useCallback(async (): Promise<boolean> => {
     console.log('🎤 TOGGLE LISTENING - Current state:', {
@@ -714,7 +715,9 @@ export function useVoiceModeHandler({
     // If already listening, stop safely
     if (state.isListening) {
       console.log('🛑 Stopping listening safely...');
-      await stopListeningSafely();
+      if (stopListeningSafelyRef.current) {
+        await stopListeningSafelyRef.current();
+      }
       return false;
     }
 
@@ -749,7 +752,7 @@ export function useVoiceModeHandler({
       console.error('🚨 Failed to start listening:', error);
       return false;
     }
-  }, [state.isListening, state.isSupported, state.hasPermission, disabled, hasError, stopListening, startListening]);
+  }, [state.isListening, state.isSupported, state.hasPermission, disabled, hasError, startListening]);
 
   // Safe speech recognition management with error suppression
   const stopListeningSafely = useCallback(async (): Promise<void> => {
@@ -870,6 +873,11 @@ export function useVoiceModeHandler({
       console.error('🚨 Failed to create speech recognition:', error);
       return false;
     }
+  }, []);
+
+  // Assign the function to the ref to avoid circular dependency
+  useEffect(() => {
+    stopListeningSafelyRef.current = stopListeningSafely;
   }, [stopListeningSafely]);
 
   // Safe wrapper for stopListening - routes to safe method
