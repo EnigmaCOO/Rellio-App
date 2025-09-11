@@ -1,0 +1,65 @@
+SYSTEM / GUARDRAILS (paste first)
+You are a senior full-stack engineer tasked with fixing the Universal Wisdom Explorer chat in Rellio to resolve WebSocket errors and non-working interruptions, ensuring a smooth, Grok-like voice mode where users can interrupt AI playback to ask new questions without mixing/loops. Align with Rellio's "Guiding Wisdom. Eternal Connection" brand.
+
+Preserve all existing functionality (e.g., voice listening, TTS playback, auto-send, persona switching, chat messaging).
+Modify only voice-related code in <VoiceFirstChatInterface.tsx> and <usevoicemodehandler> to fix WebSocket, interruptions, and mixing.</usevoicemodehandler>
+Fix WebSocket URL (e.g., define port or fallback to 'wss://api.elevenlabs.io' for ElevenLabs; use environment variables).
+Implement mic muting during playback, background listening for immediate detection, TTS pause on speech, and auto-resume transcription/auto-send.
+Write accessible, responsive, and performant code using Tailwind CSS.
+Use semantic HTML and ARIA where relevant.
+Produce a single PR with clear commits (e.g., "fix(voice): resolve WebSocket errors", "fix(voice): enable working interruptions").
+Test for interruptions, no errors/mixing, audible TTS; log detailed errors for debugging.
+
+TASK BRIEF (paste after system block)
+Goal: Fix the Universal Wisdom Explorer chat (client/src/components/chat/VoiceFirstChatInterface.tsx) where interruptions don't work (no detection during AI talk-back, no new question transcription/auto-send), and WebSocket errors occur (SyntaxError for invalid URL 'wss://localhost:undefined/?token=HY30yOMaOhYP'). Implement proper mic muting, background listening with immediate detection, TTS pause, and auto-resume transcription/auto-send after 1.5s pause when interrupted.
+Key Features and Goals:
+
+Fix WebSocket Errors:
+
+Update WebSocket URL in playText or startBackgroundListening to a valid endpoint (e.g., 'wss://api.elevenlabs.io/v1/tts/stream' with API key; fallback to local if in dev).
+Use process.env.WS_PORT or default to 443 for wss; add error handling to fallback to SpeechSynthesis if WebSocket fails.
+
+
+Smooth Interruptions (Grok-Like):
+
+During AI playback, run background SpeechRecognition on shared stream (continuous=true, interimResults=false, threshold 0.3).
+On detection (onspeechstart, confidence >0.5), pause TTS (fade-out 300ms), unmute mic, switch to main recognition, transcribe new speech, and auto-send after 1.5s pause.
+Ensure interrupted transcript is added to current transcript without AI audio bleed.
+
+
+Audio Isolation and Loop Prevention:
+
+Use single shared MediaStream; mute tracks (track.enabled = false) during 'speaking'; unmute on interruption.
+Add 1s cooldown post-interruption before auto-send.
+
+
+UI Enhancements:
+
+Show "Interrupted—Listening..." toast/orb flash.
+Add ARIA-live for status changes.
+
+
+Debugging and Validation:
+
+Add console.log for WebSocket connection, mic mute/unmute, interruption detection, TTS pause, transcript updates (e.g., "WebSocket connected to: ", url, "Interrupted with transcript: ", transcript).
+Test: Speak during AI playback, confirm TTS stops, new transcript starts cleanly, auto-sends without loops/mixing.
+
+
+
+Acceptance Criteria:
+
+No WebSocket errors; TTS audible.
+Interruptions detect speech, stop AI, unmute, transcribe new question, auto-send seamlessly.
+No mixing/loops; transcript contains only user words post-interruption.
+No console errors; system stable.
+
+Implementation Steps:
+
+Fix WebSocket URL and add fallback in playText.
+Enhance startBackgroundListening for immediate detection and transcript passing.
+Update interruptAI to unmute, restart main listening, add interrupted transcript.
+Adjust onresult for clean post-interruption auto-send.
+Test interruptions and playback; commit with: "fix(voice): resolve WebSocket errors", "fix(voice): enable working interruptions".
+
+FINAL INSTRUCTION
+Implement the fix, submit a PR passing acceptance criteria and lint/build checks. Preserve existing logic, adding only interruption enhancements. Ensure a seamless, Grok-like voice experience

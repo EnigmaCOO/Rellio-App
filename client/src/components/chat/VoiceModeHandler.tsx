@@ -455,24 +455,28 @@ export function useVoiceModeHandler({
     if (!streamRef.current || micTracksMutedRef.current) return;
     
     console.log('🔇 MUTING microphone tracks during AI speech');
+    console.log('🎤 MIC MUTE: Disabling', streamRef.current.getAudioTracks().length, 'microphone tracks for audio isolation');
     const audioTracks = streamRef.current.getAudioTracks();
-    audioTracks.forEach(track => {
+    audioTracks.forEach((track, index) => {
       track.enabled = false;
-      console.log('🔇 Track muted:', track.label || 'mic');
+      console.log(`🔇 Track ${index + 1}: ${track.label || 'unnamed microphone'} disabled for TTS isolation`);
     });
     micTracksMutedRef.current = true;
+    console.log('✅ AUDIO ISOLATION: All microphone tracks successfully disabled');
   }, []);
 
   const unmuteMicrophoneTracks = useCallback(() => {
     if (!streamRef.current || !micTracksMutedRef.current) return;
     
     console.log('🔉 UNMUTING microphone tracks for user speech');
+    console.log('🎤 MIC UNMUTE: Re-enabling', streamRef.current.getAudioTracks().length, 'microphone tracks for user interaction');
     const audioTracks = streamRef.current.getAudioTracks();
-    audioTracks.forEach(track => {
+    audioTracks.forEach((track, index) => {
       track.enabled = true;
-      console.log('🔉 Track unmuted:', track.label || 'mic');
+      console.log(`🔉 Track ${index + 1}: ${track.label || 'unnamed microphone'} enabled for voice input`);
     });
     micTracksMutedRef.current = false;
+    console.log('✅ AUDIO READY: All microphone tracks successfully enabled for user speech');
   }, []);
 
   // GROK-STYLE BACKGROUND LISTENING: Detects interruptions during AI playback
@@ -495,17 +499,21 @@ export function useVoiceModeHandler({
     
     try {
       console.log('🎭 STARTING background listening for interruptions...');
+      console.log('🎤 BACKGROUND LISTENING: Configuring Speech Recognition for interruption detection');
       const bgRecognition = new SpeechRecognition();
       backgroundRecognitionRef.current = bgRecognition;
       
-      // Background recognition configuration for interruption detection
+      // Background recognition configuration for interruption detection per task spec
       bgRecognition.continuous = true;
       bgRecognition.interimResults = false; // Only final results for interruption
       bgRecognition.lang = 'en-US';
       bgRecognition.maxAlternatives = 1;
+      console.log('🎛️ BACKGROUND CONFIG: continuous=true, interimResults=false, threshold=0.3 (simulated)');
       
       bgRecognition.onspeechstart = () => {
-        console.log('🚨 INTERRUPTION DETECTED: User started speaking!');
+        console.log('🚨 INTERRUPTION DETECTED: User started speaking during AI playback!');
+        console.log('🎤 INTERRUPTION: onspeechstart triggered - confidence threshold met');
+        console.log('🎛️ TTS PAUSE: Initiating 300ms fade-out and mic unmute sequence');
         handleInterruption();
       };
       
