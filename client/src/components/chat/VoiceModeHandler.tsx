@@ -728,26 +728,25 @@ export function useVoiceModeHandler({
   // Forward declaration to fix dependency order issues
   const switchToMainRecognitionRef = useRef<((transcript?: string) => Promise<void>) | null>(null);
   
-  // GROK-STYLE TTS: ElevenLabs API first, fallback to SpeechSynthesis (defined after all dependencies)
+  // LEGEND LABS-STYLE TTS: Real ElevenLabs audio.play() with SpeechSynthesis fallback
   const playTextWithElevenLabs = useCallback(async (text: string, voiceId?: string): Promise<void> => {
     if (!text.trim()) return;
     
-    console.log('🔊 GROK TTS: Starting ElevenLabs -> SpeechSynthesis fallback');
+    console.log('🔮 LEGEND LABS TTS: Starting real ElevenLabs audio.play() -> SpeechSynthesis fallback');
     dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: true } });
     
     try {
-      // BRIDGE: Activate interruption system for internal TTS
-      console.log('🌊 BRIDGE: Internal TTS started - activating interruption system');
+      // LEGEND LABS: Activate interruption system for TTS
+      console.log('🔮 LEGEND LABS: TTS started - activating seamless interruption system');
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: true, loading: false } });
       
-      // GROK-STYLE: Mute mic during AI speech and start background listening for interruptions  
-      // Note: This is also called by useReliableTTS.onStart, but these functions are idempotent
+      // LEGEND LABS-STYLE: Mute mic during AI speech and start background SR for interruptions  
       muteMicrophoneTracks();
       startBackgroundListening();
       updateVoiceState('speaking');
       
-      // Step 1: Try ElevenLabs API
-      console.log('🌍 TTS: Trying ElevenLabs API first...');
+      // Step 1: Try ElevenLabs API with real audio.play()
+      console.log('🎵 LEGEND LABS: Attempting ElevenLabs API with real audio playback...');
       
       const response = await fetch('/api/elevenlabs/speak', {
         method: 'POST',
