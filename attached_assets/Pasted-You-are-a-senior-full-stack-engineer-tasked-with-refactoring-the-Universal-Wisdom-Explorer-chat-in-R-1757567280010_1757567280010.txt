@@ -1,0 +1,71 @@
+You are a senior full-stack engineer tasked with refactoring the Universal Wisdom Explorer chat in Rellio to achieve the smoothest, Grok-like voice system with seamless interruptions, audio isolation, and preparation for future 3-D character integration (e.g., virtual personas like priest/rabbi/mufti/guru/monk as user companions), without breaking existing functionality or logic. Align with Rellio's "Guiding Wisdom. Eternal Connection" brand and draw inspiration from Legend Labs AI for smooth TTS and recognition.
+
+Preserve all existing functionality (e.g., voice listening, TTS playback, auto-send, persona switching, chat messaging, multi-perspective responses).
+Modify only voice-related code in <VoiceFirstChatInterface.tsx> and <usevoicemodehandler> to fix mixing/loops, interruptions, and inaudible output.</usevoicemodehandler>
+Implement single shared mic stream, track muting during playback, background listening for interruptions, and auto-resume/auto-send post-interruption.
+Prepare for 3-D characters by adding hooks for persona visuals (e.g., state for character model ID, callbacks for animation triggers on speak/interrupt).
+Write accessible, responsive, and performant code using Tailwind CSS.
+Use semantic HTML and ARIA where relevant.
+Produce a single PR with clear commits (e.g., "fix(voice): resolve mixing and inaudible TTS", "feat(voice): add Grok-like interruptions and 3-D prep").
+Test for smooth interruptions, no loops/mixing, audible TTS, and 3-D hooks; log detailed errors for debugging.
+
+TASK BRIEF (paste after system block)
+Goal: Refactor the Universal Wisdom Explorer chat (client/src/components/chat/VoiceFirstChatInterface.tsx) to fix AI voice mixing with transcript, inaudible TTS, and non-working interruptions. Implement a single shared mic stream for isolation, background listening for detection, immediate TTS pause on user speech, auto-resume transcription, and auto-send after 1.5s pause, replicating Grok's smooth mode. Add hooks to prepare for 3-D character integration (e.g., visual animations for personas like Islamic Mufti, Jewish Rabbi, Christian Priest during speak/interrupt).
+Key Features and Goals:
+
+Single Shared Mic Stream and Isolation:
+
+Use one MediaStream for main and background recognition to ensure consistent muting.
+Mute mic tracks (track.enabled = false) during AI playback ('speaking' state) to prevent mixing/loops.
+Unmute on interruption; add 1s cooldown before auto-send.
+
+
+Smooth Interruptions (Grok-Like):
+
+During AI playback, run background SpeechRecognition on the shared stream (continuous=true, interimResults=false, threshold 0.3).
+On detection (onspeechstart, confidence >0.5), pause TTS (fade-out 300ms), unmute mic, switch to main recognition, transcribe interrupting speech, and auto-send after 1.5s pause.
+Retain context (last 5 turns) for personas; trigger 3-D animation hooks (e.g., onInterruptAnimation(persona)).
+
+
+Audible TTS Playback:
+
+Use ElevenLabs API for real audio (fetch '/api/elevenlabs/speak' with text/voiceId); fallback to SpeechSynthesis if fails.
+Ensure audio.play() triggers sound; add volume control and error handling.
+
+
+3-D Character Preparation:
+
+Add state/hooks for persona visuals (e.g., useState for modelId; callbacks onSpeakAnimation, onInterruptAnimation).
+Example: onStateChange('speaking') calls onSpeakAnimation(selectedPersona.name).
+
+
+UI Enhancements:
+
+Show "Interrupted—Listening..." toast/orb flash after interruption.
+Add ARIA-live for status.
+
+
+Debugging and Validation:
+
+Add console.log for mic mute/unmute, interruption detection, TTS URL, playback start/end, auto-send (e.g., "Mic muted during AI speech", "Interrupted with transcript: ", transcript).
+Test: Speak during AI playback, confirm TTS stops, transcription resumes, auto-sends without loops/mixing.
+
+
+
+Acceptance Criteria:
+
+No mixing/loops; TTS audible.
+Interruptions detect speech, stop AI, unmute, transcribe, auto-send seamlessly.
+3-D hooks prepared for future integration.
+No console errors; system stable.
+
+Implementation Steps:
+
+Share single stream between main/background; add track muting in useEffect.
+Update background onresult to trigger interrupt, restart main listening.
+Replace simulateElevenLabsTTS with real API/fallback.
+Add 3-D animation hooks.
+Test interruptions and playback; commit with: "fix(voice): resolve mixing and inaudible TTS", "feat(voice): add Grok-like interruptions and 3-D prep".
+
+FINAL INSTRUCTION
+Implement the refactor, submit a PR passing acceptance criteria and lint/build checks. Preserve existing logic, adding only voice enhancements and 3-D hooks. Ensure a seamless, Grok-like voice experience with smooth interruptions. If issues persist, share console logs or updated code.
