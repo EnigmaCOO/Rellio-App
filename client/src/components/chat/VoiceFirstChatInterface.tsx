@@ -1227,7 +1227,7 @@ function VoiceFirstChatInterfaceInner({
       if (recognitionRef.current) {
         try {
           console.log('🎤 Stopping main recognition...');
-          recognitionRef.current.abort();
+          recognitionRef.current.stop(); // Use stop() instead of abort() to avoid DOMException
           recognitionRef.current = null;
         } catch (error) {
           console.warn('🚨 Main recognition cleanup error:', error);

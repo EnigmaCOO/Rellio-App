@@ -482,6 +482,17 @@ export function useVoiceModeHandler({
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
     
+    // CRITICAL FIX: Stop main recognition before starting background recognition to avoid conflicts
+    if (recognitionRef.current) {
+      console.log('🎭 MICROPHONE ISOLATION: Stopping main recognition before background listening');
+      try {
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      } catch (error) {
+        console.warn('⚠️ Error stopping main recognition for background:', error);
+      }
+    }
+    
     try {
       console.log('🎭 STARTING background listening for interruptions...');
       const bgRecognition = new SpeechRecognition();
@@ -699,6 +710,10 @@ export function useVoiceModeHandler({
           resolve(false);
           return;
         }
+
+        // CRITICAL FIX: Stop background recognition before starting main recognition to avoid conflicts
+        console.log('🎤 MICROPHONE ISOLATION: Stopping background recognition before main listening');
+        stopBackgroundListening();
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
