@@ -1,0 +1,62 @@
+Refactor the Universal Wisdom Explorer chat (client/src/components/chat/VoiceFirstChatInterface.tsx) to fix non-working interruptions, inaudible TTS, and WebSocket errors (e.g., wss://localhost:undefined/?token=HY30yOMaOhYP). Implement a single shared mic stream for isolation, background listening with improved detection, immediate TTS pause on user speech, auto-resume transcription, and auto-send after 1.5s pause, inspired by Legend Labs’ smooth mode. Use real ElevenLabs API or SpeechSynthesis fallback for audible TTS, and add 3-D character preparation hooks.
+Key Features and Goals:
+
+Fix WebSocket and TTS Issues:
+
+Resolve WebSocket error by checking environment variables (e.g., process.env.WS_PORT or process.env.ELEVENLABS_API_KEY) and defaulting to a valid URL (e.g., wss://api.elevenlabs.io if API key exists, else local fallback).
+Update simulateElevenLabsTTS to fetch real audio from ElevenLabs API (e.g., /api/elevenlabs/speak) with voiceId; fallback to window.speechSynthesis.speak() if fails. Ensure audio.play() succeeds with error logging.
+
+
+Single Shared Mic Stream and Isolation:
+
+Use one MediaStream for main and background recognition, initialized in initializeAudioContext.
+Mute all tracks (track.enabled = false) during 'speaking' state; unmute on interruption with 1s cooldown before auto-send.
+
+
+Smooth Interruptions (Legend Labs-Inspired):
+
+In startBackgroundListening, use the shared stream with continuous=true, interimResults=false, threshold 0.3, and onspeechstart detection (confidence >0.5).
+On interruption, call interruptAI() to pause TTS (fade-out 300ms), unmute tracks, restart main startListening, transcribe interrupting speech, and auto-send after 1.5s pause.
+Retain context (last 5 turns); trigger 3-D animation hooks (e.g., onInterruptAnimation).
+
+
+Auto-Transcription and Auto-Send:
+
+After interruption, auto-transition to 'listening' state and feed background transcript to onTranscript.
+In onresult, auto-send final transcript after 1.5s (onspeechend, confidence >0.85) if in voice mode.
+
+
+3-D Character Preparation:
+
+Add useState for characterModelId; callbacks onSpeakAnimation, onInterruptAnimation triggered by voiceState changes (e.g., 'speaking' → onSpeakAnimation(selectedPersona.name)).
+
+
+UI Enhancements:
+
+Show "Interrupted—Listening..." toast/orb flash; add ARIA-live for status.
+
+
+Debugging and Validation:
+
+Add console.log for WebSocket URL, mic mute/unmute, interruption detection, TTS playback, auto-send (e.g., "WebSocket URL: ", url, "Mic muted during AI speech", "Interrupted with transcript: ", transcript).
+Test: Speak during AI playback, confirm TTS stops, transcription resumes, auto-sends without loops/mixing.
+
+
+
+Acceptance Criteria:
+
+WebSocket error resolved; TTS audible (ElevenLabs or fallback).
+Interruptions detect speech, stop AI, unmute, transcribe, auto-send seamlessly.
+3-D hooks functional for future integration.
+No console errors (e.g., aborted recognition); system stable.
+
+Implementation Steps:
+
+Fix WebSocket URL in playText or environment; update simulateElevenLabsTTS with API/fallback.
+Share single stream and add track muting in useEffect.
+Enhance startBackgroundListening and interruptAI for detection/restart.
+Add 3-D hooks and UI feedback.
+Test interruptions and playback; commit with: "fix(voice): resolve interruptions and WebSocket errors", "feat(voice): enhance TTS and 3-D prep".
+
+FINAL INSTRUCTION
+Implement the refactor, submit a PR passing acceptance criteria and lint/build checks. Preserve existing logic, adding only voice enhancements and 3-D hooks. Ensure a seamless, Legend Labs-inspired voice experience with working interruptions. If issues persist (e.g., errors or no interruption), share console logs or updated code—let’s get this perfect!

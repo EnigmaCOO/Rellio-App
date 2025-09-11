@@ -55,6 +55,10 @@ export interface VoiceModeHandlerReturn {
     isFirefox: boolean;
     name: string;
   };
+  // BRIDGE METHODS: Connect external TTS systems (like VoiceTalkBackHandler)
+  onAISpeakingStart: () => void;
+  onAISpeakingEnd: () => void;
+  setExternalTTSStopCallback: (callback: (() => void) | null) => void;
 }
 
 declare global {
@@ -197,16 +201,25 @@ export function useVoiceModeHandler({
   const reliableTTS = useReliableTTS({
     volume: state.volume,
     onStart: () => {
+      console.log('🌊 BRIDGE: useReliableTTS started - activating interruption system');
+      muteMicrophoneTracks();
+      startBackgroundListening();
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: true, loading: false } });
       updateVoiceState('speaking');
     },
     onEnd: () => {
+      console.log('🌊 BRIDGE: useReliableTTS ended - deactivating interruption system');
+      unmuteMicrophoneTracks();
+      stopBackgroundListening();
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
       updateVoiceState('idle');
       activeRequestRef.current = null;
     },
     onError: (error) => {
       console.error('🔊 TTS Error:', error);
+      console.log('🌊 BRIDGE: useReliableTTS error - deactivating interruption system');
+      unmuteMicrophoneTracks();
+      stopBackgroundListening();
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
       updateVoiceState('idle');
       activeRequestRef.current = null;
@@ -562,7 +575,12 @@ export function useVoiceModeHandler({
     dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: true } });
     
     try {
-      // GROK-STYLE: Mute mic during AI speech and start background listening for interruptions
+      // BRIDGE: Activate interruption system for internal TTS
+      console.log('🌊 BRIDGE: Internal TTS started - activating interruption system');
+      dispatch({ type: 'SET_TTS_STATE', payload: { playing: true, loading: false } });
+      
+      // GROK-STYLE: Mute mic during AI speech and start background listening for interruptions  
+      // Note: This is also called by useReliableTTS.onStart, but these functions are idempotent
       muteMicrophoneTracks();
       startBackgroundListening();
       updateVoiceState('speaking');
@@ -603,6 +621,9 @@ export function useVoiceModeHandler({
       updateVoiceState('idle');
       unmuteMicrophoneTracks();
       stopBackgroundListening();
+      
+      // BRIDGE: Deactivate interruption system on TTS failure
+      console.log('🌊 BRIDGE: Internal TTS failed - deactivating interruption system');
     }
     
   }, [muteMicrophoneTracks, startBackgroundListening, updateVoiceState, reliableTTS, unmuteMicrophoneTracks, stopBackgroundListening]);
@@ -1313,6 +1334,43 @@ export function useVoiceModeHandler({
           userAgent.includes('opr') || userAgent.includes('opera') ? 'Opera' : 'Unknown Browser',
     fullUserAgent: navigator.userAgent
   };
+  
+  // PUBLIC BRIDGE METHODS: Connect external TTS systems with interruption logic
+  const externalTTSStopRef = useRef<(() => void) | null>(null);
+  
+  const onAISpeakingStart = useCallback(() => {
+    console.log('🌊 BRIDGE: External TTS started - activating interruption system');
+    muteMicrophoneTracks();
+    startBackgroundListening();
+    updateVoiceState('speaking');
+    dispatch({ type: 'SET_TTS_STATE', payload: { playing: true, loading: false } });
+  }, [muteMicrophoneTracks, startBackgroundListening, updateVoiceState]);
+  
+  const onAISpeakingEnd = useCallback(() => {
+    console.log('🌊 BRIDGE: External TTS ended - deactivating interruption system');
+    unmuteMicrophoneTracks();
+    stopBackgroundListening();
+    updateVoiceState('idle');
+    dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
+  }, [unmuteMicrophoneTracks, stopBackgroundListening, updateVoiceState]);
+  
+  const setExternalTTSStopCallback = useCallback((callback: (() => void) | null) => {
+    externalTTSStopRef.current = callback;
+  }, []);
+  
+  // Enhanced interruption handler that stops both internal and external TTS
+  const enhancedInterruptAI = useCallback(() => {
+    console.log('🚨 ENHANCED INTERRUPTION: Stopping all TTS playback');
+    
+    // Stop internal TTS
+    interruptAI();
+    
+    // Stop external TTS if callback exists
+    if (externalTTSStopRef.current) {
+      console.log('🚨 BRIDGE: Stopping external TTS via callback');
+      externalTTSStopRef.current();
+    }
+  }, [interruptAI]);
 
 
   return {
@@ -1326,7 +1384,7 @@ export function useVoiceModeHandler({
     toggleListening,
     isSupported: state.isSupported,
     hasPermission: state.hasPermission,
-    interruptAI,
+    interruptAI: enhancedInterruptAI,
     // Background listening removed
     // ElevenLabs TTS methods
     playText: playTextWithElevenLabs,
@@ -1335,6 +1393,10 @@ export function useVoiceModeHandler({
     isLoading: state.isLoading,
     volume: state.volume,
     setVolume,
-    browserInfo
+    browserInfo,
+    // BRIDGE METHODS: Connect external TTS systems (like VoiceTalkBackHandler)
+    onAISpeakingStart,
+    onAISpeakingEnd,
+    setExternalTTSStopCallback
   };
 }

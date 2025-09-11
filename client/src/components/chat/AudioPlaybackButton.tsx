@@ -103,7 +103,7 @@ export function AudioPlaybackButton({
             setIsLoading(false);
             
             // Handle the specific "interrupted by pause" error
-            if (playError.name === 'AbortError') {
+            if ((playError as Error).name === 'AbortError') {
               toast({
                 title: "Audio interrupted",
                 description: "Audio playback was interrupted. Please try again.",

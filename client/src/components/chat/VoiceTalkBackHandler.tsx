@@ -56,17 +56,22 @@ export const VoiceTalkBackHandler = React.memo(({
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
     
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    // Fix for undefined port issue - ensure we have a proper host with port
-    let host = window.location.host;
     
-    // Fallback to localhost:5000 if host is empty or doesn't include port
-    if (!host || host === 'localhost' || !host.includes(':')) {
-      host = 'localhost:5000';
+    // FIX: Use same-origin host for production compatibility (no hardcoded port)
+    const host = window.location.host || 'localhost:5000'; // Only fallback in dev
+    
+    console.log('🌐 WebSocket URL Debug - protocol:', protocol, 'host:', host);
+    
+    // Simplified host validation - use same-origin
+    const finalHost = host || 'localhost:5000';
+    if (!finalHost || finalHost.includes('undefined')) {
+      console.warn('⚠️ WebSocket: Invalid host, falling back to localhost:5000');
     }
     
-    const wsUrl = `${protocol}//${host}/ws/voice`;
+    const wsUrl = `${protocol}//${finalHost}/ws/voice`;
     
     try {
+      console.log('🔊 WebSocket URL constructed:', wsUrl);
       console.log('🔊 Attempting WebSocket connection to:', wsUrl);
       wsRef.current = new WebSocket(wsUrl);
       
@@ -94,14 +99,16 @@ export const VoiceTalkBackHandler = React.memo(({
       };
       
       wsRef.current.onerror = (error) => {
-        console.error('Voice WebSocket error:', error);
+        console.error('❌ Voice WebSocket error:', error);
         console.log('🔊 WebSocket failed, falling back to HTTP streaming');
+        console.log('🔍 Failed WebSocket URL was:', wsUrl);
         // Fallback to HTTP streaming
         fallbackToHttpStreaming();
       };
       
     } catch (error) {
-      console.error('Failed to setup WebSocket:', error);
+      console.error('❌ Failed to setup WebSocket:', error);
+      console.log('🔍 WebSocket URL that failed:', wsUrl);
       console.log('🔊 WebSocket setup failed, using HTTP streaming instead');
       fallbackToHttpStreaming();
     }

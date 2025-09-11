@@ -27,7 +27,16 @@ export class VoiceWebSocketHandler {
       server, 
       path: '/ws/voice',
       perMessageDeflate: false, // Disable compression for lower latency
-      host: '0.0.0.0' // Ensure it binds to all interfaces in Replit
+      host: '0.0.0.0', // Ensure it binds to all interfaces in Replit
+      // Allow connections with any query parameters (tokens, etc.)
+      verifyClient: (info: { origin: string; secure: boolean; req: any }) => {
+        console.log('🔍 WebSocket verification request:', {
+          origin: info.origin,
+          url: info.req.url,
+          secure: info.secure
+        });
+        return true; // Accept all connections for now - can add auth later
+      }
     });
     
     this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -41,6 +50,11 @@ export class VoiceWebSocketHandler {
       const sessionId = `voice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
       console.log(`🎤 Voice client connected: ${sessionId}`);
+      console.log(`🌐 WebSocket connection details:`, {
+        url: req.url,
+        headers: req.headers.origin || 'no-origin',
+        userAgent: req.headers['user-agent']?.slice(0, 50) || 'no-ua'
+      });
       
       const client: ClientConnection = {
         ws,
