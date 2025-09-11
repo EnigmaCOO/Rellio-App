@@ -244,8 +244,14 @@ export function useVoiceModeHandler({
       
       // LEGEND LABS: Initialize and start background SR for speech detection
       if (!backgroundRecognitionRef.current) {
-        await initializeBackgroundSR();
+        console.log('🎭 LEGEND LABS DEBUG: Initializing background SR...');
+        const success = await initializeBackgroundSR();
+        if (!success) {
+          console.error('❌ LEGEND LABS DEBUG: Failed to initialize background SR');
+          return; // Don't continue if background SR failed
+        }
       }
+      console.log('🎭 LEGEND LABS DEBUG: Starting background listening...');
       startBackgroundListening(); // Start dedicated SR for interruption
       
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: true, loading: false } });
@@ -646,7 +652,7 @@ export function useVoiceModeHandler({
       
       // Critical: Configure background SR for interruption detection only
       backgroundRecognition.onspeechstart = () => {
-        console.log('🚨 BACKGROUND SR: Speech detected during AI playback - triggering interruption!');
+        console.log('🚨🚨🚨 LEGEND LABS: SPEECH DETECTED DURING AI PLAYBACK - INTERRUPTION TRIGGERED! 🚨🚨🚨');
         interruptionDetectedRef.current = true;
         
         // Immediately stop background SR to prevent multiple triggers
@@ -654,7 +660,10 @@ export function useVoiceModeHandler({
         
         // Trigger immediate TTS pause and main SR restart
         if (handleBackgroundInterruptionRef.current) {
+          console.log('🎭 LEGEND LABS: Calling interruption handler...');
           handleBackgroundInterruptionRef.current();
+        } else {
+          console.error('❌ LEGEND LABS: No interruption handler available!');
         }
       };
       
@@ -714,6 +723,10 @@ export function useVoiceModeHandler({
 
   const startBackgroundListening = useCallback(() => {
     if (!backgroundRecognitionRef.current || backgroundSRActiveRef.current) {
+      console.log('🚨 LEGEND LABS DEBUG: Cannot start background SR - missing ref or already active', {
+        hasRef: !!backgroundRecognitionRef.current,
+        isActive: backgroundSRActiveRef.current
+      });
       return;
     }
     
@@ -723,9 +736,10 @@ export function useVoiceModeHandler({
       backgroundSRActiveRef.current = true;
       interruptionDetectedRef.current = false;
       backgroundRecognitionRef.current.start();
-      console.log('✅ Background SR started - monitoring for speech during AI playback');
+      console.log('✅✅✅ BACKGROUND SR STARTED SUCCESSFULLY - MONITORING FOR SPEECH! ✅✅✅');
     } catch (error) {
-      console.error('❌ Failed to start background SR:', error);
+      console.error('❌ LEGEND LABS DEBUG: Failed to start background SR:', error);
+      console.error('❌ Error details:', error instanceof Error ? error.message : error, error instanceof Error ? error.name : 'Unknown');
       backgroundSRActiveRef.current = false;
     }
   }, []);
@@ -983,8 +997,14 @@ export function useVoiceModeHandler({
       
       // LEGEND LABS: Initialize and start background SR for speech detection
       if (!backgroundRecognitionRef.current) {
-        await initializeBackgroundSR();
+        console.log('🎭 LEGEND LABS DEBUG: Initializing background SR...');
+        const success = await initializeBackgroundSR();
+        if (!success) {
+          console.error('❌ LEGEND LABS DEBUG: Failed to initialize background SR');
+          return; // Don't continue if background SR failed
+        }
       }
+      console.log('🎭 LEGEND LABS DEBUG: Starting background listening...');
       startBackgroundListening(); // Start dedicated SR for interruption
       
       updateVoiceState('speaking');
