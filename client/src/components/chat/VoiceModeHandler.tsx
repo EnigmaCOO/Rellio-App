@@ -171,6 +171,7 @@ export function useVoiceModeHandler({
   const [hasError, setHasError] = useState(false);
   const isInterruptedRef = useRef<boolean>(false);
   const isPostInterruptionRef = useRef<boolean>(false); // Track post-interruption state for 1.5s auto-send
+  const interruptionCooldownRef = useRef<boolean>(false); // 1s cooldown to prevent interruption loops
   
   // Transactional interruption system refs
   const interruptionInFlightRef = useRef<boolean>(false);
@@ -512,6 +513,12 @@ export function useVoiceModeHandler({
       console.log('🎛️ BACKGROUND CONFIG: continuous=true, interimResults=false, threshold=0.3 (simulated)');
       
       bgRecognition.onspeechstart = () => {
+        // Check cooldown before processing interruption
+        if (interruptionCooldownRef.current) {
+          console.log('⏱️ INTERRUPTION COOLDOWN: Ignoring interruption during 1s cooldown period');
+          return;
+        }
+        
         console.log('🚨 INTERRUPTION DETECTED: User started speaking during AI playback!');
         console.log('🎤 INTERRUPTION: onspeechstart triggered - confidence threshold met');
         console.log('🎛️ TTS PAUSE: Initiating 300ms fade-out and mic unmute sequence');
@@ -887,6 +894,15 @@ export function useVoiceModeHandler({
                         if (isPostInterruption) {
                           console.log('🚀 POST-INTERRUPTION AUTO-SEND after 1.5s pause:', messageToSend);
                           console.log('📝 TRANSCRIPT PASSED: Clean post-interruption question sent');
+                          
+                          // Start 1s cooldown to prevent loops per task specification  
+                          interruptionCooldownRef.current = true;
+                          console.log('⏱️ COOLDOWN START: 1s interruption cooldown activated to prevent loops');
+                          setTimeout(() => {
+                            interruptionCooldownRef.current = false;
+                            console.log('⏱️ COOLDOWN END: 1s interruption cooldown completed, interruptions re-enabled');
+                          }, 1000); // Task spec: 1s cooldown post-interruption
+                          
                           // Reset post-interruption flag after successful send
                           isPostInterruptionRef.current = false;
                         } else {
