@@ -221,7 +221,6 @@ function VoiceFirstChatInterfaceInner({
     isSupported,
     hasPermission,
     interruptAI,
-    startBackgroundListening,
     playText,
     stopPlayback,
     isPlaying: voiceIsPlaying,
