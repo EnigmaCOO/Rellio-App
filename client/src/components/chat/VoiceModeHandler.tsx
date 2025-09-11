@@ -462,11 +462,11 @@ export function useVoiceModeHandler({
       micGainNodeRef.current = micGainNode;
       ttsGainNodeRef.current = ttsGainNode;
 
-      // LEGEND LABS CHAIN: Microphone -> MicGain -> Analyser -> Destination
-      // This allows gain-based muting while preserving analyser functionality
+      // CRITICAL FIX: Analyser must tap mic BEFORE gain control for interruption detection
+      // Routes: microphone -> analyser (for interruption) AND microphone -> micGain (for muting)
       const microphone = audioContext.createMediaStreamSource(stream);
+      microphone.connect(analyser);
       microphone.connect(micGainNode);
-      micGainNode.connect(analyser);
       
       // Keep analyser active for interruption detection even when mic is gain-muted
       console.log('✅ LEGEND LABS: Dual-gain audio chain initialized for precise isolation');
