@@ -1,0 +1,82 @@
+You are a senior full-stack engineer tasked with fixing the Universal Wisdom Explorer chat in Rellio to resolve the persistent interruption failure (no detection during AI talk-back, no new question transcription/auto-send) and the recurring DOMException error from Eruda devtools (SyntaxError for WebSocket construction at 'wss://localhost:undefined/?token=HY30yOMaOhYP'), ensuring a smooth, Legend Labs-inspired voice system with seamless interruptions and preparation for future 3-D character integration. Align with Rellio's "Guiding Wisdom. Eternal Connection" brand.
+
+Preserve all existing functionality (e.g., voice listening, TTS playback, auto-send, persona switching, chat messaging).
+Modify only voice-related code in <VoiceFirstChatInterface.tsx> and <usevoicemodehandler> to fix interruptions and Eruda/WebSocket errors.</usevoicemodehandler>
+Implement single shared mic stream, track muting during playback, background SR with immediate detection, TTS pause on speech, auto-resume transcription, and auto-send after 1.5s pause.
+Fix Eruda/WebSocket by removing or disabling Eruda devtools integration if causing errors; fallback TTS to SpeechSynthesis if ElevenLabs fails.
+Prepare for 3-D characters with hooks for persona visuals.
+Write accessible, responsive, and performant code using Tailwind CSS.
+Use semantic HTML and ARIA where relevant.
+Produce a single PR with clear commits (e.g., "fix(voice): resolve Eruda/WebSocket errors and interruptions", "feat(voice): enhance smooth mode and 3-D prep").
+Test for smooth interruptions, no errors/mixing, audible TTS; log detailed errors for debugging.
+
+TASK BRIEF (paste after system block)
+Goal: Fix the Universal Wisdom Explorer chat (client/src/components/chat/VoiceFirstChatInterface.tsx) where interruptions don't work (no detection during AI talk-back, no new question transcription/auto-send) and Eruda devtools causes DOMException (SyntaxError for WebSocket at 'wss://localhost:undefined/?token=HY30yOMaOhYP'). Implement a single shared mic stream for isolation, background SpeechRecognition with immediate detection, TTS pause on speech, auto-resume transcription, and auto-send after 1.5s pause, inspired by Legend Labs’ smooth mode. Use ElevenLabs API or SpeechSynthesis fallback for audible TTS. Add 3-D character preparation hooks.
+Key Features and Goals:
+
+Fix Eruda/WebSocket Errors:
+
+Remove or disable Eruda devtools integration (e.g., if imported in index.html or App.tsx, comment out <script src="eruda.js">).
+Update WebSocket URL in playText or startBackgroundListening to a valid endpoint (e.g., use process.env.WS_URL or fallback to 'wss://api.elevenlabs.io' for TTS; handle undefined port with default 443).
+Add error handling in fetch/WebSocket calls to fallback to SpeechSynthesis if fails.
+
+
+Single Shared Mic Stream and Isolation:
+
+Use one MediaStream in initializeAudioContext; mute tracks (track.enabled = false) during 'speaking'; unmute on interruption with 1s cooldown before auto-send.
+
+
+Smooth Interruptions (Legend Labs-Inspired):
+
+During AI playback, run background SR on shared stream (continuous=true, interimResults=false, threshold 0.3, confidence >0.5).
+On detection (onspeechstart), pause TTS (fade-out 300ms), unmute tracks, switch to main SR, transcribe new speech, and auto-send after 1.5s pause.
+Handle "aborted" DOMExceptions by restarting SR after 200ms delay in onerror.
+
+
+Auto-Transcription and Auto-Send:
+
+After interruption, auto-transition to 'listening' and feed background transcript to onTranscript.
+In onresult, auto-send final transcript after 1.5s (onspeechend, confidence >0.85).
+
+
+Audible TTS Playback:
+
+Use ElevenLabs API (fetch '/api/elevenlabs/speak'); fallback to SpeechSynthesis if fails.
+Ensure audio.play() triggers sound with error logging.
+
+
+3-D Character Preparation:
+
+Add useState for characterModelId; callbacks onSpeakAnimation, onInterruptAnimation on voiceState changes.
+
+
+UI Enhancements:
+
+Show "Interrupted—Listening..." toast/orb flash; add ARIA-live for status.
+
+
+Debugging and Validation:
+
+Add console.log for Eruda/WebSocket URL, mic mute/unmute, interruption detection, TTS pause, transcript updates (e.g., "WebSocket URL: ", url, "Interrupted with transcript: ", transcript).
+Test: Speak during AI playback, confirm TTS stops, transcription resumes, auto-sends without errors/mixing.
+
+
+
+Acceptance Criteria:
+
+No Eruda/WebSocket DOMExceptions; TTS audible.
+Interruptions detect speech, stop AI, unmute, transcribe, auto-send seamlessly.
+No mixing/loops; transcript clean.
+3-D hooks prepared; no console errors; system stable.
+
+Implementation Steps:
+
+Disable/remove Eruda devtools and fix WebSocket URL/fallback.
+Share single stream and add track muting.
+Enhance background SR and interruptAI for detection/restart.
+Update TTS with API/fallback.
+Add 3-D hooks and UI feedback.
+Test interruptions and playback; commit with: "fix(voice): resolve Eruda/WebSocket errors and interruptions", "feat(voice): enhance smooth mode and 3-D prep".
+
+FINAL INSTRUCTION
+Implement the refactor, submit a PR passing acceptance criteria and lint/build checks. Preserve existing logic, adding only enhancements. Ensure a seamless, Legend Labs-inspired voice experience with working interruptions. If issues persist, share console logs or updated code.
