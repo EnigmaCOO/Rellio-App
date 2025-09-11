@@ -482,62 +482,161 @@ export function useVoiceModeHandler({
     console.log('✅ AUDIO READY: All microphone tracks successfully enabled for user speech');
   }, []);
 
-  // SIMPLIFIED INTERRUPTION: Use audio level monitoring instead of background Speech Recognition
+  // LEGEND LABS-INSPIRED: Background Speech Recognition with pause/resume pattern  
   const startBackgroundListening = useCallback(() => {
-    if (!streamRef.current || !analyserRef.current) return;
+    if (backgroundRecognitionRef.current) {
+      console.log('⚠️ Background listening already active');
+      return;
+    }
+
+    console.log('🔮 LEGEND LABS: Starting background Speech Recognition for seamless interruptions');
     
-    console.log('🎭 STARTING audio-level interruption detection...');
-    console.log('🎤 INTERRUPTION: Using audio analysis instead of Speech Recognition to avoid conflicts');
-    
-    // Use existing audio analyser for interruption detection
-    const analyser = analyserRef.current;
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-    
-    let isMonitoring = true;
-    let consecutiveHighSamples = 0;
-    const requiredConsecutiveSamples = 5; // Require sustained audio for interruption
-    const interruptionThreshold = 30; // Audio level threshold for interruption
-    
-    const monitorInterruption = () => {
-      if (!isMonitoring || !analyser) return;
+    // Legend Labs approach: Use Speech Recognition with robust error handling
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.log('📱 No Speech Recognition API - falling back to audio-level monitoring');
+      // Fallback to audio-level monitoring if SR not available
+      if (!streamRef.current || !analyserRef.current) return;
       
-      analyser.getByteFrequencyData(dataArray);
-      const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
+      const analyser = analyserRef.current;
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
       
-      if (average > interruptionThreshold) {
-        consecutiveHighSamples++;
-        if (consecutiveHighSamples >= requiredConsecutiveSamples) {
-          // Check cooldown before processing interruption
-          if (interruptionCooldownRef.current) {
-            console.log('⏱️ INTERRUPTION COOLDOWN: Ignoring interruption during 1s cooldown period');
+      let isMonitoring = true;
+      let consecutiveHighSamples = 0;
+      const requiredConsecutiveSamples = 5;
+      const interruptionThreshold = 30;
+      
+      const monitorInterruption = () => {
+        if (!isMonitoring || !analyser) return;
+        
+        analyser.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
+        
+        if (average > interruptionThreshold) {
+          consecutiveHighSamples++;
+          if (consecutiveHighSamples >= requiredConsecutiveSamples) {
+            if (interruptionCooldownRef.current) {
+              console.log('⏱️ INTERRUPTION COOLDOWN: Ignoring interruption during 1s cooldown period');
+              return;
+            }
+            
+            console.log('🚨 AUDIO INTERRUPTION DETECTED: User speaking detected!');
+            isMonitoring = false;
+            handleInterruption();
             return;
           }
+        } else {
+          consecutiveHighSamples = 0;
+        }
+        
+        requestAnimationFrame(monitorInterruption);
+      };
+      
+      monitorInterruption();
+      backgroundRecognitionRef.current = {
+        stop: () => {
+          isMonitoring = false;
+          console.log('🎭 STOPPING audio-level interruption detection');
+        }
+      } as any;
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      backgroundRecognitionRef.current = recognition;
+      
+      // LEGEND LABS-STYLE: Optimized background listening configuration
+      recognition.continuous = true;        // Continuous monitoring
+      recognition.interimResults = false;   // Final results only for clean detection
+      recognition.lang = 'en-US';
+      recognition.maxAlternatives = 1;
+      
+      // Lower threshold for detection (more sensitive than main SR)
+      const confidenceThreshold = 0.3; // Legend Labs approach: lower threshold for interruption detection
+
+      recognition.onspeechstart = () => {
+        console.log('🔮 LEGEND LABS INTERRUPT: Speech detected during AI playback');
+        handleInterruption();
+      };
+
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        // Legend Labs pattern: Enhanced result processing with lower threshold
+        const lastResult = event.results[event.results.length - 1];
+        if (lastResult.isFinal && lastResult[0].confidence > confidenceThreshold) {
+          const transcript = lastResult[0].transcript.trim();
+          console.log(`🎤 LEGEND LABS: Background captured (confidence: ${lastResult[0].confidence}):`, transcript);
           
-          console.log('🚨 AUDIO INTERRUPTION DETECTED: User speaking detected!');
-          console.log('🎤 AUDIO LEVEL:', average.toFixed(1), '(threshold:', interruptionThreshold, ')');
-          console.log('🎛️ TTS PAUSE: Initiating immediate stop and mic unmute sequence');
-          isMonitoring = false; // Stop monitoring once interruption is detected
-          handleInterruption();
+          if (transcript.length > 1) { // Very low barrier for interruption
+            console.log('🎯 LEGEND LABS: Speech detected with sufficient confidence, triggering seamless interruption');
+            handleInterruption();
+          }
+        }
+      };
+      
+      // LEGEND LABS ERROR RESILIENCE: Handle "aborted" with 200ms restart delay
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        console.log('⚠️ Background SR error:', event.error);
+        
+        // Legend Labs pattern: Handle aborted errors with graceful restart
+        if (event.error === 'aborted') {
+          console.log('🔄 LEGEND LABS: SR aborted - restarting after 200ms delay for error resilience');
+          backgroundRecognitionRef.current = null;
+          setTimeout(() => {
+            if (state.tts.playing && !backgroundRecognitionRef.current) { 
+              console.log('🔄 LEGEND LABS: Restarting background SR after aborted error');
+              startBackgroundListening();
+            }
+          }, 200); // 200ms delay as per Legend Labs analysis
           return;
         }
-      } else {
-        consecutiveHighSamples = 0; // Reset if audio drops below threshold
-      }
+        
+        if (event.error === 'no-speech') {
+          console.log('✅ LEGEND LABS: No speech detected (expected during background monitoring)');
+          return; // Expected during quiet periods
+        }
+        
+        if (event.error === 'audio-capture') {
+          console.log('🔄 LEGEND LABS: Audio capture issue - implementing resilient restart');
+          backgroundRecognitionRef.current = null;
+          setTimeout(() => {
+            if (state.tts.playing && !backgroundRecognitionRef.current) {
+              console.log('🔄 LEGEND LABS: Retrying background listening after audio-capture error');
+              startBackgroundListening();
+            }
+          }, 500); // Longer delay for capture issues
+        }
+      };
+
+      recognition.onend = () => {
+        console.log('🔮 LEGEND LABS: Background listening ended');
+        backgroundRecognitionRef.current = null;
+        
+        // Legend Labs resilience: Auto-restart if still needed
+        if (state.tts.playing) {
+          console.log('🔄 LEGEND LABS: Auto-restarting background listening (AI still speaking)');
+          setTimeout(() => {
+            startBackgroundListening();
+          }, 100);
+        }
+      };
+
+      recognition.start();
+      console.log('✅ LEGEND LABS: Background Speech Recognition active with enhanced error resilience');
       
-      requestAnimationFrame(monitorInterruption);
-    };
-    
-    // Start monitoring
-    monitorInterruption();
-    
-    // Store cleanup function
-    backgroundRecognitionRef.current = {
-      stop: () => {
-        isMonitoring = false;
-        console.log('🎭 STOPPING audio-level interruption detection');
-      }
-    } as any;
+    } catch (error) {
+      console.warn('⚠️ Error starting LEGEND LABS background listening:', error);
+      backgroundRecognitionRef.current = null;
+      
+      // Legend Labs resilience: Retry after error
+      setTimeout(() => {
+        if (state.tts.playing) {
+          console.log('🔄 LEGEND LABS: Retrying background listening after initialization error');
+          startBackgroundListening();
+        }
+      }, 200);
+    }
     
   }, []);
 
