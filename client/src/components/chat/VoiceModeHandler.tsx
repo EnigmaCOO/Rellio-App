@@ -39,7 +39,7 @@ export interface VoiceModeHandlerReturn {
   isSupported: boolean;
   hasPermission: boolean;
   interruptAI: () => void;
-  startBackgroundListening: () => Promise<void>; // Add background listening for voice interruption
+  // Background listening removed - using single SR instance only
   // ElevenLabs TTS integration
   playText: (text: string) => Promise<void>;
   stopPlayback: () => void;
@@ -166,6 +166,10 @@ export function useVoiceModeHandler({
   // Add error boundary protection
   const [hasError, setHasError] = useState(false);
   const isInterruptedRef = useRef<boolean>(false);
+  
+  // Transactional interruption system refs
+  const interruptionInFlightRef = useRef<boolean>(false);
+  const srStoppingRef = useRef<boolean>(false);
 
   // Reset error state when disabled changes
   useEffect(() => {
@@ -265,8 +269,8 @@ export function useVoiceModeHandler({
     }
   }, [hasError]); // Remove onStateChange from dependencies
 
-  // Enhanced cleanup function with proper background recognition handling
-  const cleanup = useCallback(() => {
+  // Enhanced cleanup function with safe recognition handling
+  const cleanup = useCallback(async () => {
     console.log('🎤 Enhanced voice handler cleanup');
     try {
       // Clear all timeouts
@@ -277,27 +281,8 @@ export function useVoiceModeHandler({
         }
       });
 
-      // Stop background recognition first
-      if (recognitionRef.current?.backgroundRecognition) {
-        try {
-          console.log('🎤 Stopping background recognition...');
-          recognitionRef.current.backgroundRecognition.abort();
-          recognitionRef.current.backgroundRecognition = null;
-        } catch (error) {
-          console.warn('🚨 Error stopping background recognition:', error);
-        }
-      }
-
-      // Stop main recognition
-      if (recognitionRef.current) {
-        try {
-          console.log('🎤 Stopping main recognition...');
-          recognitionRef.current.abort();
-          recognitionRef.current = null;
-        } catch (error) {
-          console.warn('🚨 Error aborting main recognition:', error);
-        }
-      }
+      // Stop recognition safely
+      await stopListeningSafely();
 
       // Clean up audio context with better error handling
       if (audioContextRef.current) {
@@ -695,10 +680,15 @@ export function useVoiceModeHandler({
         
         console.log('💡 User-friendly error:', errorMessage);
         
-        // Direct cleanup to avoid dependency
-        if (recognitionRef.current) {
-          recognitionRef.current.abort();
-          recognitionRef.current = null;
+        // Use safe cleanup to avoid DOMException
+        try {
+          await stopListeningSafely();
+        } catch (cleanupError) {
+          console.warn('⚠️ Safe cleanup failed:', cleanupError);
+          // Fallback to direct cleanup only if safe method fails
+          if (recognitionRef.current) {
+            recognitionRef.current = null;
+          }
         }
         dispatch({ type: 'SET_LISTENING', payload: false });
         dispatch({ type: 'SET_STATE', payload: 'idle' });
@@ -710,30 +700,7 @@ export function useVoiceModeHandler({
     hasError
   ]); // Minimal dependencies to prevent loops
 
-  const stopListening = useCallback(() => {
-    console.log('🛑 Stopping listening');
-    // Call cleanup directly to avoid dependency issues
-    try {
-      // Clear all timeouts
-      [autoSendTimeoutRef, debounceTimeoutRef, silenceDetectionRef].forEach(ref => {
-        if (ref.current) {
-          clearTimeout(ref.current);
-          ref.current = null;
-        }
-      });
-
-      // Stop recognition
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
-        recognitionRef.current = null;
-      }
-
-      dispatch({ type: 'SET_LISTENING', payload: false });
-      dispatch({ type: 'SET_STATE', payload: 'idle' });
-    } catch (error) {
-      console.error('🚨 Stop listening error:', error);
-    }
-  }, []); // No dependencies
+  // Moved after stopListeningSafely declaration to fix dependency order
 
   const toggleListening = useCallback(async (): Promise<boolean> => {
     console.log('🎤 TOGGLE LISTENING - Current state:', {
@@ -744,10 +711,10 @@ export function useVoiceModeHandler({
       hasError
     });
 
-    // If already listening, stop
+    // If already listening, stop safely
     if (state.isListening) {
-      console.log('🛑 Stopping listening...');
-      stopListening();
+      console.log('🛑 Stopping listening safely...');
+      await stopListeningSafely();
       return false;
     }
 
@@ -784,154 +751,188 @@ export function useVoiceModeHandler({
     }
   }, [state.isListening, state.isSupported, state.hasPermission, disabled, hasError, stopListening, startListening]);
 
-  // Simplified interruption system - inspired by LegendLabs approach
-  const interruptAI = useCallback(() => {
-    console.log('🚨 INTERRUPT: Stopping AI speech immediately');
-
-    // Set interrupted flag to prevent any delayed operations
-    isInterruptedRef.current = true;
-
-    // STEP 1: Stop speech synthesis immediately (most important)
-    try {
-      if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
-        console.log('✅ Speech synthesis stopped');
+  // Safe speech recognition management with error suppression
+  const stopListeningSafely = useCallback(async (): Promise<void> => {
+    if (!recognitionRef.current || srStoppingRef.current) return;
+    
+    srStoppingRef.current = true;
+    console.log('🎤 Stopping speech recognition safely...');
+    
+    return new Promise((resolve) => {
+      if (!recognitionRef.current) {
+        srStoppingRef.current = false;
+        resolve();
+        return;
       }
-      
-      if (reliableTTS) {
-        reliableTTS.stopPlayback();
-        console.log('✅ Reliable TTS stopped');
+
+      const cleanup = () => {
+        if (recognitionRef.current) {
+          recognitionRef.current = null;
+        }
+        srStoppingRef.current = false;
+        dispatch({ type: 'SET_LISTENING', payload: false });
+        resolve();
+      };
+
+      // Set up listeners before stopping
+      recognitionRef.current.onend = cleanup;
+      recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
+        // Suppress expected "aborted" errors during intentional stops
+        if (srStoppingRef.current && event.error === 'aborted') {
+          console.log('✅ Speech recognition stopped intentionally');
+        } else {
+          console.warn('⚠️ Speech recognition error during stop:', event.error);
+        }
+        cleanup();
+      };
+
+      try {
+        recognitionRef.current.stop(); // Use stop() instead of abort()
+      } catch (error) {
+        console.warn('⚠️ Error stopping recognition:', error);
+        cleanup();
+      }
+    });
+  }, []);
+
+  const startListeningSafely = useCallback(async (): Promise<boolean> => {
+    console.log('🎤 Starting speech recognition safely...');
+    
+    // Ensure audio context is resumed
+    try {
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume();
       }
     } catch (error) {
-      console.warn('⚠️ TTS stop error:', error);
+      console.warn('⚠️ Audio context resume error:', error);
     }
 
-    // STEP 2: Update states
-    dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
-    
-    // STEP 3: Clear active requests
-    if (activeRequestRef.current) {
-      activeRequestRef.current = null;
+    // Ensure microphone gain is enabled
+    if (gainNodeRef.current) {
+      gainNodeRef.current.gain.value = 1;
     }
 
-    // STEP 4: Notify parent component
+    // Stop any existing recognition first
+    if (recognitionRef.current) {
+      await stopListeningSafely();
+      await new Promise(resolve => setTimeout(resolve, 250)); // Settle delay
+    }
+
+    // Create fresh SR instance (SR is stateful after errors)
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.error('🚨 Speech Recognition API not available');
+      return false;
+    }
+
     try {
-      if (onInterrupt && typeof onInterrupt === 'function') {
-        onInterrupt();
-      }
-    } catch (callbackError) {
-      console.warn('⚠️ Callback error:', callbackError);
-    }
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
 
-    // STEP 5: Start listening after brief delay (key improvement)
-    setTimeout(() => {
-      if (isInterruptedRef.current) {
-        console.log('🎤 INTERRUPT: Starting listening after speech stop');
-        updateVoiceState('listening');
-        
-        // Try to start listening smoothly
-        if (!state.isListening && !hasError) {
-          startListening().catch(error => {
-            console.warn('⚠️ Could not start listening after interrupt:', error);
-            updateVoiceState('idle');
-          });
+      // Configure recognition
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      recognition.maxAlternatives = 1;
+
+      // Set up error handling with suppression
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        // Suppress expected errors during intentional operations
+        if ((srStoppingRef.current || interruptionInFlightRef.current) && 
+            (event.error === 'aborted' || event.error === 'network')) {
+          console.log('✅ Recognition error suppressed during intentional stop:', event.error);
+          return;
         }
-        
-        isInterruptedRef.current = false;
+        console.warn('🚨 Recognition error:', event.error);
+        setHasError(true);
+      };
+
+      // Start recognition with retry logic
+      try {
+        recognition.start();
+        dispatch({ type: 'SET_LISTENING', payload: true });
+        console.log('✅ Speech recognition started safely');
+        return true;
+      } catch (startError) {
+        console.warn('⚠️ Recognition start failed, retrying...', startError);
+        await new Promise(resolve => setTimeout(resolve, 250));
+        try {
+          recognition.start();
+          dispatch({ type: 'SET_LISTENING', payload: true });
+          console.log('✅ Speech recognition started on retry');
+          return true;
+        } catch (retryError) {
+          console.error('🚨 Recognition start failed after retry:', retryError);
+          return false;
+        }
       }
-    }, 200); // Small delay to ensure speech stops
+    } catch (error) {
+      console.error('🚨 Failed to create speech recognition:', error);
+      return false;
+    }
+  }, [stopListeningSafely]);
 
-    console.log('✅ Interruption initiated');
-  }, [updateVoiceState, onInterrupt, reliableTTS, state.isListening, hasError, startListening]);
+  // Safe wrapper for stopListening - routes to safe method
+  const stopListening = useCallback(async () => {
+    console.log('🛑 Stopping listening (routing to safe method)');
+    await stopListeningSafely();
+  }, [stopListeningSafely]);
 
-  // Enhanced background listening for interruption during AI speech
-  const startBackgroundListening = useCallback(async (): Promise<void> => {
-    console.log('🎤 Starting background interruption detection...');
-    
-    if (!state.isSupported || hasError || !state.hasPermission) {
-      console.log('🚫 Background listening blocked:', { 
-        supported: state.isSupported, 
-        hasError, 
-        permission: state.hasPermission 
-      });
+  // Transactional interruption system - atomic sequence
+  const interruptAI = useCallback(async () => {
+    // Prevent concurrent interruptions
+    if (interruptionInFlightRef.current) {
+      console.log('🚫 Interruption already in progress, skipping');
       return;
     }
 
+    interruptionInFlightRef.current = true;
+    console.log('🚨 INTERRUPT: Starting transactional interruption');
+
     try {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const backgroundRecognition = new SpeechRecognition();
-
-      // Configure for interruption detection
-      backgroundRecognition.continuous = true;
-      backgroundRecognition.interimResults = true;
-      backgroundRecognition.lang = 'en-US';
-      backgroundRecognition.maxAlternatives = 1;
-
-      let hasDetectedSpeech = false;
-
-      backgroundRecognition.onstart = () => {
-        console.log('✅ Background interruption detection active');
-        hasDetectedSpeech = false;
-      };
-
-      backgroundRecognition.onresult = (event: SpeechRecognitionEvent) => {
-        if (hasDetectedSpeech) return;
-
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const result = event.results[i];
-          const transcript = result[0].transcript.trim();
-          const confidence = result[0].confidence || 0.8;
-
-          // Detect any speech for interruption
-          if (transcript.length > 0 && confidence > 0.3) {
-            console.log('🚨 SPEECH DETECTED - INTERRUPTING AI:', transcript);
-            hasDetectedSpeech = true;
-            
-            // Stop background recognition
-            try {
-              backgroundRecognition.stop();
-            } catch (e) {
-              console.log('Background recognition stop error:', e);
-            }
-
-            // Simplified interruption - just trigger interrupt, let it handle the rest
-            console.log('🚨 BACKGROUND: Speech detected, triggering interrupt');
-            
-            try {
-              interruptAI();
-              
-              // Pass the initial transcript to parent
-              if (onTranscript && typeof onTranscript === 'function') {
-                onTranscript(transcript, false);
-              }
-            } catch (interruptError) {
-              console.error('🚨 Background interruption error:', interruptError);
-            }
-            break;
-          }
-        }
-      };
-
-      backgroundRecognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.log('🎤 Background recognition error:', event.error);
-      };
-
-      backgroundRecognition.onend = () => {
-        console.log('🎤 Background recognition ended');
-      };
-
-      // Start background recognition
-      backgroundRecognition.start();
-      
-      // Store reference for cleanup
-      if (recognitionRef.current) {
-        recognitionRef.current.backgroundRecognition = backgroundRecognition;
+      // STEP 1: Stop TTS immediately
+      if (reliableTTS) {
+        reliableTTS.stopPlayback();
+        console.log('✅ TTS stopped');
       }
 
+      // STEP 2: Clear active requests and update state
+      if (activeRequestRef.current) {
+        activeRequestRef.current = null;
+      }
+      dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
+
+      // STEP 3: Wait for TTS to settle
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // STEP 4: Notify parent
+      try {
+        if (onInterrupt && typeof onInterrupt === 'function') {
+          onInterrupt();
+        }
+      } catch (callbackError) {
+        console.warn('⚠️ Callback error:', callbackError);
+      }
+
+      // STEP 5: Start listening safely after settle delay
+      updateVoiceState('listening');
+      const started = await startListeningSafely();
+      if (!started) {
+        console.warn('⚠️ Could not start listening after interrupt');
+        updateVoiceState('idle');
+      }
+
+      console.log('✅ Transactional interruption completed');
     } catch (error) {
-      console.error('🚨 Background listening setup failed:', error);
+      console.error('🚨 Interruption error:', error);
+      updateVoiceState('idle');
+    } finally {
+      interruptionInFlightRef.current = false;
     }
-  }, [state.isSupported, state.hasPermission, state.isListening, hasError, interruptAI, onTranscript, startListening]);
+  }, [updateVoiceState, onInterrupt, reliableTTS, startListeningSafely]);
+
+  // Background recognition removed to eliminate concurrent SpeechRecognition instances
+  // Using audio analysis for interruption detection instead
 
   // Simple and reliable TTS integration with voice interruption
   const playText = useCallback(async (text: string): Promise<void> => {
@@ -949,8 +950,7 @@ export function useVoiceModeHandler({
     activeRequestRef.current = requestId;
 
     try {
-      // Start background listening for voice interruption after a small delay
-      setTimeout(() => startBackgroundListening(), 500);
+      // Background listening removed - interruption will be handled via UI button
 
       // Mute microphone during AI speech to prevent feedback
       if (gainNodeRef.current) {
@@ -975,7 +975,7 @@ export function useVoiceModeHandler({
       activeRequestRef.current = null;
       setHasError(true);
     }
-  }, [hasError, updateVoiceState, startBackgroundListening, reliableTTS]);
+  }, [hasError, updateVoiceState, reliableTTS]);
 
 
   const stopPlayback = useCallback(() => {
@@ -1032,11 +1032,8 @@ export function useVoiceModeHandler({
         // Stop main recognition
         if (recognitionRef.current) {
           try {
-            if (recognitionRef.current.backgroundRecognition) {
-              recognitionRef.current.backgroundRecognition.abort();
-              recognitionRef.current.backgroundRecognition = null;
-            }
-            recognitionRef.current.abort();
+            // Background recognition removed
+            recognitionRef.current.stop(); // Use stop() instead of abort() to avoid DOMException
             recognitionRef.current = null;
           } catch (error) {
             console.warn('🚨 Error aborting recognition:', error);
@@ -1105,7 +1102,7 @@ export function useVoiceModeHandler({
     isSupported: state.isSupported,
     hasPermission: state.hasPermission,
     interruptAI,
-    startBackgroundListening, // Add background listening for voice interruption
+    // Background listening removed
     // ElevenLabs TTS methods
     playText,
     stopPlayback,

@@ -17,10 +17,12 @@ export function useReliableTTS({
   const [isLoading, setIsLoading] = useState(false);
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const isInterruptedRef = useRef(false);
+  const ttsInterruptedRef = useRef(false);
 
   const stopPlayback = useCallback(() => {
     console.log('🔊 Stopping TTS playback...');
     isInterruptedRef.current = true;
+    ttsInterruptedRef.current = true; // Mark as intentionally interrupted
     
     try {
       if (window.speechSynthesis && window.speechSynthesis.speaking) {
@@ -132,6 +134,7 @@ export function useReliableTTS({
 
       utterance.onend = () => {
         console.log('✅ TTS completed');
+        ttsInterruptedRef.current = false; // Clear interrupted flag on normal end
         setIsPlaying(false);
         setIsLoading(false);
         currentUtteranceRef.current = null;
@@ -139,6 +142,17 @@ export function useReliableTTS({
       };
 
       utterance.onerror = (event) => {
+        // Suppress expected "interrupted" errors when TTS is intentionally stopped
+        if (ttsInterruptedRef.current && event.error === 'interrupted') {
+          console.log('✅ TTS interrupted intentionally (not an error)');
+          ttsInterruptedRef.current = false; // Clear flag
+          setIsPlaying(false);
+          setIsLoading(false);
+          currentUtteranceRef.current = null;
+          onEnd?.(); // Call onEnd instead of onError
+          return;
+        }
+        
         console.error('🔊 TTS error:', event.error);
         setIsPlaying(false);
         setIsLoading(false);
