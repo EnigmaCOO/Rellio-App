@@ -1,0 +1,80 @@
+You are a senior full-stack engineer tasked with fixing the Universal Wisdom Explorer chat in Rellio to resolve the ReferenceError in <VoiceFirstChatInterfaceInner> and non-working interruptions, ensuring a smooth, Legend Labs-inspired voice system with seamless interruptions and preparation for 3-D character integration (e.g., virtual personas like priest/rabbi/mufti/guru/monk). Align with Rellio's "Guiding Wisdom. Eternal Connection" brand.
+
+Preserve all existing functionality (e.g., voice listening, TTS playback, auto-send, persona switching, chat messaging).
+Modify only voice-related code in <VoiceFirstChatInterface.tsx> and <usevoicemodehandler> to fix <code>ReferenceError</code>, interruptions, and mixing.</usevoicemodehandler>
+Implement single shared mic stream, track muting during playback, background SR with enhanced detection, immediate TTS pause on user speech, auto-resume transcription, and auto-send after 1.5s pause.
+Prepare for 3-D characters with hooks for persona visuals.
+Write accessible, responsive, and performant code using Tailwind CSS.
+Use semantic HTML and ARIA where relevant.
+Produce a single PR with clear commits (e.g., "fix(voice): resolve ReferenceError and interruptions", "feat(voice): enhance Legend Labs-inspired mode").
+Test for interruptions, no errors/mixing, audible TTS; log detailed errors for debugging.
+
+TASK BRIEF (paste after system block)
+Goal: Fix the Universal Wisdom Explorer chat (client/src/components/chat/VoiceFirstChatInterface.tsx) where a ReferenceError occurs in <VoiceFirstChatInterfaceInner> (line 61) and interruptions don’t work (no detection during AI talk-back, no new question transcription/auto-send). Implement a single shared mic stream for isolation, background SpeechRecognition with immediate detection, TTS pause on speech, auto-resume transcription, and auto-send after 1.5s pause, inspired by Legend Labs’ smooth mode. Use ElevenLabs API or SpeechSynthesis fallback for audible TTS. Add 3-D character preparation hooks.
+Key Features and Goals:
+
+Fix ReferenceError:
+
+Trace error at VoiceFirstChatInterfaceInner:61 (e.g., undefined prop/function); initialize all hook returns (e.g., startListening) with null checks or lazy loading.
+Ensure useVoiceModeHandler returns are defined before render (e.g., use useState for loading state).
+
+
+Single Shared Mic Stream and Isolation:
+
+Use one MediaStream in initializeAudioContext; mute tracks (track.enabled = false) during 'speaking'; unmute on interruption with 1s cooldown.
+
+
+Smooth Interruptions (Legend Labs-Inspired):
+
+During AI playback, run background SR on shared stream (continuous=true, interimResults=false, threshold 0.3, confidence >0.5).
+On detection (onspeechstart), pause TTS (fade-out 300ms), unmute tracks, switch to main SR, transcribe new speech, and auto-send after 1.5s pause.
+Handle "aborted" DOMExceptions by restarting SR after 200ms delay in onerror.
+
+
+Auto-Transcription and Auto-Send:
+
+After interruption, auto-transition to 'listening' and feed background transcript to onTranscript.
+In onresult, auto-send final transcript after 1.5s (onspeechend, confidence >0.85).
+
+
+Audible TTS Playback:
+
+Use ElevenLabs API (fetch '/api/elevenlabs/speak'); fallback to SpeechSynthesis if fails.
+Ensure audio.play() triggers sound with error logging.
+
+
+3-D Character Preparation:
+
+Add useState for characterModelId; callbacks onSpeakAnimation, onInterruptAnimation on voiceState changes.
+
+
+UI Enhancements:
+
+Show "Interrupted—Listening..." toast/orb flash; add ARIA-live.
+
+
+Debugging and Validation:
+
+Add console.log for error source (line 61), mic mute/unmute, interruption detection, TTS pause, transcript updates (e.g., "ReferenceError at line 61: ", error, "Interrupted with transcript: ", transcript).
+Test: Speak during AI playback, confirm TTS stops, transcription resumes, auto-sends without errors/mixing.
+
+
+
+Acceptance Criteria:
+
+No ReferenceError in <VoiceFirstChatInterfaceInner>.
+Interruptions detect speech, stop AI, unmute, transcribe, auto-send seamlessly.
+TTS audible; no loops/mixing.
+3-D hooks prepared; no console errors; system stable.
+
+Implementation Steps:
+
+Fix ReferenceError with null checks/lazy loading in VoiceFirstChatInterfaceInner.
+Share single stream and add track muting.
+Enhance background SR and interruptAI for detection/restart.
+Update TTS with API/fallback.
+Add 3-D hooks and UI feedback.
+Test interruptions and playback; commit with: "fix(voice): resolve ReferenceError and interruptions", "feat(voice): enhance Legend Labs-inspired mode".
+
+FINAL INSTRUCTION
+Implement the refactor, submit a PR passing acceptance criteria and lint/build checks. Preserve existing logic, adding only enhancements. Ensure a seamless, Legend Labs-inspired voice experience with working interruptions. If issues persist, share console logs or updated code—let’s nail this!

@@ -309,7 +309,7 @@ export function useVoiceModeHandler({
       await stopListeningSafely();
       
       // Stop background listening
-      stopBackgroundListening();
+      stopInterruptionDetection();
 
       // Clean up audio context with better error handling
       if (audioContextRef.current) {
@@ -347,7 +347,7 @@ export function useVoiceModeHandler({
       }
 
       // Unmute microphone
-      unmuteMicrophoneTracks();
+      unmuteMicrophoneGain();
 
       // Reset state
       dispatch({ type: 'SET_LISTENING', payload: false });
@@ -386,7 +386,7 @@ export function useVoiceModeHandler({
 
       // Apply initial muting state based on AI status
       if (isAIResponding) {
-        muteMicrophoneTracks();
+        muteMicrophoneGain();
       }
 
       // LEGEND LABS AUDIO ARCHITECTURE: Enhanced dual-gain isolation system
@@ -671,9 +671,9 @@ export function useVoiceModeHandler({
       console.log('🔮 LEGEND LABS: TTS started - activating seamless interruption system');
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: true, loading: false } });
       
-      // LEGEND LABS-STYLE: Mute mic during AI speech and start background SR for interruptions  
-      muteMicrophoneTracks();
-      startBackgroundListening();
+      // LEGEND LABS-STYLE: Mute mic during AI speech and start interruption detection  
+      muteMicrophoneGain();
+      startInterruptionDetection();
       updateVoiceState('speaking');
       
       // Step 1: Try ElevenLabs API with real audio.play()
@@ -710,14 +710,14 @@ export function useVoiceModeHandler({
       console.error('🚨 All TTS methods failed:', fallbackError);
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
       updateVoiceState('idle');
-      unmuteMicrophoneTracks();
-      stopBackgroundListening();
+      unmuteMicrophoneGain();
+      stopInterruptionDetection();
       
       // BRIDGE: Deactivate interruption system on TTS failure
       console.log('🌊 BRIDGE: Internal TTS failed - deactivating interruption system');
     }
     
-  }, [muteMicrophoneTracks, startBackgroundListening, updateVoiceState, reliableTTS, unmuteMicrophoneTracks, stopBackgroundListening]);
+  }, [muteMicrophoneGain, startInterruptionDetection, updateVoiceState, reliableTTS, unmuteMicrophoneGain, stopInterruptionDetection]);
   
   // Audio blob playback helper
   const playAudioBlob = useCallback(async (blob: Blob): Promise<void> => {
@@ -734,8 +734,8 @@ export function useVoiceModeHandler({
         console.log('✅ ElevenLabs audio playback completed');
         dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
         updateVoiceState('idle');
-        unmuteMicrophoneTracks();
-        stopBackgroundListening();
+        unmuteMicrophoneGain();
+        stopInterruptionDetection();
         resolve();
       };
       
@@ -743,15 +743,15 @@ export function useVoiceModeHandler({
         console.error('🚨 ElevenLabs audio error:', error);
         dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
         updateVoiceState('idle');
-        unmuteMicrophoneTracks();
-        stopBackgroundListening();
+        unmuteMicrophoneGain();
+        stopInterruptionDetection();
         reject(new Error('Audio playback failed'));
       };
       
       audio.src = URL.createObjectURL(blob);
       audio.play().catch(reject);
     });
-  }, [state.volume, updateVoiceState, unmuteMicrophoneTracks, stopBackgroundListening]);
+  }, [state.volume, updateVoiceState, unmuteMicrophoneGain, stopInterruptionDetection]);
   
   // Stop TTS playback function
   const stopTTSPlayback = useCallback(() => {
@@ -775,9 +775,9 @@ export function useVoiceModeHandler({
     // Reset states
     dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
     updateVoiceState('idle');
-    unmuteMicrophoneTracks();
-    stopBackgroundListening();
-  }, [reliableTTS, updateVoiceState, unmuteMicrophoneTracks, stopBackgroundListening]);
+    unmuteMicrophoneGain();
+    stopInterruptionDetection();
+  }, [reliableTTS, updateVoiceState, unmuteMicrophoneGain, stopInterruptionDetection]);
 
   // Simplified startListening without permission pre-checks
   const startListening = useCallback(async (): Promise<boolean> => {
@@ -793,8 +793,8 @@ export function useVoiceModeHandler({
 
         // Ensure clean state before starting main recognition
         console.log('🎤 MICROPHONE ISOLATION: Ensuring clean state before main listening');
-        if (backgroundRecognitionRef.current) {
-          stopBackgroundListening();
+        if (interruptionDetectionRef.current) {
+          stopInterruptionDetection();
           // Add a small delay to ensure cleanup completes
           await new Promise(resolve => setTimeout(resolve, 100));
         }
@@ -1514,19 +1514,19 @@ export function useVoiceModeHandler({
   
   const onAISpeakingStart = useCallback(() => {
     console.log('🌊 BRIDGE: External TTS started - activating interruption system');
-    muteMicrophoneTracks();
-    startBackgroundListening();
+    muteMicrophoneGain();
+    startInterruptionDetection();
     updateVoiceState('speaking');
     dispatch({ type: 'SET_TTS_STATE', payload: { playing: true, loading: false } });
-  }, [muteMicrophoneTracks, startBackgroundListening, updateVoiceState]);
+  }, [muteMicrophoneGain, startInterruptionDetection, updateVoiceState]);
   
   const onAISpeakingEnd = useCallback(() => {
     console.log('🌊 BRIDGE: External TTS ended - deactivating interruption system');
-    unmuteMicrophoneTracks();
-    stopBackgroundListening();
+    unmuteMicrophoneGain();
+    stopInterruptionDetection();
     updateVoiceState('idle');
     dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
-  }, [unmuteMicrophoneTracks, stopBackgroundListening, updateVoiceState]);
+  }, [unmuteMicrophoneGain, stopInterruptionDetection, updateVoiceState]);
   
   const setExternalTTSStopCallback = useCallback((callback: (() => void) | null) => {
     externalTTSStopRef.current = callback;
