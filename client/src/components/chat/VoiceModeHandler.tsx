@@ -172,6 +172,7 @@ export function useVoiceModeHandler({
   const isInterruptedRef = useRef<boolean>(false);
   const isPostInterruptionRef = useRef<boolean>(false); // Track post-interruption state for 1.5s auto-send
   const interruptionCooldownRef = useRef<boolean>(false); // 1s cooldown to prevent interruption loops
+  const startListeningRef = useRef<(() => Promise<boolean>) | null>(null); // Forward ref to startListening function
   
   // Transactional interruption system refs
   const interruptionInFlightRef = useRef<boolean>(false);
@@ -554,45 +555,74 @@ export function useVoiceModeHandler({
     }
   }, []);
 
-  // GROK-STYLE INTERRUPTION HANDLING: Smooth transition from AI to user speech with fade-out
+  // LEGEND LABS-INSPIRED INTERRUPTION HANDLING: Smooth transition with proper SR restart
   const handleInterruption = useCallback(() => {
-    console.log('🚨 HANDLING INTERRUPTION: Initiating 300ms fade-out sequence');
-    console.log('🎛️ TTS FADE-OUT: Beginning smooth audio transition (SpeechSynthesis limitation: immediate stop)');
+    if (interruptionInFlightRef.current) {
+      console.log('🔄 INTERRUPTION: Already in progress, ignoring duplicate');
+      return;
+    }
     
-    // 1. Immediately pause/stop AI TTS playback (SpeechSynthesis API limitation)
+    interruptionInFlightRef.current = true;
+    console.log('🚨 LEGEND LABS INTERRUPTION: Initiating seamless transition');
+    console.log('🎛️ TTS FADE-OUT: Beginning 300ms smooth audio transition');
+    
+    // 1. Immediately pause/stop AI TTS playback
     try {
       reliableTTS.stopPlayback();
-      console.log('🔊 AI TTS stopped due to interruption (immediate due to browser API limitations)');
+      console.log('🔊 AI TTS stopped due to interruption');
     } catch (error) {
       console.warn('⚠️ Error stopping AI TTS:', error);
     }
     
-    // 2. Simulate 300ms fade-out timing as per task specification
-    console.log('⏱️ FADE-OUT: Simulating 300ms audio fade transition...');
+    // 2. Stop background listening (pause, don't abort to prevent DOMExceptions)
+    stopBackgroundListening();
+    
+    // 3. 300ms fade-out timing as per task specification
+    console.log('⏱️ FADE-OUT: 300ms audio fade transition...');
     setTimeout(() => {
-      console.log('✅ FADE-OUT COMPLETE: 300ms transition completed, proceeding with mic unmute');
+      console.log('✅ FADE-OUT COMPLETE: Proceeding with mic unmute and SR restart');
       
-      // 3. Unmute microphone tracks after fade-out simulation
+      // 4. Unmute microphone tracks after fade-out
       unmuteMicrophoneTracks();
       
-      // 4. Stop background listening
-      stopBackgroundListening();
-      
-      // 5. Update states
+      // 5. Update states and prepare for main SR
       updateVoiceState('interrupted');
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
+      dispatch({ type: 'SET_LISTENING', payload: true }); // FIX: Set isListening true
       
-      // 6. Call interruption callback  
+      // 6. CRITICAL FIX: Restart main SR for transcription after interruption (using forward ref)
+      console.log('🎤 LEGEND LABS: Restarting main SR for post-interruption transcription');
+      if (startListeningRef.current) {
+        startListeningRef.current().then(() => {
+          console.log('✅ Main SR restarted successfully for post-interruption input');
+        }).catch((error) => {
+          console.error('🚨 Failed to restart main SR after interruption:', error);
+          // Retry with 200ms delay for error resilience
+          setTimeout(() => {
+            console.log('🔄 RETRY: Attempting SR restart after 200ms delay');
+            if (startListeningRef.current) {
+              startListeningRef.current().catch(retryError => {
+                console.error('🚨 SR restart retry failed:', retryError);
+              });
+            }
+          }, 200);
+        });
+      }
+      
+      // 7. Set post-interruption flag for enhanced 1.5s auto-send behavior
+      isPostInterruptionRef.current = true;
+      console.log('📝 POST-INTERRUPTION: Enhanced 1.5s auto-send mode activated');
+      
+      // 8. Call interruption callback
       try {
         onInterrupt();
-        console.log('🎤 INTERRUPTION SEQUENCE: Ready for user speech input');
-        // 7. Set post-interruption flag for enhanced 1.5s auto-send behavior
-        isPostInterruptionRef.current = true;
-        console.log('📝 POST-INTERRUPTION: Enabled enhanced 1.5s auto-send mode for clean transcript processing');
+        console.log('🎤 LEGEND LABS INTERRUPTION: Complete - ready for seamless voice input');
       } catch (error) {
         console.warn('⚠️ Error calling onInterrupt:', error);
       }
-    }, 300); // Task spec: 300ms fade-out
+      
+      interruptionInFlightRef.current = false;
+    }, 300); // 300ms fade-out timing
     
   }, [reliableTTS, unmuteMicrophoneTracks, stopBackgroundListening, updateVoiceState, onInterrupt]);
 
@@ -1123,6 +1153,11 @@ export function useVoiceModeHandler({
       }
     });
   }, []);
+
+  // Set forward ref for handleInterruption to use
+  useEffect(() => {
+    startListeningRef.current = startListening;
+  }, [startListening]);
 
   const startListeningSafely = useCallback(async (): Promise<boolean> => {
     console.log('🎤 Starting speech recognition safely...');
