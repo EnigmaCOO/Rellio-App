@@ -163,18 +163,32 @@ export class ElevenLabsService {
     // Check if this exact request is already in progress
     if (this.activeRequests.has(requestKey)) {
       console.log('🔄 Deduplicating concurrent request for:', text.substring(0, 50));
-      return this.activeRequests.get(requestKey)!;
+      // Return a new promise that handles its own errors to prevent uncaught exceptions
+      return this.activeRequests.get(requestKey)!.catch(error => {
+        // Re-throw the error so each caller can handle it independently
+        throw error;
+      });
     }
     
-    // Create the request promise
-    const requestPromise = this._generateSpeechInternal(text, voiceId, options);
+    // Create the request promise with proper error handling
+    const requestPromise = this._generateSpeechInternal(text, voiceId, options).catch(error => {
+      // Log the error but re-throw it for proper handling by callers
+      console.error('❌ ElevenLabs TTS error in generateSpeech:', error);
+      throw error;
+    });
     
     // Store it in active requests
     this.activeRequests.set(requestKey, requestPromise);
     
-    // Clean up when done
+    // Clean up when done - ensure cleanup doesn't throw
     requestPromise.finally(() => {
-      this.activeRequests.delete(requestKey);
+      try {
+        this.activeRequests.delete(requestKey);
+      } catch (cleanupError) {
+        console.error('Error cleaning up ElevenLabs request:', cleanupError);
+      }
+    }).catch(() => {
+      // Silently handle any remaining unhandled rejections from the cleanup
     });
     
     return requestPromise;

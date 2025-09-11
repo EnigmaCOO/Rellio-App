@@ -4,6 +4,18 @@ import { setupVite, serveStatic, log } from "./vite";
 import session from "express-session";
 import MemoryStore from "memorystore";
 
+// Global error handling to prevent unhandled promise rejections from crashing the process
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🚨 Unhandled Promise Rejection at:', promise, 'reason:', reason);
+  // Log the error but don't crash the process
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('🚨 Uncaught Exception:', error);
+  // Log the error but don't crash the process for now
+  // In production, you might want to gracefully shut down
+});
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
