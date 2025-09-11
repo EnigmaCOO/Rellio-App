@@ -203,24 +203,31 @@ export function useVoiceModeHandler({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const activeRequestRef = useRef<string | null>(null);
   const interruptionDetectionRef = useRef<boolean>(false); // Track interruption monitoring
+  
+  // CRITICAL LOOP PREVENTION: Refs to prevent stale closures in SR handlers
+  const srDisabledRef = useRef<boolean>(false);
+  const isPlayingRef = useRef<boolean>(false);
+  const ignoreUntilRef = useRef<number>(0);
 
   // LEGEND LABS TTS BRIDGE: Initialize reliable TTS with unified interruption system
   const reliableTTS = useReliableTTS({
     volume: state.volume,
     gainNode: ttsGainNodeRef.current, // Pass TTS gain node for 300ms fade-out
     onStart: async () => {
-      console.log('🌊 CRITICAL FIX: TTS started - HARD-STOPPING Speech Recognition to prevent loop');
+      console.log('🌊 LOOP PREVENTION: reliableTTS started - HARD-ABORTING Speech Recognition');
       
-      // Save if we were listening before TTS started
+      // CRITICAL LOOP PREVENTION: Set refs to prevent stale closures
+      srDisabledRef.current = true;
+      isPlayingRef.current = true;
       wasListeningBeforeTTSRef.current = state.isListening;
       
-      // HARD STOP Speech Recognition instead of just pausing
+      // HARD ABORT Speech Recognition to completely halt it
       if (recognitionRef.current && state.isListening) {
-        console.log('🛑 HARD STOPPING SR during TTS to prevent audio bleed');
+        console.log('🛑 LOOP PREVENTION: Aborting SR for reliableTTS - NO TTS CAPTURE!');
         try {
-          await stopListeningSafely();
-        } catch (stopError) {
-          console.warn('⚠️ Error stopping SR during TTS start:', stopError);
+          recognitionRef.current.abort(); // Use abort() not stop()
+        } catch (abortError) {
+          console.warn('⚠️ Error aborting SR during reliableTTS start:', abortError);
         }
       }
       
@@ -233,9 +240,11 @@ export function useVoiceModeHandler({
     onEnd: () => {
       console.log('🌊 CRITICAL FIX: TTS ended - setting up ignore window and restarting SR');
       
-      // Set ignore window to prevent capturing TTS tail audio (400ms)
-      postTTSIgnoreUntilRef.current = Date.now() + 400;
-      console.log('⏱️ IGNORE WINDOW: SR results ignored for 400ms to prevent TTS tail capture');
+      // CRITICAL LOOP PREVENTION: Extended ignore window to prevent tail capture
+      ignoreUntilRef.current = Date.now() + 1200; // 1.2s extended window
+      isPlayingRef.current = false;
+      srDisabledRef.current = false;
+      console.log('⏱️ LOOP PREVENTION: reliableTTS end - SR results ignored for 1200ms');
       
       // Standard cleanup
       unmuteMicrophoneGain();
@@ -264,9 +273,11 @@ export function useVoiceModeHandler({
       console.error('🔊 TTS Error:', error);
       console.log('🌊 CRITICAL FIX: TTS error - setting ignore window and restarting SR');
       
-      // CRITICAL FIX: Set ignore window and restart SR (same as onEnd)
-      postTTSIgnoreUntilRef.current = Date.now() + 400;
-      console.log('⏱️ IGNORE WINDOW: TTS error - SR results ignored for 400ms');
+      // CRITICAL LOOP PREVENTION: Extended ignore window on error
+      ignoreUntilRef.current = Date.now() + 1200;
+      isPlayingRef.current = false;
+      srDisabledRef.current = false;
+      console.log('⏱️ LOOP PREVENTION: reliableTTS error - SR results ignored for 1200ms');
       
       // Standard cleanup
       unmuteMicrophoneGain();
@@ -729,14 +740,18 @@ export function useVoiceModeHandler({
       console.log('🔮 LEGEND LABS: TTS started - activating seamless interruption system');
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: true, loading: false } });
       
-      // CRITICAL FIX: Hard-stop Speech Recognition for ElevenLabs path too
+      // CRITICAL LOOP PREVENTION: Hard-disable SR with refs during ElevenLabs TTS
+      srDisabledRef.current = true;
+      isPlayingRef.current = true;
       wasListeningBeforeTTSRef.current = state.isListening;
+      
       if (recognitionRef.current && state.isListening) {
-        console.log('🛑 CRITICAL: Hard-stopping SR for ElevenLabs path to prevent loop');
+        console.log('🛑 LOOP PREVENTION: Aborting SR for ElevenLabs - NO TTS CAPTURE!');
         try {
-          await stopListeningSafely();
-        } catch (stopError) {
-          console.warn('⚠️ Error stopping SR during ElevenLabs start:', stopError);
+          recognitionRef.current.abort(); // Use abort() not stop() for immediate halt
+          console.log('✅ SR aborted successfully');
+        } catch (abortError) {
+          console.warn('⚠️ Error aborting SR during ElevenLabs start:', abortError);
         }
       }
       
@@ -802,9 +817,11 @@ export function useVoiceModeHandler({
       audio.onended = () => {
         console.log('✅ ElevenLabs audio playback completed');
         
-        // CRITICAL FIX: Set ignore window and restart SR (same as reliableTTS.onEnd)
-        postTTSIgnoreUntilRef.current = Date.now() + 400;
-        console.log('⏱️ IGNORE WINDOW: ElevenLabs end - SR results ignored for 400ms');
+        // CRITICAL LOOP PREVENTION: Extended ignore window to block tail capture  
+        ignoreUntilRef.current = Date.now() + 1200; // 1.2s extended window
+        isPlayingRef.current = false;
+        srDisabledRef.current = false;
+        console.log('⏱️ LOOP PREVENTION: ElevenLabs end - SR results ignored for 1200ms');
         
         dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
         updateVoiceState('idle');
@@ -833,9 +850,11 @@ export function useVoiceModeHandler({
       audio.onerror = (error) => {
         console.error('🚨 ElevenLabs audio error:', error);
         
-        // CRITICAL FIX: Handle error with same SR restart logic
-        postTTSIgnoreUntilRef.current = Date.now() + 400;
-        console.log('⏱️ IGNORE WINDOW: ElevenLabs error - SR results ignored for 400ms');
+        // CRITICAL LOOP PREVENTION: Extended ignore window on error
+        ignoreUntilRef.current = Date.now() + 1200; 
+        isPlayingRef.current = false;
+        srDisabledRef.current = false;
+        console.log('⏱️ LOOP PREVENTION: ElevenLabs error - SR results ignored for 1200ms');
         
         dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
         updateVoiceState('idle');
@@ -885,9 +904,11 @@ export function useVoiceModeHandler({
       }
     });
     
-    // CRITICAL FIX: Apply consistent ignore window and SR restart for stopTTSPlayback
-    postTTSIgnoreUntilRef.current = Date.now() + 400;
-    console.log('⏱️ IGNORE WINDOW: Manual TTS stop - SR results ignored for 400ms');
+    // CRITICAL LOOP PREVENTION: Extended ignore window for manual stop
+    ignoreUntilRef.current = Date.now() + 1200;
+    isPlayingRef.current = false;
+    srDisabledRef.current = false;
+    console.log('⏱️ LOOP PREVENTION: Manual TTS stop - SR results ignored for 1200ms');
     
     // Reset states
     dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
@@ -1026,9 +1047,9 @@ export function useVoiceModeHandler({
 
           recognition.onresult = (event: SpeechRecognitionEvent) => {
             try {
-              // CRITICAL AUDIO ISOLATION FIX: Guard against TTS audio bleed
-              if (state.isPlaying || Date.now() < postTTSIgnoreUntilRef.current) {
-                console.log('🚫 AUDIO ISOLATION: Dropping SR result during TTS or ignore window');
+              // CRITICAL LOOP PREVENTION: REF-BASED guard against TTS audio bleed
+              if (isPlayingRef.current || srDisabledRef.current || Date.now() < ignoreUntilRef.current) {
+                console.log('🚫 LOOP PREVENTION: Dropping SR result - TTS playing or disabled or ignore window');
                 return;
               }
               
