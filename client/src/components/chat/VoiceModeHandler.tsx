@@ -188,7 +188,9 @@ export function useVoiceModeHandler({
   // UNIFIED SR SYSTEM: Single Speech Recognition instance with pause/resume
   const recognitionRef = useRef<any>(null);
   // REMOVED: backgroundRecognitionRef - using single SR with pause/resume pattern
-  const isPausedRef = useRef<boolean>(false); // Track if SR is paused during TTS
+  const isPausedRef = useRef<boolean>(false); // DEPRECATED: Will be replaced with hard stop/start
+  const wasListeningBeforeTTSRef = useRef<boolean>(false); // Track if we need to restart SR after TTS  
+  const postTTSIgnoreUntilRef = useRef<number>(0); // Ignore SR results for 400ms after TTS ends
   const autoSendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const silenceDetectionRef = useRef<NodeJS.Timeout | null>(null);
@@ -206,32 +208,88 @@ export function useVoiceModeHandler({
   const reliableTTS = useReliableTTS({
     volume: state.volume,
     gainNode: ttsGainNodeRef.current, // Pass TTS gain node for 300ms fade-out
-    onStart: () => {
-      console.log('🌊 LEGEND LABS BRIDGE: TTS started - activating gain-based isolation & interruption detection');
+    onStart: async () => {
+      console.log('🌊 CRITICAL FIX: TTS started - HARD-STOPPING Speech Recognition to prevent loop');
+      
+      // Save if we were listening before TTS started
+      wasListeningBeforeTTSRef.current = state.isListening;
+      
+      // HARD STOP Speech Recognition instead of just pausing
+      if (recognitionRef.current && state.isListening) {
+        console.log('🛑 HARD STOPPING SR during TTS to prevent audio bleed');
+        try {
+          await stopListeningSafely();
+        } catch (stopError) {
+          console.warn('⚠️ Error stopping SR during TTS start:', stopError);
+        }
+      }
+      
+      // Continue with existing isolation
       muteMicrophoneGain();
-      isPausedRef.current = true; // Pause main SR during TTS
-      startInterruptionDetection();
+      startInterruptionDetection(); 
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: true, loading: false } });
       updateVoiceState('speaking');
     },
     onEnd: () => {
-      console.log('🌊 LEGEND LABS BRIDGE: TTS ended - deactivating isolation & resuming SR');
+      console.log('🌊 CRITICAL FIX: TTS ended - setting up ignore window and restarting SR');
+      
+      // Set ignore window to prevent capturing TTS tail audio (400ms)
+      postTTSIgnoreUntilRef.current = Date.now() + 400;
+      console.log('⏱️ IGNORE WINDOW: SR results ignored for 400ms to prevent TTS tail capture');
+      
+      // Standard cleanup
       unmuteMicrophoneGain();
-      isPausedRef.current = false; // Resume main SR after TTS
-      stopInterruptionDetection();
+      stopInterruptionDetection(); 
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
       updateVoiceState('idle');
       activeRequestRef.current = null;
+      
+      // RESTART Speech Recognition after delay if we were listening before
+      if (wasListeningBeforeTTSRef.current) {
+        console.log('🔄 RESTARTING SR after 150ms delay to prevent TTS audio capture');
+        setTimeout(() => {
+          if (startListeningRef.current) {
+            startListeningRef.current().then(() => {
+              console.log('✅ SR restarted successfully after TTS ended');
+              wasListeningBeforeTTSRef.current = false; // Reset flag
+            }).catch((error) => {
+              console.error('🚨 Failed to restart SR after TTS:', error);
+              wasListeningBeforeTTSRef.current = false; // Reset flag on error
+            });
+          }
+        }, 150); // 150ms delay as per architect recommendation
+      }
     },
     onError: (error) => {
       console.error('🔊 TTS Error:', error);
-      console.log('🌊 LEGEND LABS BRIDGE: TTS error - deactivating systems and resuming SR');
+      console.log('🌊 CRITICAL FIX: TTS error - setting ignore window and restarting SR');
+      
+      // CRITICAL FIX: Set ignore window and restart SR (same as onEnd)
+      postTTSIgnoreUntilRef.current = Date.now() + 400;
+      console.log('⏱️ IGNORE WINDOW: TTS error - SR results ignored for 400ms');
+      
+      // Standard cleanup
       unmuteMicrophoneGain();
-      isPausedRef.current = false; // Resume main SR on error
       stopInterruptionDetection();
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
       updateVoiceState('idle');
       activeRequestRef.current = null;
+      
+      // RESTART Speech Recognition after delay if we were listening before
+      if (wasListeningBeforeTTSRef.current) {
+        console.log('🔄 RESTARTING SR after TTS error');
+        setTimeout(() => {
+          if (startListeningRef.current) {
+            startListeningRef.current().then(() => {
+              console.log('✅ SR restarted successfully after TTS error');
+              wasListeningBeforeTTSRef.current = false;
+            }).catch((restartError) => {
+              console.error('🚨 Failed to restart SR after TTS error:', restartError);
+              wasListeningBeforeTTSRef.current = false;
+            });
+          }
+        }, 150);
+      }
     }
   });
 
@@ -671,6 +729,17 @@ export function useVoiceModeHandler({
       console.log('🔮 LEGEND LABS: TTS started - activating seamless interruption system');
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: true, loading: false } });
       
+      // CRITICAL FIX: Hard-stop Speech Recognition for ElevenLabs path too
+      wasListeningBeforeTTSRef.current = state.isListening;
+      if (recognitionRef.current && state.isListening) {
+        console.log('🛑 CRITICAL: Hard-stopping SR for ElevenLabs path to prevent loop');
+        try {
+          await stopListeningSafely();
+        } catch (stopError) {
+          console.warn('⚠️ Error stopping SR during ElevenLabs start:', stopError);
+        }
+      }
+      
       // LEGEND LABS-STYLE: Mute mic during AI speech and start interruption detection  
       muteMicrophoneGain();
       startInterruptionDetection();
@@ -732,19 +801,63 @@ export function useVoiceModeHandler({
       
       audio.onended = () => {
         console.log('✅ ElevenLabs audio playback completed');
+        
+        // CRITICAL FIX: Set ignore window and restart SR (same as reliableTTS.onEnd)
+        postTTSIgnoreUntilRef.current = Date.now() + 400;
+        console.log('⏱️ IGNORE WINDOW: ElevenLabs end - SR results ignored for 400ms');
+        
         dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
         updateVoiceState('idle');
         unmuteMicrophoneGain();
         stopInterruptionDetection();
+        
+        // RESTART Speech Recognition after delay if we were listening before
+        if (wasListeningBeforeTTSRef.current) {
+          console.log('🔄 RESTARTING SR after ElevenLabs audio ended');
+          setTimeout(() => {
+            if (startListeningRef.current) {
+              startListeningRef.current().then(() => {
+                console.log('✅ SR restarted successfully after ElevenLabs audio');
+                wasListeningBeforeTTSRef.current = false;
+              }).catch((error) => {
+                console.error('🚨 Failed to restart SR after ElevenLabs audio:', error);
+                wasListeningBeforeTTSRef.current = false;
+              });
+            }
+          }, 150);
+        }
+        
         resolve();
       };
       
       audio.onerror = (error) => {
         console.error('🚨 ElevenLabs audio error:', error);
+        
+        // CRITICAL FIX: Handle error with same SR restart logic
+        postTTSIgnoreUntilRef.current = Date.now() + 400;
+        console.log('⏱️ IGNORE WINDOW: ElevenLabs error - SR results ignored for 400ms');
+        
         dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
         updateVoiceState('idle');
         unmuteMicrophoneGain();
         stopInterruptionDetection();
+        
+        // RESTART Speech Recognition on error too
+        if (wasListeningBeforeTTSRef.current) {
+          console.log('🔄 RESTARTING SR after ElevenLabs error');
+          setTimeout(() => {
+            if (startListeningRef.current) {
+              startListeningRef.current().then(() => {
+                console.log('✅ SR restarted after ElevenLabs error');
+                wasListeningBeforeTTSRef.current = false;
+              }).catch((restartError) => {
+                console.error('🚨 Failed to restart SR after ElevenLabs error:', restartError);
+                wasListeningBeforeTTSRef.current = false;
+              });
+            }
+          }, 150);
+        }
+        
         reject(new Error('Audio playback failed'));
       };
       
@@ -772,11 +885,31 @@ export function useVoiceModeHandler({
       }
     });
     
+    // CRITICAL FIX: Apply consistent ignore window and SR restart for stopTTSPlayback
+    postTTSIgnoreUntilRef.current = Date.now() + 400;
+    console.log('⏱️ IGNORE WINDOW: Manual TTS stop - SR results ignored for 400ms');
+    
     // Reset states
     dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
     updateVoiceState('idle');
     unmuteMicrophoneGain();
     stopInterruptionDetection();
+    
+    // RESTART Speech Recognition after delay if we were listening before
+    if (wasListeningBeforeTTSRef.current) {
+      console.log('🔄 RESTARTING SR after manual TTS stop');
+      setTimeout(() => {
+        if (startListeningRef.current) {
+          startListeningRef.current().then(() => {
+            console.log('✅ SR restarted successfully after manual stop');
+            wasListeningBeforeTTSRef.current = false;
+          }).catch((error) => {
+            console.error('🚨 Failed to restart SR after manual stop:', error);
+            wasListeningBeforeTTSRef.current = false;
+          });
+        }
+      }, 150);
+    }
   }, [reliableTTS, updateVoiceState, unmuteMicrophoneGain, stopInterruptionDetection]);
 
   // Simplified startListening without permission pre-checks
@@ -893,6 +1026,12 @@ export function useVoiceModeHandler({
 
           recognition.onresult = (event: SpeechRecognitionEvent) => {
             try {
+              // CRITICAL AUDIO ISOLATION FIX: Guard against TTS audio bleed
+              if (state.tts.playing || Date.now() < postTTSIgnoreUntilRef.current) {
+                console.log('🚫 AUDIO ISOLATION: Dropping SR result during TTS or ignore window');
+                return;
+              }
+              
               let interimTranscript = '';
 
               for (let i = event.resultIndex; i < event.results.length; i++) {

@@ -22,7 +22,7 @@ export class ElevenLabsService {
     if (!this.apiKey) {
       throw new Error('ELEVENLABS_API_KEY environment variable is required');
     }
-    console.log('ElevenLabs API key loaded:', this.apiKey ? `${this.apiKey.substring(0, 6)}...` : 'NOT FOUND');
+    console.log('🔐 ElevenLabs API key:', this.apiKey ? 'configured' : 'NOT FOUND');
   }
 
   // Check available quota before making requests with better error handling
