@@ -1027,7 +1027,7 @@ export function useVoiceModeHandler({
           recognition.onresult = (event: SpeechRecognitionEvent) => {
             try {
               // CRITICAL AUDIO ISOLATION FIX: Guard against TTS audio bleed
-              if (state.tts.playing || Date.now() < postTTSIgnoreUntilRef.current) {
+              if (state.isPlaying || Date.now() < postTTSIgnoreUntilRef.current) {
                 console.log('🚫 AUDIO ISOLATION: Dropping SR result during TTS or ignore window');
                 return;
               }
