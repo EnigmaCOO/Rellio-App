@@ -481,78 +481,63 @@ export function useVoiceModeHandler({
     console.log('✅ AUDIO READY: All microphone tracks successfully enabled for user speech');
   }, []);
 
-  // GROK-STYLE BACKGROUND LISTENING: Detects interruptions during AI playback
+  // SIMPLIFIED INTERRUPTION: Use audio level monitoring instead of background Speech Recognition
   const startBackgroundListening = useCallback(() => {
-    if (!streamRef.current || backgroundRecognitionRef.current) return;
+    if (!streamRef.current || !analyserRef.current) return;
     
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
+    console.log('🎭 STARTING audio-level interruption detection...');
+    console.log('🎤 INTERRUPTION: Using audio analysis instead of Speech Recognition to avoid conflicts');
     
-    // CRITICAL FIX: Stop main recognition before starting background recognition to avoid conflicts
-    if (recognitionRef.current) {
-      console.log('🎭 MICROPHONE ISOLATION: Stopping main recognition before background listening');
-      try {
-        recognitionRef.current.stop();
-        recognitionRef.current = null;
-      } catch (error) {
-        console.warn('⚠️ Error stopping main recognition for background:', error);
-      }
-    }
+    // Use existing audio analyser for interruption detection
+    const analyser = analyserRef.current;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
     
-    try {
-      console.log('🎭 STARTING background listening for interruptions...');
-      console.log('🎤 BACKGROUND LISTENING: Configuring Speech Recognition for interruption detection');
-      const bgRecognition = new SpeechRecognition();
-      backgroundRecognitionRef.current = bgRecognition;
+    let isMonitoring = true;
+    let consecutiveHighSamples = 0;
+    const requiredConsecutiveSamples = 5; // Require sustained audio for interruption
+    const interruptionThreshold = 30; // Audio level threshold for interruption
+    
+    const monitorInterruption = () => {
+      if (!isMonitoring || !analyser) return;
       
-      // Background recognition configuration for interruption detection per task spec
-      bgRecognition.continuous = true;
-      bgRecognition.interimResults = false; // Only final results for interruption
-      bgRecognition.lang = 'en-US';
-      bgRecognition.maxAlternatives = 1;
-      console.log('🎛️ BACKGROUND CONFIG: continuous=true, interimResults=false, threshold=0.3 (simulated)');
+      analyser.getByteFrequencyData(dataArray);
+      const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
       
-      bgRecognition.onspeechstart = () => {
-        // Check cooldown before processing interruption
-        if (interruptionCooldownRef.current) {
-          console.log('⏱️ INTERRUPTION COOLDOWN: Ignoring interruption during 1s cooldown period');
+      if (average > interruptionThreshold) {
+        consecutiveHighSamples++;
+        if (consecutiveHighSamples >= requiredConsecutiveSamples) {
+          // Check cooldown before processing interruption
+          if (interruptionCooldownRef.current) {
+            console.log('⏱️ INTERRUPTION COOLDOWN: Ignoring interruption during 1s cooldown period');
+            return;
+          }
+          
+          console.log('🚨 AUDIO INTERRUPTION DETECTED: User speaking detected!');
+          console.log('🎤 AUDIO LEVEL:', average.toFixed(1), '(threshold:', interruptionThreshold, ')');
+          console.log('🎛️ TTS PAUSE: Initiating immediate stop and mic unmute sequence');
+          isMonitoring = false; // Stop monitoring once interruption is detected
+          handleInterruption();
           return;
         }
-        
-        console.log('🚨 INTERRUPTION DETECTED: User started speaking during AI playback!');
-        console.log('🎤 INTERRUPTION: onspeechstart triggered - confidence threshold met');
-        console.log('🎛️ TTS PAUSE: Initiating 300ms fade-out and mic unmute sequence');
-        handleInterruption();
-      };
+      } else {
+        consecutiveHighSamples = 0; // Reset if audio drops below threshold
+      }
       
-      bgRecognition.onresult = (event: SpeechRecognitionEvent) => {
-        const result = event.results[event.results.length - 1];
-        const confidence = result?.[0]?.confidence || 0;
-        
-        if (result && result.isFinal && confidence > 0.5) { // Task spec: confidence >0.5
-          const transcript = result[0].transcript.trim();
-          console.log('🎭 INTERRUPTION TRANSCRIPT:', transcript);
-          console.log('🎯 CONFIDENCE LEVEL:', confidence.toFixed(2), '(threshold: >0.5)');
-          console.log('✅ INTERRUPTED WITH TRANSCRIPT:', transcript);
-          console.log('🔄 SWITCHING: Background → Main recognition with clean transcript');
-          // Switch to main recognition with this transcript per task spec
-          console.log('📝 TRANSCRIPT UPDATE: Passing clean transcript to main recognition:', transcript);
-        } else {
-          console.log('❌ INTERRUPTION IGNORED: Confidence', confidence.toFixed(2), 'below threshold 0.5 or not final');
-        }
-      };
-      
-      bgRecognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.log('🎭 Background recognition error (normal):', event.error);
-        // Silently handle errors in background recognition
-      };
-      
-      // Start background recognition on the shared stream
-      bgRecognition.start();
-      
-    } catch (error) {
-      console.warn('⚠️ Background listening failed:', error);
-    }
+      requestAnimationFrame(monitorInterruption);
+    };
+    
+    // Start monitoring
+    monitorInterruption();
+    
+    // Store cleanup function
+    backgroundRecognitionRef.current = {
+      stop: () => {
+        isMonitoring = false;
+        console.log('🎭 STOPPING audio-level interruption detection');
+      }
+    } as any;
+    
   }, []);
 
   const stopBackgroundListening = useCallback(() => {
@@ -560,7 +545,9 @@ export function useVoiceModeHandler({
     
     try {
       console.log('🎭 STOPPING background listening');
-      backgroundRecognitionRef.current.stop();
+      if (backgroundRecognitionRef.current.stop) {
+        backgroundRecognitionRef.current.stop();
+      }
       backgroundRecognitionRef.current = null;
     } catch (error) {
       console.warn('⚠️ Error stopping background listening:', error);
@@ -745,9 +732,13 @@ export function useVoiceModeHandler({
           return;
         }
 
-        // CRITICAL FIX: Stop background recognition before starting main recognition to avoid conflicts
-        console.log('🎤 MICROPHONE ISOLATION: Stopping background recognition before main listening');
-        stopBackgroundListening();
+        // Ensure clean state before starting main recognition
+        console.log('🎤 MICROPHONE ISOLATION: Ensuring clean state before main listening');
+        if (backgroundRecognitionRef.current) {
+          stopBackgroundListening();
+          // Add a small delay to ensure cleanup completes
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
@@ -935,11 +926,24 @@ export function useVoiceModeHandler({
           };
 
           recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-            console.error('🚨 Recognition error:', event.error);
+            console.log('🚨 Recognition error:', event.error);
+
+            // Don't treat "aborted" as a fatal error - it's expected during interruptions
+            if (event.error === 'aborted') {
+              console.log('✅ Recognition aborted (expected during interruption)');
+              resolve(false);
+              return;
+            }
 
             if (event.error === 'not-allowed') {
               dispatch({ type: 'SET_SUPPORT', payload: { supported: state.isSupported, permission: false } });
+            } else if (event.error === 'network') {
+              console.warn('⚠️ Network error in speech recognition, retrying...');
+              // Don't set error state for network issues
+              resolve(false);
+              return;
             }
+            
             setHasError(true);
             cleanup();
             resolve(false);
@@ -1081,6 +1085,8 @@ export function useVoiceModeHandler({
 
       const cleanup = () => {
         if (recognitionRef.current) {
+          recognitionRef.current.onend = null;
+          recognitionRef.current.onerror = null;
           recognitionRef.current = null;
         }
         srStoppingRef.current = false;
@@ -1088,22 +1094,31 @@ export function useVoiceModeHandler({
         resolve();
       };
 
+      // Set timeout to force cleanup if stop() doesn't trigger events
+      const forceCleanup = setTimeout(() => {
+        console.log('⏰ Force cleanup after timeout');
+        cleanup();
+      }, 1000);
+
       // Set up listeners before stopping
-      recognitionRef.current.onend = cleanup;
+      recognitionRef.current.onend = () => {
+        clearTimeout(forceCleanup);
+        console.log('✅ Speech recognition ended normally');
+        cleanup();
+      };
+      
       recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
-        // Suppress expected "aborted" errors during intentional stops
-        if (srStoppingRef.current && event.error === 'aborted') {
-          console.log('✅ Speech recognition stopped intentionally');
-        } else {
-          console.warn('⚠️ Speech recognition error during stop:', event.error);
-        }
+        clearTimeout(forceCleanup);
+        // All errors during stop are expected and safe to ignore
+        console.log('✅ Speech recognition error during stop (expected):', event.error);
         cleanup();
       };
 
       try {
         recognitionRef.current.stop(); // Use stop() instead of abort()
       } catch (error) {
-        console.warn('⚠️ Error stopping recognition:', error);
+        clearTimeout(forceCleanup);
+        console.log('✅ Error stopping recognition (handled):', error);
         cleanup();
       }
     });
