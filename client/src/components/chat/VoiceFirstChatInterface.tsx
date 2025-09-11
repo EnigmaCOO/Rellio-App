@@ -147,6 +147,7 @@ function VoiceFirstChatInterfaceInner({
   
   // ARIA-LIVE STATUS UPDATES: For accessibility and screen readers
   const [voiceStatus, setVoiceStatus] = useState<string>(''); // Screen reader announcements
+  const [interruptionStatus, setInterruptionStatus] = useState<string>(''); // Interruption feedback
 
   // 3D CHARACTER ANIMATION CALLBACKS: Ready for future character integration
   const onSpeakAnimation = useCallback((personaName: string) => {
@@ -226,47 +227,66 @@ function VoiceFirstChatInterfaceInner({
     },
     onStateChange: (state) => {
       console.log('🎤 Voice state changed:', state);
-      if (state === 'speaking') {
+      
+      // LEGEND LABS UI FEEDBACK: Enhanced state change with interruption support
+      if (state === 'interrupted') {
+        console.log('🚨 LEGEND LABS: Interruption detected - showing user feedback');
+        
+        // Show interruption toast with Legend Labs styling
+        toast({
+          title: "🎤 Interrupted—Listening...",
+          description: "Continue speaking, I'm listening",
+          duration: 2000,
+          className: "bg-blue-50 border-blue-200 text-blue-800"
+        });
+        
+        // ARIA-live announcement for screen readers
+        setInterruptionStatus("AI interrupted. Now listening for your response.");
+        setVoiceStatus("Listening after interruption");
+        
+        // 3D Character animation callback
+        const currentPersona = selectedPersona?.name || 'Universal Scholar';
+        onInterruptAnimation(currentPersona);
+        
+        // Clear interruption status after announcement
+        setTimeout(() => {
+          setInterruptionStatus("");
+        }, 3000);
+        
+      } else if (state === 'speaking') {
         console.log('🔊 AI TTS started - enabling interruption detection');
         setIsAISpeaking(true);
         setPlayingMessageId(messages[messages.length - 1]?.id || null);
         
-        // 3D CHARACTER HOOK: Trigger speaking animation
-        onSpeakAnimation(selectedPersona?.name || 'Universal Scholar');
+        // ARIA-live update and 3D character animation
+        setVoiceStatus("AI is speaking");
+        const currentPersona = selectedPersona?.name || 'Universal Scholar';
+        onSpeakAnimation(currentPersona);
         
-        // ARIA-LIVE: Update status for screen readers
-        setVoiceStatus('AI is speaking. You can interrupt by speaking.');
-      } else if (state === 'idle' || state === 'interrupted') {
-        console.log('🔊 AI TTS ended or interrupted');
-        setIsAISpeaking(false);
-        setPlayingMessageId(null);
-        setIsProcessingVoice(false);
+      } else if (state === 'listening') {
+        setVoiceStatus("Listening for your voice");
         
-        // 3D CHARACTER HOOK: Return to idle state
-        onIdleAnimation(selectedPersona?.name || 'Universal Scholar');
-        
-        // ARIA-LIVE: Update status for screen readers
-        setVoiceStatus('Voice system is ready.');
+      } else if (state === 'idle') {
+        setVoiceStatus("");
+        const currentPersona = selectedPersona?.name || 'Universal Scholar';
+        onIdleAnimation(currentPersona);
       }
     },
     onInterrupt: () => {
-      console.log('🚨 VOICE INTERRUPTION: AI speech interrupted');
-      setIsAISpeaking(false);
-      setPlayingMessageId(null);
+      console.log('🚨 LEGEND LABS: Interruption callback triggered');
       
-      // 3D CHARACTER HOOK: Trigger interruption animation
-      onInterruptAnimation(selectedPersona?.name || 'Universal Scholar');
+      // Enhanced interruption handling with visual feedback
+      setWasLastMessageVoice(true);
+      setIsPostInterruption(true);
+      setInterruptionCooldown(true);
       
-      // ARIA-LIVE: Update status for screen readers
-      setVoiceStatus('AI speech interrupted. Continue speaking your question.');
-
-      // Show user feedback
-      toast({
-        title: "🎤 Interrupted—Listening...",
-        description: "Continue speaking your question",
-        variant: "default",
-        className: "border-emerald-200 bg-emerald-50 text-emerald-800"
-      });
+      // Reset cooldown after 1.5s (matches auto-send timing)
+      setTimeout(() => {
+        setInterruptionCooldown(false);
+      }, 1500);
+      
+      // ARIA-live update for accessibility
+      setVoiceStatus("Interrupted - now listening for your response");
     },
     disabled: false,
     isAIResponding: isAISpeaking,

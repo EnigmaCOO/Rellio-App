@@ -185,9 +185,9 @@ export function useVoiceModeHandler({
     }
   }, [disabled]);
 
-  // UNIFIED SR SYSTEM: Single Speech Recognition instance with pause/resume
-  const recognitionRef = useRef<any>(null);
-  // REMOVED: backgroundRecognitionRef - using single SR with pause/resume pattern
+  // LEGEND LABS DUAL SR SYSTEM: Main SR + Background SR for seamless interruptions
+  const recognitionRef = useRef<any>(null); // Main SR for transcription
+  const backgroundRecognitionRef = useRef<any>(null); // Background SR for interruption detection during AI speech
   const isPausedRef = useRef<boolean>(false); // DEPRECATED: Will be replaced with hard stop/start
   const wasListeningBeforeTTSRef = useRef<boolean>(false); // Track if we need to restart SR after TTS  
   const postTTSIgnoreUntilRef = useRef<number>(0); // Ignore SR results for 400ms after TTS ends
@@ -196,7 +196,8 @@ export function useVoiceModeHandler({
   const silenceDetectionRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const streamRef = useRef<MediaStream | null>(null); // Shared MediaStream
+  const streamRef = useRef<MediaStream | null>(null); // Main MediaStream for transcription
+  const backgroundStreamRef = useRef<MediaStream | null>(null); // Separate MediaStream for background interruption detection
   const micGainNodeRef = useRef<GainNode | null>(null); // Mic input gain control
   const ttsGainNodeRef = useRef<GainNode | null>(null); // TTS output gain control
   const isInitializingRef = useRef(false);
@@ -208,6 +209,12 @@ export function useVoiceModeHandler({
   const srDisabledRef = useRef<boolean>(false);
   const isPlayingRef = useRef<boolean>(false);
   const ignoreUntilRef = useRef<number>(0);
+  
+  // LEGEND LABS INTERRUPTION SYSTEM: Enhanced refs for smooth interruption flow
+  const backgroundSRActiveRef = useRef<boolean>(false); // Track if background SR is running
+  const interruptionDetectedRef = useRef<boolean>(false); // Track if interruption was detected
+  const autoSendAfterInterruptionRef = useRef<NodeJS.Timeout | null>(null); // 1.5s auto-send timer
+  const interruptionTranscriptRef = useRef<string>(''); // Store interrupted transcript for auto-send
 
   // LEGEND LABS TTS BRIDGE: Initialize reliable TTS with unified interruption system
   const reliableTTS = useReliableTTS({
@@ -231,9 +238,16 @@ export function useVoiceModeHandler({
         }
       }
       
-      // Continue with existing isolation
-      muteMicrophoneGain();
-      startInterruptionDetection(); 
+      // LEGEND LABS ENHANCED: Activate dual interruption detection system
+      muteMicrophoneGain(); // Mute main SR with dual-layer isolation
+      startInterruptionDetection(); // Audio-level detection
+      
+      // LEGEND LABS: Initialize and start background SR for speech detection
+      if (!backgroundRecognitionRef.current) {
+        await initializeBackgroundSR();
+      }
+      startBackgroundListening(); // Start dedicated SR for interruption
+      
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: true, loading: false } });
       updateVoiceState('speaking');
     },
@@ -246,9 +260,11 @@ export function useVoiceModeHandler({
       srDisabledRef.current = false;
       console.log('⏱️ LOOP PREVENTION: reliableTTS end - SR results ignored for 1200ms');
       
-      // Standard cleanup
-      unmuteMicrophoneGain();
-      stopInterruptionDetection(); 
+      // LEGEND LABS ENHANCED: Deactivate dual interruption system
+      unmuteMicrophoneGain(); // Restore dual-layer audio
+      stopInterruptionDetection(); // Stop audio-level detection
+      stopBackgroundListening(); // Stop background SR
+      
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
       updateVoiceState('idle');
       activeRequestRef.current = null;
@@ -279,9 +295,11 @@ export function useVoiceModeHandler({
       srDisabledRef.current = false;
       console.log('⏱️ LOOP PREVENTION: reliableTTS error - SR results ignored for 1200ms');
       
-      // Standard cleanup
-      unmuteMicrophoneGain();
-      stopInterruptionDetection();
+      // LEGEND LABS ENHANCED: Deactivate dual interruption system
+      unmuteMicrophoneGain(); // Restore dual-layer audio
+      stopInterruptionDetection(); // Stop audio-level detection
+      stopBackgroundListening(); // Stop background SR
+      
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
       updateVoiceState('idle');
       activeRequestRef.current = null;
@@ -539,34 +557,199 @@ export function useVoiceModeHandler({
     return true;
   }, [state.isPlaying]);
 
-  // LEGEND LABS GAIN-BASED ISOLATION: Use AudioContext gain nodes for precise control
+  // LEGEND LABS ENHANCED ISOLATION: Dual-layer isolation with gain + track control
   const muteMicrophoneGain = useCallback(() => {
-    if (!micGainNodeRef.current) return;
+    console.log('🔇 LEGEND LABS: Initiating dual-layer microphone isolation');
     
-    console.log('🔇 LEGEND LABS: Muting microphone via gain control (preserves analyser)');
-    const audioContext = audioContextRef.current;
-    if (audioContext) {
+    // Layer 1: Gain-based isolation (preserves analyser for interruption detection)
+    if (micGainNodeRef.current && audioContextRef.current) {
+      const audioContext = audioContextRef.current;
       const currentTime = audioContext.currentTime;
       micGainNodeRef.current.gain.cancelScheduledValues(currentTime);
       micGainNodeRef.current.gain.setValueAtTime(0, currentTime);
-      console.log('✅ AUDIO ISOLATION: Microphone gain set to 0 (analyser still active for interruption detection)');
+      console.log('✅ LAYER 1: Gain isolation active (analyser preserved)');
+    }
+    
+    // Layer 2: Track-level isolation for complete audio control
+    if (streamRef.current) {
+      const audioTracks = streamRef.current.getAudioTracks();
+      audioTracks.forEach((track, index) => {
+        track.enabled = false;
+        console.log(`🔇 LAYER 2: Audio track ${index} disabled at track level`);
+      });
+      console.log('✅ DUAL-LAYER ISOLATION: Both gain and track muting active');
     }
   }, []);
 
   const unmuteMicrophoneGain = useCallback(() => {
-    if (!micGainNodeRef.current) return;
+    console.log('🔉 LEGEND LABS: Restoring dual-layer microphone isolation');
     
-    console.log('🔉 LEGEND LABS: Unmuting microphone via gain control');
-    const audioContext = audioContextRef.current;
-    if (audioContext) {
+    // Layer 1: Restore gain control
+    if (micGainNodeRef.current && audioContextRef.current) {
+      const audioContext = audioContextRef.current;
       const currentTime = audioContext.currentTime;
       micGainNodeRef.current.gain.cancelScheduledValues(currentTime);
       micGainNodeRef.current.gain.setValueAtTime(1, currentTime);
-      console.log('✅ AUDIO READY: Microphone gain restored to 1.0 for user speech');
+      console.log('✅ LAYER 1: Gain restored to 1.0');
+    }
+    
+    // Layer 2: Re-enable track-level audio with 1s cooldown for stability
+    if (streamRef.current) {
+      const audioTracks = streamRef.current.getAudioTracks();
+      audioTracks.forEach((track, index) => {
+        track.enabled = true;
+        console.log(`🔉 LAYER 2: Audio track ${index} re-enabled`);
+      });
+      console.log('✅ DUAL-LAYER RESTORATION: Microphone fully active for speech');
+      
+      // Add 1s cooldown before auto-send as requested
+      interruptionCooldownRef.current = true;
+      setTimeout(() => {
+        interruptionCooldownRef.current = false;
+        console.log('⏱️ COOLDOWN: 1s interruption cooldown period ended');
+      }, 1000);
     }
   }, []);
 
-  // LEGEND LABS UNIFIED SR: Single SR instance with pause/resume and audio-level interruption detection
+  // LEGEND LABS BACKGROUND SR SYSTEM: Dedicated interruption detection during AI speech
+  const initializeBackgroundSR = useCallback(async (): Promise<boolean> => {
+    console.log('🎭 LEGEND LABS: Initializing background SpeechRecognition for interruption detection');
+    
+    try {
+      // Request separate MediaStream for background detection (not muted)
+      const backgroundStream = await navigator.mediaDevices.getUserMedia({ 
+        audio: { 
+          echoCancellation: true, 
+          noiseSuppression: true,
+          autoGainControl: false, // Disable AGC for precise control
+          sampleRate: 16000 // Optimize for speech detection
+        } 
+      });
+      
+      backgroundStreamRef.current = backgroundStream;
+      console.log('🎤 Background MediaStream created for interruption detection');
+      
+      // Initialize background SpeechRecognition
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        console.error('❌ SpeechRecognition not supported for background detection');
+        return false;
+      }
+      
+      const backgroundRecognition = new SpeechRecognition();
+      
+      // Configure for interruption detection (low sensitivity, continuous)
+      backgroundRecognition.continuous = true;
+      backgroundRecognition.interimResults = false;
+      backgroundRecognition.maxAlternatives = 1;
+      backgroundRecognition.lang = 'en-US';
+      
+      // Critical: Configure background SR for interruption detection only
+      backgroundRecognition.onspeechstart = () => {
+        console.log('🚨 BACKGROUND SR: Speech detected during AI playback - triggering interruption!');
+        interruptionDetectedRef.current = true;
+        
+        // Immediately stop background SR to prevent multiple triggers
+        stopBackgroundListening();
+        
+        // Trigger immediate TTS pause and main SR restart
+        if (handleBackgroundInterruptionRef.current) {
+          handleBackgroundInterruptionRef.current();
+        }
+      };
+      
+      backgroundRecognition.onresult = (event: SpeechRecognitionEvent) => {
+        // We primarily rely on onspeechstart, but capture result for auto-send
+        if (event.results.length > 0) {
+          const transcript = event.results[event.results.length - 1][0].transcript;
+          const confidence = event.results[event.results.length - 1][0].confidence;
+          
+          if (confidence > 0.5 && transcript.trim().length > 0) {
+            console.log('📝 Background SR captured:', transcript, 'confidence:', confidence);
+            interruptionTranscriptRef.current = transcript.trim();
+          }
+        }
+      };
+      
+      backgroundRecognition.onerror = (error: SpeechRecognitionErrorEvent) => {
+        console.warn('⚠️ Background SR error:', error.error, error.message);
+        
+        // Handle DOMExceptions gracefully as requested
+        if (error.error === 'aborted') {
+          console.log('✅ Background SR aborted gracefully (expected during interruption)');
+        } else if (error.error === 'network') {
+          console.log('🌐 Background SR network error - will retry');
+          // Auto-retry after 200ms for network errors
+          setTimeout(() => {
+            if (backgroundSRActiveRef.current && !interruptionDetectedRef.current) {
+              startBackgroundListening();
+            }
+          }, 200);
+        }
+      };
+      
+      backgroundRecognition.onend = () => {
+        console.log('🎭 Background SR session ended');
+        backgroundSRActiveRef.current = false;
+        
+        // Auto-restart if still needed and no interruption detected
+        if (state.isPlaying && !interruptionDetectedRef.current) {
+          setTimeout(() => {
+            if (state.isPlaying && !interruptionDetectedRef.current) {
+              startBackgroundListening();
+            }
+          }, 100);
+        }
+      };
+      
+      backgroundRecognitionRef.current = backgroundRecognition;
+      console.log('✅ LEGEND LABS: Background SpeechRecognition initialized for seamless interruptions');
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Failed to initialize background SpeechRecognition:', error);
+      return false;
+    }
+  }, [state.isPlaying]);
+
+  const startBackgroundListening = useCallback(() => {
+    if (!backgroundRecognitionRef.current || backgroundSRActiveRef.current) {
+      return;
+    }
+    
+    console.log('🎭 LEGEND LABS: Starting background SpeechRecognition for interruption detection');
+    
+    try {
+      backgroundSRActiveRef.current = true;
+      interruptionDetectedRef.current = false;
+      backgroundRecognitionRef.current.start();
+      console.log('✅ Background SR started - monitoring for speech during AI playback');
+    } catch (error) {
+      console.error('❌ Failed to start background SR:', error);
+      backgroundSRActiveRef.current = false;
+    }
+  }, []);
+
+  const stopBackgroundListening = useCallback(() => {
+    if (!backgroundRecognitionRef.current || !backgroundSRActiveRef.current) {
+      return;
+    }
+    
+    console.log('🎭 LEGEND LABS: Stopping background SpeechRecognition');
+    
+    try {
+      backgroundSRActiveRef.current = false;
+      backgroundRecognitionRef.current.abort(); // Use abort for immediate stop
+      console.log('✅ Background SR stopped');
+    } catch (error) {
+      console.warn('⚠️ Error stopping background SR:', error);
+    }
+  }, []);
+
+  // LEGEND LABS BACKGROUND INTERRUPTION HANDLER: Forward declaration (will be set after handleInterruption)
+  const handleBackgroundInterruptionRef = useRef<(() => void) | null>(null);
+
+  // LEGEND LABS UNIFIED SR: Enhanced with background SR integration
   const startInterruptionDetection = useCallback(() => {
     if (interruptionDetectionRef.current || !analyserRef.current) return;
     
@@ -725,6 +908,45 @@ export function useVoiceModeHandler({
     
   }, [reliableTTS, unmuteMicrophoneGain, stopInterruptionDetection, updateVoiceState, onInterrupt]);
 
+  // LEGEND LABS BACKGROUND INTERRUPTION HANDLER: Now that handleInterruption is defined
+  useEffect(() => {
+    handleBackgroundInterruptionRef.current = () => {
+      console.log('🚨 LEGEND LABS: Background interruption detected - immediate TTS pause!');
+      
+      // Immediately pause TTS with fade-out (300ms) using existing handleInterruption
+      handleInterruption();
+      
+      // Mark as post-interruption for auto-send functionality
+      isPostInterruptionRef.current = true;
+      
+      // Set up auto-send after 1.5s as requested
+      if (autoSendAfterInterruptionRef.current) {
+        clearTimeout(autoSendAfterInterruptionRef.current);
+      }
+      
+      autoSendAfterInterruptionRef.current = setTimeout(() => {
+        console.log('📤 LEGEND LABS: Auto-sending after 1.5s interruption pause');
+        
+        // Get the current transcript (either from background SR or main SR)
+        const currentTranscript = interruptionTranscriptRef.current || state.currentTranscript;
+        
+        if (currentTranscript.trim().length > 0) {
+          console.log('🎤 AUTO-SEND: Sending interrupted transcript:', currentTranscript);
+          onAutoSend(currentTranscript.trim());
+          
+          // Reset interruption state
+          isPostInterruptionRef.current = false;
+          interruptionTranscriptRef.current = '';
+        } else {
+          console.log('📝 AUTO-SEND: No transcript to send after interruption');
+          isPostInterruptionRef.current = false;
+        }
+        
+        autoSendAfterInterruptionRef.current = null;
+      }, 1500); // 1.5s as requested
+    };
+  }, [handleInterruption, state.currentTranscript, onAutoSend]);
+
   // Forward declaration to fix dependency order issues
   const switchToMainRecognitionRef = useRef<((transcript?: string) => Promise<void>) | null>(null);
   
@@ -755,9 +977,16 @@ export function useVoiceModeHandler({
         }
       }
       
-      // LEGEND LABS-STYLE: Mute mic during AI speech and start interruption detection  
-      muteMicrophoneGain();
-      startInterruptionDetection();
+      // LEGEND LABS ENHANCED: Activate dual interruption detection system
+      muteMicrophoneGain(); // Mute main SR with dual-layer isolation
+      startInterruptionDetection(); // Audio-level detection
+      
+      // LEGEND LABS: Initialize and start background SR for speech detection
+      if (!backgroundRecognitionRef.current) {
+        await initializeBackgroundSR();
+      }
+      startBackgroundListening(); // Start dedicated SR for interruption
+      
       updateVoiceState('speaking');
       
       // Step 1: Try ElevenLabs API with real audio.play()
@@ -859,6 +1088,7 @@ export function useVoiceModeHandler({
         dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
         updateVoiceState('idle');
         unmuteMicrophoneGain();
+        stopBackgroundListening(); // Stop background SR on error
         stopInterruptionDetection();
         
         // RESTART Speech Recognition on error too

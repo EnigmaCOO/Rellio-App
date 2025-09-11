@@ -1,0 +1,71 @@
+You are a senior full-stack engineer tasked with fixing the Universal Wisdom Explorer chat in Rellio to resolve persistent interruption failures where AI talk-back leaks into the transcript, causing loops, and interruptions don't stop AI to process new questions. Ensure a smooth, Legend Labs-inspired voice system with seamless interruptions and preparation for future 3-D character integration. Align with Rellio's "Guiding Wisdom. Eternal Connection" brand.
+
+Preserve all existing functionality (e.g., voice listening, TTS playback, auto-send, persona switching, chat messaging).
+Modify only voice-related code in <VoiceFirstChatInterface.tsx> and <usevoicemodehandler> to fix interruptions, leakage, and loops.</usevoicemodehandler>
+Implement separate low-sensitivity background SR instance (not muted) for detection, immediate TTS pause on speech, mic unmute, auto-resume main transcription, and auto-send after 1.5s pause.
+Add better error handling for DOMExceptions and track muting only for main SR.
+Write accessible, responsive, and performant code using Tailwind CSS.
+Use semantic HTML and ARIA where relevant.
+Produce a single PR with clear commits (e.g., "fix(voice): resolve AI leakage and interruption failures", "feat(voice): enhance Legend Labs-inspired interruptions").
+Test for smooth interruptions, no leakage/loops, audible TTS; log detailed errors for debugging.
+
+TASK BRIEF (paste after system block)
+Goal: Fix the Universal Wisdom Explorer chat (client/src/components/chat/VoiceFirstChatInterface.tsx) where interruptions fail (AI talk-back leaks into transcript, no stop for new question), causing loops. Implement a separate background SpeechRecognition instance (low sensitivity, not muted) for detection, immediate TTS pause on user speech, mic unmute, auto-resume main transcription, and auto-send after 1.5s pause, inspired by Legend Labs’ smooth mode. Use ElevenLabs API or SpeechSynthesis fallback for TTS. Add 3-D character preparation hooks.
+Key Features and Goals:
+
+Separate Background SR for Detection:
+
+During AI playback, run a dedicated background SR instance on a new stream (continuous=true, interimResults=false, threshold 0.3, confidence >0.5) without muting.
+On detection (onspeechstart), pause TTS (fade-out 300ms), stop background SR, unmute main mic, restart main SR, transcribe new speech, and auto-send after 1.5s pause.
+
+
+Main Stream and Isolation:
+
+Use main MediaStream for transcription; mute tracks (track.enabled = false) during 'speaking'; unmute on interruption with 1s cooldown before auto-send.
+
+
+Smooth Interruptions:
+
+Handle "aborted" DOMExceptions by restarting SR after 200ms in onerror.
+After interruption, auto-transition to 'listening' and feed transcript to onTranscript.
+
+
+Audible TTS Playback:
+
+Use ElevenLabs API (fetch '/api/elevenlabs/speak'); fallback to SpeechSynthesis if fails.
+Ensure audio.play() triggers sound with error logging.
+
+
+3-D Character Preparation:
+
+Add useState for characterModelId; callbacks onSpeakAnimation, onInterruptAnimation on voiceState changes.
+
+
+UI Enhancements:
+
+Show "Interrupted—Listening..." toast/orb flash; add ARIA-live.
+
+
+Debugging and Validation:
+
+Add console.log for background SR start/stop, interruption detection, TTS pause, transcript updates (e.g., "Background SR started", "Interrupted with transcript: ", transcript).
+Test: Speak during AI playback, confirm TTS stops, main transcription resumes, auto-sends without leakage/loops.
+
+
+
+Acceptance Criteria:
+
+No leakage/loops; TTS audible.
+Interruptions detect speech, stop AI, unmute, transcribe, auto-send seamlessly.
+3-D hooks prepared; no console errors; system stable.
+
+Implementation Steps:
+
+Add separate background SR instance with new stream in startBackgroundListening.
+Update interruptAI to stop background SR, unmute main, restart main SR.
+Enhance TTS with API/fallback.
+Add 3-D hooks and UI feedback.
+Test interruptions and playback; commit with: "fix(voice): resolve interruption failures and leakage", "feat(voice): enhance Legend Labs-inspired interruptions".
+
+FINAL INSTRUCTION
+Implement the refactor, submit a PR passing acceptance criteria and lint/build checks. Preserve existing logic, adding only enhancements. Ensure a seamless, Legend Labs-inspired voice experience with working interruptions. If issues persist, share console logs or updated code.
