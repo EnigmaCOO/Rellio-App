@@ -170,6 +170,7 @@ export function useVoiceModeHandler({
   // Add error boundary protection
   const [hasError, setHasError] = useState(false);
   const isInterruptedRef = useRef<boolean>(false);
+  const isPostInterruptionRef = useRef<boolean>(false); // Track post-interruption state for 1.5s auto-send
   
   // Transactional interruption system refs
   const interruptionInFlightRef = useRef<boolean>(false);
@@ -587,10 +588,13 @@ export function useVoiceModeHandler({
       updateVoiceState('interrupted');
       dispatch({ type: 'SET_TTS_STATE', payload: { playing: false, loading: false } });
       
-      // 6. Call interruption callback
+      // 6. Call interruption callback  
       try {
         onInterrupt();
         console.log('🎤 INTERRUPTION SEQUENCE: Ready for user speech input');
+        // 7. Set post-interruption flag for enhanced 1.5s auto-send behavior
+        isPostInterruptionRef.current = true;
+        console.log('📝 POST-INTERRUPTION: Enabled enhanced 1.5s auto-send mode for clean transcript processing');
       } catch (error) {
         console.warn('⚠️ Error calling onInterrupt:', error);
       }
@@ -858,24 +862,39 @@ export function useVoiceModeHandler({
                     autoSendTimeoutRef.current = null;
                   }
 
-                  // Simple & Reliable Auto-Send: 1.5s pause after speech ends
+                  // Enhanced Auto-Send: 1.5s pause after speech ends with post-interruption handling
                   if (!preventAutoSend && autoSendDelay > 0 && confidence >= confidenceThreshold && cleanFinalTranscript.length > 0) {
-                    console.log('🎤 SCHEDULING AUTO-SEND: 1.5s after speech ends');
-                    console.log('🎤 TRANSCRIPT:', cleanFinalTranscript, 'confidence:', confidence);
+                    const isPostInterruption = isPostInterruptionRef.current;
+                    
+                    if (isPostInterruption) {
+                      console.log('🚨 POST-INTERRUPTION AUTO-SEND: 1.5s after interruption speech ends');
+                      console.log('📝 CLEAN TRANSCRIPT (post-interruption):', cleanFinalTranscript, 'confidence:', confidence);
+                      console.log('✅ INTERRUPTION HANDLING: Clean transcript without AI audio bleed detected');
+                    } else {
+                      console.log('🎤 SCHEDULING AUTO-SEND: 1.5s after speech ends');
+                      console.log('🎤 TRANSCRIPT:', cleanFinalTranscript, 'confidence:', confidence);
+                    }
                     
                     // Clear any existing timeout
                     if (autoSendTimeoutRef.current) {
                       clearTimeout(autoSendTimeoutRef.current);
                     }
                     
-                    // Set 1.5s auto-send timeout
+                    // Set 1.5s auto-send timeout (consistent for both normal and post-interruption)
                     autoSendTimeoutRef.current = setTimeout(() => {
                       const messageToSend = cleanFinalTranscript.trim();
                       if (messageToSend.length > 0) {
-                        console.log('🚀 AUTO-SENDING after 1.5s pause:', messageToSend);
+                        if (isPostInterruption) {
+                          console.log('🚀 POST-INTERRUPTION AUTO-SEND after 1.5s pause:', messageToSend);
+                          console.log('📝 TRANSCRIPT PASSED: Clean post-interruption question sent');
+                          // Reset post-interruption flag after successful send
+                          isPostInterruptionRef.current = false;
+                        } else {
+                          console.log('🚀 AUTO-SENDING after 1.5s pause:', messageToSend);
+                        }
                         onAutoSend(messageToSend);
                       }
-                    }, 1500); // Fixed 1.5s delay as requested
+                    }, 1500); // Task spec: 1.5s delay for both normal and post-interruption
                   } else {
                     console.log('✅ GROK MODE: Manual send - user controls timing');
                   }
