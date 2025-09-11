@@ -5,13 +5,16 @@ interface ReliableTTSOptions {
   onStart?: () => void;
   onEnd?: () => void;
   onError?: (error: string) => void;
+  // LEGEND LABS: Gain control for 300ms fade-out during interruptions
+  gainNode?: GainNode | null;
 }
 
 export function useReliableTTS({
   volume = 0.8,
   onStart,
   onEnd,
-  onError
+  onError,
+  gainNode = null
 }: ReliableTTSOptions = {}) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -20,7 +23,7 @@ export function useReliableTTS({
   const ttsInterruptedRef = useRef(false);
 
   const stopPlayback = useCallback(() => {
-    console.log('🔊 Stopping TTS playback...');
+    console.log('🔊 LEGEND LABS: Stopping TTS playback with gain fade support...');
     isInterruptedRef.current = true;
     ttsInterruptedRef.current = true; // Mark as intentionally interrupted
     
