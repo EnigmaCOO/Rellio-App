@@ -1,0 +1,208 @@
+Love the direction — your prompt is already clean, specific, and very “agent-friendly.”
+What it’s missing (based on the weaknesses we flagged): guardrails, ops, and proofs—i.e., CI/CD + testing, privacy/GDPR, cost controls, metrics/A/B, offline/PWA, risk fallbacks (2D/voice), and explicit artifacts (zip + Postman). Also, it helps to pre-commit the PR shape so Replit AI knows what to produce.
+
+Below is an engineered, production-minded version that keeps your hybrid vision intact while adding the missing muscle. It’s a single document you can paste into Replit. (I trimmed wording but kept all the important bits.)
+
+⸻
+
+
+
+Use this entire document as a single instruction to the Replit AI Agent.
+Bootstrap a production-ready monorepo with web (React/Three.js), server (Node/Express), real-time voice (WS), AI adapters (Grok/GPT), Drizzle ORM (Neon Postgres), Redis, and a secure baseline. If an existing file conflicts, overwrite it.
+At the end, create:
+	•	dist/rellio-starter.zip (zipped repo excluding node_modules/.env), and
+	•	postman_collection.json (all HTTP+WS endpoints).
+
+0) High-Level Objectives
+	•	Build Rellio: a multi-faith spiritual sanctuary fusing cinematic 3-D immersion, elite, interruptible voice UX, and a learning/community ecosystem.
+	•	Deliver: web app, API server, WS voice, DB schema+migrations+seed, auth, AI persona system, scripture connectors, 3-D scene with lip-sync, Security P0, CI/CD, tests (vitest + Cypress), metrics, GDPR, offline PWA, haptics, AR/VR scaffolds, zip export, and Postman.
+
+1) Tech Stack (with realistic scaling)
+	•	Monorepo: pnpm workspaces, TypeScript strict, Turbo.
+	•	Frontend: React 18 + Vite, Tailwind + shadcn/ui, Framer Motion, react-three-fiber/Three.js + @react-three/drei, React Query, Zustand.
+	•	3-D: GLTFLoader, Mixamo animations, phoneme→viseme adapter (Rhubarb compatible).
+	•	Voice: /ws/voice (ws), ElevenLabs Realtime primary; Web Speech API fallback; navigator.vibrate for haptics.
+	•	Backend: Node 20, Express, ws, Drizzle + Neon Postgres, Redis, zod, jose (JWT), pino, bullmq (background jobs).
+	•	AI: XAI Grok-2 primary; OpenAI GPT-4o fallback via unified adapter; HuggingFace Inference for lightweight personalization/sentiment.
+	•	Security: helmet + strict CSP, CORS allowlist, DOMPurify server-side, xss, multer, rate-limiter-flexible.
+	•	Ops/QA: ESLint/Prettier, vitest, Cypress e2e, GitHub Actions (build+lint+test).
+	•	Offline: PWA (manifest + service worker via Workbox); IndexedDB cache for scriptures.
+	•	XR (scaffolds): AR.js (AR) and A-Frame (VR) routes (disabled by default behind feature flags).
+
+2) Monorepo Structure
+
+rellio-hybrid/
+├─ .replit
+├─ replit.nix
+├─ pnpm-workspace.yaml
+├─ package.json
+├─ turbo.json
+├─ .env.example
+├─ .gitignore
+├─ README.md
+├─ apps/
+│  ├─ web/                  # React + Vite + Tailwind + r3f (+ AR/VR stubs)
+│  └─ server/               # Express API + WS + Drizzle + Redis
+├─ packages/
+│  ├─ config/               # tsconfig/eslint shared
+│  ├─ ui/                   # shadcn wrappers + theme tokens
+│  ├─ types/                # zod schemas/shared types
+│  └─ ai/                   # AI adapters + persona prompts + ML helpers
+├─ scripts/                 # seed, export-zip, export-postman
+└─ docs/
+   ├─ ARCHITECTURE.md
+   ├─ SECURITY_P0.md
+   ├─ GDPR_COMPLIANCE.md
+   └─ API_REFERENCE.md
+
+3) Root Files
+
+package.json (root)
+
+{
+  "name": "rellio-hybrid",
+  "private": true,
+  "packageManager": "pnpm@9",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "postinstall": "pnpm -C apps/web prepare && pnpm -C apps/server build:drizzle",
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "seed": "node scripts/seed.mjs",
+    "export-zip": "node scripts/export-zip.mjs",
+    "export-postman": "node scripts/export-postman.mjs"
+  },
+  "devDependencies": { "turbo": "^2.1.0" }
+}
+
+pnpm-workspace.yaml
+
+packages:
+  - apps/*
+  - packages/*
+
+.replit
+
+run = "turbo run dev"
+
+replit.nix
+
+{ pkgs }: { deps = [ pkgs.nodejs_20 pkgs.pnpm pkgs.openssl pkgs.redis pkgs.postgresql ]; }
+
+.env.example (additions)
+
+# ...existing
+GDPR_CONSENT_REQUIRED=true
+SENTRY_DSN=
+POSTHOG_KEY=
+HF_TOKEN=
+
+4) Server (apps/server)
+
+Install: express, ws, cors, helmet, compression, pino(+pretty), zod, jose, bcryptjs, rate-limiter-flexible, drizzle-orm, pg, postgres, ioredis, nanoid, xss, multer, @huggingface/inference, bullmq.
+
+Key folders
+	•	src/voice/ws.ts — WS handler (hello, heartbeats, interrupt, relay to ElevenLabs RT; stop current stream on new “interrupt” message).
+	•	src/ai/adapter.ts — Grok primary / OpenAI fallback + persona guards.
+	•	src/ml/personalize.ts — sentiment + path suggestion.
+	•	src/scripture/providers/* — Bible/Quran/Torah/Gita/Tripitaka adapters (normalized).
+	•	src/security/* — CSP + rate limit.
+	•	src/routes/* — health, chat, compare, progress, gdpr (consent CRUD), metrics (server events).
+
+Schema (Drizzle, excerpt)
+	•	users, messages, progress, bookmarks, consents, metrics_events.
+
+Routes
+	•	GET /health
+	•	POST /api/chat { persona, text, context? }  → JSON (SSE stream optional)
+	•	POST /api/compare { topic|verseRef, targets[] }
+	•	GET /api/scripture/:faith/:book/:chapter
+	•	POST /api/progress
+	•	POST /api/ml/path (queue personalization job)
+	•	POST /api/gdpr/consent { region, accepted }
+	•	WS /ws/voice (JSON control + binary chunks, heartbeats)
+
+5) Web (apps/web)
+
+Install: react, react-dom, vite, tailwind, postcss, autoprefixer, class-variance-authority, lucide-react, @tanstack/react-query, zustand, framer-motion, @react-three/fiber, @react-three/drei, three, workbox-window, cypress (dev), sentry, posthog-js.
+
+Routes:
+	•	Landing (3-D cosmic canvas with CTA),
+	•	Dashboard (3-pane reader: nav / scripture / persona+chat),
+	•	ArView (AR.js scaffold, feature-flag),
+	•	VrSanctuary (A-Frame scaffold, feature-flag).
+
+Components: VoiceOrb (idle/listening/speaking/interrupted+haptics), ThreeScene (GLTF avatar + lights), PersonaPanel, VerseCard, CompareTray, ProgressTray.
+
+PWA: public/manifest.json, public/service-worker.js (Workbox) to cache last-read chapter + assets; IndexedDB for scripture cache.
+
+Metrics: init Sentry + PostHog; track voice_interrupt, tts_play_start/end, compare_used, consent_accept.
+
+6) Packages
+	•	packages/ai: askAI() adapter; personas.ts (universal_sage, islamic_mufti, christian_priest, jewish_rabbi, buddhist_monk, hindu_guru); ml-personalize.ts.
+	•	packages/types: zod schemas for all APIs.
+	•	packages/ui: theme tokens (Cosmic Indigo / Celestial Gold / Turquoise Glow), shadcn wrappers.
+	•	packages/config: tsconfig/eslint.
+
+7) Security P0
+
+Helmet with strict CSP, rate limit (IP + token bucket), server-side sanitize, zod validation, JWT rotation (short access, refresh rotate+revoke), WS heartbeats+idle kill, pino redaction.
+Docs: docs/SECURITY_P0.md.
+
+8) Privacy / GDPR
+
+docs/GDPR_COMPLIANCE.md: consent banner for EU, consent storage, data export/delete stubs, retention 12 months, DPIA note. Route /api/gdpr/consent.
+
+9) Testing & CI/CD
+	•	Vitest unit tests (utils/adapters).
+	•	Cypress e2e: voice interruption (speak→interrupt→resume), 3-D presence check, PWA offline read.
+	•	GitHub Actions: lint, typecheck, unit, e2e (headless), build.
+
+10) Metrics & A/B
+	•	PostHog flags: feature.ar, feature.vr, feature.autoReader.
+	•	Capture DAU/MAU, average session, interruption success %, compare usage, conversion rate.
+	•	Sentry for errors (server+web).
+
+11) Seeds & Scripts
+	•	scripts/seed.mjs — demo user, Al-Fatihah + Genesis 1 etc., consent yes(EU), sample progress.
+	•	scripts/export-zip.mjs — zip repo to dist/rellio-starter.zip (exclude node_modules, .env*).
+	•	scripts/export-postman.mjs — generate postman_collection.json (HTTP + WS example).
+
+12) Acceptance Criteria
+	•	Landing renders 3-D hero; Dashboard renders 3-pane reader; /api/scripture returns Al-Fatihah.
+	•	/api/chat works (Grok if set, else GPT fallback).
+	•	/ws/voice accepts connection; interrupt stops playback and resumes mic without echo.
+	•	PWA installs; offline shows last chapter.
+	•	GDPR consent flow persists.
+	•	CI passes; Cypress e2e green.
+	•	dist/rellio-starter.zip + postman_collection.json created.
+
+13) Budget, Risks, Fallbacks (encode as comments in README)
+	•	Cap AI cost via env flags: AI_MAX_TOKENS, AI_DISABLE_FALLBACK.
+	•	Fallbacks: 2D mode for low GPUs; SpeechSynthesis when ElevenLabs unavailable; turn off AR/VR via flags.
+	•	Track tech debt in docs/ARCHITECTURE.md#tech-debt.
+
+14) PR Output
+
+Produce a single PR with commits:
+	1.	refactor(prompt): baseline monorepo + security P0
+	2.	feat(ai): adapters (Grok primary, GPT fallback) + personas
+	3.	feat(voice): ws handler + interruptible TTS + haptics
+	4.	feat(3d): r3f scene + avatar scaffold
+	5.	feat(pwa): offline cache + IndexedDB
+	6.	feat(privacy): GDPR consent + docs
+	7.	feat(ci): GitHub Actions + vitest + Cypress
+	8.	feat(devx): seeds + export zip + Postman
+	9.	docs: architecture, api reference
+
+⸻
+
+Why this is better (quick take)
+	•	Ops-ready: CI/CD, tests, metrics, GDPR, PWA, seeds, exports.
+	•	Cost & risk aware: fallbacks and flags; WS timeouts; 2D mode.
+	•	Innovation preserved: 3-D, lip-sync, AR/VR scaffolds, haptics, ML personalization.
+	•	Agent-executable: precise files, scripts, endpoints, and acceptance tests.
+
