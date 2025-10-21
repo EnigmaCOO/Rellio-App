@@ -1745,20 +1745,7 @@ function VoiceFirstChatInterfaceInner({
           </div>
         )}
 
-        {/* Permission Warning for Supported Browsers */}
-        {isSupported && !hasPermission && !hasError && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Headphones className="w-4 h-4 text-blue-600" />
-              <p className="text-sm text-blue-800 font-medium">
-                Microphone Access Required
-              </p>
-            </div>
-            <p className="text-xs text-blue-700 mb-3">
-              Voice input needs microphone permission. Click the microphone button below to request access.
-            </p>
-          </div>
-        )}
+        {/* Permission warning removed - users will be prompted when they click the microphone button */}
 
         {/* Voice System Reset for Errors */}
         {hasError && (
