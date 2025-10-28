@@ -1,9 +1,13 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="theme-color" content="#d4af37" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/assets/rellio-logo-gold.png" />
     <title>AI Scripture Guide</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -48,7 +52,7 @@
               <span class="text-xs text-gray-500">2:30 PM</span>
             </div>
           </div>
-          
+
           <div class="flex items-start space-x-2">
             <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-sm">
               AI
@@ -161,11 +165,11 @@
         chatHistory.forEach((message, index) => {
           const messageDiv = document.createElement('div');
           messageDiv.className = 'flex items-start space-x-2';
-          
+
           const isUser = message.isUser;
           const avatarBg = isUser ? 'bg-blue-500' : 'bg-green-500';
           const messageBg = isUser ? 'bg-gray-100' : 'bg-white border border-gray-200';
-          
+
           messageDiv.innerHTML = `
             <div class="w-8 h-8 rounded-full ${avatarBg} flex items-center justify-center text-white text-sm">
               ${isUser ? 'U' : 'AI'}
@@ -184,13 +188,13 @@
               </div>
             </div>
           `;
-          
+
           container.appendChild(messageDiv);
         });
 
         // Scroll to bottom
         container.scrollTop = container.scrollHeight;
-        
+
         // Debug logging for chat content height
         console.log("Chat content height:", container.scrollHeight);
       }
@@ -199,11 +203,11 @@
       function sendMessage() {
         const input = document.getElementById('messageInput');
         const message = input.value.trim();
-        
+
         if (message) {
           addMessage(message, true);
           input.value = '';
-          
+
           // Simulate AI response (replace with actual API call)
           setTimeout(() => {
             const responses = [
@@ -212,7 +216,7 @@
               "The verse you're asking about has multiple layers of meaning that have been interpreted differently across various religious traditions throughout history.\n\nIn the original Hebrew/Greek/Arabic contexts, the linguistic nuances reveal deeper meanings that may not be immediately apparent in translation. For instance, the Hebrew concept of 'hesed' (lovingkindness) encompasses both mercy and covenant faithfulness. The Greek 'agape' represents unconditional divine love. The Arabic 'rahma' (compassion) derives from the root meaning 'womb,' suggesting nurturing care.\n\nSanskrit terminology in Hindu texts uses words like 'bhakti' (devotion) and 'moksha' (liberation) to express spiritual concepts. Pali Buddhist texts employ terms like 'metta' (loving-kindness) and 'nirvana' (ultimate peace).\n\nThese linguistic distinctions help us understand how different cultures have grappled with similar spiritual realities while developing their own unique theological vocabularies and interpretive frameworks.",
               "This teaching appears in various forms across different religious traditions, each offering unique insights while addressing common human concerns about meaning, purpose, and transcendence.\n\nFrom a comparative religion perspective, we can observe how different cultures have developed similar ethical principles while maintaining distinct theological frameworks. The Golden Rule, for example, appears in various forms across traditions: 'Do unto others as you would have them do unto you' (Christianity), 'None of you believes until he wishes for his brother what he wishes for himself' (Islam), 'What is hateful to you, do not do to your neighbor' (Judaism).\n\nSimilarly, concepts of compassion, justice, and spiritual transformation are universal themes that manifest differently across traditions. Hindu concepts of karma and dharma parallel Christian teachings on moral responsibility and divine justice. Buddhist emphasis on mindfulness and compassion resonates with Islamic principles of consciousness (taqwa) and mercy (rahma).\n\nThese convergences suggest that while religious expressions vary culturally, the underlying spiritual truths and ethical principles often transcend individual traditions, pointing toward universal human experiences of the sacred."
             ];
-            
+
             const randomResponse = responses[Math.floor(Math.random() * responses.length)];
             addMessage(randomResponse, false);
           }, 1000);
@@ -258,10 +262,10 @@
           utterance.rate = 0.8;
           utterance.pitch = 1;
           speechSynthesis.speak(utterance);
-          
+
           button.textContent = '🔊 Speaking...';
           button.className = 'text-xs text-purple-800';
-          
+
           utterance.onend = () => {
             button.textContent = '🔊 Speak';
             button.className = 'text-xs text-purple-600 hover:text-purple-800';
@@ -280,7 +284,7 @@
 
     <!-- Main React application script -->
     <script type="module" src="/src/main.tsx"></script>
-    
+
     <!-- Replit development banner -->
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
   </body>
