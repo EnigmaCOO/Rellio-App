@@ -180,42 +180,6 @@ export const moderationLogs = pgTable("moderation_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// GDPR Consent table
-export const gdprConsents = pgTable("gdpr_consents", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id"),
-  region: text("region").notNull(), // 'EU', 'US', 'other'
-  accepted: integer("accepted").default(0).notNull(), // 0 = declined, 1 = accepted
-  version: text("version").notNull().default("1.0"),
-  consentText: text("consent_text"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Metrics Events table
-export const metricsEvents = pgTable("metrics_events", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id"),
-  sessionId: text("session_id"),
-  eventType: text("event_type").notNull(), // 'voice_interrupt', 'tts_play_start', 'compare_used', etc.
-  eventData: json("event_data"), // additional event context
-  timestamp: timestamp("timestamp").defaultNow(),
-});
-
-// Voice Sessions table for tracking interruptions
-export const voiceSessions = pgTable("voice_sessions", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id"),
-  sessionId: text("session_id").notNull(),
-  startTime: timestamp("start_time").defaultNow(),
-  endTime: timestamp("end_time"),
-  interruptionCount: integer("interruption_count").default(0),
-  averageLatency: integer("average_latency"),
-  persona: text("persona"),
-  voiceProvider: text("voice_provider").default("elevenlabs"), // 'elevenlabs', 'browser'
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
 export const insertScriptureSchema = createInsertSchema(scriptures);
 export const insertChatMessageSchema = createInsertSchema(chatMessages);
 export const insertUserReadingSchema = createInsertSchema(userReadings);
@@ -225,9 +189,6 @@ export const insertJourneyMilestoneSchema = createInsertSchema(journeyMilestones
 export const insertWeeklyProgressSchema = createInsertSchema(weeklyProgress);
 export const insertFlaggedMessageSchema = createInsertSchema(flaggedMessages);
 export const insertModerationLogSchema = createInsertSchema(moderationLogs);
-export const insertGdprConsentSchema = createInsertSchema(gdprConsents);
-export const insertMetricsEventSchema = createInsertSchema(metricsEvents);
-export const insertVoiceSessionSchema = createInsertSchema(voiceSessions);
 
 export type InsertScripture = z.infer<typeof insertScriptureSchema>;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
@@ -238,9 +199,6 @@ export type InsertJourneyMilestone = z.infer<typeof insertJourneyMilestoneSchema
 export type InsertWeeklyProgress = z.infer<typeof insertWeeklyProgressSchema>;
 export type InsertFlaggedMessage = z.infer<typeof insertFlaggedMessageSchema>;
 export type InsertModerationLog = z.infer<typeof insertModerationLogSchema>;
-export type InsertGdprConsent = z.infer<typeof insertGdprConsentSchema>;
-export type InsertMetricsEvent = z.infer<typeof insertMetricsEventSchema>;
-export type InsertVoiceSession = z.infer<typeof insertVoiceSessionSchema>;
 
 export type Scripture = typeof scriptures.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;
@@ -251,9 +209,6 @@ export type JourneyMilestone = typeof journeyMilestones.$inferSelect;
 export type WeeklyProgress = typeof weeklyProgress.$inferSelect;
 export type FlaggedMessage = typeof flaggedMessages.$inferSelect;
 export type ModerationLog = typeof moderationLogs.$inferSelect;
-export type GdprConsent = typeof gdprConsents.$inferSelect;
-export type MetricsEvent = typeof metricsEvents.$inferSelect;
-export type VoiceSession = typeof voiceSessions.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type OtpCode = typeof otpCodes.$inferSelect;
 export type RefreshToken = typeof refreshTokens.$inferSelect;
@@ -367,17 +322,4 @@ export const updateReadingSessionSchema = z.object({
 
 export const updateJourneyGoalSchema = z.object({
   readingGoal: z.number().min(0).max(10080), // max 1 week in minutes
-});
-
-// GDPR Consent schemas
-export const gdprConsentSchema = z.object({
-  region: z.string(),
-  accepted: z.boolean(),
-  version: z.string().default("1.0"),
-});
-
-// Metrics Event schema
-export const trackEventSchema = z.object({
-  eventType: z.string(),
-  eventData: z.record(z.any()).optional(),
 });

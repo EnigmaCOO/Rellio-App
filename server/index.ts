@@ -3,41 +3,22 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import session from "express-session";
 import MemoryStore from "memorystore";
-import { helmetConfig, sanitizeInput, generalRateLimit } from "./middleware/security";
-import { logger, createRequestLogger } from "./middleware/logger";
-import compression from "compression";
 
 // Global error handling to prevent unhandled promise rejections from crashing the process
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error({ reason, promise }, '🚨 Unhandled Promise Rejection');
+  console.error('🚨 Unhandled Promise Rejection at:', promise, 'reason:', reason);
+  // Log the error but don't crash the process
 });
 
 process.on('uncaughtException', (error) => {
-  logger.error({ error }, '🚨 Uncaught Exception');
+  console.error('🚨 Uncaught Exception:', error);
   // Log the error but don't crash the process for now
   // In production, you might want to gracefully shut down
 });
 
 const app = express();
-
-// Security middleware (apply early)
-app.use(helmetConfig);
-
-// Request logging
-app.use(createRequestLogger());
-
-// Compression
-app.use(compression());
-
-// Body parsing
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: false, limit: '1mb' }));
-
-// Input sanitization
-app.use(sanitizeInput);
-
-// General rate limiting (apply to all routes)
-app.use('/api', generalRateLimit);
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 // Session configuration
 const MemSession = MemoryStore(session);
