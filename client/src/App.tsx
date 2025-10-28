@@ -13,6 +13,7 @@ import ProfilePage from "@/pages/profile";
 import PrivacyPolicyPage from "@/pages/privacy";
 import TermsOfServicePage from "@/pages/terms";
 import NotFound from "@/pages/not-found";
+import InstallPrompt from "@/components/InstallPrompt";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -47,11 +48,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <LoadingSplash 
-          show={showSplash} 
-          onComplete={() => setShowSplash(false)} 
+        <LoadingSplash
+          show={showSplash}
+          onComplete={() => setShowSplash(false)}
         />
         <div className={showSplash ? 'opacity-0' : 'opacity-100 transition-opacity duration-500'}>
+          <InstallPrompt />
           <Toaster />
           <Router />
         </div>
