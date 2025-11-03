@@ -1,11 +1,14 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Volume2, Copy, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useElevenLabsReader } from "@/hooks/useElevenLabsReader";
-import { ElevenLabsControls } from "./ElevenLabsControls";
+import { AutoReaderControls } from "./AutoReaderControls";
+import { usePersonaSceneBridge } from "@/hooks/usePersonaSceneBridge";
+import { cn } from "@/lib/utils";
 import type { Religion, Scripture } from "@shared/schema";
 
 interface VerseListProps {
@@ -21,14 +24,71 @@ interface VerseListProps {
   highlightedVerse?: number;
   maxChapters?: number;
   onVerseRead?: () => void;
-  readingSession?: any;
+  readingSession?: {
+    incrementVersesRead?: () => void;
+  };
 }
+
+const PAGE_SIZE = 2;
+
+const defaultPageVariants = {
+  enter: (direction: number) => ({
+    rotateY: direction > 0 ? -35 : 35,
+    opacity: 0,
+    x: direction * 120,
+    scale: 0.96,
+  }),
+  center: {
+    rotateY: 0,
+    opacity: 1,
+    x: 0,
+    scale: 1,
+    transition: { type: "spring", stiffness: 120, damping: 20 },
+  },
+  exit: (direction: number) => ({
+    rotateY: direction > 0 ? 25 : -25,
+    opacity: 0,
+    x: direction * -90,
+    scale: 0.96,
+  }),
+};
+
+const reducedMotionPageVariants = {
+  enter: () => ({
+    opacity: 0,
+    x: 0,
+    rotateY: 0,
+    scale: 0.98,
+  }),
+  center: {
+    opacity: 1,
+    x: 0,
+    rotateY: 0,
+    scale: 1,
+    transition: { duration: 0.2, ease: "easeOut" },
+  },
+  exit: () => ({
+    opacity: 0,
+    x: 0,
+    rotateY: 0,
+    scale: 0.98,
+  }),
+};
+
+const verseGradientMap: Record<string, string> = {
+  islam: "from-emerald-50 via-white to-emerald-100",
+  christianity: "from-indigo-50 via-white to-blue-100",
+  judaism: "from-purple-50 via-white to-indigo-100",
+  hinduism: "from-amber-50 via-white to-orange-100",
+  buddhism: "from-violet-50 via-white to-pink-100",
+  universal: "from-slate-50 via-white to-slate-100",
+};
 
 export function VerseList({
   selectedReligion,
   selectedBook,
   selectedChapter,
-  scriptures,
+  scriptures = [],
   isLoading,
   isError = false,
   religionName,
@@ -40,197 +100,63 @@ export function VerseList({
   readingSession
 }: VerseListProps) {
   const { toast } = useToast();
-  const [speakingStates, setSpeakingStates] = useState<Record<number, boolean>>({});
-  
-  // State for verse highlighting and auto-reader
-  const [currentReadingVerse, setCurrentReadingVerse] = useState<number | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
-  
-  // Track verses as they are read
-  const [versesTracked, setVersesTracked] = useState(new Set<number>());
-  const [availableVoices, setAvailableVoices] = useState<any[]>([]);
-  const [selectedVoiceIndex, setSelectedVoiceIndex] = useState(0);
-  const [speed, setSpeed] = useState(1);
-  const [volume, setVolume] = useState(0.8);
-  const [pauseDuration, setPauseDuration] = useState(1.5);
-  const [isVoicesLoading, setIsVoicesLoading] = useState(true);
-  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
-  const isPlayingRef = useRef(false);
-  const isPausedRef = useRef(false);
-  
-  // Load ElevenLabs voices
-  useEffect(() => {
-    const loadVoices = async () => {
-      try {
-        const response = await fetch('/api/elevenlabs/voices');
-        if (response.ok) {
-          const data = await response.json();
-          const maleVoices = data.recommendedMaleVoices || [];
-          setAvailableVoices(maleVoices);
-          console.log('✅ Voices loaded:', maleVoices.length);
-        }
-      } catch (error) {
-        console.error('Voice loading error:', error);
-      } finally {
-        setIsVoicesLoading(false);
-      }
-    };
-    loadVoices();
-  }, []);
+  const { setActiveVerse, pushChatEvent } = usePersonaSceneBridge();
+  const prefersReducedMotion = useReducedMotion();
+  const pageVariants = prefersReducedMotion ? reducedMotionPageVariants : defaultPageVariants;
 
-  // Reset verse tracking when chapter changes
-  useEffect(() => {
-    setVersesTracked(new Set());
-  }, [selectedChapter, selectedBook]);
-  
-  // Clean up current audio
-  const cleanupCurrentAudio = () => {
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.src = '';
-      setCurrentAudio(null);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageDirection, setPageDirection] = useState<1 | -1>(1);
+  const [focusedVerse, setFocusedVerse] = useState<Scripture | null>(null);
+  const [versesVisited, setVersesVisited] = useState<Set<number>>(new Set());
+
+  const pages = useMemo(() => {
+    if (!scriptures.length) return [] as Scripture[][];
+    const chunks: Scripture[][] = [];
+    for (let i = 0; i < scriptures.length; i += PAGE_SIZE) {
+      chunks.push(scriptures.slice(i, i + PAGE_SIZE));
     }
-  };
+    return chunks;
+  }, [scriptures]);
 
-  // Direct audio playback function
-  const playVerse = async (verseIndex: number) => {
-    if (!scriptures || verseIndex >= scriptures.length) {
-      console.log('🏁 Finished reading all verses in chapter');
-      setIsPlaying(false);
-      setCurrentReadingVerse(null);
-      cleanupCurrentAudio();
+  const totalPages = pages.length;
+  const currentPage = pages[pageIndex] ?? [];
+
+  const handleVerseFocus = useCallback((verse: Scripture | null) => {
+    if (!verse) {
+      setFocusedVerse(null);
+      setActiveVerse(null);
       return;
     }
-    
-    const verse = scriptures[verseIndex];
-    if (!verse) return;
-    
-    try {
-      // Clean up previous audio
-      cleanupCurrentAudio();
-      
-      setCurrentVerseIndex(verseIndex);
-      setCurrentReadingVerse(verse.verse);
-      
-      console.log('🎵 Playing verse:', verse.verse, verse.text.substring(0, 50));
-      
-      const selectedVoice = availableVoices[selectedVoiceIndex];
-      let useElevenLabs = selectedVoice && !isVoicesLoading;
-      
-      // Try ElevenLabs first if available
-      if (useElevenLabs) {
-        try {
-          const response = await fetch('/api/elevenlabs/speak', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              text: verse.text,
-              voiceId: selectedVoice.voice_id,
-              settings: { stability: 0.5, similarityBoost: 0.75 }
-            }),
-          });
-          
-          if (response.ok) {
-            const audioBlob = await response.blob();
-            console.log('📊 Audio blob size:', audioBlob.size, 'bytes');
-            
-            const audioUrl = URL.createObjectURL(audioBlob);
-            const audio = new Audio(audioUrl);
-            audio.volume = volume;
-            audio.playbackRate = speed;
-            setCurrentAudio(audio);
-            
-            audio.onended = () => {
-              console.log('🏁 Audio ended for verse', verse.verse);
-              URL.revokeObjectURL(audioUrl);
-              
-              const nextVerseIndex = verseIndex + 1;
-              if (isPlayingRef.current && !isPausedRef.current && nextVerseIndex < scriptures.length) {
-                setTimeout(() => playVerse(nextVerseIndex), pauseDuration * 1000);
-              } else {
-                setIsPlaying(false);
-                isPlayingRef.current = false;
-                setCurrentReadingVerse(null);
-              }
-            };
-            
-            try {
-              await audio.play();
-              console.log('🎵 ElevenLabs audio started for verse', verse.verse);
-              return; // Exit here when ElevenLabs works
-            } catch (playError) {
-              console.error('❌ Audio play failed:', playError);
-              URL.revokeObjectURL(audioUrl);
-              useElevenLabs = false;
-            }
-          } else {
-            console.log('⚠️ ElevenLabs API failed - response not ok');
-            useElevenLabs = false;
-          }
-        } catch (apiError) {
-          console.log('⚠️ ElevenLabs error:', apiError);
-          useElevenLabs = false;
-        }
-      }
-    
-    // Handle ElevenLabs failure
-    if (!useElevenLabs) {
-      console.log('⚠️ ElevenLabs failed for verse', verse.verse, '- continuing to next verse');
-      const nextVerseIndex = verseIndex + 1;
-      if (isPlayingRef.current && !isPausedRef.current && nextVerseIndex < scriptures.length) {
-        setTimeout(() => playVerse(nextVerseIndex), 500);
-      } else {
-        console.log('🏁 Reading sequence complete');
-        setIsPlaying(false);
-        isPlayingRef.current = false;
-        setCurrentReadingVerse(null);
-      }
+
+    if (!versesVisited.has(verse.verse)) {
+      setVersesVisited((prev) => {
+        const next = new Set(prev);
+        next.add(verse.verse);
+        return next;
+      });
+      onVerseRead?.();
+      readingSession?.incrementVersesRead?.();
     }
-    } catch (error) {
-      console.error('Playback error:', error);
-      if (isPlaying && !isPaused) {
-        setTimeout(() => playVerse(verseIndex + 1), 500);
-      }
-    }
-  };
-  
-  const startReading = () => {
-    console.log('▶️ Starting reading...', {
-      scripturesCount: scriptures?.length || 0,
-      firstVerse: scriptures?.[0]?.verse,
-      lastVerse: scriptures?.[scriptures.length - 1]?.verse
+
+    setFocusedVerse(verse);
+    setActiveVerse({
+      book: verse.book,
+      chapter: verse.chapter,
+      verse: verse.verse,
+      text: verse.text,
+      religion: verse.religion as Religion,
     });
-    setIsPlaying(true);
-    setIsPaused(false);
-    isPlayingRef.current = true;
-    isPausedRef.current = false;
-    playVerse(0);
-  };
-  
-  const pauseReading = () => {
-    setIsPaused(true);
-    isPausedRef.current = true;
-    if (currentAudio) {
-      currentAudio.pause();
-    }
-  };
-  
-  const stopReading = () => {
-    setIsPlaying(false);
-    setIsPaused(false);
-    isPlayingRef.current = false;
-    isPausedRef.current = false;
-    setCurrentReadingVerse(null);
-    cleanupCurrentAudio();
-  };
-  
-  // Create autoReader object for compatibility
-  const autoReader = {
+    pushChatEvent({
+      type: "system",
+      text: `Exploring ${verse.book} ${verse.chapter}:${verse.verse}`,
+      energy: 0.14,
+    });
+  }, [versesVisited, onVerseRead, readingSession, setActiveVerse, pushChatEvent]);
+
+  const {
     isPlaying,
     isPaused,
-    currentVerseIndex,
+    currentVerseIndex: readerVerseIndex,
     speed,
     volume,
     pauseDuration,
@@ -238,325 +164,295 @@ export function VerseList({
     selectedVoiceIndex,
     startReading,
     pauseReading,
+    resumeReading,
     stopReading,
     setSpeed,
     setVolume,
     setPauseDuration,
-    setVoice: setSelectedVoiceIndex,
-    isLoading: isVoicesLoading
-  };
-
-  // Handle verse highlighting when highlightedVerse prop changes
-  useEffect(() => {
-    if (highlightedVerse) {
-      const verseId = `verse-${highlightedVerse}`;
-      
-      const attemptHighlight = (attempts = 0) => {
-        const verseElement = document.getElementById(verseId);
-        
-        if (verseElement) {
-          verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          
-          verseElement.style.backgroundColor = '#fef3c7'; // yellow-100
-          verseElement.style.borderLeft = '4px solid #f59e0b'; // yellow-600
-          verseElement.style.transition = 'all 0.3s ease';
-          
-          setTimeout(() => {
-            verseElement.style.backgroundColor = '';
-            verseElement.style.borderLeft = '';
-          }, 3000);
-        } else if (attempts < 5) {
-          setTimeout(() => attemptHighlight(attempts + 1), 500 * (attempts + 1));
-        }
-      };
-      
-      attemptHighlight();
-    }
-  }, [highlightedVerse, scriptures]);
-
-  // Handle auto-reader verse highlighting
-  useEffect(() => {
-    if (currentReadingVerse) {
-      const verseId = `verse-${currentReadingVerse}`;
-      const verseElement = document.getElementById(verseId);
-      
-      if (verseElement) {
-        verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
-  }, [currentReadingVerse]);
-
-  const handleCopyVerse = (verseText: string, verseRef: string) => {
-    const fullText = `"${verseText}" - ${verseRef}`;
-    navigator.clipboard.writeText(fullText);
-    toast({
-      title: "Verse copied",
-      description: "Verse copied to clipboard",
-    });
-    
-    if (onCopyVerse) {
-      onCopyVerse(fullText);
-    }
-  };
-
-  const handleSpeakVerse = async (verseText: string, verseNumber: number) => {
-    if ('speechSynthesis' in window) {
-      // Stop any current speech
-      window.speechSynthesis.cancel();
-      
-      if (speakingStates[verseNumber]) {
-        setSpeakingStates(prev => ({ ...prev, [verseNumber]: false }));
+    setVoice,
+    isLoading: isReaderLoading,
+  } = useElevenLabsReader({
+    scriptures,
+    onVerseHighlight: (verseNumber) => {
+      if (verseNumber == null) {
         return;
       }
+      const verse = scriptures.find((entry) => entry.verse === verseNumber);
+      if (verse) {
+        handleVerseFocus(verse);
+      }
+    },
+  });
 
-      setSpeakingStates(prev => ({ ...prev, [verseNumber]: true }));
-      
-      const utterance = new SpeechSynthesisUtterance(verseText);
-      utterance.rate = 0.8;
-      utterance.pitch = 1;
-      utterance.volume = 0.8;
-      
-      utterance.onend = () => {
-        setSpeakingStates(prev => ({ ...prev, [verseNumber]: false }));
-      };
-      
-      utterance.onerror = () => {
-        setSpeakingStates(prev => ({ ...prev, [verseNumber]: false }));
+  const handleCopy = useCallback((verse: Scripture) => {
+    const verseText = `${verse.book} ${verse.chapter}:${verse.verse} — ${verse.text}`;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(verseText).catch(() => {
         toast({
-          title: "Speech Error",
-          description: "Could not read the verse aloud",
+          title: "Copy failed",
+          description: "Please copy manually if needed.",
           variant: "destructive",
         });
-      };
-
-      window.speechSynthesis.speak(utterance);
-    } else {
-      toast({
-        title: "Speech Not Supported",
-        description: "Text-to-speech is not supported in your browser",
-        variant: "destructive",
       });
     }
+    onCopyVerse?.(verseText);
+    toast({
+      title: "Verse copied",
+      description: `${verse.book} ${verse.chapter}:${verse.verse} ready for sharing`,
+      variant: "default",
+    });
+  }, [onCopyVerse, toast]);
+
+  const handlePlayVerse = useCallback((verse: Scripture) => {
+    const index = scriptures.findIndex((entry) => entry.verse === verse.verse);
+    if (index >= 0) {
+      startReading(index);
+    }
+  }, [scriptures, startReading]);
+
+  useEffect(() => {
+    setPageIndex(0);
+    setPageDirection(1);
+    setVersesVisited(new Set());
+  }, [selectedChapter, selectedBook]);
+
+  useEffect(() => {
+    if (!currentPage.length) {
+      handleVerseFocus(null);
+      return;
+    }
+    const candidate = currentPage[0];
+    if (!focusedVerse || focusedVerse.verse !== candidate.verse) {
+      handleVerseFocus(candidate);
+    }
+  }, [currentPage, focusedVerse, handleVerseFocus]);
+
+  useEffect(() => {
+    if (!highlightedVerse || !scriptures.length) return;
+    const index = scriptures.findIndex((verse) => verse.verse === highlightedVerse);
+    if (index >= 0) {
+      const newPage = Math.floor(index / PAGE_SIZE);
+      if (newPage !== pageIndex) {
+        setPageDirection(newPage > pageIndex ? 1 : -1);
+        setPageIndex(newPage);
+      }
+      const verse = scriptures[index];
+      setTimeout(() => handleVerseFocus(verse), 150);
+    }
+  }, [highlightedVerse, scriptures, pageIndex, handleVerseFocus]);
+
+  const handlePageChange = (nextIndex: number) => {
+    if (nextIndex < 0 || nextIndex >= totalPages) return;
+    setPageDirection(nextIndex > pageIndex ? 1 : -1);
+    setPageIndex(nextIndex);
   };
+
+  const gradientClass = verseGradientMap[selectedReligion ?? "universal"];
 
   if (isLoading) {
     return (
-      <Card className="bg-rellio-white rounded-xl shadow-md p-6">
-        <div className="space-y-4">
-          <Skeleton className="h-6 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-          <div className="space-y-3">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </Card>
+      <div className="space-y-4">
+        <Skeleton className="h-32 w-full rounded-3xl" />
+        <Skeleton className="h-32 w-full rounded-3xl" />
+      </div>
     );
   }
 
   if (isError) {
     return (
-      <Card className="bg-rellio-white rounded-xl shadow-md p-6">
-        <div className="text-center text-red-600">
-          <p>Error loading scriptures. Please try again.</p>
-        </div>
+      <Card className="flex h-full flex-col items-center justify-center border-dashed border-red-200 bg-red-50/40 p-6 text-center">
+        <p className="text-sm text-red-600">We couldn’t load this chapter right now.</p>
+        <p className="text-xs text-red-500">Please try again or choose another book.</p>
       </Card>
     );
   }
 
-  // Generate chapter tabs
-  const generateChapterTabs = () => {
-    const tabs = [];
-    const maxTabsToShow = 12;
-    
-    if (maxChapters <= maxTabsToShow) {
-      // Show all chapters if we have few
-      for (let i = 1; i <= maxChapters; i++) {
-        tabs.push(i);
-      }
-    } else {
-      // Smart pagination for many chapters
-      const start = Math.max(1, selectedChapter - 5);
-      const end = Math.min(maxChapters, start + maxTabsToShow - 1);
-      for (let i = start; i <= end; i++) {
-        tabs.push(i);
-      }
-    }
-    return tabs;
-  };
+  if (!scriptures.length) {
+    return (
+      <Card className="flex h-full flex-col items-center justify-center border-dashed border-slate-200 bg-slate-50/50 p-6 text-center">
+        <p className="text-sm font-semibold text-slate-600">No verses found for this chapter yet.</p>
+        <p className="text-xs text-slate-500">Choose a different chapter or explore another tradition.</p>
+      </Card>
+    );
+  }
+
+  const readerActiveVerse = scriptures[readerVerseIndex];
 
   return (
-    <div className="h-full bg-gray-50 flex flex-col">
-      {/* Top Controls Section */}
-      <div className="bg-white p-4 border-b border-gray-200">
-        {/* Auto-Reader Controls */}
-        {scriptures && scriptures.length > 0 && (
-          <div className="flex items-center justify-center mb-4">
-            <ElevenLabsControls
-              isPlaying={autoReader.isPlaying}
-              isPaused={autoReader.isPaused}
-              speed={autoReader.speed}
-              volume={autoReader.volume}
-              pauseDuration={autoReader.pauseDuration}
-              onPlay={autoReader.startReading}
-              onPause={autoReader.pauseReading}
-              onStop={autoReader.stopReading}
-              onSpeedChange={autoReader.setSpeed}
-              onVolumeChange={autoReader.setVolume}
-              onPauseDurationChange={autoReader.setPauseDuration}
-              onVoiceChange={autoReader.setVoice}
-              availableVoices={autoReader.availableVoices}
-              selectedVoiceIndex={autoReader.selectedVoiceIndex}
-              disabled={!scriptures || scriptures.length === 0}
-              isLoading={autoReader.isLoading}
-            />
-          </div>
-        )}
-
-        {/* Title and Subtitle */}
-        <div className="text-center mb-4">
-          <h1 className="text-xl font-bold text-gray-900">
-            {religionName} — {selectedBook}
-          </h1>
-          <p className="text-sm text-gray-600 mt-1">
-            {selectedReligion === 'islam' ? 'Surah' : 'Chapter'} {selectedChapter} of {maxChapters}
-          </p>
+    <div className="flex h-full flex-col gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">
+            {religionName} · {selectedBook}
+          </h2>
+          <p className="text-sm text-slate-500">Chapter {selectedChapter}</p>
         </div>
-
-        {/* Chapter Tabs - Always Show When Available */}
-        {maxChapters >= 1 && (
-          <div className="flex gap-2 overflow-x-auto bg-gray-100 p-2 rounded-lg">
-            {generateChapterTabs().map(chapter => (
-              <button
-                key={chapter}
-                onClick={() => onChapterChange(chapter)}
-                className={`px-3 py-1 text-sm font-medium rounded-full whitespace-nowrap transition-all ${
-                  selectedChapter === chapter
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-                }`}
-                aria-label={`Go to chapter ${chapter}`}
-              >
-                {chapter}
-              </button>
-            ))}
-            {maxChapters > 12 && selectedChapter < maxChapters - 6 && (
-              <button
-                onClick={() => onChapterChange(Math.min(maxChapters, selectedChapter + 10))}
-                className="px-3 py-1 text-sm font-medium rounded-full bg-white text-gray-500 hover:bg-blue-50 hover:text-blue-600"
-                aria-label="Show more chapters"
-              >
-                ...
-              </button>
-            )}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full"
+            onClick={() => onChapterChange(Math.max(1, selectedChapter - 1))}
+            disabled={selectedChapter <= 1}
+            title="Previous chapter"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-xs font-medium text-slate-600">Chapter {selectedChapter}</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full"
+            onClick={() => onChapterChange(Math.min(maxChapters, selectedChapter + 1))}
+            disabled={selectedChapter >= maxChapters}
+            title="Next chapter"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      {/* Verse Display Card - Fixed Height with Internal Scrolling */}
-      <div className="flex-1 p-4">
-        <Card className="h-full bg-white shadow-md rounded-xl border border-gray-200 flex flex-col" style={{ height: '60vh' }}>
-          <div className="flex-1 overflow-y-auto p-6">
-            {isLoading ? (
-              <div className="space-y-4">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-24 w-full" />
-                ))}
-              </div>
-            ) : isError ? (
-              <div className="text-center text-red-500 py-12">
-                <p className="text-lg">Error loading verses</p>
-                <p className="text-sm mt-2">Please try again or select a different chapter.</p>
-              </div>
-            ) : scriptures && scriptures.length > 0 ? (
-              <div className="space-y-6">
-                {scriptures.map((scripture, index) => {
-                  const isCurrentlyReading = autoReader.isPlaying && 
-                                           !autoReader.isPaused && 
-                                           autoReader.currentVerseIndex === index;
-                  
-                  const isHighlighted = currentReadingVerse === scripture.verse || 
-                                      highlightedVerse === scripture.verse;
-                  
-                  return (
-                    <div
-                      key={scripture.verse}
-                      id={`verse-${scripture.verse}`}
-                      className={`group relative p-4 rounded-lg transition-all shadow-sm ${
-                        isCurrentlyReading 
-                          ? 'bg-blue-50 border-l-4 border-blue-600 shadow-lg' 
-                          : isHighlighted
-                          ? 'bg-yellow-50 border-l-4 border-yellow-500 shadow-md'
-                          : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                      }`}
-                    >
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="flex-1"
-                             onMouseEnter={() => {
-                               // Track verse as read when user hovers/focuses on it
-                               if (!versesTracked.has(scripture.verse)) {
-                                 setVersesTracked(prev => new Set([...Array.from(prev), scripture.verse]));
-                                 onVerseRead?.();
-                               }
-                             }}>
-                          <div className="flex items-start gap-3">
-                            <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                              {scripture.verse}
-                            </span>
-                            <div className="flex-1">
-                              <p className="text-lg text-gray-800 leading-relaxed mb-2">
-                                {scripture.text}
-                              </p>
-                              <p className="text-sm font-bold text-gray-600">
-                                {selectedBook} {selectedChapter}:{scripture.verse}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleSpeakVerse(scripture.text, scripture.verse)}
-                            className={`hover:bg-blue-50 border-blue-200 ${
-                              speakingStates[scripture.verse] ? 'bg-blue-100 text-blue-700 border-blue-300' : 'text-gray-600'
-                            }`}
-                            title="Read aloud"
-                          >
-                            <Volume2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleCopyVerse(
-                              scripture.text, 
-                              `${selectedBook} ${selectedChapter}:${scripture.verse}`
-                            )}
-                            className="text-gray-600 hover:bg-blue-50 hover:text-blue-700 border-blue-200"
-                            title="Copy verse and send to chat"
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        </div>
+      <div className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-2 text-xs text-slate-600 shadow-sm backdrop-blur">
+        <div>
+          Page {pageIndex + 1} of {totalPages}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full"
+            onClick={() => handlePageChange(pageIndex - 1)}
+            disabled={pageIndex === 0}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full"
+            onClick={() => handlePageChange(pageIndex + 1)}
+            disabled={pageIndex >= totalPages - 1}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+
+      <div className="relative flex-1">
+        <AnimatePresence initial={false} custom={pageDirection} mode="wait">
+          <motion.div
+            key={pageIndex}
+            custom={pageDirection}
+            variants={pageVariants}
+            initial={prefersReducedMotion ? false : "enter"}
+            animate="center"
+            exit={prefersReducedMotion ? false : "exit"}
+            className="grid h-full gap-4 md:grid-cols-2"
+          >
+            {currentPage.map((verse) => {
+              const isFocused = focusedVerse?.verse === verse.verse;
+              const isHighlighted = highlightedVerse === verse.verse;
+              const isAudioActive = readerActiveVerse?.verse === verse.verse && isPlaying;
+              return (
+                <Card
+                  key={`${verse.book}-${verse.chapter}-${verse.verse}`}
+                  className={cn(
+                    "relative overflow-hidden border-none bg-white/80 shadow-lg transition-transform duration-300",
+                    (isFocused || isAudioActive) && "scale-[1.01] shadow-xl",
+                    isHighlighted && "ring-2 ring-teal-300"
+                  )}
+                  onMouseEnter={() => handleVerseFocus(verse)}
+                  onFocus={() => handleVerseFocus(verse)}
+                >
+                  <div className={cn("absolute inset-0 opacity-80", `bg-gradient-to-br ${gradientClass}`)} />
+                  <div className="relative flex h-full flex-col gap-3 p-5">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Verse {verse.verse}
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          {verse.book} {verse.chapter}:{verse.verse}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="rounded-full"
+                          onClick={() => handlePlayVerse(verse)}
+                          title="Play immersive recitation from this verse"
+                        >
+                          <Volume2 className={cn("h-4 w-4", isAudioActive ? "text-teal-600" : "text-slate-500")}
+                          />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="rounded-full"
+                          onClick={() => handleCopy(verse)}
+                          title="Copy verse"
+                        >
+                          <Copy className="h-4 w-4 text-slate-500" />
+                        </Button>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center text-gray-500 py-12">
-                <p className="text-lg">No verses available for this selection.</p>
-                <p className="text-sm mt-2">Please select a different book or chapter.</p>
-              </div>
-            )}
+
+                    <p className="text-sm leading-relaxed text-slate-800">
+                      {verse.text}
+                    </p>
+
+                    {isAudioActive && (
+                      <span className="text-[11px] font-medium uppercase tracking-wide text-teal-600">
+                        Persona reciting…
+                      </span>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      <div className="mt-auto space-y-3 rounded-2xl border border-slate-200/70 bg-white/70 p-4 shadow-sm backdrop-blur">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-slate-700">Immersive recitation</p>
+            <p className="text-xs text-slate-500">
+              Let your chosen persona guide the reading with gentle pauses and ambient tone.
+            </p>
           </div>
-        </Card>
+        </div>
+        <AutoReaderControls
+          isPlaying={isPlaying}
+          isPaused={isPaused}
+          speed={speed}
+          volume={volume}
+          pauseDuration={pauseDuration}
+          onPlay={() => {
+            if (isPaused) {
+              resumeReading();
+            } else if (!isPlaying) {
+              const startIndex = focusedVerse
+                ? scriptures.findIndex((verse) => verse.verse === focusedVerse.verse)
+                : 0;
+              startReading(Math.max(0, startIndex));
+            }
+          }}
+          onPause={pauseReading}
+          onStop={stopReading}
+          onSpeedChange={setSpeed}
+          onVolumeChange={setVolume}
+          onPauseDurationChange={setPauseDuration}
+          onVoiceChange={setVoice}
+          availableVoices={availableVoices}
+          selectedVoiceIndex={selectedVoiceIndex}
+          disabled={isReaderLoading}
+        />
+        {isReaderLoading && (
+          <p className="text-[11px] text-slate-500">Preparing voices…</p>
+        )}
       </div>
     </div>
   );
