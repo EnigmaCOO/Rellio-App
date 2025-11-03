@@ -1,88 +1,378 @@
-import { useState, useEffect, useRef } from "react";
-import { useLocation } from "wouter";
+import { useMemo, useState, useCallback } from "react";
 import { Helmet } from "react-helmet";
-import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 import {
   Menu,
   X,
-  BookOpen,
-  MessageCircle,
-  Users,
-  Search,
-  TrendingUp,
   Compass,
+  BookOpen,
   Volume2,
-  Eye,
-  Play,
   Sparkles,
-  Brain,
-  Route,
-  Target,
-  Mail,
-  Phone,
   Globe,
-  Send,
+  MessageCircle,
+  ArrowRight,
+  Layers,
 } from "lucide-react";
-import heroImage from "@assets/rellio-hero-latest.png";
-import mobileHeroImage from "@assets/rellio-mobile-hero.png";
-import compassLogo from "@assets/rellio-compass-logo.png";
+import type { LucideIcon } from "lucide-react";
+
+import { BookCarousel, type FaithLibrary } from "@/components/landing/BookCarousel";
+import { PersonaShowcase, type PersonaPreview } from "@/components/landing/PersonaShowcase";
 import ExperienceAIWisdom from "@/components/ExperienceAIWisdom";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import type { Religion } from "@shared/schema";
+import compassLogo from "@assets/rellio-compass-logo.png";
 
-export default function LandingPage({
-  bgUrl = "/assets/rellio-hero.jpg",
-  logoUrl = "/assets/rellio-logo-gold.png",
-}: {
-  bgUrl?: string;
-  logoUrl?: string;
-} = {}) {
-  const [offset, setOffset] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
+type ExplorerRouteOptions = {
+  religion?: Religion;
+  book?: string;
+  personaId?: string;
+  view?: string;
+};
+
+const buildExplorerRoute = ({ religion, book, personaId, view }: ExplorerRouteOptions) => {
+  const params = new URLSearchParams();
+
+  if (religion) {
+    params.set("religion", religion);
+  }
+
+  if (book) {
+    params.set("book", book);
+  }
+
+  if (personaId) {
+    params.set("persona", personaId);
+  }
+
+  if (view) {
+    params.set("view", view);
+  }
+
+  const query = params.toString();
+  return `/dashboard${query ? `?${query}` : ""}`;
+};
+
+const heroMetrics = [
+  {
+    label: "Faiths",
+    value: "5+",
+    description: "Major traditions with guided study pathways",
+  },
+  {
+    label: "Personas",
+    value: "8",
+    description: "Scholar voices ready for dialogue and reflection",
+  },
+  {
+    label: "Voice",
+    value: "Live",
+    description: "Hands-free prompts with pause and resume control",
+  },
+  {
+    label: "Explorer",
+    value: "Universal",
+    description: "Compare verses and contexts in one shared canvas",
+  },
+];
+
+const faqItems = [
+  {
+    question: "How does the Universal Wisdom Explorer work?",
+    answer:
+      "Select a book or persona and Rellio orchestrates scripture, commentary, and AI-guided conversation in a single responsive workspace.",
+  },
+  {
+    question: "Can I speak to the personas with my voice?",
+    answer:
+      "Yes. Voice prompts stream into the chat, and the persona pauses automatically whenever you speak so the dialogue feels natural and respectful.",
+  },
+  {
+    question: "Which traditions are available today?",
+    answer:
+      "Christianity, Islam, Judaism, Hinduism, and Buddhism are live now with curated libraries. Additional traditions are on our roadmap.",
+  },
+  {
+    question: "Do I need an account to explore?",
+    answer:
+      "You can browse highlights without signing in. Creating an account unlocks personalised journeys, saved reflections, and community spaces.",
+  },
+];
+
+export default function LandingPage() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
-  const prefersReduced = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const heroContainerRef = useRef<HTMLDivElement>(null);
-  const heroImageRef = useRef<HTMLImageElement>(null);
 
-  useEffect(() => {
-    if (prefersReduced) return;
-    const onScroll = () => {
-      const y = window.scrollY;
-      setOffset(Math.min(y * 0.2, 80));
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [prefersReduced]);
+  const faithLibraries = useMemo<FaithLibrary[]>(() => [
+    {
+      id: "christianity",
+      name: "Christian Wisdom",
+      tagline: "Gospels, letters, and psalms curated for guided devotion.",
+      accent: "rgba(99, 102, 241, 0.2) 0%, rgba(147, 51, 234, 0.12) 100%",
+      glow: "shadow-[0_0_40px_rgba(129,140,248,0.25)]",
+      voicePrompt: "Lead me through the Beatitudes and invite a moment for prayer.",
+      books: [
+        {
+          id: "JOHN",
+          title: "Gospel of John",
+          description: "Experience the poetic proclamation of the Word with live cross references.",
+          route: buildExplorerRoute({ religion: "christianity", book: "John", view: "scripture" }),
+          highlight: "“The light shines in the darkness, and the darkness has not overcome it.”",
+          livePreview: (
+            <p className="text-sm leading-relaxed text-yellow-100/80">
+              Illuminated passages align with prophetic voices from Isaiah, guiding a meditative reading rhythm.
+            </p>
+          ),
+        },
+        {
+          id: "PSALMS",
+          title: "Book of Psalms",
+          description: "Reflective worship with adaptive music beds and journaling cues.",
+          route: buildExplorerRoute({ religion: "christianity", book: "Psalms", view: "scripture" }),
+          highlight: "“Create in me a clean heart, O God, and renew a right spirit within me.”",
+        },
+        {
+          id: "ACTS",
+          title: "Acts of the Apostles",
+          description: "Follow the early church with persona insights on community and mission.",
+          route: buildExplorerRoute({ religion: "christianity", book: "Acts", view: "scripture" }),
+        },
+      ],
+    },
+    {
+      id: "islam",
+      name: "Islamic Guidance",
+      tagline: "Recite the Qur'an with tajweed-aware voice prompts.",
+      accent: "rgba(34, 197, 94, 0.2) 0%, rgba(16, 185, 129, 0.12) 100%",
+      glow: "shadow-[0_0_40px_rgba(34,197,94,0.25)]",
+      voicePrompt: "Recite Surah Al-Fatiha slowly and pause so I can repeat it after you.",
+      books: [
+        {
+          id: "AL-FATIHA",
+          title: "Surah Al-Fatiha",
+          description: "Hear authentic recitation while the AI scholar explains each verse with reverence.",
+          route: buildExplorerRoute({ religion: "islam", book: "Al-Fatiha", view: "scripture" }),
+          highlight: "Bismillah ar-Rahman ar-Raheem — begin in the Name of the Most Compassionate, Most Merciful.",
+        },
+        {
+          id: "YA-SIN",
+          title: "Surah Ya-Sin",
+          description: "Engage with heart-soothing passages using immersive call-and-response mode.",
+          route: buildExplorerRoute({ religion: "islam", book: "Ya-Sin", view: "scripture" }),
+        },
+        {
+          id: "AL-KAHF",
+          title: "Surah Al-Kahf",
+          description: "Weekly reflections with reminders and voice-led pauses for du'a.",
+          route: buildExplorerRoute({ religion: "islam", book: "Al-Kahf", view: "scripture" }),
+        },
+      ],
+    },
+    {
+      id: "judaism",
+      name: "Jewish Heritage",
+      tagline: "Walk Torah portions with cantillation-aware narration.",
+      accent: "rgba(59, 130, 246, 0.18) 0%, rgba(14, 165, 233, 0.12) 100%",
+      glow: "shadow-[0_0_40px_rgba(14,165,233,0.25)]",
+      voicePrompt: "Chant the Shema and invite me to respond in Hebrew.",
+      books: [
+        {
+          id: "GENESIS",
+          title: "Sefer Bereshit",
+          description: "Trace creation narratives with rabbinic commentary layers at a tap.",
+          route: buildExplorerRoute({ religion: "judaism", book: "Genesis", view: "scripture" }),
+        },
+        {
+          id: "EXODUS",
+          title: "Sefer Shemot",
+          description: "Experience the Exodus journey with persona-led historical context.",
+          route: buildExplorerRoute({ religion: "judaism", book: "Exodus", view: "scripture" }),
+        },
+        {
+          id: "PSALMS",
+          title: "Tehillim",
+          description: "Chant psalms with lyrical translation overlays and voice journaling.",
+          route: buildExplorerRoute({ religion: "judaism", book: "Psalms", view: "scripture" }),
+        },
+      ],
+    },
+    {
+      id: "hinduism",
+      name: "Vedic Insights",
+      tagline: "Dialogue with the Bhagavad Gita through guided meditation.",
+      accent: "rgba(234, 179, 8, 0.24) 0%, rgba(249, 115, 22, 0.12) 100%",
+      glow: "shadow-[0_0_45px_rgba(249,115,22,0.2)]",
+      voicePrompt: "Recite the opening of Chapter 2 and pause for me to repeat the Sanskrit.",
+      books: [
+        {
+          id: "GITA",
+          title: "Bhagavad Gita",
+          description: "Journey verse-by-verse with animated battlefield visualisations and mantra loops.",
+          route: buildExplorerRoute({ religion: "hinduism", book: "Bhagavad Gita", view: "scripture" }),
+        },
+        {
+          id: "UPANISHADS",
+          title: "Upanishads",
+          description: "Contemplate the nature of Atman with reflective prompts and soundscapes.",
+          route: buildExplorerRoute({ religion: "hinduism", book: "Upanishads", view: "scripture" }),
+        },
+        {
+          id: "RAMAYANA",
+          title: "Ramayana",
+          description: "Follow Rama's journey with persona narratives and cultural context.",
+          route: buildExplorerRoute({ religion: "hinduism", book: "Ramayana", view: "scripture" }),
+        },
+      ],
+    },
+    {
+      id: "buddhism",
+      name: "Buddhist Clarity",
+      tagline: "Practice mindful reading with calming visualisations.",
+      accent: "rgba(59, 130, 246, 0.16) 0%, rgba(56, 189, 248, 0.12) 100%",
+      glow: "shadow-[0_0_40px_rgba(56,189,248,0.22)]",
+      voicePrompt: "Guide me through the Metta Sutta with breath cues between verses.",
+      books: [
+        {
+          id: "DHAMMAPADA",
+          title: "Dhammapada",
+          description: "Receive concise teachings with persona reflections for daily practice.",
+          route: buildExplorerRoute({ religion: "buddhism", book: "Dhammapada", view: "scripture" }),
+        },
+        {
+          id: "LOTUS",
+          title: "Lotus Sutra",
+          description: "Immerse in compassion themes with visual mandala cues.",
+          route: buildExplorerRoute({ religion: "buddhism", book: "Lotus Sutra", view: "scripture" }),
+        },
+        {
+          id: "HEART",
+          title: "Heart Sutra",
+          description: "Chant with a calming beat and persona-guided breath work.",
+          route: buildExplorerRoute({ religion: "buddhism", book: "Heart Sutra", view: "scripture" }),
+        },
+      ],
+    },
+  ], []);
 
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-  
-  // Debug hero and image dimensions on load
-  useEffect(() => {
-    const hero = heroContainerRef.current;
-    const img = heroImageRef.current;
-    if (hero) {
-      console.log('Hero dimensions:', hero.getBoundingClientRect());
-      console.log('Screen size:', window.innerWidth + 'x' + window.innerHeight);
-      console.log('Is mobile:', isMobile);
-    }
-    if (img) {
-      console.log('Image natural dimensions:', img.naturalWidth, 'x', img.naturalHeight);
-      console.log('Image display dimensions:', img.width, 'x', img.height);
-      console.log('Background image:', isMobile ? mobileHeroImage : heroImage);
-    }
-  }, [isMobile]);
+  const personaPreviews = useMemo<PersonaPreview[]>(() => [
+    {
+      id: "universal-sage",
+      name: "Lumina",
+      title: "Universal Sage",
+      description:
+        "A radiant guide synthesising themes across traditions and inviting respectful dialogue as you read.",
+      accent: "rgba(251, 191, 36, 0.22) 0%, rgba(248, 113, 113, 0.12) 100%",
+      glow: "shadow-[0_0_45px_rgba(251,191,36,0.25)]",
+      voicePrompt: "Illuminate the theme of compassion across the Bible, Qur'an, and Bhagavad Gita.",
+      route: buildExplorerRoute({ view: "universal-explorer", personaId: "universal-sage" }),
+      livePreview: (
+        <p className="text-sm leading-relaxed text-yellow-100/80">
+          “Compassion is the resonance of divine love. In the Qur'an it is Rahma, in the Gospels agape, and in the Gita, the steady
+          heart of a yogi.”
+        </p>
+      ),
+    },
+    {
+      id: "mufti-aminah",
+      name: "Mufti Aminah",
+      title: "Islamic Scholar",
+      description: "A warm teacher delivering precise tafsir and tajweed-friendly recitation cues.",
+      accent: "rgba(34, 197, 94, 0.24) 0%, rgba(74, 222, 128, 0.14) 100%",
+      glow: "shadow-[0_0_40px_rgba(34,197,94,0.22)]",
+      voicePrompt: "Explain Ayat al-Kursi and invite me to recite each line after you.",
+      route: buildExplorerRoute({ religion: "islam", personaId: "mufti-aminah", view: "scripture" }),
+      livePreview: (
+        <p className="text-sm leading-relaxed text-yellow-100/80">
+          “Let us recite slowly. Feel the cadence, then I will pause so you can repeat the sacred words.”
+        </p>
+      ),
+    },
+    {
+      id: "pastor-eli",
+      name: "Pastor Eli",
+      title: "Christian Theologian",
+      description: "Offers pastoral insight with contextual history and devotional prompts.",
+      accent: "rgba(96, 165, 250, 0.22) 0%, rgba(139, 92, 246, 0.14) 100%",
+      glow: "shadow-[0_0_40px_rgba(96,165,250,0.22)]",
+      voicePrompt: "Share a reflection on the Good Samaritan and ask me what love looks like today.",
+      route: buildExplorerRoute({ religion: "christianity", personaId: "pastor-eli", view: "scripture" }),
+    },
+    {
+      id: "guru-meera",
+      name: "Guru Meera",
+      title: "Vedic Mentor",
+      description: "Guides mindful reading with breath, mantra, and visual focus cues.",
+      accent: "rgba(251, 191, 36, 0.18) 0%, rgba(249, 115, 22, 0.12) 100%",
+      glow: "shadow-[0_0_42px_rgba(249,115,22,0.22)]",
+      voicePrompt: "Lead me through a Gita meditation on dharma with gentle bells between verses.",
+      route: buildExplorerRoute({ religion: "hinduism", personaId: "guru-meera", view: "scripture" }),
+    },
+  ], []);
 
-  const handleGetStarted = () => setLocation("/dashboard");
-  const handleWatchDemo = () =>
-    document.getElementById("scriptures")?.scrollIntoView({ behavior: "smooth" });
-  const handleScriptureClick = (religion: string) =>
-    setLocation(`/dashboard?religion=${religion.toLowerCase()}`);
+  const explorerTiles = useMemo(
+    () => [
+      {
+        id: "compare",
+        title: "Compare perspectives",
+        description: "Place passages side-by-side and hear how each persona interprets them in real time.",
+        icon: Globe,
+        route: buildExplorerRoute({ view: "universal-explorer", personaId: "universal-sage" }),
+      },
+      {
+        id: "voice",
+        title: "Speak & listen",
+        description: "Launch voice dialogue with pause detection so your words are always honoured.",
+        icon: Volume2,
+        route: buildExplorerRoute({ view: "voice" }),
+      },
+      {
+        id: "persona",
+        title: "Choose a companion",
+        description: "Invite a scholar persona who mirrors your current study goal or mood.",
+        icon: MessageCircle,
+        route: buildExplorerRoute({ view: "persona-hub" }),
+      },
+      {
+        id: "journey",
+        title: "Track your journey",
+        description: "Celebrate streaks, reflections, and discoveries with gentle progress insights.",
+        icon: Layers,
+        route: buildExplorerRoute({ view: "journey" }),
+      },
+    ] as Array<{ id: string; title: string; description: string; icon: LucideIcon; route: string }>,
+    []
+  );
+
+  const handleNavigate = useCallback(
+    (route: string) => {
+      setLocation(route);
+      setIsMenuOpen(false);
+    },
+    [setLocation]
+  );
+
+  const handleFaithVoicePrompt = useCallback(
+    (prompt: string, meta: { faith: Religion }) => {
+      toast({
+        title: `Previewing ${meta.faith} voice prompt`,
+        description: `“${prompt}”`,
+      });
+    },
+    [toast]
+  );
+
+  const handlePersonaVoicePrompt = useCallback(
+    (prompt: string, meta: { personaId: string }) => {
+      toast({
+        title: "Persona voice prompt queued",
+        description: `“${prompt}”`,
+      });
+    },
+    [toast]
+  );
 
   return (
     <>
@@ -90,12 +380,12 @@ export default function LandingPage({
         <title>Rellio - Explore Sacred Wisdom with AI</title>
         <meta
           name="description"
-          content="Dive into Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more! Engage with voice chats, scholar personas, and theme-based verse comparisons—enlighten your soul today!"
+          content="Dive into Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more. Engage with voice chats, scholar personas, and theme-based verse comparisons — enlighten your soul today!"
         />
         <meta property="og:title" content="Rellio - Explore Sacred Wisdom with AI" />
         <meta
           property="og:description"
-          content="Dive into Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more! Engage with voice chats, scholar personas, and theme-based verse comparisons—enlighten your soul today!"
+          content="Dive into Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more. Engage with voice chats, scholar personas, and theme-based verse comparisons — enlighten your soul today!"
         />
         <meta property="og:image" content={`${currentOrigin}/images/og-image.png`} />
         <meta
@@ -110,425 +400,283 @@ export default function LandingPage({
         <meta name="twitter:title" content="Rellio - Explore Sacred Wisdom with AI" />
         <meta
           name="twitter:description"
-          content="Dive into Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more! Engage with voice chats, scholar personas, and theme-based verse comparisons—enlighten your soul today!"
+          content="Dive into Rellio, an AI-powered platform uniting scriptures from the Bible, Quran, Torah, Bhagavad Gita, and more. Engage with voice chats, scholar personas, and theme-based verse comparisons — enlighten your soul today!"
         />
         <meta name="twitter:image" content={`${currentOrigin}/images/og-image.png`} />
       </Helmet>
 
-      <div className="min-h-screen bg-black text-[#E8D18A] selection:bg-yellow-200/20 selection:text-yellow-100">
-        {/* NAVIGATION */}
-        <header className="fixed left-0 right-0 top-0 z-50 backdrop-blur-sm bg-black/30 border-b border-yellow-200/30">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img
-                src={compassLogo}
-                alt="Rellio compass logo"
-                className="h-10 w-10 object-contain animate-pulse [animation-duration:3s]"
-                loading="eager"
-              />
-              <span className="font-serif tracking-widest text-xl text-yellow-200">RELLIO</span>
-            </div>
-            <nav className="hidden md:flex items-center gap-8 text-sm text-yellow-100/80">
-              <a href="#features" className="hover:text-yellow-200 transition-colors">Features</a>
-              <a href="#about" className="hover:text-yellow-200 transition-colors">About</a>
-              <a href="#faq" className="hover:text-yellow-200 transition-colors">FAQ</a>
-              <a href="#contact" className="hover:text-yellow-200 transition-colors">Contact</a>
-              <a href="#auth" className="ml-2 rounded-full border border-yellow-200/30 px-4 py-1.5 text-yellow-100 hover:bg-yellow-200/10 transition-colors">Sign Up</a>
+      <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0d11] to-black text-[#E8D18A] selection:bg-yellow-200/20 selection:text-yellow-100">
+        <header className="fixed inset-x-0 top-0 z-50 border-b border-yellow-200/10 bg-black/50 backdrop-blur">
+          <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+            <button
+              type="button"
+              onClick={() => handleNavigate("/")}
+              className="flex items-center gap-3"
+            >
+              <img src={compassLogo} alt="Rellio compass logo" className="h-10 w-10" loading="lazy" />
+              <span className="font-serif text-xl tracking-[0.4em] text-yellow-200">RELLIO</span>
+            </button>
+            <nav className="hidden items-center gap-8 text-sm text-yellow-100/80 md:flex">
+              <a href="#explorer" className="transition-colors hover:text-yellow-100">
+                Explorer
+              </a>
+              <a href="#libraries" className="transition-colors hover:text-yellow-100">
+                Libraries
+              </a>
+              <a href="#personas" className="transition-colors hover:text-yellow-100">
+                Personas
+              </a>
+              <a href="#faq" className="transition-colors hover:text-yellow-100">
+                FAQ
+              </a>
+              <Button
+                type="button"
+                className="border border-yellow-200/40 bg-yellow-200/20 text-yellow-900 hover:bg-yellow-200"
+                onClick={() => handleNavigate("/dashboard")}
+              >
+                Enter app
+              </Button>
             </nav>
-            <button className="md:hidden text-yellow-200" aria-label="Open menu">
-              <Menu className="h-6 w-6" />
+            <button
+              type="button"
+              className="rounded-full border border-yellow-200/40 p-2 text-yellow-100 md:hidden"
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+              aria-label="Toggle navigation menu"
+            >
+              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
+          {isMenuOpen && (
+            <div className="md:hidden">
+              <nav className="space-y-1 border-t border-yellow-200/10 bg-black/80 px-4 py-4 text-sm text-yellow-100/80">
+                {[
+                  { label: "Explorer", href: "#explorer" },
+                  { label: "Libraries", href: "#libraries" },
+                  { label: "Personas", href: "#personas" },
+                  { label: "FAQ", href: "#faq" },
+                ].map((item) => (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    className="block rounded-xl px-3 py-2 transition-colors hover:bg-yellow-200/10"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.label}
+                  </a>
+                ))}
+                <Button
+                  type="button"
+                  className="w-full bg-yellow-200 text-black hover:bg-yellow-300"
+                  onClick={() => handleNavigate("/dashboard")}
+                >
+                  Enter app
+                </Button>
+              </nav>
+            </div>
+          )}
         </header>
 
-        {/* HERO SECTION */}
-        <section 
-          ref={heroContainerRef}
-          aria-label="Rellio hero" 
-          className="relative isolate flex min-h-screen items-center justify-center overflow-hidden"
-        >
-          {/* Hero Image */}
-          <img
-            ref={heroImageRef}
-            src={isMobile ? mobileHeroImage : heroImage}
-            alt="Rellio cosmic hero with floating scriptures - Torah, Quran, Bible, Tripitaka, and Bhagavad Gita"
-            className={isMobile ? "w-full h-screen object-contain z-10" : "w-full h-auto min-h-screen object-cover z-10"}
-            style={{
-              transform: `translateY(${prefersReduced ? 0 : offset * 0.3}px)`,
-              willChange: "transform"
-            }}
-            onLoad={() => {
-              const img = heroImageRef.current;
-              if (img) {
-                console.log('Image loaded - Natural:', img.naturalWidth, 'x', img.naturalHeight);
-                console.log('Image display:', img.width, 'x', img.height);
-              }
-            }}
-          />
-          
-          {/* Light gradient overlay for text readability */}
-          <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-black/50 via-black/20 to-black/30" />
-          <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_40%_at_50%_60%,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_40%,rgba(0,0,0,0.2)_100%)]" />
-          
-          
-          <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 pt-28 pb-24 text-center">
-            {/* Content overlay for logo, tagline, and CTAs */}
-          </div>
-          
-          {/* Tagline positioned below the figure */}
-          <div className="absolute bottom-1/4 left-1/2 transform -translate-x-1/2 z-30">
-            <p className="font-serif text-sm md:text-xl tracking-[0.3em] text-yellow-300/90 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] text-center whitespace-nowrap">
-              GUIDING WISDOM. ETERNAL CONNECTION
-            </p>
-          </div>
-          
-          {/* Scroll Cue */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex justify-center z-20">
-            <div className="h-6 w-4 rounded-full border border-yellow-200/40 flex items-start justify-center p-1">
-              <div className="h-1 w-1 rounded-full bg-yellow-200/80 animate-bounce" />
-            </div>
-          </div>
-        </section>
-
-        {/* CALL TO ACTION BUTTONS */}
-        <section className="bg-[#0c0f12] py-8">
-          <div className="flex flex-col items-center gap-4">
-            <button
-              onClick={handleGetStarted}
-              className="inline-flex items-center justify-center rounded-lg border-2 border-yellow-300/60 bg-black/30 backdrop-blur-sm px-10 py-3 font-serif text-sm font-semibold tracking-[0.2em] text-yellow-200 transition-all duration-300 hover:border-yellow-200 hover:bg-yellow-200/10 hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
-              aria-label="Enter the Rellio spiritual community"
-            >
-              ENTER THE CIRCLE
-            </button>
-            <button
-              onClick={handleWatchDemo}
-              className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-yellow-600/90 to-yellow-500/90 backdrop-blur-sm px-8 py-2 font-serif text-xs font-semibold tracking-[0.2em] text-black transition-all duration-300 hover:from-yellow-500 hover:to-yellow-400 hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
-              aria-label="Explore sacred scriptures"
-            >
-              EXPLORE SCRIPTURES
-            </button>
-          </div>
-        </section>
-
-        {/* EXPERIENCE AI WISDOM SECTION */}
-        <ExperienceAIWisdom />
-
-        {/* FEATURES SECTION */}
-        <section id="features" className="bg-[#0c0f12] pt-8 pb-8 text-yellow-100/85">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <h2 className="font-serif text-2xl tracking-[0.3em] text-yellow-200 mb-8 text-center">FEATURES</h2>
-            
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              {/* Sacred Texts */}
-              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-6 text-center hover:border-yellow-200/50 transition-all duration-300">
-                <div className="mx-auto mb-4 w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
-                  <BookOpen className="h-6 w-6 text-yellow-200" />
-                </div>
-                <h3 className="mb-3 font-serif text-yellow-200 font-semibold text-lg tracking-wide">Sacred Texts</h3>
-                <p className="text-xs text-yellow-100/80 leading-relaxed">
-                  Access scriptures from multiple religious traditions with authentic translations
-                </p>
+        <main className="mx-auto flex w-full max-w-7xl flex-col gap-20 px-4 pb-24 pt-32 sm:px-6 lg:px-8">
+          <section id="explorer" className="grid gap-12 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+            <div className="space-y-8">
+              <span className="inline-flex items-center gap-2 rounded-full border border-yellow-200/40 bg-yellow-200/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-yellow-200">
+                <Compass className="h-4 w-4" />
+                Universal Wisdom Explorer
+              </span>
+              <h1 className="font-serif text-4xl leading-tight text-yellow-50 sm:text-5xl lg:text-6xl">
+                Read, speak, and compare sacred wisdom in one responsive sanctuary.
+              </h1>
+              <p className="max-w-2xl text-lg leading-relaxed text-yellow-100/80">
+                Rellio brings scripture, AI personas, and live voice dialogue into a single experience. Start a verse, ask a
+                question, compare traditions, and let the conversation pause whenever you speak. The journey is immersive, mobile,
+                and deeply respectful.
+              </p>
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <Button
+                  type="button"
+                  className="h-12 rounded-full bg-yellow-200 text-black hover:bg-yellow-300"
+                  onClick={() => handleNavigate(buildExplorerRoute({ view: "universal-explorer" }))}
+                >
+                  Launch the explorer
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-12 rounded-full border-yellow-200/40 bg-transparent text-yellow-100 hover:bg-yellow-200/10"
+                  onClick={() => handleNavigate(buildExplorerRoute({ view: "scripture" }))}
+                >
+                  Browse scriptures
+                </Button>
               </div>
-
-              {/* AI Guidance */}
-              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-6 text-center hover:border-yellow-200/50 transition-all duration-300">
-                <div className="mx-auto mb-4 w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
-                  <Brain className="h-6 w-6 text-yellow-200" />
-                </div>
-                <h3 className="mb-3 font-serif text-yellow-200 font-semibold text-lg tracking-wide">AI Guidance</h3>
-                <p className="text-xs text-yellow-100/80 leading-relaxed">
-                  Scholar-grade AI personas provide contextual insights for each tradition
-                </p>
-              </div>
-
-              {/* Deep Dialogue */}
-              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-6 text-center hover:border-yellow-200/50 transition-all duration-300">
-                <div className="mx-auto mb-4 w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
-                  <MessageCircle className="h-6 w-6 text-yellow-200" />
-                </div>
-                <h3 className="mb-3 font-serif text-yellow-200 font-semibold text-lg tracking-wide">Deep Dialogue</h3>
-                <p className="text-xs text-yellow-100/80 leading-relaxed">
-                  Engage in meaningful conversations about spiritual teachings and wisdom
-                </p>
-              </div>
-
-              {/* Voice Interaction */}
-              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-6 text-center hover:border-yellow-200/50 transition-all duration-300">
-                <div className="mx-auto mb-4 w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
-                  <Volume2 className="h-6 w-6 text-yellow-200" />
-                </div>
-                <h3 className="mb-3 font-serif text-yellow-200 font-semibold text-lg tracking-wide">Voice Interaction</h3>
-                <p className="text-xs text-yellow-100/80 leading-relaxed">
-                  Listen and speak naturally with voice-enabled spiritual guidance
-                </p>
-              </div>
-
-              {/* Wisdom Search */}
-              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-6 text-center hover:border-yellow-200/50 transition-all duration-300">
-                <div className="mx-auto mb-4 w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
-                  <Search className="h-6 w-6 text-yellow-200" />
-                </div>
-                <h3 className="mb-3 font-serif text-yellow-200 font-semibold text-lg tracking-wide">Wisdom Search</h3>
-                <p className="text-xs text-yellow-100/80 leading-relaxed">
-                  Find relevant passages and teachings across all sacred texts instantly
-                </p>
-              </div>
-
-              {/* Progress Tracking */}
-              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-6 text-center hover:border-yellow-200/50 transition-all duration-300">
-                <div className="mx-auto mb-4 w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-yellow-200" />
-                </div>
-                <h3 className="mb-3 font-serif text-yellow-200 font-semibold text-lg tracking-wide">Progress Tracking</h3>
-                <p className="text-xs text-yellow-100/80 leading-relaxed">
-                  Monitor your spiritual journey and reading milestones
-                </p>
-              </div>
-
-              {/* Multi-Perspective */}
-              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-6 text-center hover:border-yellow-200/50 transition-all duration-300">
-                <div className="mx-auto mb-4 w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
-                  <Eye className="h-6 w-6 text-yellow-200" />
-                </div>
-                <h3 className="mb-3 font-serif text-yellow-200 font-semibold text-lg tracking-wide">Multi-Perspective</h3>
-                <p className="text-xs text-yellow-100/80 leading-relaxed">
-                  Compare interpretations and insights across different religious views
-                </p>
-              </div>
-
-              {/* Community */}
-              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-6 text-center hover:border-yellow-200/50 transition-all duration-300">
-                <div className="mx-auto mb-4 w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
-                  <Users className="h-6 w-6 text-yellow-200" />
-                </div>
-                <h3 className="mb-3 font-serif text-yellow-200 font-semibold text-lg tracking-wide">Community</h3>
-                <p className="text-xs text-yellow-100/80 leading-relaxed">
-                  Connect with fellow seekers on their spiritual journeys
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ABOUT US SECTION */}
-        <section id="about" className="bg-[#0c0f12] py-8 text-yellow-100/85">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6 text-center">
-            <h2 className="font-serif text-2xl tracking-[0.3em] text-yellow-200 mb-6">ABOUT US</h2>
-            <p className="text-lg leading-relaxed text-yellow-100/80">
-              Rellio bridges spiritual traditions through AI-powered dialogue, creating a sanctuary where ancient wisdom meets modern technology. 
-              Our platform unites the world's sacred texts - Bible, Qur'an, Torah, Bhagavad Gita, and Tripitaka - in one accessible experience. 
-              Through specialized scholar personas and voice-first interactions, we facilitate deep exploration of faith across boundaries, 
-              fostering understanding and connection in our shared human journey toward wisdom and meaning.
-            </p>
-          </div>
-        </section>
-
-        {/* FAQ SECTION */}
-        <section id="faq" className="bg-[#0c0f12] py-8 text-yellow-100/85">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6">
-            <h2 className="font-serif text-2xl tracking-[0.3em] text-yellow-200 mb-6 text-center">FAQ</h2>
-            <div className="space-y-4">
-              {[
-                {
-                  question: "HOW DOES RELLIO WORK?",
-                  answer: "Rellio uses AI to provide contextual insights from sacred texts through specialized religious scholar personas. Simply select a scripture, ask questions, and receive thoughtful responses grounded in theological traditions."
-                },
-                {
-                  question: "WHICH SCRIPTURES ARE AVAILABLE?",
-                  answer: "We support five major religious traditions: Christianity (Bible), Islam (Qur'an), Judaism (Torah), Hinduism (Bhagavad Gita), and Buddhism (Tripitaka), with plans to expand our library."
-                },
-                {
-                  question: "ARE THE AI RESPONSES THEOLOGICALLY ACCURATE?",
-                  answer: "Our AI is trained on scholarly sources and responds through specialized religious personas to ensure respectful, informed guidance that honors each tradition's authentic teachings."
-                },
-                {
-                  question: "IS RELLIO FREE TO USE?",
-                  answer: "Rellio offers both free and premium tiers. Free users can explore scriptures and have basic conversations, while premium members get unlimited AI interactions and advanced features."
-                }
-              ].map((faq, index) => (
-                <div key={index} className="border-b border-yellow-200/20 pb-4">
-                  <button className="w-full flex justify-between items-center text-left py-4 group">
-                    <h3 className="font-serif text-yellow-200 font-semibold tracking-wide group-hover:text-yellow-100 transition-colors">
-                      {faq.question}
-                    </h3>
-                    <svg className="w-5 h-5 text-yellow-200 group-hover:text-yellow-100 transition-transform group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                  <div className="text-sm text-yellow-100/70 leading-relaxed pl-0">
-                    {faq.answer}
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                {heroMetrics.map((metric) => (
+                  <div
+                    key={metric.label}
+                    className="rounded-2xl border border-yellow-200/20 bg-black/50 p-4"
+                  >
+                    <p className="text-xs uppercase tracking-[0.35em] text-yellow-200/70">{metric.label}</p>
+                    <p className="mt-2 text-2xl font-semibold text-yellow-50">{metric.value}</p>
+                    <p className="mt-2 text-xs leading-relaxed text-yellow-100/70">{metric.description}</p>
                   </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              <div className="grid gap-4 rounded-3xl border border-yellow-200/20 bg-black/60 p-6">
+                <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-200/80">
+                  Explorer entry points
+                </h2>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {explorerTiles.map((tile) => (
+                    <button
+                      key={tile.id}
+                      type="button"
+                      onClick={() => handleNavigate(tile.route)}
+                      className="flex flex-col gap-3 rounded-2xl border border-yellow-200/20 bg-black/50 p-4 text-left transition-all hover:border-yellow-200/50 hover:bg-yellow-200/10"
+                    >
+                      <tile.icon className="h-5 w-5 text-yellow-200" />
+                      <p className="font-serif text-lg text-yellow-50">{tile.title}</p>
+                      <p className="text-sm leading-relaxed text-yellow-100/75">{tile.description}</p>
+                    </button>
+                  ))}
                 </div>
+              </div>
+              <div id="libraries">
+                <BookCarousel
+                  libraries={faithLibraries}
+                  onNavigate={handleNavigate}
+                  onVoicePrompt={handleFaithVoicePrompt}
+                />
+              </div>
+            </div>
+          </section>
+
+          <section id="personas">
+            <PersonaShowcase
+              personas={personaPreviews}
+              onNavigate={handleNavigate}
+              onVoicePrompt={handlePersonaVoicePrompt}
+            />
+          </section>
+
+          <section className="rounded-3xl border border-yellow-200/20 bg-black/60 p-8">
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+              <div className="space-y-4">
+                <h2 className="font-serif text-3xl text-yellow-50">Why Rellio feels like a sacred studio</h2>
+                <p className="text-base leading-relaxed text-yellow-100/80">
+                  Every interaction is designed for reflection. Start a scripture session, invite a persona, speak your heart, and
+                  receive responses grounded in tradition. All of it flows inside a responsive layout that feels at home on mobile
+                  and desktop alike.
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {[
+                    {
+                      title: "Immersive scripture journeys",
+                      description: "Adaptive layouts reveal commentary, highlights, and media without losing focus.",
+                      icon: BookOpen,
+                    },
+                    {
+                      title: "Voice-first dialogue",
+                      description: "Converse naturally with pause-aware audio prompts and expressive playback.",
+                      icon: Volume2,
+                    },
+                    {
+                      title: "Persona companionship",
+                      description: "Choose guides who reflect diverse traditions and temperaments.",
+                      icon: MessageCircle,
+                    },
+                    {
+                      title: "Interfaith comparisons",
+                      description: "Line up passages from multiple faiths for deep, respectful exploration.",
+                      icon: Globe,
+                    },
+                  ].map((feature) => (
+                    <div
+                      key={feature.title}
+                      className="flex gap-3 rounded-2xl border border-yellow-200/15 bg-black/40 p-4"
+                    >
+                      <feature.icon className="h-5 w-5 text-yellow-200" />
+                      <div>
+                        <p className="font-serif text-lg text-yellow-50">{feature.title}</p>
+                        <p className="text-sm leading-relaxed text-yellow-100/75">{feature.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-3xl border border-yellow-200/20 bg-black/50 p-6">
+                <ExperienceAIWisdom />
+              </div>
+            </div>
+          </section>
+
+          <section id="faq" className="space-y-6">
+            <h2 className="font-serif text-3xl text-yellow-50">Frequently asked questions</h2>
+            <div className="space-y-4">
+              {faqItems.map((faq) => (
+                <details
+                  key={faq.question}
+                  className="group rounded-2xl border border-yellow-200/20 bg-black/50 p-5 text-yellow-100/80"
+                >
+                  <summary className="flex cursor-pointer items-center justify-between text-lg text-yellow-50">
+                    <span>{faq.question}</span>
+                    <Sparkles className="h-4 w-4 text-yellow-200 transition-transform group-open:rotate-45" />
+                  </summary>
+                  <p className="mt-3 text-sm leading-relaxed">{faq.answer}</p>
+                </details>
               ))}
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* CONTACT SECTION */}
-        <section id="contact" className="bg-black py-8 text-yellow-100/85">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="text-center mb-8">
-              <h2 className="font-serif text-2xl tracking-[0.3em] text-yellow-200 mb-4">CONNECT WITH US</h2>
-              <p className="font-serif text-lg tracking-[0.2em] text-yellow-200/80">GET IN TOUCH</p>
-              <p className="font-serif text-sm tracking-[0.3em] text-yellow-300/60 mt-2">SACRED CONNECTIONS</p>
-            </div>
-            
-            <div className="grid gap-12 lg:grid-cols-2">
-              {/* Contact Information */}
-              <div className="space-y-8">
-                <div className="text-center lg:text-left">
-                  <h3 className="font-serif text-xl tracking-[0.2em] text-yellow-200 mb-4">Follow Our Journey</h3>
-                  
-                  <div className="space-y-6">
-                    {/* Email */}
-                    <div className="flex items-center justify-center lg:justify-start gap-4">
-                      <div className="w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
-                        <Mail className="h-6 w-6 text-yellow-200" />
-                      </div>
-                      <div>
-                        <p className="font-serif text-yellow-200 tracking-wide">hello@rellio.app</p>
-                      </div>
-                    </div>
-                    
-                    {/* Phone */}
-                    <div className="flex items-center justify-center lg:justify-start gap-4">
-                      <div className="w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
-                        <Phone className="h-6 w-6 text-yellow-200" />
-                      </div>
-                      <div>
-                        <p className="font-serif text-yellow-200 tracking-wide">+1 (555) RELLIO-1</p>
-                      </div>
-                    </div>
-                    
-                    {/* Location */}
-                    <div className="flex items-center justify-center lg:justify-start gap-4">
-                      <div className="w-12 h-12 rounded-full border border-yellow-300/50 flex items-center justify-center">
-                        <Globe className="h-6 w-6 text-yellow-200" />
-                      </div>
-                      <div>
-                        <p className="font-serif text-yellow-200 tracking-wide">Digital Platform - Serving Globally</p>
-                      </div>
-                    </div>
-                  </div>
+          <section id="contact" className="rounded-3xl border border-yellow-200/20 bg-black/60 p-8">
+            <div className="grid gap-8 lg:grid-cols-2">
+              <div className="space-y-4">
+                <h2 className="font-serif text-3xl text-yellow-50">Connect with us</h2>
+                <p className="text-sm leading-relaxed text-yellow-100/75">
+                  Be the first to access new personas, rituals, and community experiences. Our team loves hearing how you weave
+                  sacred study into daily life.
+                </p>
+                <div className="space-y-3 text-sm text-yellow-100/80">
+                  <p>Email: hello@rellio.app</p>
+                  <p>Phone: +1 (555) RELLIO-1</p>
+                  <p>Global: Serving seekers worldwide</p>
                 </div>
               </div>
-              
-              {/* Contact Form */}
-              <div className="rounded-2xl border border-yellow-300/30 bg-gradient-to-br from-yellow-900/20 to-black/80 p-8">
-                <h3 className="font-serif text-xl tracking-[0.2em] text-yellow-200 mb-2 text-center">Send us a Message</h3>
-                <p className="text-sm text-yellow-100/70 mb-4 text-center">We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
-                
-                <form className="space-y-6">
-                  {/* Name Field */}
-                  <div>
-                    <label className="block text-sm font-serif text-yellow-200 mb-2 tracking-wide">Your Name</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-4 py-3 rounded-lg bg-black/50 border border-yellow-300/30 text-yellow-100 placeholder-yellow-100/40 focus:border-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-200/20 transition-all duration-300"
-                      placeholder="Enter your name"
-                    />
-                  </div>
-                  
-                  {/* Email Field */}
-                  <div>
-                    <label className="block text-sm font-serif text-yellow-200 mb-2 tracking-wide">Email Address</label>
-                    <input 
-                      type="email" 
-                      className="w-full px-4 py-3 rounded-lg bg-black/50 border border-yellow-300/30 text-yellow-100 placeholder-yellow-100/40 focus:border-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-200/20 transition-all duration-300"
-                      placeholder="Enter your email"
-                    />
-                  </div>
-                  
-                  {/* Message Field */}
-                  <div>
-                    <label className="block text-sm font-serif text-yellow-200 mb-2 tracking-wide">Your Message</label>
-                    <textarea 
-                      rows={6}
-                      className="w-full px-4 py-3 rounded-lg bg-black/50 border border-yellow-300/30 text-yellow-100 placeholder-yellow-100/40 focus:border-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-200/20 transition-all duration-300 resize-none"
-                      placeholder="Share your thoughts, questions, or feedback..."
-                    />
-                  </div>
-                  
-                  {/* Submit Button */}
-                  <button 
-                    type="submit"
-                    className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-yellow-600/90 to-yellow-500/90 backdrop-blur-sm px-8 py-3 font-serif text-sm font-semibold tracking-[0.2em] text-black transition-all duration-300 hover:from-yellow-500 hover:to-yellow-400 hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
-                  >
-                    <Send className="h-4 w-4" />
-                    SEND SACRED MESSAGE
-                  </button>
-                </form>
-              </div>
+              <form className="grid gap-4">
+                <div>
+                  <label className="block text-xs uppercase tracking-[0.3em] text-yellow-200/70">Name</label>
+                  <input
+                    type="text"
+                    className="mt-2 w-full rounded-2xl border border-yellow-200/20 bg-black/40 px-4 py-3 text-yellow-100 focus:border-yellow-200/60 focus:outline-none"
+                    placeholder="Your sacred name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs uppercase tracking-[0.3em] text-yellow-200/70">Email</label>
+                  <input
+                    type="email"
+                    className="mt-2 w-full rounded-2xl border border-yellow-200/20 bg-black/40 px-4 py-3 text-yellow-100 focus:border-yellow-200/60 focus:outline-none"
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs uppercase tracking-[0.3em] text-yellow-200/70">Message</label>
+                  <textarea
+                    className="mt-2 h-32 w-full rounded-2xl border border-yellow-200/20 bg-black/40 px-4 py-3 text-yellow-100 focus:border-yellow-200/60 focus:outline-none"
+                    placeholder="Share your hopes for Rellio"
+                  />
+                </div>
+                <Button type="button" className="rounded-full bg-yellow-200 text-black hover:bg-yellow-300">
+                  Send message
+                </Button>
+              </form>
             </div>
-          </div>
-        </section>
-
-        {/* FOOTER */}
-        <footer className="bg-black py-8 text-yellow-100/50 border-t border-yellow-200/10">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6">
-            {/* Logo and Navigation */}
-            <div className="text-center mb-6">
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <img src={compassLogo} alt="Rellio compass logo" className="h-10 w-10 object-contain" loading="lazy" />
-              </div>
-              <h2 className="font-serif text-xl tracking-[0.3em] text-yellow-200 mb-4">RELLIO</h2>
-              
-              {/* Footer Navigation */}
-              <div className="flex flex-wrap justify-center gap-6 text-xs">
-                <a href="#features" className="hover:text-yellow-200 transition-colors">Features</a>
-                <a href="#about" className="hover:text-yellow-200 transition-colors">About</a>
-                <a href="#faq" className="hover:text-yellow-200 transition-colors">FAQ</a>
-                <a href="#contact" className="hover:text-yellow-200 transition-colors">Contact</a>
-                <a href="/privacy" className="hover:text-yellow-200 transition-colors">Privacy</a>
-                <a href="/terms" className="hover:text-yellow-200 transition-colors">Terms</a>
-              </div>
-            </div>
-            
-            {/* Social Media Icons */}
-            <div className="flex justify-center gap-4 mb-4">
-              {/* X (Twitter) */}
-              <a href="https://x.com/RellioApp" className="w-8 h-8 rounded-full border border-yellow-300/40 flex items-center justify-center hover:border-yellow-200 hover:text-yellow-200 hover:shadow-[0_0_15px_rgba(255,215,0,0.3)] transition-all duration-300" aria-label="Follow us on X">
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                </svg>
-              </a>
-              
-              {/* LinkedIn */}
-              <a href="https://www.linkedin.com/company/rellioapp/" className="w-8 h-8 rounded-full border border-yellow-300/40 flex items-center justify-center hover:border-yellow-200 hover:text-yellow-200 hover:shadow-[0_0_15px_rgba(255,215,0,0.3)] transition-all duration-300" aria-label="Follow us on LinkedIn">
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                </svg>
-              </a>
-              
-              {/* TikTok */}
-              <a href="https://www.tiktok.com/@rellioapp?is_from_webapp=1&sender_device=pc" className="w-8 h-8 rounded-full border border-yellow-300/40 flex items-center justify-center hover:border-yellow-200 hover:text-yellow-200 hover:shadow-[0_0_15px_rgba(255,215,0,0.3)] transition-all duration-300" aria-label="Follow us on TikTok">
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743l-.002-.001.002.001a2.895 2.895 0 0 1 3.183-4.51v-3.5a6.329 6.329 0 0 0-5.394 10.692 6.33 6.33 0 0 0 10.857-4.424V8.687a8.182 8.182 0 0 0 4.773 1.526V6.79a4.831 4.831 0 0 1-1.003-.104z"/>
-                </svg>
-              </a>
-              
-              {/* Instagram */}
-              <a href="https://www.instagram.com/rellioapp?igsh=MXRremNtOGZka3pq&utm_source=qr" className="w-8 h-8 rounded-full border border-yellow-300/40 flex items-center justify-center hover:border-yellow-200 hover:text-yellow-200 hover:shadow-[0_0_15px_rgba(255,215,0,0.3)] transition-all duration-300" aria-label="Follow us on Instagram">
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fillRule="evenodd" d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 6.62 5.367 11.987 11.988 11.987s11.987-5.367 11.987-11.987C24.004 5.367 18.637.001 12.017.001zM8.449 16.988c-1.297 0-2.348-1.051-2.348-2.348s1.051-2.348 2.348-2.348 2.348 1.051 2.348 2.348-1.051 2.348-2.348 2.348zm7.718 0c-1.297 0-2.348-1.051-2.348-2.348s1.051-2.348 2.348-2.348 2.348 1.051 2.348 2.348-1.051 2.348-2.348 2.348z" clipRule="evenodd" />
-                </svg>
-              </a>
-              
-              {/* YouTube */}
-              <a href="https://www.youtube.com/@RellioApp" className="w-8 h-8 rounded-full border border-yellow-300/40 flex items-center justify-center hover:border-yellow-200 hover:text-yellow-200 hover:shadow-[0_0_15px_rgba(255,215,0,0.3)] transition-all duration-300" aria-label="Follow us on YouTube">
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                </svg>
-              </a>
-            </div>
-            
-            {/* Copyright */}
-            <div className="text-center text-xs border-t border-yellow-200/10 pt-4">
-              © {new Date().getFullYear()} Rellio. All rights reserved.
-            </div>
-          </div>
-        </footer>
+          </section>
+        </main>
       </div>
     </>
   );
 }
+
