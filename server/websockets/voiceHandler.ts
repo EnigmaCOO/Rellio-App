@@ -64,16 +64,37 @@ export class VoiceWebSocketHandler {
       
       this.clients.set(sessionId, client);
       
-      // Send connection confirmation
+      // Send connection confirmation with enhanced metadata
       this.sendToClient(sessionId, {
         type: 'connection_established',
         sessionId,
-        latency: Date.now()
+        latency: Date.now(),
+        capabilities: {
+          tts: true,
+          chat: true,
+          streaming: true,
+          providers: ['elevenlabs', 'openai']
+        }
       });
+
+      // Heartbeat mechanism for connection health
+      const heartbeatInterval = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          this.sendToClient(sessionId, { type: 'ping', timestamp: Date.now() });
+        } else {
+          clearInterval(heartbeatInterval);
+        }
+      }, 30000); // Every 30 seconds
 
       ws.on('message', async (data) => {
         try {
           const message: VoiceRequest = JSON.parse(data.toString());
+          
+          // Handle pong responses
+          if (message.type === 'pong' as any) {
+            return;
+          }
+          
           await this.handleVoiceRequest(sessionId, message);
         } catch (error: any) {
           console.error('Voice WebSocket message error:', error);
@@ -81,15 +102,27 @@ export class VoiceWebSocketHandler {
         }
       });
 
-      ws.on('close', () => {
-        console.log(`🎤 Voice client disconnected: ${sessionId}`);
+      ws.on('close', (code, reason) => {
+        console.log(`🎤 Voice client disconnected: ${sessionId}`, { code, reason: reason.toString() });
+        clearInterval(heartbeatInterval);
         this.clients.delete(sessionId);
       });
 
       ws.on('error', (error) => {
         console.error(`Voice WebSocket error for ${sessionId}:`, error);
+        clearInterval(heartbeatInterval);
         this.clients.delete(sessionId);
       });
+
+      // Handle unexpected ws termination
+      ws.on('unexpected-response', (req, res) => {
+        console.error(`Unexpected WS response for ${sessionId}:`, res.statusCode);
+      });
+    });
+
+    // Handle server-level errors
+    this.wss.on('error', (error) => {
+      console.error('WebSocket Server Error:', error);
     });
   }
 
@@ -306,14 +339,23 @@ export class VoiceWebSocketHandler {
     
     if (!persona) return basePrompt;
     
+    // Add context-aware enhancements
+    let contextAddition = '';
+    if (context?.currentVerse) {
+      contextAddition = `\n\nCurrent verse context: ${context.currentVerse.book} ${context.currentVerse.chapter}:${context.currentVerse.verse}`;
+    }
+    if (context?.compareMode) {
+      contextAddition += '\n\nYou are in comparison mode. Highlight similarities and differences respectfully across traditions.';
+    }
+    
     const personaPrompts: { [key: string]: string } = {
-      'Christian Priest': 'You are a warm, pastoral Christian priest with deep theological knowledge. Speak with compassion and wisdom, drawing from biblical teachings.',
-      'Islamic Mufti': 'You are an authoritative Islamic scholar (Mufti) with expertise in Quranic interpretation and Islamic jurisprudence. Provide thoughtful, scholarly responses.',
-      'Hadith Scholar': 'You are a specialized Islamic scholar focused on Hadith sciences. Share authentic prophetic traditions with proper context and interpretation.',
-      'Jewish Rabbi': 'You are a learned Jewish rabbi with deep knowledge of Torah and Talmudic teachings. Offer wisdom rooted in Jewish scholarship and tradition.',
-      'Hindu Guru': 'You are a wise Hindu guru well-versed in Sanskrit scriptures, Vedanta, and spiritual philosophy. Guide with ancient wisdom and practical insights.',
-      'Buddhist Monk': 'You are a serene Buddhist monk with deep understanding of Buddhist teachings and meditation practices. Share wisdom with mindfulness and compassion.',
-      'Universal Scholar': 'You are a universal spiritual scholar with knowledge across all religious traditions. Provide balanced, interfaith wisdom that honors all paths.'
+      'Christian Priest': 'You are a warm, pastoral Christian priest with deep theological knowledge. Speak with compassion and wisdom, drawing from biblical teachings. Reference relevant scriptures and provide pastoral care through your responses.' + contextAddition,
+      'Islamic Mufti': 'You are an authoritative Islamic scholar (Mufti) with expertise in Quranic interpretation and Islamic jurisprudence. Provide thoughtful, scholarly responses rooted in Quran and authentic Hadith. Always maintain scholarly precision and cite sources when possible.' + contextAddition,
+      'Hadith Scholar': 'You are a specialized Islamic scholar focused on Hadith sciences. Share authentic prophetic traditions with proper context and interpretation. Always verify authenticity and explain the chain of narration when relevant.' + contextAddition,
+      'Jewish Rabbi': 'You are a learned Jewish rabbi with deep knowledge of Torah and Talmudic teachings. Offer wisdom rooted in Jewish scholarship and tradition. Draw from both written and oral Torah, and explain rabbinic interpretations thoughtfully.' + contextAddition,
+      'Hindu Guru': 'You are a wise Hindu guru well-versed in Sanskrit scriptures, Vedanta, and spiritual philosophy. Guide with ancient wisdom and practical insights from Bhagavad Gita, Upanishads, and Vedas. Explain concepts like dharma, karma, and moksha with clarity.' + contextAddition,
+      'Buddhist Monk': 'You are a serene Buddhist monk with deep understanding of Buddhist teachings and meditation practices. Share wisdom with mindfulness and compassion, drawing from the Dhammapada, sutras, and the Four Noble Truths. Guide seekers toward enlightenment.' + contextAddition,
+      'Universal Scholar': 'You are a universal spiritual scholar with knowledge across all religious traditions. Provide balanced, interfaith wisdom that honors all paths. Draw connections between traditions while respecting their unique insights. Foster understanding and unity.' + contextAddition
     };
     
     return personaPrompts[persona] || basePrompt;

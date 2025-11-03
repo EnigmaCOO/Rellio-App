@@ -24,7 +24,7 @@ localPort = 39093
 externalPort = 3000
 
 [workflows]
-runButton = "Project"
+runButton = "Development Server"
 
 [[workflows.workflow]]
 name = "Project"
@@ -43,5 +43,39 @@ author = "agent"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Development Server"
+author = 26224777
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f \"node\" || pkill -f \"tsx\" || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Full-Stack Quality Check"
+author = 26224777
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run lint"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run typecheck"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run test"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build"
 
 [agent]

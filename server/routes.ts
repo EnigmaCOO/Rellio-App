@@ -34,6 +34,7 @@ import {
   type InsertReadingSession
 } from "@shared/schema";
 import { z } from "zod";
+import { compareScriptures, streamComparisonAnalysis } from './services/compareScripture';
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -65,7 +66,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Check for JWT token in Authorization header
       const token = req.headers.authorization?.replace('Bearer ', '');
-      
+
       if (token) {
         const decoded = authService.verifyAccessToken(token);
         if (decoded) {
@@ -76,7 +77,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       }
-      
+
       // Fallback to session-based authentication
       if (req.session?.userId) {
         if (req.session.isGuest) {
@@ -106,9 +107,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/send-otp", otpLimiter, async (req: any, res) => {
     try {
       const { email, phone, purpose } = sendOtpSchema.parse(req.body);
-      
+
       const result = await authService.sendOtp(email, phone, purpose);
-      
+
       if (result.success) {
         res.json({ success: true, message: result.message });
       } else {
@@ -128,9 +129,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/verify-otp", authLimiter, async (req: any, res) => {
     try {
       const { email, phone, code, purpose } = verifyOtpSchema.parse(req.body);
-      
+
       const result = await authService.verifyOtp(email, phone, code, purpose);
-      
+
       if (result.success) {
         // Complete verification if it's signup or login
         if (purpose === 'signup' || purpose === 'login') {
@@ -165,9 +166,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/signup", authLimiter, async (req: any, res) => {
     try {
       const userData = signupSchema.parse(req.body);
-      
+
       const result = await authService.registerUser(userData);
-      
+
       if (result.success) {
         if (result.requiresVerification) {
           res.json({
@@ -201,10 +202,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", authLimiter, async (req: any, res) => {
     try {
       const { email, phone, username, password } = loginSchema.parse(req.body);
-      
+
       let type: 'email' | 'phone' | 'username';
       let identifier: string;
-      
+
       if (email) {
         type = 'email';
         identifier = email;
@@ -215,9 +216,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type = 'username';
         identifier = username!;
       }
-      
+
       const result = await authService.authenticateUser(identifier, password, type);
-      
+
       if (result.success) {
         if (result.requiresVerification) {
           res.json({
@@ -228,10 +229,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           // Create JWT tokens
           const tokens = await authService.createAuthTokens(result.user!);
-          
+
           // Also set session for backward compatibility
           req.session.userId = result.user!.id;
-          
+
           res.json({
             success: true,
             message: "Login successful",
@@ -255,13 +256,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/refresh", async (req: any, res) => {
     try {
       const { refreshToken } = req.body;
-      
+
       if (!refreshToken) {
         return res.status(400).json({ error: "Refresh token required" });
       }
-      
+
       const result = await authService.refreshAccessToken(refreshToken);
-      
+
       if (result) {
         res.json(result);
       } else {
@@ -279,14 +280,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user from JWT or session
       const token = req.headers.authorization?.replace('Bearer ', '');
       let userId: string | undefined;
-      
+
       if (token) {
         const decoded = authService.verifyAccessToken(token);
         userId = decoded?.userId;
       } else if (req.session?.userId && !req.session.isGuest) {
         userId = req.session.userId;
       }
-      
+
       if (!userId) {
         return res.status(401).json({ error: "Authentication required" });
       }
@@ -337,12 +338,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/logout", async (req: any, res) => {
     try {
       const { refreshToken } = req.body;
-      
+
       // Invalidate refresh token if provided
       if (refreshToken) {
         await authService.logout(refreshToken);
       }
-      
+
       // Destroy session
       req.session.destroy((err: any) => {
         if (err) {
@@ -376,7 +377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('🌍 Host header:', req.get('host'));
     console.log('🔒 Protocol (forcing HTTPS):', 'https');
     console.log('🔑 Google OAuth - Client ID:', process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...');
-    
+
     const googleAuthUrl = `https://accounts.google.com/oauth/authorize?` +
       `client_id=${process.env.GOOGLE_CLIENT_ID}&` +
       `redirect_uri=${encodeURIComponent(redirectUri)}&` +
@@ -384,7 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `scope=${encodeURIComponent('openid profile email')}&` +
       `access_type=offline&` +
       `prompt=consent`;
-    
+
     console.log('🚀 Full Google OAuth URL:', googleAuthUrl.substring(0, 100) + '...');
     res.redirect(googleAuthUrl);
   });
@@ -393,12 +394,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('🔍 Google OAuth callback started');
       const { code, error } = req.query;
-      
+
       if (error) {
         console.log('❌ OAuth error from Google:', error);
         return res.redirect('/?error=auth_cancelled');
       }
-      
+
       if (!code) {
         console.log('❌ No authorization code received');
         return res.redirect('/?error=auth_cancelled');
@@ -409,7 +410,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Exchange code for tokens - Force HTTPS
       const redirectUri = process.env.GOOGLE_REDIRECT_URI || `https://${req.get('host')}/api/auth/google/callback`;
       console.log('🔗 Using redirect URI:', redirectUri);
-      
+
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: {
@@ -426,7 +427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const tokens = await tokenResponse.json();
       console.log('🎫 Token response status:', tokenResponse.status);
-      
+
       if (!tokenResponse.ok || !tokens.access_token) {
         console.error('❌ Token exchange failed:', tokens);
         return res.redirect('/?error=auth_failed');
@@ -448,11 +449,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const googleUser = await userResponse.json();
       console.log('👤 Google user info received:', { email: googleUser.email, name: googleUser.name });
-      
+
       // Check if user exists
       let user = await storage.getUserByEmail(googleUser.email);
       console.log('🔍 Existing user found:', !!user);
-      
+
       if (!user) {
         // Create new user
         console.log('➕ Creating new user...');
@@ -465,7 +466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           verified: 1, // Google users are pre-verified
           socialProvider: 'google',
         };
-        
+
         user = await storage.createUser(newUserData);
         console.log('✅ New user created:', user.id);
       } else {
@@ -487,7 +488,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Redirect to dashboard with success
       console.log('✅ Redirecting to dashboard...');
       res.redirect('/?auth=success');
-      
+
     } catch (error) {
       console.error('❌ Google OAuth error:', error);
       res.redirect('/?error=auth_failed');
@@ -500,34 +501,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user from JWT or session
       const token = req.headers.authorization?.replace('Bearer ', '');
       let userId: string | undefined;
-      
+
       if (token) {
         const decoded = authService.verifyAccessToken(token);
         userId = decoded?.userId;
       } else if (req.session?.userId && !req.session.isGuest) {
         userId = req.session.userId;
       }
-      
+
       if (!userId) {
         return res.status(401).json({ error: "Authentication required" });
       }
-      
+
       const preferences = updateNotificationPreferencesSchema.parse(req.body);
-      
+
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
-      
+
       const updatedPreferences = {
         ...user.notificationPreferences,
         ...preferences
       };
-      
+
       await storage.updateUser(userId, { 
         notificationPreferences: updatedPreferences 
       });
-      
+
       res.json({ 
         success: true, 
         preferences: updatedPreferences 
@@ -546,22 +547,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/notifications/send-update", async (req: any, res) => {
     try {
       const { subject, message } = req.body;
-      
+
       if (!subject || !message) {
         return res.status(400).json({ error: "Subject and message are required" });
       }
-      
+
       // Get all users with notification preferences
       // Note: In a real implementation, you'd want to paginate this
       // and implement proper admin authentication
       const users = []; // This would get users from database
-      
+
       const result = await notificationService.sendNotificationUpdate(
         users,
         subject,
         message
       );
-      
+
       res.json({
         success: true,
         emailsSent: result.emailsSent,
@@ -578,7 +579,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const religions = getAvailableReligions();
       const religionData = religions.map(religion => {
         const config = getReligionConfig(religion);
-        
+
         // For Islam, group books by sections
         if (religion === 'islam') {
           const sections: Record<string, string[]> = {};
@@ -589,7 +590,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             sections[section].push(book.name);
           });
-          
+
           return {
             id: religion,
             name: config.name,
@@ -597,7 +598,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sections: sections
           };
         }
-        
+
         return {
           id: religion,
           name: config.name,
@@ -630,14 +631,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const religion = religionSchema.parse(req.params.religion);
       const bookName = req.params.book;
-      
+
       const religionConfig = getReligionConfig(religion);
       const book = religionConfig.books.find(b => b.name === bookName);
-      
+
       if (!book) {
         return res.status(404).json({ error: "Book not found" });
       }
-      
+
       res.json({
         name: book.name,
         chapters: book.chapters,
@@ -657,22 +658,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { religion, book, chapter: chapterStr } = req.query;
       const chapter = parseInt(chapterStr as string, 10);
-      
+
       console.log('Query params:', { religion, book, chapter, chapterStr });
-      
+
       if (isNaN(chapter)) {
         return res.status(400).json({ error: "Invalid chapter number" });
       }
-      
+
       const validatedParams = scriptureRequestSchema.parse({ religion, book, chapter });
-      
+
       // Try to fetch from external APIs first
       const externalScriptures = await fetchScriptureContent(
         validatedParams.religion, 
         validatedParams.book, 
         validatedParams.chapter
       );
-      
+
       if (externalScriptures.length > 0) {
         res.json(externalScriptures);
       } else {
@@ -723,19 +724,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/chat", async (req, res) => {
     try {
       const { message, sessionId, context } = chatRequestSchema.parse(req.body);
-      
+
       console.log("Chat request payload:", { context });
       console.log("Context multiReligiousPerspective:", context?.multiReligiousPerspective);
       console.log("Context type:", typeof context?.multiReligiousPerspective);
-      
+
       // Content moderation check
       const userId = req.session?.userId;
       const moderationResult = await moderateMessage(message, userId);
-      
+
       if (moderationResult.isBlocked) {
         // Log the blocked message for audit
         console.log(`Message blocked for user ${userId}: ${moderationResult.reason}`);
-        
+
         // Return moderation response
         return res.status(400).json({
           error: "Message blocked to promote unity—please rephrase.",
@@ -744,7 +745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           flagType: moderationResult.flagType
         });
       }
-      
+
       // Retrieve previous conversation history (last 5 messages for context)
       const previousMessages = await storage.getChatMessages(sessionId);
       const conversationHistory = previousMessages
@@ -754,13 +755,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           content: msg.content,
           timestamp: msg.timestamp
         }));
-      
+
       console.log("Conversation history retrieved:", { 
         sessionId, 
         historyLength: conversationHistory.length,
         recentMessages: conversationHistory.map(m => ({ role: m.role, preview: m.content.substring(0, 50) + '...' }))
       });
-      
+
       // Save user message
       const userMessage = await storage.createChatMessage({
         sessionId,
@@ -771,11 +772,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Enhanced AI response generation with XAI and persona support
       let aiResponse: string;
-      
+
       // Check if persona-specific response is requested
       if (context?.persona) {
         console.log("Generating persona response with XAI for:", context.persona);
-        
+
         // Define scholar persona context (this should match the frontend personas)
         const personaContexts: Record<string, any> = {
           "Dr. Sophia Cross": {
@@ -803,9 +804,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             voiceTone: "scholarly and reverent"
           }
         };
-        
+
         const personaContext = personaContexts[context.persona];
-        
+
         try {
           aiResponse = await generatePersonaResponse(
             message,
@@ -860,7 +861,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             verses: verses.map(v => ({ number: v.verse, text: v.text }))
           };
         }
-        
+
         // Try XAI first for general responses, fallback to OpenAI
         try {
           aiResponse = await generatePersonaResponse(
@@ -879,7 +880,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           aiResponse = await generateScriptureResponse(message, scriptureContext, conversationHistory);
         }
       }
-      
+
       // Save AI response
       const aiMessage = await storage.createChatMessage({
         sessionId,
@@ -890,7 +891,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const response = { userMessage, aiMessage };
       console.log("Chat response:", response);
-      
+
       res.json(response);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -906,12 +907,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/chat/compare", async (req, res) => {
     try {
       const { theme, sessionId, maxVersesPerReligion = 5 } = compareRequestSchema.parse(req.body);
-      
+
       console.log("Compare Mode request:", { theme, sessionId, maxVersesPerReligion });
-      
+
       // Fetch verses for the theme
       let comparisonResult = await fetchVersesByTheme(theme, maxVersesPerReligion);
-      
+
       // Generate AI summary using XAI/OpenAI
       try {
         const summaryPrompt = `You are an interfaith scholar analyzing verses about "${theme}" from multiple religious traditions. 
@@ -935,13 +936,13 @@ Provide a thoughtful 2-3 sentence summary highlighting the common spiritual them
           null,
           []
         );
-        
+
         comparisonResult.aiSummary = aiSummary;
       } catch (error) {
         console.error("Failed to generate AI summary for comparison:", error);
         comparisonResult.aiSummary = `Explore how different religious traditions approach the theme of ${theme}. Each tradition offers unique wisdom while often sharing common spiritual insights about this fundamental aspect of human experience.`;
       }
-      
+
       // Save the comparison as a chat message for history
       await storage.createChatMessage({
         sessionId,
@@ -969,13 +970,13 @@ Provide a thoughtful 2-3 sentence summary highlighting the common spiritual them
           comparisonData: comparisonResult.verses
         }
       });
-      
+
       console.log("Compare Mode response:", { 
         theme: comparisonResult.theme,
         verseCount: Object.values(comparisonResult.verses).reduce((sum, verses) => sum + verses.length, 0),
         religions: Object.keys(comparisonResult.verses)
       });
-      
+
       res.json(comparisonResult);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1019,11 +1020,11 @@ Provide a thoughtful 2-3 sentence summary highlighting the common spiritual them
       const religions = getAvailableReligions();
       const randomReligion = religions[Math.floor(Math.random() * religions.length)];
       const religionConfig = getReligionConfig(randomReligion);
-      
+
       // Get random book
       const books = religionConfig.books;
       const randomBook = books[Math.floor(Math.random() * books.length)];
-      
+
       // Check if the random book selected from islam religion is actually a hadith book
       const hadithCollectionNames = ['Sahih al-Bukhari', 'Sahih Muslim', 'Sunan Abu Dawud', 'Jami\' at-Tirmidhi', 'Sunan an-Nasa\'i', 'Sunan Ibn Majah'];
       if (randomReligion === 'islam' && hadithCollectionNames.includes(randomBook.name)) {
@@ -1039,13 +1040,13 @@ Provide a thoughtful 2-3 sentence summary highlighting the common spiritual them
           });
         }
       }
-      
+
       // Get random chapter
       const randomChapter = Math.floor(Math.random() * randomBook.chapters) + 1;
-      
+
       // Fetch verses from that chapter
       const verses = await fetchScriptureContent(randomReligion, randomBook.name, randomChapter);
-      
+
       if (verses.length === 0) {
         // Fallback to predefined verses if external API fails
         const fallbackVerses = [
@@ -1092,7 +1093,7 @@ Provide a thoughtful 2-3 sentence summary highlighting the common spiritual them
             text: "The reward of deeds depends upon the intentions and every person will get the reward according to what he has intended."
           }
         ];
-        
+
         const randomFallback = fallbackVerses[Math.floor(Math.random() * fallbackVerses.length)];
         return res.json({
           faith: randomFallback.religion,
@@ -1103,10 +1104,10 @@ Provide a thoughtful 2-3 sentence summary highlighting the common spiritual them
           reference: `${randomFallback.book} ${randomFallback.chapter}:${randomFallback.verse}`
         });
       }
-      
+
       // Get random verse from the fetched verses
       const randomVerse = verses[Math.floor(Math.random() * verses.length)];
-      
+
       res.json({
         faith: randomVerse.religion,
         book: randomVerse.book,
@@ -1125,11 +1126,11 @@ Provide a thoughtful 2-3 sentence summary highlighting the common spiritual them
   app.post("/api/scholar/explain", async (req, res) => {
     try {
       const { reference, text, faith } = req.body;
-      
+
       if (!reference || !text) {
         return res.status(400).json({ error: "Reference and text are required" });
       }
-      
+
       const prompt = `You are a scholarly expert in religious texts. Provide a concise, insightful explanation (1-2 sentences) of the following verse, emphasizing its key theme and practical application. Keep it respectful and accessible.
 
 Verse: "${text}"
@@ -1139,7 +1140,7 @@ Faith tradition: ${faith || 'Unknown'}
 Focus on the universal wisdom and practical guidance this verse offers.`;
 
       const response = await generateScriptureResponse(prompt);
-      
+
       res.json({
         insight: response
       });
@@ -1151,7 +1152,7 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
 
   // ElevenLabs voice routes
   let elevenLabsService: ElevenLabsService | null = null;
-  
+
   try {
     elevenLabsService = new ElevenLabsService();
   } catch (error) {
@@ -1169,7 +1170,7 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
       console.log('Raw voices data:', voices.slice(0, 3)); // Log first 3 voices for debugging
       const maleVoices = elevenLabsService.getRecommendedMaleVoices(voices);
       console.log('Filtered male voices:', maleVoices.length);
-      
+
       res.json({
         allVoices: voices,
         recommendedMaleVoices: maleVoices
@@ -1184,7 +1185,7 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
   app.post("/api/chat/voice-data", async (req, res) => {
     try {
       const { sessionId, voiceData, verseReference, context } = req.body;
-      
+
       if (!sessionId || !voiceData) {
         return res.status(400).json({ error: "Session ID and voice data are required" });
       }
@@ -1202,7 +1203,7 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
   app.post("/api/chat/interruption", async (req, res) => {
     try {
       const { sessionId, interruptionData, isInterrupted, context } = req.body;
-      
+
       if (!sessionId || !interruptionData) {
         return res.status(400).json({ error: "Session ID and interruption data are required" });
       }
@@ -1224,7 +1225,7 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
       }
 
       const { text, voice_id, model_id, voice_settings, output_format } = req.body;
-      
+
       if (!text || !voice_id) {
         return res.status(400).json({ error: "Text and voice_id are required" });
       }
@@ -1240,16 +1241,16 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
           use_speaker_boost: true
         }
       });
-      
+
       console.log('🔊 Generated streaming audio:', audioBuffer.length, 'bytes');
-      
+
       res.set({
         'Content-Type': 'audio/mpeg',
         'Content-Length': audioBuffer.length,
         'Cache-Control': 'no-cache',
         'Accept-Ranges': 'bytes'
       });
-      
+
       res.send(audioBuffer);
     } catch (error) {
       console.error("Error streaming ElevenLabs audio:", error);
@@ -1266,7 +1267,7 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
       }
 
       const { text, voiceId, settings } = req.body;
-      
+
       if (!text || !voiceId) {
         console.log('❌ Missing required fields:', { hasText: !!text, hasVoiceId: !!voiceId });
         return res.status(400).json({ error: "Text and voiceId are required" });
@@ -1284,17 +1285,17 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
         style: 0.0,
         useSpeakerBoost: true
       });
-      
+
       console.log('✅ ElevenLabs audio generated:', audioBuffer.length, 'bytes');
-      
+
       res.set({
         'Content-Type': 'audio/mpeg',
         'Content-Length': audioBuffer.length.toString(),
         'Cache-Control': 'no-cache'
       });
-      
+
       res.send(audioBuffer);
-      
+
     } catch (error) {
       console.error("❌ ElevenLabs speak error:", error);
       res.status(500).json({ 
@@ -1305,17 +1306,17 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
   });
 
   // ===== SPIRITUAL JOURNEY PROGRESS TRACKING API =====
-  
+
   // Get user's spiritual journey overview
   app.get("/api/progress/journey", async (req: any, res) => {
     try {
       if (!req.session?.userId) {
         return res.status(401).json({ error: "Authentication required" });
       }
-      
+
       const userId = req.session.userId;
       let journey = await storage.getSpiritualJourney(userId);
-      
+
       // Create journey if it doesn't exist
       if (!journey) {
         journey = await storage.createSpiritualJourney({
@@ -1327,7 +1328,7 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
           readingGoal: 60 // default 1 hour per week
         });
       }
-      
+
       res.json(journey);
     } catch (error) {
       console.error("Get journey error:", error);
@@ -1341,10 +1342,10 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
       if (!req.session?.userId) {
         return res.status(401).json({ error: "Authentication required" });
       }
-      
+
       const { readingGoal } = updateJourneyGoalSchema.parse(req.body);
       const userId = req.session.userId;
-      
+
       const journey = await storage.updateSpiritualJourney(userId, { readingGoal });
       res.json(journey);
     } catch (error) {
@@ -1362,10 +1363,10 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
       if (!req.session?.userId) {
         return res.status(401).json({ error: "Authentication required" });
       }
-      
+
       const sessionData = startReadingSessionSchema.parse(req.body);
       const userId = req.session.userId;
-      
+
       // Check if there's an active session and end it first
       const activeSession = await storage.getActiveReadingSession(userId);
       if (activeSession) {
@@ -1373,7 +1374,7 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
           durationMinutes: Math.round((Date.now() - activeSession.startTime.getTime()) / 60000)
         });
       }
-      
+
       // Get or create journey
       let journey = await storage.getSpiritualJourney(userId);
       if (!journey) {
@@ -1386,14 +1387,14 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
           readingGoal: 60
         });
       }
-      
+
       // Start new session
       const session = await storage.startReadingSession({
         userId,
         journeyId: journey.id,
         ...sessionData
       });
-      
+
       res.json(session);
     } catch (error) {
       console.error("Start reading session error:", error);
@@ -1410,20 +1411,20 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
       if (!req.session?.userId) {
         return res.status(401).json({ error: "Authentication required" });
       }
-      
+
       const sessionId = parseInt(req.params.sessionId);
       const updates = updateReadingSessionSchema.parse(req.body);
       const userId = req.session.userId;
-      
+
       // End the session
       const session = await storage.endReadingSession(sessionId, updates);
-      
+
       // Update journey statistics
       const journey = await storage.getSpiritualJourney(userId);
       if (journey) {
         const newTotalSessions = journey.totalReadingSessions + 1;
         const newTotalMinutes = journey.totalTimeMinutes + (updates.durationMinutes || 0);
-        
+
         // Check for milestones
         await checkAndCreateMilestones(userId, journey.id, {
           totalSessions: newTotalSessions,
@@ -1431,7 +1432,7 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
           completedChapter: updates.completedChapter || false,
           religion: session.religion
         });
-        
+
         await storage.updateSpiritualJourney(userId, {
           totalReadingSessions: newTotalSessions,
           totalTimeMinutes: newTotalMinutes,
@@ -1439,7 +1440,7 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
           favoriteReligion: await calculateFavoriteReligion(userId)
         });
       }
-      
+
       res.json(session);
     } catch (error) {
       console.error("End reading session error:", error);
@@ -1456,7 +1457,7 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
       if (!req.session?.userId) {
         return res.status(401).json({ error: "Authentication required" });
       }
-      
+
       const userId = req.session.userId;
       const summary = await storage.getUserProgressSummary(userId);
       res.json(summary);
@@ -1472,7 +1473,7 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
       if (!req.session?.userId) {
         return res.status(401).json({ error: "Authentication required" });
       }
-      
+
       const userId = req.session.userId;
       const milestones = await storage.getUserMilestones(userId);
       res.json(milestones);
@@ -1488,7 +1489,7 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
       if (!req.session?.userId) {
         return res.status(401).json({ error: "Authentication required" });
       }
-      
+
       const userId = req.session.userId;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       const sessions = await storage.getUserReadingSessions(userId, limit);
@@ -1519,14 +1520,14 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
 
     for (const milestone of milestones) {
       const value = milestone.type === 'sessions_milestone' ? stats.totalSessions : stats.totalMinutes;
-      
+
       if (value >= milestone.threshold) {
         // Check if milestone already exists
         const existing = await storage.getUserMilestones(userId);
         const hasThisMilestone = existing.some(m => 
           m.type === milestone.type && m.value === milestone.threshold
         );
-        
+
         if (!hasThisMilestone) {
           await storage.createJourneyMilestone({
             userId,
@@ -1559,12 +1560,12 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
   async function calculateFavoriteReligion(userId: string): Promise<string | null> {
     const sessions = await storage.getUserReadingSessions(userId);
     if (sessions.length === 0) return null;
-    
+
     const religionCounts: { [key: string]: number } = {};
     sessions.forEach(session => {
       religionCounts[session.religion] = (religionCounts[session.religion] || 0) + 1;
     });
-    
+
     let maxReligion = null;
     let maxCount = 0;
     for (const [religion, count] of Object.entries(religionCounts)) {
@@ -1573,15 +1574,60 @@ Focus on the universal wisdom and practical guidance this verse offers.`;
         maxReligion = religion;
       }
     }
-    
+
     return maxReligion;
   }
 
+  // Health check
+  app.get('/api/health', (_req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  // Scripture comparison endpoint
+  app.post('/api/scripture/compare', async (req, res) => {
+    try {
+      const { theme, faiths, verses } = req.body;
+
+      if (!theme || !faiths || faiths.length < 2) {
+        return res.status(400).json({ 
+          error: 'Must provide theme and at least 2 faiths to compare' 
+        });
+      }
+
+      const comparison = await compareScriptures({ theme, faiths, verses });
+      res.json(comparison);
+    } catch (error: any) {
+      console.error('Comparison error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Streaming comparison endpoint
+  app.post('/api/scripture/compare/stream', async (req, res) => {
+    try {
+      const { theme, faiths, verses } = req.body;
+
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+
+      await streamComparisonAnalysis({ theme, faiths, verses }, (chunk) => {
+        res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+      });
+
+      res.write('data: [DONE]\n\n');
+      res.end();
+    } catch (error: any) {
+      console.error('Stream comparison error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
-  
+
   // Initialize Voice WebSocket Handler for real-time streaming
   const voiceHandler = new VoiceWebSocketHandler(httpServer);
   console.log('🎤 Voice WebSocket handler initialized');
-  
+
   return httpServer;
 }
