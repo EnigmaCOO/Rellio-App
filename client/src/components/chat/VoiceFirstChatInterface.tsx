@@ -46,6 +46,7 @@ import { ProgressDashboard } from '@/components/progress/ProgressDashboard';
 import { AudioPlaybackButton } from './AudioPlaybackButton';
 import { Input } from '@/components/ui/input';
 import { useVoiceModeHandler } from './VoiceModeHandler';
+import { usePersonaSceneBridge } from '@/hooks/usePersonaSceneBridge';
 import { apiRequest } from '@/lib/queryClient';
 import type { Religion, ChatMessage } from '@shared/schema';
 import type { ScholarPersona } from './ScholarPersonas';
@@ -126,6 +127,7 @@ function VoiceFirstChatInterfaceInner({
   const [showTextInput, setShowTextInput] = useState(false);
   const [textInputValue, setTextInputValue] = useState('');
   const [lastAIMessage, setLastAIMessage] = useState<string>('');
+  const sceneLastAIMessageRef = useRef<string>('');
 
   // Voice recognition support states
   const [lastVoiceActivity, setLastVoiceActivity] = useState(0);
@@ -140,55 +142,54 @@ function VoiceFirstChatInterfaceInner({
   const [isPostInterruption, setIsPostInterruption] = useState(false); // Tracks if we're in post-interruption voice mode
   const [interruptionCooldown, setInterruptionCooldown] = useState(false); // Prevents loops after interruption
   
-  // 3D CHARACTER INTEGRATION HOOKS: Prepare for future 3D character support
-  const [characterModelId, setCharacterModelId] = useState<string | null>(null); // Current 3D character model
-  const [isCharacterAnimating, setIsCharacterAnimating] = useState(false); // Animation state
-  const [characterState, setCharacterState] = useState<'idle' | 'speaking' | 'listening'>('idle'); // Character visual state
+  const {
+    triggerPose,
+    syncVoiceState: syncSceneVoiceState,
+    syncTranscript: syncSceneTranscript,
+    pushChatEvent,
+    activeVerse,
+  } = usePersonaSceneBridge();
+  const versePromptOptions = useMemo(() => {
+    if (!activeVerse) return [] as Array<{ id: string; label: string; prompt: string }>;
+    const reference = `${activeVerse.book} ${activeVerse.chapter}:${activeVerse.verse}`;
+    return [
+      {
+        id: 'context',
+        label: 'Context',
+        prompt: `Share the historical and spiritual context behind ${reference}.`,
+      },
+      {
+        id: 'apply',
+        label: 'Apply',
+        prompt: `How can I apply the wisdom from ${reference} in modern life?`,
+      },
+      {
+        id: 'compare',
+        label: 'Compare',
+        prompt: `Compare ${reference} with insights from another tradition to deepen understanding.`,
+      },
+    ];
+  }, [activeVerse]);
   
   // ARIA-LIVE STATUS UPDATES: For accessibility and screen readers
   const [voiceStatus, setVoiceStatus] = useState<string>(''); // Screen reader announcements
   const [interruptionStatus, setInterruptionStatus] = useState<string>(''); // Interruption feedback
 
-  // 3D CHARACTER ANIMATION CALLBACKS: Ready for future character integration
+  // 3D CHARACTER ANIMATION CALLBACKS: Now wired into persona scene bridge
   const onSpeakAnimation = useCallback((personaName: string) => {
-    console.log('🎭 3D CHARACTER: Triggering speak animation for', personaName);
-    setCharacterState('speaking');
-    setIsCharacterAnimating(true);
-    
-    // Future 3D integration: Map persona to character model
-    const characterModelMap = {
-      'Universal Scholar': 'universal_guide_model',
-      'Christian Scholar': 'priest_model',
-      'Islamic Scholar': 'mufti_model', 
-      'Jewish Scholar': 'rabbi_model',
-      'Hindu Scholar': 'guru_model',
-      'Buddhist Scholar': 'monk_model'
-    };
-    
-    const modelId = characterModelMap[personaName as keyof typeof characterModelMap] || 'universal_guide_model';
-    setCharacterModelId(modelId);
-    
-    // Future: Call 3D animation system
-    // window.character3D?.playAnimation('speaking', modelId);
-  }, []);
-  
+    console.log('🎭 Persona viewport: speak animation for', personaName);
+    triggerPose('speaking', { energy: 0.28, textSnippet: personaName, speaker: 'ai' });
+  }, [triggerPose]);
+
   const onInterruptAnimation = useCallback((personaName: string) => {
-    console.log('🎭 3D CHARACTER: Triggering interrupt animation for', personaName);
-    setCharacterState('listening');
-    setIsCharacterAnimating(true);
-    
-    // Future: Call 3D animation system
-    // window.character3D?.playAnimation('interrupted', characterModelId);
-  }, [characterModelId]);
-  
+    console.log('🎭 Persona viewport: interrupt animation for', personaName);
+    triggerPose('interrupted', { energy: 0.2, textSnippet: personaName });
+  }, [triggerPose]);
+
   const onIdleAnimation = useCallback((personaName: string) => {
-    console.log('🎭 3D CHARACTER: Returning to idle for', personaName);
-    setCharacterState('idle');
-    setIsCharacterAnimating(false);
-    
-    // Future: Call 3D animation system
-    // window.character3D?.playAnimation('idle', characterModelId);
-  }, [characterModelId]);
+    console.log('🎭 Persona viewport: idle animation for', personaName);
+    triggerPose('idle', { energy: 0.08, textSnippet: personaName });
+  }, [triggerPose]);
 
   // VoiceModeHandler's reliable TTS - mapped after voiceHandlerResult is available
 
@@ -209,6 +210,7 @@ function VoiceFirstChatInterfaceInner({
       setIsProcessingVoice(text.length > 0 && isInterim);
       // Update text input with live transcript so user can see and edit it
       setTextInputValue(text);
+      syncSceneTranscript(text, { isInterim, speaker: 'user' });
       // CRITICAL: Mark that voice input is being used - set flag immediately
       if (text.length > 0 && !isInterim) {
         setWasLastMessageVoice(true);
@@ -222,11 +224,13 @@ function VoiceFirstChatInterfaceInner({
         setWasLastMessageVoice(true);
         setIsProcessingVoice(false);
         setTextInputValue(text);
+        syncSceneTranscript(text, { isInterim: false, speaker: 'user' });
         handleSendMessage(text);
       }
     },
     onStateChange: (state) => {
       console.log('🎤 Voice state changed:', state);
+      syncSceneVoiceState(state as any);
       
       // LEGEND LABS UI FEEDBACK: Enhanced state change with interruption support
       if (state === 'interrupted') {
@@ -671,13 +675,35 @@ function VoiceFirstChatInterfaceInner({
 
     console.log('📤 SENDING MESSAGE - wasLastMessageVoice:', wasLastMessageVoice || isCurrentlyVoiceInput);
     console.log('📤 Sending message:', message);
+    pushChatEvent({
+      type: 'user',
+      text: message,
+      energy: isCurrentlyVoiceInput ? 0.24 : 0.16,
+    });
+    syncSceneTranscript(message, { isInterim: false, speaker: 'user' });
     sendMessageMutation.mutate(message);
 
     // Clear text input if using text mode
     if (showTextInput) {
       setTextInputValue('');
     }
-  }, [sendMessageMutation, showTextInput, isListening, voiceState, textInputValue, currentTranscript, wasLastMessageVoice]);
+  }, [sendMessageMutation, showTextInput, isListening, voiceState, textInputValue, currentTranscript, wasLastMessageVoice, pushChatEvent, syncSceneTranscript]);
+
+  const handleVersePrompt = useCallback((prompt: string) => {
+    if (!prompt.trim()) return;
+    if (inputIsolated) {
+      toast({
+        title: 'AI speaking',
+        description: 'Interrupt the response or wait until it finishes to ask a new verse question.',
+        variant: 'default',
+      });
+      return;
+    }
+    setShowTextInput(false);
+    setWasLastMessageVoice(false);
+    setTextInputValue('');
+    handleSendMessage(prompt);
+  }, [handleSendMessage, inputIsolated, toast]);
 
   // Speech input is now handled by VoiceModeHandler
 
@@ -1224,9 +1250,19 @@ function VoiceFirstChatInterfaceInner({
       const lastMessage = messages[messages.length - 1];
       if (lastMessage?.type === 'ai' && lastMessage.content !== lastAIMessage) {
         setLastAIMessage(lastMessage.content);
+        if (lastMessage.content && sceneLastAIMessageRef.current !== lastMessage.content) {
+          sceneLastAIMessageRef.current = lastMessage.content;
+          pushChatEvent({
+            type: 'ai',
+            text: lastMessage.content,
+            energy: wasLastMessageVoice ? 0.32 : 0.24,
+          });
+          syncSceneTranscript(lastMessage.content, { isInterim: false, speaker: 'ai' });
+          triggerPose('speaking', { energy: 0.24, textSnippet: lastMessage.content.slice(0, 120), speaker: 'ai' });
+        }
       }
     }
-  }, [messages, lastAIMessage]);
+  }, [messages, lastAIMessage, pushChatEvent, syncSceneTranscript, triggerPose, wasLastMessageVoice]);
 
   // Enhanced cleanup function with background recognition
   const cleanup = useCallback(() => {
@@ -1423,6 +1459,45 @@ function VoiceFirstChatInterfaceInner({
           </Button>
         </div>
       </div>
+
+      {activeVerse && (
+        <div className="border-b border-gray-100 bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4 py-3">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Guiding verse</span>
+              <button
+                type="button"
+                className="text-xs font-medium text-slate-600 hover:text-teal-600 disabled:text-slate-400"
+                disabled={!activeVerse.religion}
+                onClick={() => {
+                  if (activeVerse.religion) {
+                    onNavigateToVerse?.(activeVerse.religion, activeVerse.book, activeVerse.chapter, activeVerse.verse);
+                  }
+                }}
+              >
+                {activeVerse.book} {activeVerse.chapter}:{activeVerse.verse}
+              </button>
+            </div>
+            <p className="text-sm text-slate-700 line-clamp-2">{activeVerse.text}</p>
+            {versePromptOptions.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {versePromptOptions.map((option) => (
+                  <Button
+                    key={option.id}
+                    size="sm"
+                    variant="secondary"
+                    className="rounded-full bg-white/80 text-xs text-slate-600 hover:bg-teal-50 hover:text-teal-700"
+                    disabled={sendMessageMutation.isPending || inputIsolated}
+                    onClick={() => handleVersePrompt(option.prompt)}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Compare Mode Panel */}
       {isCompareMode && (

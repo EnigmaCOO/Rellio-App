@@ -6,6 +6,8 @@ import { VoiceFirstChatInterface } from "@/components/chat/VoiceFirstChatInterfa
 // Note: VoiceFirstChatInterface now uses ConsolidatedVoiceHandler internally
 import { ProgressDashboard } from "@/components/progress/ProgressDashboard";
 import { type ScholarPersona, getPersonaForReligion } from "@/components/chat/ScholarPersonas";
+import { Persona3DViewport } from "@/components/Persona3DViewport";
+import { PersonaSceneProvider, usePersonaSceneBridge } from "@/hooks/usePersonaSceneBridge";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Settings, BookOpen, Menu, X, ChevronLeft, ChevronRight, MessageCircle, TrendingUp, User, LogOut } from "lucide-react";
 import rellioLogo from "@assets/image_1756158906598.png";
@@ -19,6 +21,14 @@ import { cn } from "@/lib/utils";
 import type { Religion, Scripture } from "@shared/schema";
 
 export default function Dashboard() {
+  return (
+    <PersonaSceneProvider>
+      <DashboardContent />
+    </PersonaSceneProvider>
+  );
+}
+
+function DashboardContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedReligion, setSelectedReligion] = useState<Religion | null>(null);
@@ -50,6 +60,7 @@ export default function Dashboard() {
   const [currentView, setCurrentView] = useState<'scripture' | 'progress'>('scripture');
   const { toast } = useToast();
   const { user, isGuest } = useAuth();
+  const { setPersona: setScenePersona, setActiveVerse } = usePersonaSceneBridge();
 
   // Debug panel visibility state
   useEffect(() => {
@@ -60,6 +71,12 @@ export default function Dashboard() {
   useEffect(() => {
     console.log("Top left bubble removed or not found");
   }, []);
+
+  useEffect(() => {
+    if (!selectedReligion || !selectedBook) {
+      setActiveVerse(null);
+    }
+  }, [selectedReligion, selectedBook, setActiveVerse]);
 
   // Add copy event listeners to detect manual copying
   useEffect(() => {
@@ -131,11 +148,12 @@ export default function Dashboard() {
   // Enhanced auto-select persona with book context
   useEffect(() => {
     const persona = getPersonaForReligion(selectedReligion, selectedBook);
-    
+    setScenePersona(persona);
+
     // Only update if persona actually changed
     if (!selectedPersona || selectedPersona.id !== persona.id) {
       setSelectedPersona(persona);
-      
+
       if (selectedReligion && selectedBook) {
         console.log(`🎭 Inside books - Persona activated: ${persona.name} for ${selectedReligion} - ${selectedBook}`);
         toast({
@@ -154,7 +172,7 @@ export default function Dashboard() {
         }
       }
     }
-  }, [selectedReligion, selectedBook, selectedPersona, toast]);
+  }, [selectedReligion, selectedBook, selectedPersona, toast, setScenePersona]);
 
   const handleReligionChange = (religion: Religion) => {
     setSelectedReligion(religion);
@@ -628,6 +646,10 @@ export default function Dashboard() {
                   </div>
                 </div>
                 
+                <div className="flex-shrink-0 border-b border-gray-100/80 bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4 py-4">
+                  <Persona3DViewport className="h-56" />
+                </div>
+
                 {/* Enhanced Voice-First Chat - Full Height */}
                 <div className="flex-1 min-h-0">
                   <VoiceFirstChatInterface

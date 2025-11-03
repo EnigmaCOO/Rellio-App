@@ -3,7 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Play, Pause, Square, Settings, Volume2, TestTube } from "lucide-react";
+import { Play, Pause, Square, Settings, Volume2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface ReaderVoiceOption {
+  voice_id: string;
+  name: string;
+  category?: string;
+  gender?: string;
+  accent?: string;
+  description?: string;
+}
 
 interface AutoReaderControlsProps {
   isPlaying: boolean;
@@ -18,7 +28,7 @@ interface AutoReaderControlsProps {
   onVolumeChange: (volume: number) => void;
   onPauseDurationChange: (duration: number) => void;
   onVoiceChange: (voiceIndex: number) => void;
-  availableVoices: SpeechSynthesisVoice[];
+  availableVoices: ReaderVoiceOption[];
   selectedVoiceIndex: number;
   disabled?: boolean;
 }
@@ -51,27 +61,42 @@ export function AutoReaderControls({
 }: AutoReaderControlsProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [testingVoice, setTestingVoice] = useState(false);
+  const { toast } = useToast();
 
   const testVoice = (voiceIndex: number) => {
     if (testingVoice) return;
-    
+
+    const voice = availableVoices[voiceIndex];
+    if (!voice) return;
+
+    if (!voice.voice_id.startsWith("browser_")) {
+      toast({
+        title: "Preview not available",
+        description: "Browser previews are only available for system voices at the moment.",
+        variant: "default",
+      });
+      return;
+    }
+
     setTestingVoice(true);
     speechSynthesis.cancel();
-    
+
     const testPhrase = "This is a preview of the selected voice for reading sacred texts.";
     const utterance = new SpeechSynthesisUtterance(testPhrase);
-    
-    if (availableVoices[voiceIndex]) {
-      utterance.voice = availableVoices[voiceIndex];
+
+    const browserVoices = speechSynthesis.getVoices();
+    const browserIndex = parseInt(voice.voice_id.split("_")[1] ?? "-1", 10);
+    if (browserIndex >= 0 && browserVoices[browserIndex]) {
+      utterance.voice = browserVoices[browserIndex];
     }
-    
+
     utterance.rate = speed * 0.85;
     utterance.pitch = 0.9;
     utterance.volume = volume;
-    
+
     utterance.onend = () => setTestingVoice(false);
     utterance.onerror = () => setTestingVoice(false);
-    
+
     speechSynthesis.speak(utterance);
   };
 
@@ -207,8 +232,8 @@ export function AutoReaderControls({
             {availableVoices.length > 0 && (
               <div className="space-y-2">
                 <label className="text-sm font-medium">Voice & Gender</label>
-                <Select 
-                  value={selectedVoiceIndex.toString()} 
+                <Select
+                  value={selectedVoiceIndex.toString()}
                   onValueChange={(value) => onVoiceChange(parseInt(value))}
                 >
                   <SelectTrigger className="w-full">
@@ -216,22 +241,10 @@ export function AutoReaderControls({
                   </SelectTrigger>
                   <SelectContent className="max-h-64 overflow-y-auto">
                     {availableVoices.map((voice, index) => {
-                      const name = voice.name.toLowerCase();
-                      const isNatural = name.includes('natural') || name.includes('neural') || name.includes('premium');
-                      const isFemale = name.includes('female') || name.includes('woman') || 
-                                     name.includes('sara') || name.includes('allison') || 
-                                     name.includes('karen') || name.includes('samantha') ||
-                                     name.includes('susan') || name.includes('anna');
-                      const isMale = name.includes('male') || name.includes('man') || 
-                                   name.includes('david') || name.includes('alex') || 
-                                   name.includes('daniel') || name.includes('tom') ||
-                                   name.includes('james') || name.includes('john') ||
-                                   name.includes('microsoft david') || name.includes('google us-english-wavenet-a') ||
-                                   name.includes('google us-english-wavenet-b') || name.includes('google us-english-wavenet-d');
-                      
-                      const genderIcon = isFemale ? "♀" : isMale ? "♂" : "";
-                      const qualityIcon = isNatural ? "✨" : voice.localService ? "🔊" : "";
-                      
+                      const genderIcon = voice.gender === 'female' ? '♀' : voice.gender === 'male' ? '♂' : '';
+                      const qualityIcon = voice.voice_id.startsWith('browser_') ? '🔊' : '✨';
+                      const accentLabel = voice.accent ?? voice.category ?? 'custom';
+
                       return (
                         <SelectItem key={index} value={index.toString()}>
                           <div className="flex items-center justify-between w-full">
@@ -240,7 +253,7 @@ export function AutoReaderControls({
                             </span>
                             <div className="flex items-center gap-1 text-xs text-gray-500">
                               {qualityIcon}
-                              <span>({voice.lang})</span>
+                              <span>{accentLabel}</span>
                             </div>
                           </div>
                         </SelectItem>
@@ -253,7 +266,11 @@ export function AutoReaderControls({
                     variant="outline"
                     size="sm"
                     onClick={() => testVoice(selectedVoiceIndex)}
-                    disabled={testingVoice || availableVoices.length === 0}
+                    disabled={
+                      testingVoice ||
+                      availableVoices.length === 0 ||
+                      !availableVoices[selectedVoiceIndex]?.voice_id.startsWith('browser_')
+                    }
                     className="text-xs"
                   >
                     {testingVoice ? "Testing..." : "Test Voice"}
