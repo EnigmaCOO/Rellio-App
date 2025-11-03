@@ -1,14 +1,11 @@
 # Rellio-App-main/AGENTS.ROOT.md
 ## Purpose
-This repository powers **Rellio**, a next-generation **spiritual knowledge and conversation platform** that blends AI, scripture, and voice interaction into a unified experience.  
+This repository powers **Rellio**, a next-generation **spiritual knowledge and conversation platform** that blends AI, scripture, and voice interaction into a unified experience.
 It enables users to **explore verses across multiple faiths**, **chat with AI scholars (personas)**, **listen to recitations**, and **receive personalized spiritual reflections** — all through an immersive, artistic interface.
 
 Each directory in this repo functions as an **independent agent** within a larger ecosystem — with clear inputs, outputs, and collaboration handoffs.
 
-This document outlines:
-1. Each agent’s purpose and interconnection.
-2. The technology topology of the Rellio ecosystem.
-3. A **roadmap of tasks and milestones** toward Rellio’s ultimate launch goals.
+This document now captures the refreshed multi-team charter so every agent — code modules, design assets, Replit automation, and human collaborators — is aligned on the same mission briefing before implementation begins.
 
 ---
 
@@ -39,6 +36,7 @@ This document outlines:
 | `/shared` | Schema, types, validators | ↔ both client & server |
 | `/public` | Static files served via Express | ↔ Browser |
 | `/attached_assets` | Design assets, generated art | → `/client/public/assets` |
+| `/replit.md` & automation scripts | External collaborators & CI prompts | ↔ All agents |
 
 ---
 
@@ -47,13 +45,16 @@ This document outlines:
 ### Vision
 To build the **world’s first AI-powered universal scripture companion**, where wisdom from **Islamic, Christian, Hindu, Jewish, and global philosophical traditions** converge through voice, visuals, and AI dialogue.
 
-### Core Objectives
-1. **Seamless Scripture Exploration** — multi-faith library with real-time verse explanation, cross-comparison, and voice recitation.
-2. **AI Sage Personas** — lifelike 3D scholars (e.g., Islamic Mufti, Christian Theologian, Hindu Guru, Universal Sage).
-3. **Voice-first Interaction** — natural speech queries with AI-generated responses and emotional TTS.
-4. **Immersive Artistry** — each persona environment rendered as a dynamic, ambient digital painting (IlluminVerse).
-5. **Daily Guidance Engine** — verse of the day, spiritual journal, and reflection tracker.
-6. **Community & Discussion** — faith-respectful, AI-moderated conversation threads.
+### Core Objectives (2025 Charter Refresh)
+1. **Interactive Book Browsing** — a tactile scripture explorer with voice narration, persona annotations, and cross-text comparison that feels native on mobile.
+2. **Persona Previews & Voices** — lifelike 3D-ready scholar spotlights (Priest, Mufti, Universal Guide) with interactive bios, animated greeting loops, and instant chat/vocal handoff.
+3. **Real-time 3D Dashboard** — a cinematic control center that merges IlluminVerse scenes, reading progress, and persona presence into a responsive, multi-faith cockpit.
+4. **Voice-first Interaction** — natural speech queries with AI-generated responses and emotional TTS.
+5. **Immersive Artistry** — each persona environment rendered as a dynamic, ambient digital painting (IlluminVerse) that scales into 3D when the dashboard activates.
+6. **Daily Guidance Engine** — verse of the day, spiritual journal, and reflection tracker.
+7. **Community & Discussion** — faith-respectful, AI-moderated conversation threads.
+
+> **Alignment Protocol:** Every agent touching these goals must reference this charter (see `client/AGENTS.md`, `client/src/pages/AGENTS.md`, component-level AGENTS, and `replit.md`) before scoping work. Automation scripts and external collaborators should surface the "Interactive Browsing / Persona Previews / 3D Dashboard" mantra in kickoff logs.
 
 ---
 
@@ -78,8 +79,8 @@ To build the **world’s first AI-powered universal scripture companion**, where
 
 | Area | Task |
 |------|------|
-| **Scripture Viewer** | - Implement 3-pane layout (faith selector, verse card, AI pane)<br>- Integrate smooth navigation & highlight syncing<br>- Add “Compare perspectives” & “Explain verse” quick buttons |
-| **Chat UI** | - Persona chat interface with contextual bubbles & verse linking<br>- Live voice chat integration with WS<br>- AI response with streaming text + TTS playback |
+| **Interactive Scripture Viewer** | - Implement 3-pane layout (faith selector, verse card, AI pane)<br>- Add persona-tinted annotations and hoverable preview chips |
+| **Chat & Persona Preview** | - Persona chat interface with contextual bubbles & verse linking<br>- Quick persona preview modals featuring Priest, Mufti, Universal Guide |
 | **IlluminVerse Backgrounds** | - Animated environment (mosque, cathedral, temple, cosmic)<br>- Dynamic lighting & particle ambience based on persona |
 | **UI System** | - Build reusable components (Modal, Button, Card, Toast)<br>- Implement dark/light modes with Tailwind |
 | **State Management** | - TanStack Query for data<br>- Zustand for app state (persona, theme, verse) |
@@ -156,9 +157,9 @@ To build the **world’s first AI-powered universal scripture companion**, where
 > *Rellio isn’t just an app — it’s a movement to unite wisdom, voice, and design into a single, transcendent platform.*
 >
 > Each agent in this repo contributes toward that mission:
-> - The **server** brings divine text to life through AI reasoning.  
-> - The **client** paints it in light and motion.  
-> - The **shared** schema binds truth and structure together.  
-> - The **voice** unites it all — letting users converse with knowledge itself.  
-
-The ultimate goal is **to make spirituality interactive, intelligent, and inclusive** — one verse, one voice, one soul at a time.
+> - The **server** brings divine text to life through AI reasoning.
+> - The **client** paints it in light and motion.
+> - The **shared** schema binds truth and structure together.
+> - The **voice** unites it all — letting users converse with knowledge itself.
+>
+> The ultimate goal is **to make spirituality interactive, intelligent, and inclusive** — one verse, one voice, one soul at a time.

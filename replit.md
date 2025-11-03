@@ -3,6 +3,14 @@
 ## Overview
 Rellio is a full-stack web application designed for comprehensive scripture study across multiple religious texts (Bible, Quran, Torah, Bhagavad Gita, Tripitaka). It integrates an AI chatbot for contextual discussions and provides a rich reading experience. The project aims to be a leading platform for interfaith scripture exploration and AI-assisted theological inquiry, offering deep insights and fostering understanding across diverse spiritual traditions.
 
+## Updated Product Charter (Sync with AGENTS)
+All Replit collaborators and automation scripts must align with the 2025 charter refresh:
+1. **Interactive Book Browsing** — tactile scripture exploration with voice narration, persona annotations, and cross-text comparisons optimized for mobile.
+2. **Persona Previews & Voices** — front-and-center Priest, Mufti, and Universal Guide showcases with interactive bios, audio greetings, and instant chat handoff.
+3. **Real-time 3D Dashboard** — an IlluminVerse-powered cockpit fusing ambient scenes, reading progress, and live persona presence.
+
+When spinning up development environments, surface this mantra in logs, prompts, and onboarding notes so engineers and designers reference the same objectives before writing code. Cross-check `AGENTS.ROOT.md`, `client/AGENTS.md`, `client/src/pages/AGENTS.md`, and component AGENTS for deeper guidance.
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
