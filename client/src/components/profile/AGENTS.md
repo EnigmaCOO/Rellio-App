@@ -1,22 +1,22 @@
-# client/src/components/profile/AGENTS.md
+# AGENT: `client/src/components/profile`
 
-## Agent: Profile & Settings
-**Owns:** User preferences (faith, persona, voice, theme) and personal reflections.
+## Legacy Definition (pre-refresh)
+- Owned **profile and preference displays** highlighting faith traditions, persona affinities, reading stats, and saved verses with a respectful, private tone.
+- Connected to future growth trackers, voice settings, and secure data handling to mirror persona presence inside the 3D dashboard context.
 
----
+## Updated Definition
+This directory contains profile-related components for Rellio users.
 
-### End Goal Contribution
-This module personalizes Rellio — it makes the platform adaptive and unique for every spiritual seeker.
-To support the charter’s pillars, it:
-- Curates the **immersive homepage** content tiles, including interactive book queues and recommended reading scenes.
-- Manages **persona previews** so users can audition the Priest, Mufti, and Universal Guide voices, avatars, and dashboard presets.
-- Configures the **real-time 3D dashboard** layout, toggling widgets (progress, chat, ambient cues) per user preference.
+## Responsibilities
+- Present user information, preferences, and **spiritual journey settings**.
+- Surface key insights such as:
+  - Preferred faith traditions or personas.
+  - Reading streaks and engagement stats.
+  - Saved verses and reflections (in collaboration with backend).
 
----
-
-### Tasks Toward End Goal
-- Create editable profile dashboard that surfaces interactive browsing history and persona favorites.
-- Store preferences in DB and local storage.
-- Allow switching between scholar personas with preview playback and 3D dashboard theme sync.
-- Add “daily reflection” journal linked to verse history and homepage highlights.
-- Implement privacy settings (anonymous mode) while keeping dashboard telemetry accurate.
+## Key Tasks for Agents
+- Design profile UI to feel **personal, private, and respectful**.
+- Prepare hooks into future features:
+  - Spiritual growth tracker.
+  - Persona preferences and voice settings.
+- Keep security/privacy in mind: do not surface sensitive data without explicit intent from the backend.

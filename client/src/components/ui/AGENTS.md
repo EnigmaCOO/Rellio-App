@@ -1,22 +1,21 @@
-# client/src/components/ui/AGENTS.md
+# AGENT: `client/src/components/ui`
 
-## Agent: UI Library
-**Owns:** Core design system (Buttons, Inputs, Modals, Tooltips, Cards).
+## Legacy Definition (pre-refresh)
+- Owned **design-system primitives** (shadcn/Tailwind/Radix) delivering the visual grammar, motion, and accessibility that powered interactive browsing widgets, persona teasers, and dashboard HUDs.
+- Prioritized reusable, brand-aligned components with micro-interactions that could scale to mobile-first and 3D-adjacent layouts.
 
----
+## Updated Definition
+This directory holds **UI primitives and design-system components** (largely ShadCN/Tailwind-based) used throughout Rellio.
 
-### End Goal Contribution
-Provides a **consistent spiritual aesthetic** across Rellio — calm, elegant, and modern.
-Now it also acts as the connective tissue between:
-- The **immersive homepage** interactions (book carousels, persona highlight cards, CTA buttons).
-- **Persona previews** that require consistent badge styles, voice indicators, and accessibility labels for Priest, Mufti, and Universal Guide personas.
-- The **real-time 3D dashboard** overlays, ensuring controls remain legible atop dynamic IlluminVerse scenes.
+## Responsibilities
+- Provide accessible, theme-aligned components:
+  - Buttons, inputs, dialogs, sheets, menus, tooltips, etc.
+- Serve as the **single source of truth** for Rellio’s visual language:
+  - Spacing, typography, corner radius, motion, elevation.
 
----
-
-### Tasks Toward End Goal
-- Build unified button hierarchy (Primary, Secondary, Ghost) with variants for immersive homepage hero actions and dashboard toggles.
-- Create typography presets for verses, annotations, and persona bios.
-- Add Tailwind theme integration that aligns 2D UI with 3D dashboard palettes.
-- Ensure full accessibility (ARIA, focus rings, screen reader support) across interactive browsing widgets and persona previews.
-- Document component usage in `replit.md` snippets so collaborators implement the charter consistently.
+## Key Tasks for Agents
+- Keep components **generic and reusable**; avoid hard-coding Rellio-specific logic here.
+- Ensure all primitives are:
+  - Accessible (ARIA, keyboard, focus).
+- Themed to match the cosmic white-gold-turquoise palette.
+- Support motion/micro-interactions that subtly enhance spiritual immersion without distraction.

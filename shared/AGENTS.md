@@ -1,18 +1,25 @@
-# shared/AGENTS.md
+# AGENT: `shared`
 
-## Agent: Shared Schema & Types
-**Owns:** Centralized Drizzle ORM schema, zod validators, and shared TypeScript interfaces.
+## Legacy Definition (pre-refresh)
+- Hosted **shared schemas and domain models** ensuring client/server agreement on scripture entities, chat/voice payloads, reflections, and persona configurations.
+- Focused on versioned, stable Zod definitions driving validation in handlers and forms while preparing daily-verse and comparison entities.
 
----
+## Updated Definition
+`shared` hosts **code and types shared between client and server**, such as schemas and domain models.
 
-### End Goal Contribution
-Acts as Rellio’s **universal truth source** — ensuring data between server and client remains coherent and type-safe.
+## Responsibilities
+- Define **source-of-truth schemas** (e.g., via Zod) for:
+  - Scripture entities.
+  - Chat/voice message payloads.
+  - Reflections and user-facing data structures.
+- Ensure the client and server **agree on shapes and constraints**.
 
----
-
-### Tasks Toward End Goal
-- Define tables: Users, Verses, Personas, Reflections, Progress.
-- Export zod validators for all DTOs.
-- Manage migrations with Drizzle-kit.
-- Enforce type safety across services and API responses.
-- Version schema updates carefully with release cycles.
+## Key Tasks for Agents
+- Expand `schema.ts` to cover:
+  - Persona configurations.
+  - Daily verse and reflection structures.
+  - Any cross-faith comparison entities.
+- Keep schemas versioned and stable; coordinate changes with both frontend and backend.
+- Use schemas to drive validation in:
+  - Request handlers (server).
+  - Form handling and data parsing (client).

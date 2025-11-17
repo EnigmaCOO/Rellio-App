@@ -1,18 +1,22 @@
-# server/websockets/AGENTS.md
+# AGENT: `server/websockets`
 
-## Agent: WebSocket Layer (Voice Handler)
-**Owns:** The `/ws/voice` pipeline for real-time voice chat between users and Rellio’s AI scholars.
+## Legacy Definition (pre-refresh)
+- Owned **WebSocket handlers** for voice/real-time layers, streaming audio both ways, syncing conversational context, and managing lifecycles/heartbeats.
+- Focused on graceful disconnect handling, binary payload efficiency, and coordination with ElevenLabs/AI services under proper auth and rate limits.
 
----
+## Updated Definition
+This directory defines **WebSocket handlers**, notably for the voice/real-time interaction layer.
 
-### End Goal Contribution
-This agent gives Rellio **its voice** — literally. It merges real-time input/output, making divine dialogue possible.
+## Responsibilities
+- Implement low-latency, robust WebSocket endpoints for:
+  - Streaming audio from clients.
+  - Streaming TTS responses back to clients.
+  - Keeping conversational context synchronized with voice flows.
+- Manage connection lifecycles and heartbeats.
 
----
-
-### Tasks Toward End Goal
-- Implement binary streaming for user mic input.
-- Stream AI TTS responses to client.
-- Add ping/pong heartbeats and reconnection.
-- Integrate persona context in WS sessions.
-- Log latency metrics and audio quality.
+## Key Tasks for Agents
+- Harden the voice WebSocket implementation:
+  - Handle disconnects, timeouts, and retries gracefully.
+  - Support binary audio payloads efficiently.
+- Coordinate with `server/services/elevenlabs.ts` and AI services to deliver near real-time experiences.
+- Enforce auth and rate limiting where appropriate to protect infrastructure.

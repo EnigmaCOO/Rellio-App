@@ -1,25 +1,31 @@
-# client/src/AGENTS.md
+# AGENT: `client/src`
 
-## Agent: Client Source Code (React)
-**Owns:** Core logic of the front-end app — routing, state management, and integration with API and WebSocket layers.
+## Legacy Definition (pre-refresh)
+- Owned the **core React app logic** (routing, state, WebSockets) translating backend intelligence into interactive scripture browsing, persona previews, and the 3D dashboard state machine.
+- Emphasized **Interactive Book Browsing**, persona staging (Priest, Mufti, Universal Guide), and Framer Motion-driven transitions aligned with `/ws/voice` and API hooks.
 
----
+## Updated Definition
+`client/src` contains the **TypeScript/React source code** for the Rellio frontend. It is where the multi-faith scripture experience, persona-based chat, and voice interactions are actually implemented.
 
-### End Goal Contribution
-This is the **interactive soul** of Rellio.
-It translates backend intelligence into user experience — connecting scripture exploration, AI responses, IlluminVerse art, and now the charter’s spotlight moments:
-- **Interactive Book Browsing** flows that feel like turning illuminated manuscripts with instant persona insights.
-- **Persona Preview pipelines** that stage the Priest, Mufti, and Universal Guide in both 2D UI and 3D-ready states.
-- A **real-time 3D dashboard** state machine that synchronizes chat, progress, and ambient layers.
+## Responsibilities
+- Own the **core React app structure**, including:
+  - Layout and routing (`pages`).
+  - Components (UI, chat, scripture viewer, profiles).
+  - Hooks and utilities for state and data.
+- Integrate with backend APIs for:
+  - Scripture retrieval.
+  - AI chat and persona logic.
+  - Voice processing endpoints.
+- Ensure the UX expresses the **vision of immersive, reverent, multi-faith exploration**.
 
----
-
-### Tasks Toward End Goal
-- Implement React Router routes: `/`, `/chat`, `/scripture`, `/profile` with hooks for persona preview summons.
-- Build the AppProvider managing theme, persona, dashboard scenes, and user session.
-- Integrate TanStack Query for fetching and caching.
-- Use Zustand for persistent app state, including 3D dashboard context.
-- Connect to `/server/api/*` and `/ws/voice`.
-- Configure Framer Motion animations for route transitions and 3D dashboard reveal sequences.
-- Implement error boundaries and global toasts that reference the active persona preview where relevant.
-- Ensure contributor onboarding scripts (`replit.md`, GitHub templates) echo these objectives before coding starts.
+## Key Tasks for Agents
+- Maintain clear layering:
+  - `components` → presentation & interactivity.
+  - `hooks` → reusable logic.
+  - `lib` → client utilities and API helpers.
+  - `pages` → route-level composition.
+- Keep code **typed, accessible, and testable**.
+- Drive the roadmap items:
+  - Daily Verse + Reflection flows.
+  - Persona selection & environment switching.
+  - Smooth voice-first chat with fallback to text.

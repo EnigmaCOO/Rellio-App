@@ -1,22 +1,25 @@
-# client/src/components/IlluminVerse/AGENTS.md
+# AGENT: `client/src/components/IlluminVerse`
 
-## Agent: IlluminVerse (Ambient Visual Layer)
-**Owns:** Dynamic, animated backgrounds reflecting persona or faith mood.
+## Legacy Definition (pre-refresh)
+- Owned the **ambient visual layer**: dynamic persona/faith backgrounds, gradients, and 3D-ready particle scenes powering immersive browsing, persona previews, and the real-time dashboard.
+- Connected theme state, verse meaning, and voice cues to animated ambience while honoring reduced-motion preferences and mobile GPU limits.
 
----
+## Updated Definition
+`IlluminVerse` houses components for the **core scripture exploration experience** — the heart of Rellio’s “read, reflect, and compare” flow.
 
-### End Goal Contribution
-IlluminVerse defines the **emotional ambience** of Rellio — every faith and persona radiates light, texture, and motion tied to scripture energy.
-With the renewed objectives, it must:
-- Infuse the **immersive homepage** and interactive book browser with reactive gradients and particle trails.
-- Project distinct **persona previews** (Priest, Mufti, Universal Guide) by modulating color, depth, and voice-activated pulses.
-- Drive the **real-time 3D dashboard** scene graph, coordinating Three.js layers with chat, progress, and reading telemetry.
+## Responsibilities
+- Implement:
+  - Multi-faith scripture list and verse navigation.
+  - Verse spotlight / verse card.
+  - Auto-reading controls and ElevenLabs-based audio playback.
+  - Cross-scripture comparison views.
+- Provide the core UI where:
+  - Users select chapters/verses.
+  - Compare teachings across faiths in a respectful way.
+  - Trigger AI-guided explanations of the verse.
 
----
-
-### Tasks Toward End Goal
-- Implement per-persona ambient scenes (mosque, temple, cathedral) that scale between 2D and 3D dashboard views.
-- Add particle systems using Framer Motion or Three.js.
-- Connect theme state to verse meaning (dark → reflective, light → hope) and persona preview triggers.
-- Implement “Reduced Motion” preference.
-- Optimize GPU performance for mobile users and dashboard overlays.
+## Key Tasks for Agents
+- Ensure scripture loading is **fast and robust**, integrating properly with backend scripture APIs.
+- Implement intuitive **Compare Grid / cross-faith views** while respecting theological nuance and avoiding false equivalence.
+- Build hooks into reflection logging and “save verse” actions, so this area connects tightly with the community/reflection roadmap.
+- Integrate voice playback smoothly with the chat and reading sessions (e.g., start/stop/resume reading).

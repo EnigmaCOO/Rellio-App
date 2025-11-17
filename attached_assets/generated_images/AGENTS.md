@@ -1,20 +1,25 @@
-# attached_assets/generated_images/AGENTS.md
+# AGENT: `attached_assets/generated_images`
 
-## Agent: Generated Images (AI Concept Art)
-**Owns:** AI-generated backgrounds, persona portraits, verse-based illustrations, and visual motifs.
+## Legacy Definition (pre-refresh)
+- Owned **AI-generated backgrounds, persona portraits, and verse illustrations**, emphasizing reproducible prompts and annotated assets for persona-specific ambience.
+- Served as the **AI concept art lab** that synced outputs with IlluminVerse for live background transitions.
 
----
+## Updated Definition
+`generated_images` stores **AI-generated and experimental visuals** (backgrounds, persona concepts, UI explorations) that may or may not make it into production.
 
-### End Goal Contribution
-This agent enables **AI-driven visual immersion**, reflecting Rellio’s multi-faith aesthetic.  
-It ensures each persona has a cohesive world — not just text-based but *emotionally resonant* visual ambience.
+This is a **sandbox** for visual experimentation that feeds into the final design decisions.
 
----
+## Responsibilities
+- Store **raw AI-generated images** and explorations for:
+  - Persona portraits and 3D-style avatars.
+  - Thematic environments for each faith.
+  - Hero images for landing pages and blog illustrations.
+- Serve as a **visual backlog** from which production assets are selected, refined, and moved to `public/images` or `client/src/assets`.
 
-### Tasks Toward End Goal
-- Use Stable Diffusion / DALL·E prompts to generate visual identities for each Sage Scholar.
-- Create AI render templates (prompt, style, negative prompt) for reproducibility.
-- Implement a prompt library: “Generate cosmic Hindu temple in misty dawn light,” etc.
-- Export final renders as WebP (under 1MB each).
-- Annotate generated images with persona IDs for programmatic background switching.
-- Sync these assets with the IlluminVerse component for live background transitions.
+## Key Tasks for Agents
+- Group images by **experiment or persona** (e.g., `mufti_v1`, `universal_sage_bg_round2`, etc.).
+- For strong candidates, document:
+  - **Intended usage** (e.g., “Islamic persona chat hero background”).
+  - Any **prompt snippets** or generation notes useful for future iterations.
+- Mark which images have been **promoted to production** and where they now live.
+- Periodically clean out low-value or unused experiments while keeping a small archive of prior directions for reference.
