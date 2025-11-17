@@ -1,15 +1,36 @@
-# Rellio-App-main/AGENTS.ROOT.md
-## Purpose
-This repository powers **Rellio**, a next-generation **spiritual knowledge and conversation platform** that blends AI, scripture, and voice interaction into a unified experience.
-It enables users to **explore verses across multiple faiths**, **chat with AI scholars (personas)**, **listen to recitations**, and **receive personalized spiritual reflections** — all through an immersive, artistic interface.
+# Rellio Project Blueprint & Agent Charter
 
-Each directory in this repo functions as an **independent agent** within a larger ecosystem — with clear inputs, outputs, and collaboration handoffs.
+This repository powers **Rellio**, a next-generation **spiritual knowledge and conversation platform** that blends AI, scripture, and voice interaction into a unified experience. It enables users to **explore verses across multiple faiths**, **chat with AI scholars (personas)**, **listen to recitations**, and **receive personalized spiritual reflections** through immersive, artistic interfaces.
 
-This document now captures the refreshed multi-team charter so every agent — code modules, design assets, Replit automation, and human collaborators — is aligned on the same mission briefing before implementation begins.
+Each directory in this repo functions as an **independent agent** within a larger ecosystem — with clear inputs, outputs, and collaboration handoffs. This document merges the original agent charter with the latest product blueprint so every contributor stays aligned on purpose, scope, and execution.
 
 ---
 
-## SYSTEM OVERVIEW
+## 1. Vision & Core Idea
+Rellio is a multi-faith spiritual intelligence platform designed to bridge ancient wisdom with modern technology. Its mission is to digitally unify the world’s scriptures and spiritual traditions through a single, immersive experience — enabling users to read, reflect, and converse with AI-guided spiritual scholars across all faiths.
+
+### Core Vision
+To build the **world’s first AI-driven universal scripture companion** that transcends religious boundaries, cultivates understanding, and brings faith and technology into harmony.
+
+---
+
+## 2. Strategic Objectives (Expanded)
+- **Universal Wisdom Access:** Offer a central digital space for all major world scriptures with AI-assisted understanding.
+- **AI Persona Depth:** Build lifelike, voice-enabled spiritual personas — each representing different traditions (Mufti, Priest, Rabbi, Monk, Guru, Universal Sage).
+- **Immersive Learning Environment:** Thematic backgrounds, ambient audio, contextual storytelling for emotional and spiritual immersion.
+- **Cross-Faith Dialogue:** Compare scriptures across religions with ethical, unbiased AI interpretation.
+- **Voice-First Interaction:** Integrate TTS & ASR for conversational, hands-free spiritual exploration.
+- **Community & Reflection:** Save reflections, share verses, and engage in guided daily spiritual journeys.
+- **Interactive Book Browsing:** Tactile scripture explorer with voice narration, persona annotations, and cross-text comparison that feels native on mobile.
+- **Persona Previews & Voices:** Lifelike 3D-ready scholar spotlights with interactive bios, animated greeting loops, and instant chat/vocal handoff.
+- **Daily Guidance Engine:** Verse of the day, spiritual journal, and reflection tracker.
+- **Community & Discussion:** Faith-respectful, AI-moderated conversation threads.
+
+> **Alignment Protocol:** Every agent touching these goals must reference this charter (see nested AGENTS files) before scoping work. Automation scripts and external collaborators should surface the "Interactive Browsing / Persona Previews / 3D Dashboard" mantra in kickoff logs.
+
+---
+
+## 3. System Overview
 
 ### Core Stack
 | Layer | Description |
@@ -22,10 +43,7 @@ This document now captures the refreshed multi-team charter so every agent — c
 | **Auth** | Firebase Auth (OTP), OAuth (Google), JWT sessions |
 | **Deployment** | Replit / Vercel frontend; Render / Railway backend |
 
----
-
-## AGENT TOPOLOGY (SYSTEM MAP)
-
+### Agent Topology (System Map)
 | Agent | Function | Primary Handoff |
 |--------|-----------|----------------|
 | `/server` | Backend API, WS, AI & scripture logic | → `/client` |
@@ -40,7 +58,7 @@ This document now captures the refreshed multi-team charter so every agent — c
 
 ---
 
-## PLATFORM GOALS
+## 4. Platform Goals
 
 ### Vision
 To build the **world’s first AI-powered universal scripture companion**, where wisdom from **Islamic, Christian, Hindu, Jewish, and global philosophical traditions** converge through voice, visuals, and AI dialogue.
@@ -54,11 +72,65 @@ To build the **world’s first AI-powered universal scripture companion**, where
 6. **Daily Guidance Engine** — verse of the day, spiritual journal, and reflection tracker.
 7. **Community & Discussion** — faith-respectful, AI-moderated conversation threads.
 
-> **Alignment Protocol:** Every agent touching these goals must reference this charter (see `client/AGENTS.md`, `client/src/pages/AGENTS.md`, component-level AGENTS, and `replit.md`) before scoping work. Automation scripts and external collaborators should surface the "Interactive Browsing / Persona Previews / 3D Dashboard" mantra in kickoff logs.
+---
+
+## 5. Timeline & Development Phases
+
+| **Phase** | **Timeline** | **Milestones** | **Deliverables** |
+|----------|--------------|----------------|------------------|
+| **Phase 1 – Foundation** | Jan–Mar 2025 | Core scripture viewer, basic verse navigation | Multi-scripture API, three-pane UI |
+| **Phase 2 – Intelligence Layer** | Apr–Jun 2025 | Launch Sage Scholar AI | OpenAI integration, persona chat, cross-referencing |
+| **Phase 3 – Immersive Experience** | Jul–Sep 2025 | Visual & auditory immersion | Persona environments, ambient sound, illustrations |
+| **Phase 4 – Voice & Reflection** | Oct–Dec 2025 | Voice-first capabilities | TTS, STT, reflection logging, shareable verse stories |
+| **Phase 5 – Global Launch** | Jan–Mar 2026 | Cross-platform expansion | Mobile-first PWA, multi-language support, subscriptions |
 
 ---
 
-## TASKS TOWARD END GOAL
+## 6. Target Audience & Market Positioning
+
+### Audience Segments
+| Segment | Profile | Motivation | How Rellio Serves Them |
+|--------|---------|------------|--------------------------|
+| **Spiritual Seekers** | Ages 18–45 exploring cross-faith paths | Inner peace, comparative religion | AI conversation & verse comparison |
+| **Students & Academics** | Theology, philosophy | Quick reference & study tools | Context-aware scripture search |
+| **Faithful Practitioners** | Devout readers | Recitation & reflection | Personalized verse recommendations |
+| **Modern Mindfulness Users** | Non-religious but spiritually open | Guidance & meditation | Universal Wisdom persona |
+| **Interfaith Organizations** | NGOs, educators | Promote unity & dialogue | Multi-faith harmony tools |
+
+### Market Positioning
+Rellio sits at the intersection of **FaithTech** and **Cognitive AI** — a *spiritual intelligence ecosystem*, not a religious app.
+
+---
+
+## 7. Feature Matrix
+
+| Category | Current Features | Planned / Needed Features | Future Enhancements |
+|----------|------------------|----------------------------|----------------------|
+| **Core Scripture System** | Multi-scripture DB | Bookmarks, multi-language | Visual verse alignment |
+| **AI Scholar System** | Universal Sage Scholar | Dedicated personas | 3D voice avatars |
+| **User Interface** | Three-pane layout | Thematic persona backgrounds | AR spiritual exploration |
+| **Voice Integration** | ElevenLabs prototype | Full voice chat | Multilingual dialogue |
+| **Community Layer** | Reflection concept | Daily journal, shareable moments | Growth tracker, karma system |
+| **Design & Branding** | Cosmic white-gold palette | Motion design, hero art | Animated onboarding |
+
+---
+
+## 8. Gap Analysis: Needed vs. Current State
+
+| Aspect | Currently Have | Need to Build / Acquire |
+|--------|----------------|--------------------------|
+| **Backend Infrastructure** | Scripture model, API | Redis/Prisma caching, optimized queries |
+| **AI Layer** | Base OpenAI integration | Persona tuning, context caching, ethical guardrails |
+| **Design System** | Tailwind + ShadCN | Full Figma design system |
+| **Audio/Voice** | Basic ElevenLabs | Bi-directional speech system |
+| **UI/UX** | Static persona screens | Interactive environments |
+| **Security** | Basic auth | Encrypted journals |
+| **Monetization** | None | Subscription tiers |
+| **Analytics** | None | Usage insights, engagement metrics |
+
+---
+
+## 9. Tasks Toward End Goal
 
 ### 🧱 Phase 1 — Foundation & Infrastructure
 **Goal:** Establish core architecture & environment for full-stack AI interactions.
@@ -140,7 +212,26 @@ To build the **world’s first AI-powered universal scripture companion**, where
 
 ---
 
-## LONG-TERM EXTENSIONS
+## 10. Timeline, KPIs & Execution Plan
+
+### Development Stack
+- Next.js + React + TailwindCSS
+- Prisma + PostgreSQL
+- Voice: Web Speech API + ElevenLabs
+- AI: OpenAI GPT-5 with persona contexts
+- Deployment: Replit Cloud + Vercel + Supabase/Neon
+
+### Key KPIs
+- Scripture loading time: **< 2 seconds**
+- AI response latency: **< 1.5 seconds**
+- DAU Target: **10K by Q3 2026**
+- Persona retention: **60% returning to same persona**
+- Reflection engagement: **3 reflections/week/user**
+- Subscription conversion: **8–12%**
+
+---
+
+## 11. Long-Term Extensions
 
 | Feature | Description |
 |----------|--------------|
@@ -152,8 +243,25 @@ To build the **world’s first AI-powered universal scripture companion**, where
 
 ---
 
-## END VISION STATEMENT
+## 12. Success Metrics & Next Steps
 
+### Success Metrics
+- Emotional resonance & trust
+- Cultural and interfaith inclusivity
+- Seamless interaction between scripture, chat, and voice
+- Scalable AI architecture for new traditions
+- Organic growth via educators & influencers
+
+### Immediate Next Steps (Q4 2025)
+- Finalize verse + persona backend schema
+- Integrate voice for all personas
+- Launch Daily Verse + Reflection Beta
+- Refine persona art & environments
+- Begin closed beta (200 users globally)
+
+---
+
+## 13. End Vision Statement
 > *Rellio isn’t just an app — it’s a movement to unite wisdom, voice, and design into a single, transcendent platform.*
 >
 > Each agent in this repo contributes toward that mission:
@@ -163,3 +271,4 @@ To build the **world’s first AI-powered universal scripture companion**, where
 > - The **voice** unites it all — letting users converse with knowledge itself.
 >
 > The ultimate goal is **to make spirituality interactive, intelligent, and inclusive** — one verse, one voice, one soul at a time.
+
