@@ -1,22 +1,24 @@
-# client/src/pages/AGENTS.md
+# AGENT: `client/src/pages`
 
-## Agent: Page Routes
-**Owns:** High-level routes (Home, Chat, Scripture, About, Settings).
+## Legacy Definition (pre-refresh)
+- Owned **route-level composition** for landing, auth, dashboard, and legal pages, showcasing interactive browsing, persona previews, and 3D dashboard entry points.
+- Managed global layout/providers and guided flows from landing to onboarding to scripture reading and AI chat with a voice-first emphasis.
 
----
+## Updated Definition
+This directory defines **route-level pages** for the Rellio app (landing, dashboard, auth, legal pages, etc.).
 
-### End Goal Contribution
-Serves as **entry points** for every journey on Rellio — orchestrating navigation between exploration, reflection, and learning.
-With the new charter, this agent must:
-- Stage the **immersive homepage** that showcases interactive book browsing and persona previews side-by-side.
-- Shepherd users into the **real-time 3D dashboard** without friction, whether they arrive from chat, scripture, or profile screens.
-- Maintain narrative cohesion so the Priest, Mufti, and Universal Guide personas feel present across routes.
+## Responsibilities
+- Compose feature components into full pages:
+  - Landing experiences (`landing.tsx`, `landing-luxury.tsx`).
+  - Auth (`auth.tsx`).
+  - Dashboard and profile (`dashboard.tsx`, `profile.tsx`).
+  - Legal pages (`privacy.tsx`, `terms.tsx`).
+- Manage **top-level layout**, including navigation bars, footers, and global providers.
 
----
-
-### Tasks Toward End Goal
-- Create landing page with “Enter the Circle” CTA that teases persona previews and 3D dashboard widgets.
-- Add `/chat`, `/scripture`, `/profile`, `/about` routes with shared data loaders for interactive browsing progress.
-- Embed IlluminVerse backgrounds per route and coordinate with dashboard transitions.
-- Lazy-load persona chat and 3D assets to reduce bundle size while preserving instant preview loops.
-- Document route expectations inside `replit.md` so external collaborators route users consistently.
+## Key Tasks for Agents
+- Ensure the **primary landing experience** clearly communicates:
+  - Rellio’s multi-faith, AI-guided vision.
+  - The voice-first and scripture-first nature of the platform.
+- Implement seamless flows:
+  - From landing → onboarding → first scripture reading → first AI conversation.
+- Keep routing lightweight and fast, with proper 404 handling (`not-found.tsx`).

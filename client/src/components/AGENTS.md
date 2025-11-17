@@ -1,24 +1,28 @@
-# client/src/components/AGENTS.md
+# AGENT: `client/src/components`
 
-## Agent: Components (UI + Functional Modules)
-**Owns:** The interactive building blocks of Rellio’s front-end.
+## Legacy Definition (pre-refresh)
+- Owned the **interactive building blocks** that manifested persona teasers, immersive browsing widgets, and 3D-dashboard-ready HUD panels using shadcn/ui and Radix primitives.
+- Emphasized motion, responsiveness, and persona-specific avatars/voice indicators tied to the interactive browsing, persona preview, and 3D dashboard trio.
 
----
+## Updated Definition
+This directory contains **React components** that assemble the Rellio user experience: scripture viewing, AI chat, persona selection, progress, and UI primitives.
 
-### End Goal Contribution
-Components create the **visual grammar of divine interaction** — intuitive, elegant, symbolic, and responsive.
-They translate scripture and persona data into *touchable and visual form* while delivering the new charter priorities:
-- Powering the **immersive homepage** with interactive book browsing widgets and persona teaser panels.
-- Bringing the **Priest, Mufti, and Universal Guide** personas to life through preview cards, voice indicators, and 3D-ready avatars.
-- Feeding the **real-time 3D dashboard** with modular HUD panels for reading progress, chat context, and IlluminVerse cues.
+## Responsibilities
+- Implement **reusable, composable UI** for:
+  - The three-pane experience (nav, verse card, AI panel).
+  - Persona-specific experiences and environments.
+  - Progress tracking and profile views.
+- Provide the building blocks for:
+  - Daily reflection flows.
+  - Voice-enabled chat UI.
+  - Cross-faith comparison views.
 
----
-
-### Tasks Toward End Goal
-- Build **IlluminVerse** for background animations that can escalate into 3D dashboard scenes.
-- Implement modular **auth**, **chat**, **profile**, and **progress** components that surface persona previews and browsing stats.
-- Use **shadcn/ui** and **Radix** for accessible primitives tuned for immersive layouts.
-- Create component-level documentation for reusability and cross-team onboarding.
-- Implement responsive and mobile-first designs that keep interactive browsing delightful on phones.
-- Add motion variants for verse transitions, persona switching, and dashboard telemetry pulses.
-- Cross-link every component README/AGENT reference to the "Interactive Browsing / Persona Previews / 3D Dashboard" objective triad.
+## Key Tasks for Agents
+- Keep components **focused and declarative**, with heavy logic pushed into hooks/lib where possible.
+- Maintain a clear division:
+  - Feature modules (e.g., `IlluminVerse`, `chat`, `auth`, `profile`, `progress`).
+  - UI primitives (`ui`).
+- Ensure all components:
+  - Are responsive (mobile → desktop).
+  - Respect the brand system (colors, type, spacing).
+  - Are accessible (ARIA, keyboard navigation, proper semantics).

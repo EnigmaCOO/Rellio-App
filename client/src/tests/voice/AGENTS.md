@@ -1,17 +1,22 @@
-# client/src/tests/voice/AGENTS.md
+# AGENT: `client/src/tests/voice`
 
-## Agent: Voice Test Utilities
-**Owns:** Test helpers for WebSocket voice features.
+## Legacy Definition (pre-refresh)
+- Focused on **voice-first interaction experiments**: recording, auto-send strategies, timeouts, and UI affordances while simulating poor networks and long responses.
+- Served as proving ground for the voice WebSocket/HTTP stack before promoting patterns into chat and IlluminVerse components.
 
----
+## Updated Definition
+`voice` tests focus specifically on **voice-first interaction flows**: recording, sending, receiving, and playing back audio messages.
 
-### End Goal Contribution
-Ensures Rellio’s **voice experience** remains seamless, low-latency, and responsive.
+## Responsibilities
+- Experiment with:
+  - Different auto-send strategies.
+  - Error handling and timeouts in voice flows.
+  - UX affordances for recording (icons, states, animations).
+- Validate performance and reliability of the **voice WebSocket/HTTP stack** before changes hit production.
 
----
-
-### Tasks Toward End Goal
-- Mock `/ws/voice` stream data.
-- Test binary audio parsing.
-- Validate speech-to-text reconnection.
-- Add synthetic latency tests.
+## Key Tasks for Agents
+- Build scenarios that simulate:
+  - Poor network conditions.
+  - Long responses.
+  - Interruptions and cancellations.
+- Use insights from these tests to **harden production voice components** in `client/src/components/chat` and `IlluminVerse`.
