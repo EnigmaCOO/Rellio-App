@@ -1,0 +1,10 @@
+- [react-globe.gl / three / WebGL](sacred-map-globe.md) — needs three r167+; WebGL absent in headless sandbox, so 3D must degrade gracefully.
+- [Sacred Map authoring drafts](sacred-map-authoring.md) — AI drafts grounded only in live-retrieved passages; model picks passage_ids (refs rebuilt from our retrieval), ungrounded sections flagged, never auto-publishes.
+- [Scripture fetch + Read deep-link contract](scripture-fetch-contract.md) — /api/scriptures needs canonical religion + Quran surah *name* (not number); Read tab only parses ?tradition=.
+- [Vitest JSX / component-test config](vitest-jsx-config.md) — .tsx tests need `oxc.jsx.runtime: 'automatic'` (tsconfig jsx:preserve breaks them); render via react-dom + act, no testing-library.
+- [Scholar Engine caching](engine-cache.md) — ENGINE_CACHE Layer 3 must only memoize grounded answers (never legacy fallback); answer key is conversation-independent by design.
+- [Grounded scholarly responses](ask-grounded-pipeline.md) — explicit mode scopes share one structured, evidence-first pipeline; failures return insufficient evidence, never ungrounded fallback.
+- [drizzle-kit push post-merge interactivity](drizzle-post-merge.md) — push prompts on dev-DB drift; --force/closed-stdin can't answer select prompts. Cure = zero drift (DB matches schema), keep --force, raise timeout.
+- [Commentary vector store](commentary-store.md) — onRef = corpus-prefixed scripture refId (quran:.. / torah:..); namespace commentary:{tradition}:{source}; idempotency (ns,onRef,chunkIndex); availability derived from DB not a parallel list.
+- [Religion id vs TraditionId](religion-id-vs-tradition-id.md) — schema religionSchema 'shintoism' ≠ scholar TraditionId 'shinto'; map religion→ScholarId explicitly, don't string-match `.tradition`.
+- [GitHub history security](github-history-security.md) — public destination history has legacy non-empty secret-like environment entries; keep export ancestry clean.

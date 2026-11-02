@@ -1,0 +1,35 @@
+node_modules
+dist
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+
+# Local credentials and per-environment configuration.
+.env
+.env.*
+!.env.example
+!.env.template
+!.handoff/.env.handoff.example
+
+# Local database backups and generated handoff archives.
+/backups/
+/database-backups/
+/migration-backups/
+*.dump
+*.backup
+*.bak
+*.sql.gz
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+*-backup.sql
+*-dump.sql
+/handoff/*.zip
+/attached_assets/*.zip
+
+# Runtime logs and generated build/test artifacts.
+*.log
+/generated-artifacts/

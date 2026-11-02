@@ -1,0 +1,252 @@
+{
+  "_comment": "Three existing events expanded into the deep-content shape. This EXTENDS events.json (all original fields kept); 'story', 'references', 'media', 'related_books' and 'review_status' are additive and optional, so old code keeps working. KEY RULE: scripture passage TEXT is never stored here — only a structured 'locator' + 'deep_link_id'. The reader fetches the actual verse live from the licensed source (alquran.cloud, bible-api, suttacentral, etc.) and deep-links into it. These three events are merged into events.json by id, replacing the matching stubs.",
+  "events": [
+    {
+      "id": "evt_first_revelation",
+      "title": "The First Revelation",
+      "location_id": "loc_cave_hira",
+      "religion_id": "islam",
+      "figure_ids": ["fig_muhammad"],
+      "category": "revelation",
+      "date": { "display": "c. 610 CE", "year": 610, "year_end": null, "precision": "traditional" },
+      "significance": 5,
+      "description": "In Islamic tradition, while meditating in the Cave of Hira on Jabal al-Nour, Muhammad received the first verses of the Qur'an through the angel Jibril (Gabriel), beginning the prophetic mission.",
+      "tradition_note": "Described here as understood within Islamic tradition.",
+
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "The night in the cave",
+            "body": "By his early forties, Muhammad had taken to withdrawing for days at a time to a cave on Jabal al-Nour, outside Mecca, for solitude and reflection. Islamic tradition holds that on one such night in the month of Ramadan, an angel appeared and commanded him to recite. Overwhelmed, he returned home shaken to his wife Khadija, who reassured and supported him. This encounter is remembered as the beginning of the Qur'anic revelation.",
+            "ref_ids": []
+          },
+          {
+            "id": "s_scripture",
+            "type": "scripture",
+            "heading": "In the texts",
+            "body": "The opening five verses of Surah Al-'Alaq are traditionally held to be the first revealed, beginning with the command to read or recite in the name of the Lord who creates. The early verses of Surah Al-Muddaththir are also counted among the earliest. The encounter itself is preserved in the hadith literature, most fully in the narration attributed to Aisha at the start of Sahih al-Bukhari.",
+            "ref_ids": ["ref_quran_alalaq", "ref_quran_muddaththir", "ref_bukhari_wahy"]
+          },
+          {
+            "id": "s_context",
+            "type": "context",
+            "heading": "Place & moment",
+            "body": "Jabal al-Nour (the 'Mountain of Light') rises northeast of Mecca; the small Hira cave near its summit is today a site of visitation. Tradition places the event around 610 CE, when Muhammad was about forty.",
+            "ref_ids": []
+          },
+          {
+            "id": "s_significance",
+            "type": "significance",
+            "heading": "Why it matters",
+            "body": "This night marks, in Islamic belief, the start of roughly twenty-three years of revelation that together form the Qur'an, and the beginning of Muhammad's mission as a prophet.",
+            "ref_ids": []
+          }
+        ]
+      },
+
+      "references": [
+        {
+          "id": "ref_quran_alalaq",
+          "tradition": "islam",
+          "work": "Qur'an",
+          "citation": "Qur'an 96:1-5 (Surah Al-'Alaq)",
+          "locator": { "surah": 96, "ayah_start": 1, "ayah_end": 5 },
+          "source_system": "alquran.cloud",
+          "deep_link_id": "quran:96:1-5",
+          "role": "primary",
+          "note": "Traditionally held to be the first verses revealed."
+        },
+        {
+          "id": "ref_quran_muddaththir",
+          "tradition": "islam",
+          "work": "Qur'an",
+          "citation": "Qur'an 74:1-7 (Surah Al-Muddaththir)",
+          "locator": { "surah": 74, "ayah_start": 1, "ayah_end": 7 },
+          "source_system": "alquran.cloud",
+          "deep_link_id": "quran:74:1-7",
+          "role": "supporting",
+          "note": "Among the earliest passages in the traditional sequence."
+        },
+        {
+          "id": "ref_bukhari_wahy",
+          "tradition": "islam",
+          "work": "Sahih al-Bukhari",
+          "citation": "Sahih al-Bukhari, Book of the Beginning of Revelation (hadith of Aisha; ~no. 3)",
+          "locator": { "collection": "bukhari", "book": "Bad' al-Wahy", "number": 3 },
+          "source_system": "hadith-api",
+          "deep_link_id": "hadith:bukhari:1:3",
+          "role": "supporting",
+          "note": "Hadith numbering varies by edition; verify against the connected Hadith source."
+        }
+      ],
+
+      "media": [],
+      "related_books": [],
+      "sources": [
+        { "id": "src_quran", "type": "scripture", "citation": "Qur'an, Surah Al-'Alaq (96)", "url": null },
+        { "id": "src_bukhari", "type": "scripture", "citation": "Sahih al-Bukhari, Kitab Bad' al-Wahy", "url": null }
+      ],
+      "review_status": "draft_unreviewed"
+    },
+
+    {
+      "id": "evt_jesus_birth",
+      "title": "Birth of Jesus",
+      "location_id": "loc_bethlehem",
+      "religion_id": "christianity",
+      "figure_ids": ["fig_jesus"],
+      "category": "birth",
+      "date": { "display": "c. 4 BCE", "year": -4, "year_end": null, "precision": "circa" },
+      "significance": 5,
+      "description": "Christian tradition places the birth of Jesus in Bethlehem. The Church of the Nativity marks the traditional site. Most scholars date the birth to a few years before 1 CE.",
+      "tradition_note": "Honored as a prophet in Islam as well. Birth year is debated.",
+
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "A birth in Bethlehem",
+            "body": "The Christian Gospels narrate the birth of Jesus to Mary in Bethlehem. Luke describes a journey for a Roman census, a child laid in a manger, and shepherds drawn by an announcement of his birth; Matthew adds visitors from the east following a star, and the family's flight from Herod. The Church of the Nativity now stands over the traditional site.",
+            "ref_ids": ["ref_luke_nativity", "ref_matthew_nativity"]
+          },
+          {
+            "id": "s_across_traditions",
+            "type": "context",
+            "heading": "Across traditions",
+            "body": "The birth of Jesus is revered beyond Christianity. In Islam, Surah Maryam recounts the birth of Jesus ('Isa) to Mary as a sign and a mercy, and Mary is honored as among the most exalted of women. Reading the two accounts side by side is one of the things the Sacred Map is built to make possible.",
+            "ref_ids": ["ref_quran_maryam"]
+          },
+          {
+            "id": "s_context",
+            "type": "context",
+            "heading": "Place & moment",
+            "body": "Bethlehem lies just south of Jerusalem in what was then Roman Judea. Scholars generally date the birth to a few years before the conventional start of the Common Era.",
+            "ref_ids": []
+          },
+          {
+            "id": "s_significance",
+            "type": "significance",
+            "heading": "Why it matters",
+            "body": "For Christians, the birth (the Nativity, celebrated at Christmas) marks the entry of Jesus into the world and is foundational to the faith's account of his life.",
+            "ref_ids": []
+          }
+        ]
+      },
+
+      "references": [
+        {
+          "id": "ref_luke_nativity",
+          "tradition": "christianity",
+          "work": "Bible (Gospel of Luke)",
+          "citation": "Luke 2:1-20",
+          "locator": { "book": "Luke", "chapter": 2, "verse_start": 1, "verse_end": 20 },
+          "source_system": "bible-api",
+          "deep_link_id": "bible:luke:2:1-20",
+          "role": "primary",
+          "note": "Census, manger, and the shepherds."
+        },
+        {
+          "id": "ref_matthew_nativity",
+          "tradition": "christianity",
+          "work": "Bible (Gospel of Matthew)",
+          "citation": "Matthew 1:18-2:12",
+          "locator": { "book": "Matthew", "chapter": 1, "verse_start": 18, "chapter_end": 2, "verse_end": 12 },
+          "source_system": "bible-api",
+          "deep_link_id": "bible:matthew:1:18-2:12",
+          "role": "supporting",
+          "note": "Joseph's dream and the visitors from the east."
+        },
+        {
+          "id": "ref_quran_maryam",
+          "tradition": "islam",
+          "work": "Qur'an",
+          "citation": "Qur'an 19:16-34 (Surah Maryam)",
+          "locator": { "surah": 19, "ayah_start": 16, "ayah_end": 34 },
+          "source_system": "alquran.cloud",
+          "deep_link_id": "quran:19:16-34",
+          "role": "parallel-tradition",
+          "note": "The Islamic account of the birth of Jesus to Mary."
+        }
+      ],
+
+      "media": [],
+      "related_books": [],
+      "sources": [
+        { "id": "src_luke", "type": "scripture", "citation": "Gospel of Luke, ch. 2", "url": null },
+        { "id": "src_matthew", "type": "scripture", "citation": "Gospel of Matthew, ch. 1-2", "url": null },
+        { "id": "src_maryam", "type": "scripture", "citation": "Qur'an, Surah Maryam (19)", "url": null }
+      ],
+      "review_status": "draft_unreviewed"
+    },
+
+    {
+      "id": "evt_first_sermon",
+      "title": "The First Sermon at Sarnath",
+      "location_id": "loc_sarnath",
+      "religion_id": "buddhism",
+      "figure_ids": ["fig_buddha"],
+      "category": "teaching",
+      "date": { "display": "c. 528 BCE", "year": -528, "year_end": null, "precision": "circa" },
+      "significance": 5,
+      "description": "At the Deer Park in Sarnath, the Buddha delivered his first teaching, setting in motion the 'wheel of dharma' and founding the early monastic community.",
+      "tradition_note": "",
+
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Setting the wheel in motion",
+            "body": "Tradition holds that after his awakening at Bodh Gaya, the Buddha travelled to the Deer Park at Isipatana, near present-day Sarnath, and taught five former companions. This first discourse is remembered as the 'turning of the wheel of Dhamma' and the beginning of the Buddhist community (Sangha).",
+            "ref_ids": ["ref_dhammacakka"]
+          },
+          {
+            "id": "s_scripture",
+            "type": "scripture",
+            "heading": "In the texts",
+            "body": "The discourse is preserved in the Pali Canon as the Dhammacakkappavattana Sutta. In it, the Buddha sets out a middle way between extremes and presents the framework of the Four Noble Truths.",
+            "ref_ids": ["ref_dhammacakka"]
+          },
+          {
+            "id": "s_context",
+            "type": "context",
+            "heading": "Place & moment",
+            "body": "Sarnath, just north of Varanasi on the Ganges plain, became one of the four principal places of Buddhist pilgrimage and a major monastic center in later centuries.",
+            "ref_ids": []
+          },
+          {
+            "id": "s_significance",
+            "type": "significance",
+            "heading": "Why it matters",
+            "body": "As the first formal teaching, the sermon is foundational: it introduces the core framework many Buddhist traditions build upon and marks the start of the community that carried the teaching across Asia.",
+            "ref_ids": []
+          }
+        ]
+      },
+
+      "references": [
+        {
+          "id": "ref_dhammacakka",
+          "tradition": "buddhism",
+          "work": "Dhammacakkappavattana Sutta (Pali Canon)",
+          "citation": "Samyutta Nikaya 56.11",
+          "locator": { "nikaya": "SN", "sutta": "56.11" },
+          "source_system": "suttacentral",
+          "deep_link_id": "sutta:sn56.11",
+          "role": "primary",
+          "note": "The first discourse; the Four Noble Truths and the Middle Way."
+        }
+      ],
+
+      "media": [],
+      "related_books": [],
+      "sources": [
+        { "id": "src_dhammacakka", "type": "scripture", "citation": "Dhammacakkappavattana Sutta, SN 56.11", "url": null }
+      ],
+      "review_status": "draft_unreviewed"
+    }
+  ]
+}

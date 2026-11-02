@@ -1,0 +1,9 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "y0UGiLpI3gdc1OdVEq_L7"
+uri = "file://handoff/rellio-engineer-handoff.zip"
+type = "unspecified"
+title = "Rellio Engineer Handoff ZIP"
+description = "Final full-stack source handoff: frontend, backend, shared contracts, retrieval/prompts, tests, root utilities, configuration templates, documentation, runtime assets, and 16 EPUBs. Secrets, .env values, node_modules, dist, Git metadata, logs, caches, screenshots, PDFs, and pasted credentials excluded."

@@ -1,0 +1,1604 @@
+{
+  "_comment": "Events power both the map pins and the timeline scrubber. 'year' is the timeline anchor: a single integer where negative = BCE (e.g. -586 = 586 BCE). 'year_end' is set only for ranges or continuous traditions. 'precision' tells the UI how to label/treat the date: exact | circa | traditional | legendary | range | continuous. 'tradition_note' carries belief-framing and any contested-site sensitivity so the app can present claims respectfully rather than as asserted fact. 'description' is intentionally a strong starter paragraph; expand toward the 'great detail' goal in the content pipeline.",
+  "events": [
+    {
+      "id": "evt_muhammad_birth",
+      "title": "Birth of the Prophet Muhammad",
+      "location_id": "loc_mecca",
+      "religion_id": "islam",
+      "figure_ids": [
+        "fig_muhammad"
+      ],
+      "category": "birth",
+      "date": {
+        "display": "c. 570 CE",
+        "year": 570,
+        "year_end": null,
+        "precision": "circa"
+      },
+      "significance": 5,
+      "description": "Muhammad was born in Mecca around 570 CE into the Quraysh tribe. Orphaned young, he grew up to become a trader known for trustworthiness before, in Islamic belief, receiving the prophetic call.",
+      "tradition_note": "Revered in Islam as the final prophet. The exact birth year is traditional and approximate.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Muhammad was born in Mecca around 570 CE into the Quraysh tribe. Orphaned young, he grew up to become a trader known for trustworthiness before, in Islamic belief, receiving the prophetic call.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_first_revelation",
+      "title": "The First Revelation",
+      "location_id": "loc_cave_hira",
+      "religion_id": "islam",
+      "figure_ids": [
+        "fig_muhammad"
+      ],
+      "category": "revelation",
+      "date": {
+        "display": "c. 610 CE",
+        "year": 610,
+        "year_end": null,
+        "precision": "traditional"
+      },
+      "significance": 5,
+      "description": "In Islamic tradition, while meditating in the Cave of Hira on Jabal al-Nour, Muhammad received the first verses of the Qur'an through the angel Jibril (Gabriel), beginning the prophetic mission.",
+      "tradition_note": "Described here as understood within Islamic tradition.",
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "The night in the cave",
+            "body": "By his early forties, Muhammad had taken to withdrawing for days at a time to a cave on Jabal al-Nour, outside Mecca, for solitude and reflection. Islamic tradition holds that on one such night in the month of Ramadan, an angel appeared and commanded him to recite. Overwhelmed, he returned home shaken to his wife Khadija, who reassured and supported him. This encounter is remembered as the beginning of the Qur'anic revelation.",
+            "ref_ids": []
+          },
+          {
+            "id": "s_scripture",
+            "type": "scripture",
+            "heading": "In the texts",
+            "body": "The opening five verses of Surah Al-'Alaq are traditionally held to be the first revealed, beginning with the command to read or recite in the name of the Lord who creates. The early verses of Surah Al-Muddaththir are also counted among the earliest. The encounter itself is preserved in the hadith literature, most fully in the narration attributed to Aisha at the start of Sahih al-Bukhari.",
+            "ref_ids": [
+              "ref_quran_alalaq",
+              "ref_quran_muddaththir",
+              "ref_bukhari_wahy"
+            ]
+          },
+          {
+            "id": "s_context",
+            "type": "context",
+            "heading": "Place & moment",
+            "body": "Jabal al-Nour (the 'Mountain of Light') rises northeast of Mecca; the small Hira cave near its summit is today a site of visitation. Tradition places the event around 610 CE, when Muhammad was about forty.",
+            "ref_ids": []
+          },
+          {
+            "id": "s_significance",
+            "type": "significance",
+            "heading": "Why it matters",
+            "body": "This night marks, in Islamic belief, the start of roughly twenty-three years of revelation that together form the Qur'an, and the beginning of Muhammad's mission as a prophet.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [
+        {
+          "id": "ref_quran_alalaq",
+          "tradition": "islam",
+          "work": "Qur'an",
+          "citation": "Qur'an 96:1-5 (Surah Al-'Alaq)",
+          "locator": {
+            "surah": 96,
+            "ayah_start": 1,
+            "ayah_end": 5
+          },
+          "source_system": "alquran.cloud",
+          "deep_link_id": "quran:96:1-5",
+          "role": "primary",
+          "note": "Traditionally held to be the first verses revealed."
+        },
+        {
+          "id": "ref_quran_muddaththir",
+          "tradition": "islam",
+          "work": "Qur'an",
+          "citation": "Qur'an 74:1-7 (Surah Al-Muddaththir)",
+          "locator": {
+            "surah": 74,
+            "ayah_start": 1,
+            "ayah_end": 7
+          },
+          "source_system": "alquran.cloud",
+          "deep_link_id": "quran:74:1-7",
+          "role": "supporting",
+          "note": "Among the earliest passages in the traditional sequence."
+        },
+        {
+          "id": "ref_bukhari_wahy",
+          "tradition": "islam",
+          "work": "Sahih al-Bukhari",
+          "citation": "Sahih al-Bukhari, Book of the Beginning of Revelation (hadith of Aisha; ~no. 3)",
+          "locator": {
+            "collection": "bukhari",
+            "book": "Bad' al-Wahy",
+            "number": 3
+          },
+          "source_system": "hadith-api",
+          "deep_link_id": "hadith:bukhari:1:3",
+          "role": "supporting",
+          "note": "Hadith numbering varies by edition; verify against the connected Hadith source."
+        }
+      ],
+      "media": [],
+      "related_books": [],
+      "sources": [
+        {
+          "id": "src_quran",
+          "type": "scripture",
+          "citation": "Qur'an, Surah Al-'Alaq (96)",
+          "url": null
+        },
+        {
+          "id": "src_bukhari",
+          "type": "scripture",
+          "citation": "Sahih al-Bukhari, Kitab Bad' al-Wahy",
+          "url": null
+        }
+      ],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_isra_miraj",
+      "title": "The Night Journey (Isra and Mi'raj)",
+      "location_id": "loc_jerusalem",
+      "religion_id": "islam",
+      "figure_ids": [
+        "fig_muhammad"
+      ],
+      "category": "miracle",
+      "date": {
+        "display": "c. 621 CE",
+        "year": 621,
+        "year_end": null,
+        "precision": "traditional"
+      },
+      "significance": 4,
+      "description": "In Islamic tradition, Muhammad made a miraculous night journey from Mecca to Jerusalem and an ascension through the heavens. The event ties Jerusalem closely to Islam, marked today by the Dome of the Rock and Al-Aqsa Mosque.",
+      "tradition_note": "A matter of Islamic belief. Jerusalem is sacred to Judaism, Christianity, and Islam; present multiple traditions' perspectives.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "In Islamic tradition, Muhammad made a miraculous night journey from Mecca to Jerusalem and an ascension through the heavens. The event ties Jerusalem closely to Islam, marked today by the Dome of the Rock and Al-Aqsa Mosque.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_hijra",
+      "title": "The Hijra: Migration to Yathrib (Medina)",
+      "location_id": "loc_medina",
+      "religion_id": "islam",
+      "figure_ids": [
+        "fig_muhammad"
+      ],
+      "category": "founding",
+      "date": {
+        "display": "622 CE",
+        "year": 622,
+        "year_end": null,
+        "precision": "exact",
+        "calendar_note": "Year 1 of the Islamic (Hijri) calendar"
+      },
+      "significance": 5,
+      "description": "In 622 CE Muhammad and his followers migrated from Mecca to Yathrib, soon renamed Medina. The migration marks the start of the Islamic calendar and the formation of the first Muslim community.",
+      "tradition_note": "",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "In 622 CE Muhammad and his followers migrated from Mecca to Yathrib, soon renamed Medina. The migration marks the start of the Islamic calendar and the formation of the first Muslim community.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_conquest_mecca",
+      "title": "The Conquest of Mecca",
+      "location_id": "loc_mecca",
+      "religion_id": "islam",
+      "figure_ids": [
+        "fig_muhammad"
+      ],
+      "category": "battle",
+      "date": {
+        "display": "630 CE",
+        "year": 630,
+        "year_end": null,
+        "precision": "exact"
+      },
+      "significance": 4,
+      "description": "In 630 CE Muhammad returned to Mecca largely peacefully, after which the Kaaba was rededicated as a center of monotheistic worship.",
+      "tradition_note": "",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "In 630 CE Muhammad returned to Mecca largely peacefully, after which the Kaaba was rededicated as a center of monotheistic worship.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_muhammad_death",
+      "title": "Death of the Prophet Muhammad",
+      "location_id": "loc_medina",
+      "religion_id": "islam",
+      "figure_ids": [
+        "fig_muhammad"
+      ],
+      "category": "death",
+      "date": {
+        "display": "632 CE",
+        "year": 632,
+        "year_end": null,
+        "precision": "exact"
+      },
+      "significance": 5,
+      "description": "Muhammad died in Medina in 632 CE. His tomb lies within Al-Masjid an-Nabawi (the Prophet's Mosque), the second-holiest site in Islam.",
+      "tradition_note": "",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Muhammad died in Medina in 632 CE. His tomb lies within Al-Masjid an-Nabawi (the Prophet's Mosque), the second-holiest site in Islam.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_karbala",
+      "title": "The Battle of Karbala",
+      "location_id": "loc_karbala",
+      "religion_id": "islam",
+      "figure_ids": [
+        "fig_husayn"
+      ],
+      "category": "battle",
+      "date": {
+        "display": "680 CE",
+        "year": 680,
+        "year_end": null,
+        "precision": "exact",
+        "calendar_note": "10 Muharram 61 AH (Ashura)"
+      },
+      "significance": 5,
+      "description": "In 680 CE Husayn ibn Ali, grandson of Muhammad, was killed at Karbala. The event is central to Shia Islam and commemorated each year during Muharram.",
+      "tradition_note": "Especially significant in Shia Islam.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "In 680 CE Husayn ibn Ali, grandson of Muhammad, was killed at Karbala. The event is central to Shia Islam and commemorated each year during Muharram.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_jesus_birth",
+      "title": "Birth of Jesus",
+      "location_id": "loc_bethlehem",
+      "religion_id": "christianity",
+      "figure_ids": [
+        "fig_jesus"
+      ],
+      "category": "birth",
+      "date": {
+        "display": "c. 4 BCE",
+        "year": -4,
+        "year_end": null,
+        "precision": "circa"
+      },
+      "significance": 5,
+      "description": "Christian tradition places the birth of Jesus in Bethlehem. The Church of the Nativity marks the traditional site. Most scholars date the birth to a few years before 1 CE.",
+      "tradition_note": "Honored as a prophet in Islam as well. Birth year is debated.",
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "A birth in Bethlehem",
+            "body": "The Christian Gospels narrate the birth of Jesus to Mary in Bethlehem. Luke describes a journey for a Roman census, a child laid in a manger, and shepherds drawn by an announcement of his birth; Matthew adds visitors from the east following a star, and the family's flight from Herod. The Church of the Nativity now stands over the traditional site.",
+            "ref_ids": [
+              "ref_luke_nativity",
+              "ref_matthew_nativity"
+            ]
+          },
+          {
+            "id": "s_across_traditions",
+            "type": "context",
+            "heading": "Across traditions",
+            "body": "The birth of Jesus is revered beyond Christianity. In Islam, Surah Maryam recounts the birth of Jesus ('Isa) to Mary as a sign and a mercy, and Mary is honored as among the most exalted of women. Reading the two accounts side by side is one of the things the Sacred Map is built to make possible.",
+            "ref_ids": [
+              "ref_quran_maryam"
+            ]
+          },
+          {
+            "id": "s_context",
+            "type": "context",
+            "heading": "Place & moment",
+            "body": "Bethlehem lies just south of Jerusalem in what was then Roman Judea. Scholars generally date the birth to a few years before the conventional start of the Common Era.",
+            "ref_ids": []
+          },
+          {
+            "id": "s_significance",
+            "type": "significance",
+            "heading": "Why it matters",
+            "body": "For Christians, the birth (the Nativity, celebrated at Christmas) marks the entry of Jesus into the world and is foundational to the faith's account of his life.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [
+        {
+          "id": "ref_luke_nativity",
+          "tradition": "christianity",
+          "work": "Bible (Gospel of Luke)",
+          "citation": "Luke 2:1-20",
+          "locator": {
+            "book": "Luke",
+            "chapter": 2,
+            "verse_start": 1,
+            "verse_end": 20
+          },
+          "source_system": "bible-api",
+          "deep_link_id": "bible:luke:2:1-20",
+          "role": "primary",
+          "note": "Census, manger, and the shepherds."
+        },
+        {
+          "id": "ref_matthew_nativity",
+          "tradition": "christianity",
+          "work": "Bible (Gospel of Matthew)",
+          "citation": "Matthew 1:18-2:12",
+          "locator": {
+            "book": "Matthew",
+            "chapter": 1,
+            "verse_start": 18,
+            "chapter_end": 2,
+            "verse_end": 12
+          },
+          "source_system": "bible-api",
+          "deep_link_id": "bible:matthew:1:18-2:12",
+          "role": "supporting",
+          "note": "Joseph's dream and the visitors from the east."
+        },
+        {
+          "id": "ref_quran_maryam",
+          "tradition": "islam",
+          "work": "Qur'an",
+          "citation": "Qur'an 19:16-34 (Surah Maryam)",
+          "locator": {
+            "surah": 19,
+            "ayah_start": 16,
+            "ayah_end": 34
+          },
+          "source_system": "alquran.cloud",
+          "deep_link_id": "quran:19:16-34",
+          "role": "parallel-tradition",
+          "note": "The Islamic account of the birth of Jesus to Mary."
+        }
+      ],
+      "media": [
+        {
+          "id": "media_honthorst_nativity",
+          "type": "image",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Gerard_van_Honthorst_-_Adoration_of_the_Shepherds_-_WGA11657.jpg/960px-Gerard_van_Honthorst_-_Adoration_of_the_Shepherds_-_WGA11657.jpg",
+          "title": "Adoration of the Shepherds (1622)",
+          "credit": "Gerard van Honthorst, via Wikimedia Commons",
+          "license": "Public domain",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Gerard_van_Honthorst_-_Adoration_of_the_Shepherds_-_WGA11657.jpg"
+        }
+      ],
+      "related_books": [
+        {
+          "id": "book_brown_messiah",
+          "title": "The Birth of the Messiah",
+          "author": "Raymond E. Brown",
+          "url": "https://en.wikipedia.org/wiki/The_Birth_of_the_Messiah",
+          "note": "A standard scholarly study of the infancy narratives in Matthew and Luke."
+        },
+        {
+          "id": "book_nativity_church",
+          "title": "Church of the Nativity (Bethlehem)",
+          "url": "https://whc.unesco.org/en/list/1433/",
+          "note": "UNESCO World Heritage listing for the traditional site of the birth."
+        }
+      ],
+      "sources": [
+        {
+          "id": "src_luke",
+          "type": "scripture",
+          "citation": "Gospel of Luke, ch. 2",
+          "url": null
+        },
+        {
+          "id": "src_matthew",
+          "type": "scripture",
+          "citation": "Gospel of Matthew, ch. 1-2",
+          "url": null
+        },
+        {
+          "id": "src_maryam",
+          "type": "scripture",
+          "citation": "Qur'an, Surah Maryam (19)",
+          "url": null
+        }
+      ],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_galilee_ministry",
+      "title": "Ministry in Galilee",
+      "location_id": "loc_sea_of_galilee",
+      "religion_id": "christianity",
+      "figure_ids": [
+        "fig_jesus"
+      ],
+      "category": "teaching",
+      "date": {
+        "display": "c. 28-30 CE",
+        "year": 28,
+        "year_end": 30,
+        "precision": "range"
+      },
+      "significance": 4,
+      "description": "The Gospels place much of Jesus' public teaching, gathering of disciples, and reported miracles around the Sea of Galilee.",
+      "tradition_note": "Narrated as in the Christian Gospels.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "The Gospels place much of Jesus' public teaching, gathering of disciples, and reported miracles around the Sea of Galilee.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_crucifixion",
+      "title": "Crucifixion of Jesus",
+      "location_id": "loc_jerusalem",
+      "religion_id": "christianity",
+      "figure_ids": [
+        "fig_jesus"
+      ],
+      "category": "death",
+      "date": {
+        "display": "c. 30-33 CE",
+        "year": 33,
+        "year_end": null,
+        "precision": "circa"
+      },
+      "significance": 5,
+      "description": "Christian tradition holds that Jesus was crucified in Jerusalem and, three days later, rose from the dead. The Church of the Holy Sepulchre marks the traditional sites of the crucifixion and tomb.",
+      "tradition_note": "The resurrection is a central article of Christian belief.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Christian tradition holds that Jesus was crucified in Jerusalem and, three days later, rose from the dead. The Church of the Holy Sepulchre marks the traditional sites of the crucifixion and tomb.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_pentecost",
+      "title": "Pentecost and the Early Church",
+      "location_id": "loc_jerusalem",
+      "religion_id": "christianity",
+      "figure_ids": [],
+      "category": "founding",
+      "date": {
+        "display": "c. 33 CE",
+        "year": 33,
+        "year_end": null,
+        "precision": "circa"
+      },
+      "significance": 4,
+      "description": "In Christian tradition, the descent of the Holy Spirit on the apostles in Jerusalem at Pentecost marks the birth of the church and the beginning of its mission.",
+      "tradition_note": "",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "In Christian tradition, the descent of the Holy Spirit on the apostles in Jerusalem at Pentecost marks the birth of the church and the beginning of its mission.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_paul_conversion",
+      "title": "Conversion of Paul",
+      "location_id": "loc_damascus",
+      "religion_id": "christianity",
+      "figure_ids": [
+        "fig_paul"
+      ],
+      "category": "miracle",
+      "date": {
+        "display": "c. 33-36 CE",
+        "year": 34,
+        "year_end": null,
+        "precision": "circa"
+      },
+      "significance": 4,
+      "description": "On the road to Damascus, the persecutor Saul experienced a vision that, in Christian tradition, transformed him into Paul, whose letters and missions shaped early Christianity.",
+      "tradition_note": "",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "On the road to Damascus, the persecutor Saul experienced a vision that, in Christian tradition, transformed him into Paul, whose letters and missions shaped early Christianity.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_council_nicaea",
+      "title": "First Council of Nicaea",
+      "location_id": "loc_nicaea",
+      "religion_id": "christianity",
+      "figure_ids": [
+        "fig_constantine"
+      ],
+      "category": "council",
+      "date": {
+        "display": "325 CE",
+        "year": 325,
+        "year_end": null,
+        "precision": "exact"
+      },
+      "significance": 4,
+      "description": "Convened under Emperor Constantine in 325 CE, the council addressed major doctrinal disputes and produced the basis of the Nicene Creed, a defining moment in Christian history.",
+      "tradition_note": "",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Convened under Emperor Constantine in 325 CE, the council addressed major doctrinal disputes and produced the basis of the Nicene Creed, a defining moment in Christian history.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_abraham_ur",
+      "title": "Abraham's Origins at Ur",
+      "location_id": "loc_ur",
+      "religion_id": "judaism",
+      "figure_ids": [
+        "fig_abraham"
+      ],
+      "category": "tradition",
+      "date": {
+        "display": "Traditionally c. 2nd millennium BCE",
+        "year": -1900,
+        "year_end": null,
+        "precision": "legendary"
+      },
+      "significance": 4,
+      "description": "Biblical tradition names Ur as the place from which Abraham set out, beginning the narrative of the patriarchs shared by Judaism, Christianity, and Islam.",
+      "tradition_note": "Treated as traditional narrative; dating is uncertain and debated.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Biblical tradition names Ur as the place from which Abraham set out, beginning the narrative of the patriarchs shared by Judaism, Christianity, and Islam.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_sinai_torah",
+      "title": "Giving of the Torah at Sinai",
+      "location_id": "loc_mount_sinai",
+      "religion_id": "judaism",
+      "figure_ids": [
+        "fig_moses"
+      ],
+      "category": "revelation",
+      "date": {
+        "display": "Traditionally c. 13th century BCE",
+        "year": -1250,
+        "year_end": null,
+        "precision": "traditional"
+      },
+      "significance": 5,
+      "description": "In Jewish tradition, after the Exodus from Egypt, Moses received the Torah, including the Ten Commandments, at Mount Sinai, sealing the covenant between God and Israel.",
+      "tradition_note": "A foundational belief in Judaism; also honored in Christianity and Islam. The mountain's location and dating are debated.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "In Jewish tradition, after the Exodus from Egypt, Moses received the Torah, including the Ten Commandments, at Mount Sinai, sealing the covenant between God and Israel.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_first_temple_built",
+      "title": "Building of the First Temple",
+      "location_id": "loc_jerusalem",
+      "religion_id": "judaism",
+      "figure_ids": [
+        "fig_solomon"
+      ],
+      "category": "construction",
+      "date": {
+        "display": "Traditionally c. 957 BCE",
+        "year": -957,
+        "year_end": null,
+        "precision": "traditional"
+      },
+      "significance": 5,
+      "description": "Tradition credits King Solomon with building the First Temple on the Temple Mount in Jerusalem, the central sanctuary of ancient Israelite worship.",
+      "tradition_note": "Dating follows traditional chronology.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Tradition credits King Solomon with building the First Temple on the Temple Mount in Jerusalem, the central sanctuary of ancient Israelite worship.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_first_temple_destroyed",
+      "title": "Destruction of the First Temple",
+      "location_id": "loc_jerusalem",
+      "religion_id": "judaism",
+      "figure_ids": [],
+      "category": "destruction",
+      "date": {
+        "display": "586 BCE",
+        "year": -586,
+        "year_end": null,
+        "precision": "circa"
+      },
+      "significance": 5,
+      "description": "The Babylonians destroyed the First Temple around 586 BCE and exiled much of the population, a turning point in Jewish history.",
+      "tradition_note": "",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "The Babylonians destroyed the First Temple around 586 BCE and exiled much of the population, a turning point in Jewish history.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_babylonian_exile",
+      "title": "The Babylonian Exile",
+      "location_id": "loc_babylon",
+      "religion_id": "judaism",
+      "figure_ids": [],
+      "category": "exile",
+      "date": {
+        "display": "586-538 BCE",
+        "year": -586,
+        "year_end": -538,
+        "precision": "range"
+      },
+      "significance": 4,
+      "description": "Following the fall of Jerusalem, Judean elites were deported to Babylon. The exile profoundly shaped Jewish identity, scripture, and worship before a later return.",
+      "tradition_note": "",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Following the fall of Jerusalem, Judean elites were deported to Babylon. The exile profoundly shaped Jewish identity, scripture, and worship before a later return.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_second_temple_destroyed",
+      "title": "Destruction of the Second Temple",
+      "location_id": "loc_jerusalem",
+      "religion_id": "judaism",
+      "figure_ids": [],
+      "category": "destruction",
+      "date": {
+        "display": "70 CE",
+        "year": 70,
+        "year_end": null,
+        "precision": "exact"
+      },
+      "significance": 5,
+      "description": "Roman forces destroyed the Second Temple in 70 CE. The surviving Western Wall remains the holiest accessible site in Judaism today.",
+      "tradition_note": "",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Roman forces destroyed the Second Temple in 70 CE. The surviving Western Wall remains the holiest accessible site in Judaism today.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_abraham_hebron",
+      "title": "Burial of the Patriarchs at Hebron",
+      "location_id": "loc_hebron",
+      "religion_id": "judaism",
+      "figure_ids": [
+        "fig_abraham"
+      ],
+      "category": "tradition",
+      "date": {
+        "display": "Traditionally c. 2nd millennium BCE",
+        "year": -1800,
+        "year_end": null,
+        "precision": "legendary"
+      },
+      "significance": 4,
+      "description": "The Cave of the Patriarchs in Hebron is the traditional burial place of Abraham, Sarah, and other patriarchs, sacred to Jews and Muslims alike.",
+      "tradition_note": "A site held sacred across more than one tradition; present respectfully.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "The Cave of the Patriarchs in Hebron is the traditional burial place of Abraham, Sarah, and other patriarchs, sacred to Jews and Muslims alike.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_rama_ayodhya",
+      "title": "Rama and Ayodhya",
+      "location_id": "loc_ayodhya",
+      "religion_id": "hinduism",
+      "figure_ids": [
+        "fig_rama"
+      ],
+      "category": "tradition",
+      "date": {
+        "display": "Epic age (traditionally Treta Yuga)",
+        "year": -5000,
+        "year_end": null,
+        "precision": "legendary"
+      },
+      "significance": 5,
+      "description": "Ayodhya is revered as the birthplace and capital of Rama, whose story is told in the Ramayana, one of Hinduism's great epics.",
+      "tradition_note": "Belongs to epic/mythological time rather than dated history; the timeline anchor is nominal. Ayodhya has been a sensitive site in modern history; keep framing respectful and neutral.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Ayodhya is revered as the birthplace and capital of Rama, whose story is told in the Ramayana, one of Hinduism's great epics.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_krishna_mathura",
+      "title": "Birth of Krishna at Mathura",
+      "location_id": "loc_mathura",
+      "religion_id": "hinduism",
+      "figure_ids": [
+        "fig_krishna"
+      ],
+      "category": "tradition",
+      "date": {
+        "display": "Epic age (traditionally Dvapara Yuga)",
+        "year": -3200,
+        "year_end": null,
+        "precision": "legendary"
+      },
+      "significance": 5,
+      "description": "Mathura is celebrated as the birthplace of Krishna, a beloved deity whose life and teachings are central to many Hindu traditions.",
+      "tradition_note": "Mythological/epic time; the timeline anchor is nominal.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Mathura is celebrated as the birthplace of Krishna, a beloved deity whose life and teachings are central to many Hindu traditions.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_gita_kurukshetra",
+      "title": "The Bhagavad Gita at Kurukshetra",
+      "location_id": "loc_kurukshetra",
+      "religion_id": "hinduism",
+      "figure_ids": [
+        "fig_krishna"
+      ],
+      "category": "teaching",
+      "date": {
+        "display": "Epic age (Mahabharata)",
+        "year": -3100,
+        "year_end": null,
+        "precision": "legendary"
+      },
+      "significance": 5,
+      "description": "Kurukshetra is the traditional battlefield of the Mahabharata, where Krishna's counsel to the warrior Arjuna forms the Bhagavad Gita, a cornerstone of Hindu philosophy.",
+      "tradition_note": "Epic/mythological setting; timeline anchor is nominal.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Kurukshetra is the traditional battlefield of the Mahabharata, where Krishna's counsel to the warrior Arjuna forms the Bhagavad Gita, a cornerstone of Hindu philosophy.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_varanasi_sacred_city",
+      "title": "Varanasi, the Eternal City",
+      "location_id": "loc_varanasi",
+      "religion_id": "hinduism",
+      "figure_ids": [],
+      "category": "tradition",
+      "date": {
+        "display": "Ancient to present (continuous)",
+        "year": -1200,
+        "year_end": 2025,
+        "precision": "continuous"
+      },
+      "significance": 5,
+      "description": "Varanasi is among the world's oldest continuously inhabited cities and one of Hinduism's most sacred places, drawing pilgrims to the Ganges and the temples of Shiva for millennia.",
+      "tradition_note": "Best represented as a continuous tradition rather than a single dated event.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Varanasi is among the world's oldest continuously inhabited cities and one of Hinduism's most sacred places, drawing pilgrims to the Ganges and the temples of Shiva for millennia.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_kumbh_mela",
+      "title": "The Kumbh Mela",
+      "location_id": "loc_prayagraj",
+      "religion_id": "hinduism",
+      "figure_ids": [],
+      "category": "pilgrimage",
+      "date": {
+        "display": "Recurring pilgrimage (continuous)",
+        "year": 600,
+        "year_end": 2025,
+        "precision": "continuous"
+      },
+      "significance": 4,
+      "description": "The Kumbh Mela is a vast recurring Hindu pilgrimage held in rotation at sacred river sites including Prayagraj, where the Ganges and Yamuna meet. It draws among the largest gatherings of people on Earth.",
+      "tradition_note": "A recurring event; anchor and span are nominal.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "The Kumbh Mela is a vast recurring Hindu pilgrimage held in rotation at sacred river sites including Prayagraj, where the Ganges and Yamuna meet. It draws among the largest gatherings of people on Earth.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_nanak_birth",
+      "title": "Birth of Guru Nanak",
+      "location_id": "loc_nankana_sahib",
+      "religion_id": "sikhism",
+      "figure_ids": [
+        "fig_nanak"
+      ],
+      "category": "birth",
+      "date": {
+        "display": "1469 CE",
+        "year": 1469,
+        "year_end": null,
+        "precision": "exact"
+      },
+      "significance": 5,
+      "description": "Guru Nanak, the founder of Sikhism, was born in 1469 at Rai Bhoi di Talwandi, now Nankana Sahib in Pakistan. His teachings of one God, equality, and honest living shaped the faith.",
+      "tradition_note": "",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Guru Nanak, the founder of Sikhism, was born in 1469 at Rai Bhoi di Talwandi, now Nankana Sahib in Pakistan. His teachings of one God, equality, and honest living shaped the faith.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_nanak_kartarpur",
+      "title": "Guru Nanak at Kartarpur",
+      "location_id": "loc_kartarpur",
+      "religion_id": "sikhism",
+      "figure_ids": [
+        "fig_nanak"
+      ],
+      "category": "founding",
+      "date": {
+        "display": "c. 1522-1539 CE",
+        "year": 1522,
+        "year_end": 1539,
+        "precision": "range"
+      },
+      "significance": 4,
+      "description": "Guru Nanak established a community at Kartarpur, where he spent his final years teaching and where the practice of communal worship and service took shape. He passed away there in 1539.",
+      "tradition_note": "",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Guru Nanak established a community at Kartarpur, where he spent his final years teaching and where the practice of communal worship and service took shape. He passed away there in 1539.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_golden_temple",
+      "title": "Completion of the Harmandir Sahib (Golden Temple)",
+      "location_id": "loc_amritsar",
+      "religion_id": "sikhism",
+      "figure_ids": [
+        "fig_arjan"
+      ],
+      "category": "construction",
+      "date": {
+        "display": "1604 CE",
+        "year": 1604,
+        "year_end": null,
+        "precision": "exact"
+      },
+      "significance": 5,
+      "description": "In Amritsar, Guru Arjan oversaw the completion of the Harmandir Sahib and installed the Adi Granth within it in 1604. The Golden Temple is the holiest site in Sikhism.",
+      "tradition_note": "",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "In Amritsar, Guru Arjan oversaw the completion of the Harmandir Sahib and installed the Adi Granth within it in 1604. The Golden Temple is the holiest site in Sikhism.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_khalsa_founded",
+      "title": "Founding of the Khalsa",
+      "location_id": "loc_anandpur_sahib",
+      "religion_id": "sikhism",
+      "figure_ids": [
+        "fig_gobind_singh"
+      ],
+      "category": "founding",
+      "date": {
+        "display": "1699 CE",
+        "year": 1699,
+        "year_end": null,
+        "precision": "exact",
+        "calendar_note": "Vaisakhi"
+      },
+      "significance": 5,
+      "description": "At Anandpur Sahib in 1699, Guru Gobind Singh founded the Khalsa, establishing the distinctive identity and code of the Sikh community.",
+      "tradition_note": "",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "At Anandpur Sahib in 1699, Guru Gobind Singh founded the Khalsa, establishing the distinctive identity and code of the Sikh community.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_gobind_singh_birth",
+      "title": "Birth of Guru Gobind Singh",
+      "location_id": "loc_patna_sahib",
+      "religion_id": "sikhism",
+      "figure_ids": [
+        "fig_gobind_singh"
+      ],
+      "category": "birth",
+      "date": {
+        "display": "1666 CE",
+        "year": 1666,
+        "year_end": null,
+        "precision": "exact"
+      },
+      "significance": 4,
+      "description": "Guru Gobind Singh, the tenth Guru, was born in Patna in 1666. He later founded the Khalsa and designated the Guru Granth Sahib as the eternal Guru.",
+      "tradition_note": "",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Guru Gobind Singh, the tenth Guru, was born in Patna in 1666. He later founded the Khalsa and designated the Guru Granth Sahib as the eternal Guru.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_buddha_birth",
+      "title": "Birth of the Buddha",
+      "location_id": "loc_lumbini",
+      "religion_id": "buddhism",
+      "figure_ids": [
+        "fig_buddha"
+      ],
+      "category": "birth",
+      "date": {
+        "display": "c. 563 BCE",
+        "year": -563,
+        "year_end": null,
+        "precision": "circa"
+      },
+      "significance": 5,
+      "description": "Siddhartha Gautama, later the Buddha, was born at Lumbini in present-day Nepal. The site is a major pilgrimage destination and UNESCO World Heritage Site.",
+      "tradition_note": "Scholarly dates vary; some place the Buddha's life roughly a century later.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Siddhartha Gautama, later the Buddha, was born at Lumbini in present-day Nepal. The site is a major pilgrimage destination and UNESCO World Heritage Site.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_enlightenment",
+      "title": "The Enlightenment at Bodh Gaya",
+      "location_id": "loc_bodh_gaya",
+      "religion_id": "buddhism",
+      "figure_ids": [
+        "fig_buddha"
+      ],
+      "category": "revelation",
+      "date": {
+        "display": "c. 528 BCE",
+        "year": -528,
+        "year_end": null,
+        "precision": "circa"
+      },
+      "significance": 5,
+      "description": "Beneath the Bodhi tree at Bodh Gaya, Siddhartha attained enlightenment and became the Buddha. The Mahabodhi Temple marks the site.",
+      "tradition_note": "",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Beneath the Bodhi tree at Bodh Gaya, Siddhartha attained enlightenment and became the Buddha. The Mahabodhi Temple marks the site.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_first_sermon",
+      "title": "The First Sermon at Sarnath",
+      "location_id": "loc_sarnath",
+      "religion_id": "buddhism",
+      "figure_ids": [
+        "fig_buddha"
+      ],
+      "category": "teaching",
+      "date": {
+        "display": "c. 528 BCE",
+        "year": -528,
+        "year_end": null,
+        "precision": "circa"
+      },
+      "significance": 5,
+      "description": "At the Deer Park in Sarnath, the Buddha delivered his first teaching, setting in motion the 'wheel of dharma' and founding the early monastic community.",
+      "tradition_note": "",
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Setting the wheel in motion",
+            "body": "Tradition holds that after his awakening at Bodh Gaya, the Buddha travelled to the Deer Park at Isipatana, near present-day Sarnath, and taught five former companions. This first discourse is remembered as the 'turning of the wheel of Dhamma' and the beginning of the Buddhist community (Sangha).",
+            "ref_ids": [
+              "ref_dhammacakka"
+            ]
+          },
+          {
+            "id": "s_scripture",
+            "type": "scripture",
+            "heading": "In the texts",
+            "body": "The discourse is preserved in the Pali Canon as the Dhammacakkappavattana Sutta. In it, the Buddha sets out a middle way between extremes and presents the framework of the Four Noble Truths.",
+            "ref_ids": [
+              "ref_dhammacakka"
+            ]
+          },
+          {
+            "id": "s_context",
+            "type": "context",
+            "heading": "Place & moment",
+            "body": "Sarnath, just north of Varanasi on the Ganges plain, became one of the four principal places of Buddhist pilgrimage and a major monastic center in later centuries.",
+            "ref_ids": []
+          },
+          {
+            "id": "s_significance",
+            "type": "significance",
+            "heading": "Why it matters",
+            "body": "As the first formal teaching, the sermon is foundational: it introduces the core framework many Buddhist traditions build upon and marks the start of the community that carried the teaching across Asia.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [
+        {
+          "id": "ref_dhammacakka",
+          "tradition": "buddhism",
+          "work": "Dhammacakkappavattana Sutta (Pali Canon)",
+          "citation": "Samyutta Nikaya 56.11",
+          "locator": {
+            "nikaya": "SN",
+            "sutta": "56.11"
+          },
+          "source_system": "suttacentral",
+          "deep_link_id": "sutta:sn56.11",
+          "role": "primary",
+          "note": "The first discourse; the Four Noble Truths and the Middle Way."
+        }
+      ],
+      "media": [],
+      "related_books": [],
+      "sources": [
+        {
+          "id": "src_dhammacakka",
+          "type": "scripture",
+          "citation": "Dhammacakkappavattana Sutta, SN 56.11",
+          "url": null
+        }
+      ],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_parinirvana",
+      "title": "The Buddha's Parinirvana",
+      "location_id": "loc_kushinagar",
+      "religion_id": "buddhism",
+      "figure_ids": [
+        "fig_buddha"
+      ],
+      "category": "death",
+      "date": {
+        "display": "c. 483 BCE",
+        "year": -483,
+        "year_end": null,
+        "precision": "circa"
+      },
+      "significance": 5,
+      "description": "At Kushinagar the Buddha entered parinirvana, his final passing. The site became one of the four principal places of Buddhist pilgrimage.",
+      "tradition_note": "",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "At Kushinagar the Buddha entered parinirvana, his final passing. The site became one of the four principal places of Buddhist pilgrimage.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_sanchi_stupa",
+      "title": "The Great Stupa at Sanchi",
+      "location_id": "loc_sanchi",
+      "religion_id": "buddhism",
+      "figure_ids": [
+        "fig_ashoka"
+      ],
+      "category": "construction",
+      "date": {
+        "display": "c. 3rd century BCE",
+        "year": -250,
+        "year_end": null,
+        "precision": "circa"
+      },
+      "significance": 4,
+      "description": "Commissioned in the era of Emperor Ashoka, the Great Stupa at Sanchi is among India's oldest stone structures and a landmark of early Buddhist art and devotion.",
+      "tradition_note": "",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Commissioned in the era of Emperor Ashoka, the Great Stupa at Sanchi is among India's oldest stone structures and a landmark of early Buddhist art and devotion.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_ise_shrine",
+      "title": "The Ise Grand Shrine",
+      "location_id": "loc_ise",
+      "religion_id": "shintoism",
+      "figure_ids": [
+        "fig_amaterasu"
+      ],
+      "category": "tradition",
+      "date": {
+        "display": "Ancient origins to present (rebuilt every 20 years)",
+        "year": -4,
+        "year_end": 2025,
+        "precision": "continuous"
+      },
+      "significance": 5,
+      "description": "The Ise Grand Shrine, dedicated to the sun goddess Amaterasu, is the most sacred site in Shinto. By tradition its main buildings are ritually rebuilt every twenty years, embodying renewal.",
+      "tradition_note": "Founding is legendary; best shown as a continuous living tradition rather than a single dated event.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "The Ise Grand Shrine, dedicated to the sun goddess Amaterasu, is the most sacred site in Shinto. By tradition its main buildings are ritually rebuilt every twenty years, embodying renewal.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_izumo_shrine",
+      "title": "Izumo Taisha",
+      "location_id": "loc_izumo",
+      "religion_id": "shintoism",
+      "figure_ids": [],
+      "category": "tradition",
+      "date": {
+        "display": "Ancient origins to present (continuous)",
+        "year": -100,
+        "year_end": 2025,
+        "precision": "continuous"
+      },
+      "significance": 4,
+      "description": "One of Japan's oldest and most revered shrines, Izumo Taisha is associated with the kami Okuninushi and with the gathering of kami believed to occur there each autumn.",
+      "tradition_note": "Continuous tradition; anchor date is nominal.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "One of Japan's oldest and most revered shrines, Izumo Taisha is associated with the kami Okuninushi and with the gathering of kami believed to occur there each autumn.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_fuji_veneration",
+      "title": "Veneration of Mount Fuji",
+      "location_id": "loc_mount_fuji",
+      "religion_id": "shintoism",
+      "figure_ids": [],
+      "category": "tradition",
+      "date": {
+        "display": "Ancient to present (continuous)",
+        "year": -300,
+        "year_end": 2025,
+        "precision": "continuous"
+      },
+      "significance": 4,
+      "description": "Mount Fuji has long been venerated as a sacred mountain in Shinto and Buddhist practice, a place of pilgrimage and the home of kami.",
+      "tradition_note": "Sacred across more than one tradition; continuous rather than dated.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "Mount Fuji has long been venerated as a sacred mountain in Shinto and Buddhist practice, a place of pilgrimage and the home of kami.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    },
+    {
+      "id": "evt_itsukushima_shrine",
+      "title": "Itsukushima Shrine and the Floating Torii",
+      "location_id": "loc_itsukushima",
+      "religion_id": "shintoism",
+      "figure_ids": [],
+      "category": "construction",
+      "date": {
+        "display": "Current form c. 1168 CE",
+        "year": 1168,
+        "year_end": null,
+        "precision": "circa"
+      },
+      "significance": 4,
+      "description": "On the sacred island of Miyajima, Itsukushima Shrine took its celebrated form in the 12th century, its 'floating' torii gate standing in the sea at high tide.",
+      "tradition_note": "The shrine's origins are older; the famous form dates to the 12th century.",
+      "sources": [],
+      "story": {
+        "sections": [
+          {
+            "id": "s_overview",
+            "type": "overview",
+            "heading": "Overview",
+            "body": "On the sacred island of Miyajima, Itsukushima Shrine took its celebrated form in the 12th century, its 'floating' torii gate standing in the sea at high tide.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [],
+      "media": [],
+      "related_books": [],
+      "review_status": "draft_unreviewed"
+    }
+  ]
+}

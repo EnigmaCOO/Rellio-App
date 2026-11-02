@@ -1,0 +1,89 @@
+{
+  "_comment": "Seed data for Rellio Sacred Map. Adherent estimates are approximate (early 2020s). Colors are tuned to the cosmic/space art direction in the current Sacred Map mockup; each is visually distinct on a dark background.",
+  "religions": [
+    {
+      "id": "islam",
+      "name": "Islam",
+      "color": "#2ECC71",
+      "symbol": "star-and-crescent",
+      "adherents_estimate": "~1.9 billion",
+      "origin_region": "Arabian Peninsula (Hejaz)",
+      "founding_period": "7th century CE (first revelation c. 610 CE)",
+      "central_figure_ids": ["fig_muhammad"],
+      "primary_text": "Qur'an",
+      "summary": "A monotheistic faith founded on revelations received by the Prophet Muhammad in Mecca and Medina, centered on submission to the one God (Allah). Its sacred geography runs from Mecca and Medina across the early Islamic world."
+    },
+    {
+      "id": "christianity",
+      "name": "Christianity",
+      "color": "#F2C14E",
+      "symbol": "cross",
+      "adherents_estimate": "~2.4 billion",
+      "origin_region": "Roman Judea / Galilee",
+      "founding_period": "1st century CE",
+      "central_figure_ids": ["fig_jesus", "fig_paul"],
+      "primary_text": "Bible (Old and New Testaments)",
+      "summary": "A monotheistic faith centered on the life, teachings, death, and (in Christian belief) resurrection of Jesus of Nazareth. It spread from Jerusalem and Galilee across the Roman world and beyond."
+    },
+    {
+      "id": "judaism",
+      "name": "Judaism",
+      "color": "#8E6FD8",
+      "symbol": "star-of-david",
+      "adherents_estimate": "~15 million",
+      "origin_region": "Ancient Near East / Land of Israel",
+      "founding_period": "Roots in the 2nd millennium BCE; formalized over many centuries",
+      "central_figure_ids": ["fig_abraham", "fig_moses", "fig_solomon"],
+      "primary_text": "Tanakh (Hebrew Bible) and Talmud",
+      "summary": "One of the oldest monotheistic traditions, built on the covenant between God and the people of Israel. Its sacred geography centers on Jerusalem and the wider Land of Israel."
+    },
+    {
+      "id": "hinduism",
+      "name": "Hinduism",
+      "color": "#F2772E",
+      "symbol": "om",
+      "adherents_estimate": "~1.2 billion",
+      "origin_region": "Indian subcontinent",
+      "founding_period": "No single founder; Vedic roots from c. 1500 BCE, often called Sanatana Dharma (ancient/eternal tradition)",
+      "central_figure_ids": ["fig_krishna", "fig_rama"],
+      "primary_text": "Vedas, Upanishads, Bhagavad Gita, epics (Ramayana, Mahabharata)",
+      "summary": "A family of ancient Indian traditions without a single founder, spanning many deities, philosophies, and practices. Its sacred geography is woven across India's rivers, mountains, and temple cities."
+    },
+    {
+      "id": "sikhism",
+      "name": "Sikhism",
+      "color": "#1F6FEB",
+      "symbol": "khanda",
+      "adherents_estimate": "~25-30 million",
+      "origin_region": "Punjab (modern India and Pakistan)",
+      "founding_period": "15th-16th century CE (Guru Nanak, b. 1469 CE)",
+      "central_figure_ids": ["fig_nanak", "fig_arjan", "fig_gobind_singh"],
+      "primary_text": "Guru Granth Sahib",
+      "summary": "A monotheistic faith founded by Guru Nanak and shaped by ten successive Gurus, emphasizing devotion to one God, equality, and service. Its sacred geography is concentrated in Punjab."
+    },
+    {
+      "id": "buddhism",
+      "name": "Buddhism",
+      "color": "#2BB6A8",
+      "symbol": "dharma-wheel",
+      "adherents_estimate": "~500 million",
+      "origin_region": "Northern Indian subcontinent (Ganges plain and Himalayan foothills)",
+      "founding_period": "c. 5th century BCE (Siddhartha Gautama, the Buddha)",
+      "central_figure_ids": ["fig_buddha", "fig_ashoka"],
+      "primary_text": "Tripitaka (Pali Canon) and many later sutras",
+      "summary": "A tradition founded on the awakening of Siddhartha Gautama and his teaching of a path to liberation from suffering. It spread from the Ganges plain across Asia and the world."
+    },
+    {
+      "id": "shintoism",
+      "name": "Shintoism",
+      "color": "#E0533D",
+      "symbol": "torii",
+      "adherents_estimate": "Difficult to quantify; widely practiced across Japan, often alongside Buddhism",
+      "origin_region": "Japan",
+      "founding_period": "Indigenous to Japan; ancient/prehistoric origins, formalized as a distinct tradition over later centuries",
+      "central_figure_ids": ["fig_amaterasu"],
+      "primary_text": "Kojiki and Nihon Shoki (early chronicles); no single scripture",
+      "summary": "Japan's indigenous tradition, centered on kami (spirits/deities) present in nature and ancestors. It is defined less by founding events and more by continuous ritual and sacred places (shrines, mountains)."
+    }
+  ]
+}

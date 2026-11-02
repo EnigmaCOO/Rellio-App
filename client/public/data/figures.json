@@ -1,0 +1,149 @@
+{
+  "_comment": "Figures referenced by events. 'dates' are traditional/scholarly approximations and often debated; treat them as display strings, not precise facts. Mythological/legendary figures are flagged via 'historicity'.",
+  "figures": [
+    {
+      "id": "fig_muhammad",
+      "name": "Prophet Muhammad",
+      "religion_ids": ["islam"],
+      "role": "Final prophet in Islam; recipient of the Qur'anic revelation",
+      "dates": "c. 570-632 CE",
+      "historicity": "historical",
+      "summary": "Born in Mecca, Muhammad is regarded in Islam as the last in a line of prophets. His revelations form the Qur'an, and his life in Mecca and Medina anchors much of Islamic sacred geography."
+    },
+    {
+      "id": "fig_husayn",
+      "name": "Husayn ibn Ali",
+      "religion_ids": ["islam"],
+      "role": "Grandson of Muhammad; central figure in Shia Islam",
+      "dates": "626-680 CE",
+      "historicity": "historical",
+      "summary": "His death at Karbala in 680 CE is a defining event in Shia Islam, commemorated annually during Muharram."
+    },
+    {
+      "id": "fig_jesus",
+      "name": "Jesus of Nazareth",
+      "religion_ids": ["christianity"],
+      "role": "Central figure of Christianity; also honored as a prophet in Islam",
+      "dates": "c. 4 BCE - c. 30/33 CE",
+      "historicity": "historical",
+      "summary": "A first-century Jewish teacher whose life and teachings are the foundation of Christianity. Christians believe in his crucifixion and resurrection in Jerusalem."
+    },
+    {
+      "id": "fig_paul",
+      "name": "Paul the Apostle",
+      "religion_ids": ["christianity"],
+      "role": "Early Christian missionary and letter-writer",
+      "dates": "c. 5 - c. 64/67 CE",
+      "historicity": "historical",
+      "summary": "Originally a persecutor of early Christians, his conversion near Damascus and missionary journeys were pivotal in spreading Christianity across the Roman world."
+    },
+    {
+      "id": "fig_constantine",
+      "name": "Constantine the Great",
+      "religion_ids": ["christianity"],
+      "role": "Roman emperor who legalized Christianity",
+      "dates": "c. 272-337 CE",
+      "historicity": "historical",
+      "summary": "His reign marked the legalization of Christianity in the Roman Empire and the convening of the First Council of Nicaea in 325 CE."
+    },
+    {
+      "id": "fig_abraham",
+      "name": "Abraham",
+      "religion_ids": ["judaism", "christianity", "islam"],
+      "role": "Patriarch revered across Judaism, Christianity, and Islam",
+      "dates": "Traditionally c. 2nd millennium BCE",
+      "historicity": "traditional",
+      "summary": "A foundational patriarch in all three Abrahamic faiths. His traditional burial site is the Cave of the Patriarchs in Hebron."
+    },
+    {
+      "id": "fig_moses",
+      "name": "Moses",
+      "religion_ids": ["judaism", "christianity", "islam"],
+      "role": "Prophet and lawgiver who, in tradition, received the Torah",
+      "dates": "Traditionally c. 13th century BCE",
+      "historicity": "traditional",
+      "summary": "In Jewish tradition, Moses led the Israelites out of Egypt and received the Torah at Mount Sinai. He is also honored as a prophet in Christianity and Islam."
+    },
+    {
+      "id": "fig_solomon",
+      "name": "King Solomon",
+      "religion_ids": ["judaism", "christianity", "islam"],
+      "role": "King of Israel, builder of the First Temple in tradition",
+      "dates": "Traditionally c. 10th century BCE",
+      "historicity": "traditional",
+      "summary": "Credited in tradition with building the First Temple in Jerusalem. Honored across the Abrahamic faiths."
+    },
+    {
+      "id": "fig_krishna",
+      "name": "Krishna",
+      "religion_ids": ["hinduism"],
+      "role": "Major Hindu deity; central to the Bhagavad Gita",
+      "dates": "Epic/mythological time (traditionally Dvapara Yuga)",
+      "historicity": "mythological",
+      "summary": "A widely worshipped deity associated with Mathura and Vrindavan. His counsel to Arjuna at Kurukshetra forms the Bhagavad Gita."
+    },
+    {
+      "id": "fig_rama",
+      "name": "Rama",
+      "religion_ids": ["hinduism"],
+      "role": "Major Hindu deity; hero of the Ramayana",
+      "dates": "Epic/mythological time (traditionally Treta Yuga)",
+      "historicity": "mythological",
+      "summary": "A revered deity whose life is told in the Ramayana. Ayodhya is traditionally regarded as his birthplace."
+    },
+    {
+      "id": "fig_buddha",
+      "name": "Siddhartha Gautama (the Buddha)",
+      "religion_ids": ["buddhism"],
+      "role": "Founder of Buddhism",
+      "dates": "c. 563-483 BCE (scholarly estimates vary widely)",
+      "historicity": "historical",
+      "summary": "Born in Lumbini, he attained enlightenment at Bodh Gaya and taught a path to liberation from suffering across the Ganges plain."
+    },
+    {
+      "id": "fig_ashoka",
+      "name": "Emperor Ashoka",
+      "religion_ids": ["buddhism"],
+      "role": "Mauryan emperor who promoted Buddhism",
+      "dates": "c. 304-232 BCE",
+      "historicity": "historical",
+      "summary": "After embracing Buddhism, he spread the tradition across his empire and built numerous stupas, including at Sanchi."
+    },
+    {
+      "id": "fig_nanak",
+      "name": "Guru Nanak",
+      "religion_ids": ["sikhism"],
+      "role": "Founder and first Guru of Sikhism",
+      "dates": "1469-1539 CE",
+      "historicity": "historical",
+      "summary": "Born in present-day Nankana Sahib, he founded Sikhism and established the community at Kartarpur."
+    },
+    {
+      "id": "fig_arjan",
+      "name": "Guru Arjan",
+      "religion_ids": ["sikhism"],
+      "role": "Fifth Guru of Sikhism",
+      "dates": "1563-1606 CE",
+      "historicity": "historical",
+      "summary": "Compiled the Adi Granth and oversaw completion of the Harmandir Sahib (Golden Temple) in Amritsar."
+    },
+    {
+      "id": "fig_gobind_singh",
+      "name": "Guru Gobind Singh",
+      "religion_ids": ["sikhism"],
+      "role": "Tenth and final human Guru of Sikhism",
+      "dates": "1666-1708 CE",
+      "historicity": "historical",
+      "summary": "Founded the Khalsa at Anandpur Sahib in 1699 and designated the Guru Granth Sahib as the eternal Guru."
+    },
+    {
+      "id": "fig_amaterasu",
+      "name": "Amaterasu",
+      "religion_ids": ["shintoism"],
+      "role": "Sun goddess, central kami in Shinto",
+      "dates": "Mythological",
+      "historicity": "mythological",
+      "summary": "The sun goddess from whom, in tradition, Japan's imperial line descends. She is enshrined at the Ise Grand Shrine."
+    }
+  ]
+}

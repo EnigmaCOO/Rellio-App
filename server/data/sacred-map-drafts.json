@@ -1,0 +1,245 @@
+{
+  "drafts": [
+    {
+      "id": "draft_evt_jesus_birth_1780514639287",
+      "event_id": "evt_jesus_birth",
+      "event_title": "Birth of Jesus",
+      "religion_id": "christianity",
+      "review_status": "in_review",
+      "model": "gpt-4o",
+      "generated_at": "2026-06-03T19:23:59.287Z",
+      "story": {
+        "sections": [
+          {
+            "id": "s_1",
+            "type": "overview",
+            "heading": "Overview of the Birth of Jesus",
+            "body": "The birth of Jesus is a central event in Christian tradition, believed to have taken place in Bethlehem. This event is commemorated by the Church of the Nativity, which marks the traditional site of Jesus' birth. Most scholars date the birth to a few years before 1 CE.",
+            "ref_ids": []
+          },
+          {
+            "id": "s_2",
+            "type": "scripture",
+            "heading": "Scriptural Account in the Gospel of Luke",
+            "body": "According to the Gospel of Luke, a decree from Caesar Augustus required everyone to enroll in their own city. Joseph traveled from Nazareth to Bethlehem with Mary, who was pregnant. While in Bethlehem, Mary gave birth to Jesus and laid him in a feeding trough because there was no room at the inn. Shepherds nearby were visited by an angel who announced the birth of a Savior, Christ the Lord, and they went to see the child, spreading the news of what they had witnessed.",
+            "ref_ids": [
+              "ref_p1"
+            ]
+          },
+          {
+            "id": "s_3",
+            "type": "scripture",
+            "heading": "Scriptural Account in the Gospel of Matthew",
+            "body": "The Gospel of Matthew describes how Mary, engaged to Joseph, was found to be pregnant by the Holy Spirit. An angel appeared to Joseph in a dream, instructing him not to fear taking Mary as his wife, as her child was conceived by the Holy Spirit. Joseph obeyed the angel's command, and Mary gave birth to Jesus, whom Joseph named as instructed.",
+            "ref_ids": [
+              "ref_p2"
+            ]
+          },
+          {
+            "id": "s_4",
+            "type": "context",
+            "heading": "Context of the Birth Narratives",
+            "body": "The birth narratives in the Gospels of Luke and Matthew provide different perspectives on the events surrounding Jesus' birth. Luke focuses on the journey to Bethlehem and the announcement to the shepherds, while Matthew emphasizes the divine conception and Joseph's role. These accounts are foundational to Christian beliefs about the miraculous nature of Jesus' birth.",
+            "ref_ids": []
+          },
+          {
+            "id": "s_5",
+            "type": "significance",
+            "heading": "Significance of the Birth of Jesus",
+            "body": "The birth of Jesus is celebrated by Christians as the incarnation of God in human form, marking the beginning of Jesus' earthly life and mission. It is a pivotal event that fulfills Old Testament prophecies and signifies the coming of a Savior, as highlighted in the angelic announcements in the Gospel accounts.",
+            "ref_ids": [
+              "ref_p1",
+              "ref_p2"
+            ]
+          }
+        ]
+      },
+      "references": [
+        {
+          "id": "ref_p1",
+          "tradition": "christianity",
+          "work": "Bible (Gospel of Luke)",
+          "citation": "Luke 2:1-20",
+          "locator": {
+            "book": "Luke",
+            "chapter": 2,
+            "verse_start": 1,
+            "verse_end": 20
+          },
+          "source_system": "bible-api",
+          "role": "primary",
+          "note": "Provides the account of Jesus' birth in Bethlehem and the announcement to the shepherds.",
+          "verification": {
+            "status": "verified",
+            "checked_at": "2026-06-03T19:23:57.235Z",
+            "detail": "Resolved 20 passage(s) live."
+          }
+        },
+        {
+          "id": "ref_p2",
+          "tradition": "christianity",
+          "work": "Bible (Gospel of Matthew)",
+          "citation": "Matthew 1:18-2:12",
+          "locator": {
+            "book": "Matthew",
+            "chapter": 1,
+            "verse_start": 18,
+            "chapter_end": 2,
+            "verse_end": 12
+          },
+          "source_system": "bible-api",
+          "role": "primary",
+          "note": "Describes the divine conception of Jesus and Joseph's acceptance of Mary and the child.",
+          "verification": {
+            "status": "verified",
+            "checked_at": "2026-06-03T19:23:58.323Z",
+            "detail": "Resolved 8 passage(s) live."
+          }
+        },
+        {
+          "id": "ref_p3",
+          "tradition": "islam",
+          "work": "Qur'an",
+          "citation": "Qur'an 19:16-34 (Surah Maryam)",
+          "locator": {
+            "surah": 19,
+            "ayah_start": 16,
+            "ayah_end": 34
+          },
+          "source_system": "alquran.cloud",
+          "role": "parallel-tradition",
+          "note": "Offers an Islamic perspective on the birth of Jesus, highlighting Mary's experience and Jesus' early life.",
+          "verification": {
+            "status": "verified",
+            "checked_at": "2026-06-03T19:23:58.852Z",
+            "detail": "Resolved 19 passage(s) live."
+          }
+        }
+      ],
+      "flags": [],
+      "retrieval": {
+        "candidate_count": 3,
+        "retrieved_count": 3
+      }
+    },
+    {
+      "id": "draft_evt_jesus_birth_1780514876532",
+      "event_id": "evt_jesus_birth",
+      "event_title": "Birth of Jesus",
+      "religion_id": "christianity",
+      "review_status": "draft_unreviewed",
+      "model": "gpt-4o",
+      "generated_at": "2026-06-03T19:27:56.532Z",
+      "story": {
+        "sections": [
+          {
+            "id": "s_1",
+            "type": "overview",
+            "heading": "Overview of the Birth of Jesus",
+            "body": "The birth of Jesus is a central event in Christian tradition, believed to have taken place in Bethlehem. This event is commemorated by the Church of the Nativity, which marks the traditional site of Jesus' birth. Most scholars estimate that Jesus was born a few years before 1 CE.",
+            "ref_ids": []
+          },
+          {
+            "id": "s_2",
+            "type": "scripture",
+            "heading": "The Birth of Jesus According to the Gospel of Luke",
+            "body": "In the Gospel of Luke, the birth of Jesus is described as occurring during a census ordered by Caesar Augustus. Joseph and Mary traveled from Nazareth to Bethlehem, where Mary gave birth to Jesus. He was laid in a feeding trough because there was no room at the inn. Shepherds in the nearby fields were visited by an angel announcing the birth of a Savior, Christ the Lord, and they went to see the newborn child, spreading the news of what they had witnessed.",
+            "ref_ids": [
+              "ref_p1"
+            ]
+          },
+          {
+            "id": "s_3",
+            "type": "scripture",
+            "heading": "The Birth of Jesus According to the Gospel of Matthew",
+            "body": "The Gospel of Matthew describes the birth of Jesus as a fulfillment of prophecy. Mary, engaged to Joseph, was found to be pregnant by the Holy Spirit. An angel appeared to Joseph in a dream, instructing him not to fear taking Mary as his wife. The child was to be named Jesus, as he would save his people from their sins. This narrative emphasizes the divine nature of Jesus' conception and birth.",
+            "ref_ids": [
+              "ref_p2"
+            ]
+          },
+          {
+            "id": "s_4",
+            "type": "context",
+            "heading": "Context of the Birth Narratives",
+            "body": "The birth narratives in the Gospels of Luke and Matthew provide different perspectives on the birth of Jesus. Luke's account focuses on the humble circumstances of Jesus' birth and the announcement to the shepherds, while Matthew's account highlights the fulfillment of prophecy and the divine intervention in Joseph's decision to marry Mary.",
+            "ref_ids": []
+          },
+          {
+            "id": "s_5",
+            "type": "significance",
+            "heading": "Significance of the Birth of Jesus",
+            "body": "The birth of Jesus is celebrated by Christians as the incarnation of God in human form. It marks the beginning of Jesus' life on earth, which is central to Christian theology. The narratives emphasize themes of humility, divine fulfillment, and salvation, which are foundational to Christian beliefs about Jesus as the Messiah.",
+            "ref_ids": []
+          }
+        ]
+      },
+      "references": [
+        {
+          "id": "ref_p1",
+          "tradition": "christianity",
+          "work": "Bible (Gospel of Luke)",
+          "citation": "Luke 2:1-20",
+          "locator": {
+            "book": "Luke",
+            "chapter": 2,
+            "verse_start": 1,
+            "verse_end": 20
+          },
+          "source_system": "bible-api",
+          "role": "primary",
+          "note": "Describes the birth of Jesus in Bethlehem and the announcement to the shepherds.",
+          "verification": {
+            "status": "verified",
+            "checked_at": "2026-06-03T19:27:52.156Z",
+            "detail": "Resolved 20 passage(s) live."
+          }
+        },
+        {
+          "id": "ref_p2",
+          "tradition": "christianity",
+          "work": "Bible (Gospel of Matthew)",
+          "citation": "Matthew 1:18-2:12",
+          "locator": {
+            "book": "Matthew",
+            "chapter": 1,
+            "verse_start": 18,
+            "chapter_end": 2,
+            "verse_end": 12
+          },
+          "source_system": "bible-api",
+          "role": "primary",
+          "note": "Describes the divine conception of Jesus and Joseph's role in the birth narrative.",
+          "verification": {
+            "status": "verified",
+            "checked_at": "2026-06-03T19:27:53.878Z",
+            "detail": "Resolved 8 passage(s) live."
+          }
+        },
+        {
+          "id": "ref_p3",
+          "tradition": "islam",
+          "work": "Qur'an",
+          "citation": "Qur'an 19:16-34 (Surah Maryam)",
+          "locator": {
+            "surah": 19,
+            "ayah_start": 16,
+            "ayah_end": 34
+          },
+          "source_system": "alquran.cloud",
+          "role": "parallel-tradition",
+          "note": "Provides an Islamic perspective on the birth of Jesus, highlighting Mary's role and the miraculous nature of Jesus' birth.",
+          "verification": {
+            "status": "verified",
+            "checked_at": "2026-06-03T19:27:55.057Z",
+            "detail": "Resolved 19 passage(s) live."
+          }
+        }
+      ],
+      "flags": [],
+      "retrieval": {
+        "candidate_count": 3,
+        "retrieved_count": 3
+      }
+    }
+  ]
+}
