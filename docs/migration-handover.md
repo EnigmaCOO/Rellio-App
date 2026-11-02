@@ -54,13 +54,13 @@ Checks were run locally in this Replit workspace on 2026-11-03:
 
 ## GitHub and security readiness
 
-The destination, `https://github.com/EnigmaCOO/Rellio-App`, is public and uses `main` as its default branch. The workspace's configured GitHub remote points to `EnigmaCOO/Rellio`, not `Rellio-App`. A read-only fetch confirmed target `main` at `3135136` and `replit/fix-name` at `0a58f71`; `main` descends from `replit/fix-name` and includes six later commits.
+The destination, `https://github.com/EnigmaCOO/Rellio-App`, is public and uses `main` as its default branch. The workspace's configured GitHub remote still points to `EnigmaCOO/Rellio`, not `Rellio-App`. Target `main` remains at `3135136`; `replit/fix-name` remains at `0a58f71`, and `main` descends from that branch.
 
-A sanitized new-root snapshot is prepared locally on branch `migration/task-98-unified-scholarly-chat`. It does not inherit the destination's existing commit ancestry and has not been pushed. Existing branches will not be modified or force-pushed.
+A sanitized new-root snapshot has been pushed to `migration/task-98-unified-scholarly-chat`. Its root snapshot commit is `f409aa1a91c26f4e29cd72098a23b6f34f2de3e9`. The branch does not inherit the destination's existing commit ancestry. Existing branches were not modified or force-pushed.
 
 The existing public history contains a legacy `.env.example` commit with non-empty assignments to secret-like variable names. The values were not displayed. The new-root snapshot excludes that ancestry; existing branches remain unchanged. The repository owner should review the old entries and rotate any credential that may have been live. Rotation does not remove old values from existing Git history.
 
-The GitHub API integration still reports `connect` after attachment. The GitHub CLI has no authenticated account, and SSH access was rejected for lack of a public key. A successful public read/fetch does not establish push authorization; the destination write connection must be restored before the branch can be pushed.
+The GitHub API integration still reports `connect` after attachment. The GitHub CLI has no authenticated account, and SSH access was rejected for lack of a public key. The branch push nevertheless succeeded over HTTPS Git transport through Replit's proxy; no credential values were accessed. Reconnect the GitHub API integration before future API operations.
 
 The current `.env.example` and `.handoff/.env.handoff.example` contain names only, with blank values. Tracked-path checks found no database dump, SQL backup, SQLite database, credential file, or private key in the current workspace. A clean application snapshot should retain only the 23 app-imported images and `gita_text.txt` from `attached_assets/`, omit the remaining workspace uploads and attached ZIP archives, and include the 16 runtime EPUBs in `server/books/` based on the user's redistribution-rights confirmation. The live database remains external; no database export was made.
 
